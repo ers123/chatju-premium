@@ -1,0 +1,125 @@
+require('dotenv').config();
+
+const { OpenAI } = require('openai');
+const express = require('express');
+const cors = require('cors');
+const serverless = require('serverless-http');
+
+const app = express();
+
+// CORS 설정
+const corsOptions = { 
+    origin: ['https://chatju.pages.dev', 'http://localhost:8080'],
+    credentials: false,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// OpenAI 클라이언트 초기화
+const client = new OpenAI({
+    apiKey: process.env.OPENAI,
+});
+
+// 시스템 메시지 상수
+const SYSTEM_MESSAGES = [
+    {
+        "role": "system",
+        "content": "당신은 10년 이상 사주명리학을 공부한 '챗주'라는 사주상담가입니다..."
+    },
+    // ... (기존 시스템 메시지 유지)
+];
+
+// 메시지 구성 함수
+function buildMessages(userMessages, assistantMessages) {
+    const messages = [...SYSTEM_MESSAGES];
+    const maxLength = Math.max(userMessages.length, assistantMessages.length);
+    for (let i = 0; i < maxLength; i++) {
+        if (userMessages[i]) {
+            messages.push({ role: "user", content: userMessages[i] });
+        }
+        if (assistantMessages[i]) {
+            messages.push({ role: "assistant", content: assistantMessages[i] });
+        }
+    }
+    return messages;
+}
+
+// ============================================
+// 기존 무료 운세 엔드포인트
+// ============================================
+app.post('/fortuneTell', async (req, res) => {
+    try {
+        console.log('Received request:', req.body);
+        
+        const { userMessages = [], assistantMessages = [] } = req.body;
+        const messages = buildMessages(userMessages, assistantMessages);
+        
+        console.log('Messages for API call:', messages);
+
+        const completion = await client.chat.completions.create({
+            messages: messages,
+            model: "gpt-4o-mini",
+            max_tokens: 250,
+            temperature: 0.7,
+        });
+
+        const fortune = completion.choices[0].message.content;
+        console.log('API response:', fortune);
+
+        res.json({ assistant: fortune });
+        
+    } catch (error) {
+        console.error('Error in /fortuneTell:', error);
+        res.status(500).json({ 
+            error: '운세 요청 중 오류가 발생했습니다.',
+            details: error.message 
+        });
+    }
+});
+
+app.post('/saveChatHistory', (req, res) => {
+    try {
+        const { userMessages, assistantMessages } = req.body;
+        console.log('Received chat history:', { userMessages, assistantMessages });
+        res.status(200).json({ message: 'Chat history saved successfully' });
+    } catch (error) {
+        console.error('Error saving chat history:', error);
+        res.status(500).json({ 
+            error: '채팅 기록 저장 중 오류가 발생했습니다.',
+            details: error.message 
+        });
+    }
+});
+
+// ============================================
+// 프리미엄 사주 엔드포인트 (NEW)
+// ============================================
+const sajuRoutes = require('./src/routes/saju.routes');
+app.use('/saju', sajuRoutes);
+
+// TODO: Add more routes
+// const authRoutes = require('./src/routes/auth.routes');
+// const paymentRoutes = require('./src/routes/payment.routes');
+// app.use('/auth', authRoutes);
+// app.use('/payment', paymentRoutes);
+
+// ============================================
+// 헬스체크 엔드포인트
+// ============================================
+app.get('/', (req, res) => {
+    res.json({ 
+        message: 'ChatJu Premium API is running! ✨',
+        timestamp: new Date().toISOString(),
+        openaiStatus: client ? 'Connected' : 'Not Connected',
+        environment: process.env.NODE_ENV || 'production',
+        version: '1.0.0'
+    });
+});
+
+// serverless-http로 래핑
+module.exports.handler = serverless(app);
