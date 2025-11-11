@@ -7,8 +7,93 @@ const sajuService = require('../services/saju.service');
 const authMiddleware = require('../middleware/auth');
 
 /**
+ * POST /saju/preview
+ * Generate FREE Saju preview/teaser
+ * No authentication required - open to everyone
+ * Returns: Basic Four Pillars + truncated AI interpretation
+ */
+router.post('/preview', async (req, res) => {
+  try {
+    const {
+      birthDate,
+      birthTime,
+      gender,
+      timezone,
+      language,
+    } = req.body;
+
+    // Validate required fields
+    if (!birthDate || !gender) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['birthDate', 'gender'],
+      });
+    }
+
+    // Validate birth date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(birthDate)) {
+      return res.status(400).json({
+        error: 'Invalid birthDate format. Use YYYY-MM-DD',
+      });
+    }
+
+    // Validate birth time format (HH:MM) if provided
+    if (birthTime) {
+      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+      if (!timeRegex.test(birthTime)) {
+        return res.status(400).json({
+          error: 'Invalid birthTime format. Use HH:MM (24-hour)',
+        });
+      }
+    }
+
+    // Validate gender
+    if (!['male', 'female'].includes(gender)) {
+      return res.status(400).json({
+        error: 'Invalid gender. Must be "male" or "female"',
+      });
+    }
+
+    // Generate preview (free version)
+    const preview = await sajuService.generateSajuPreview({
+      birthDate,
+      birthTime,
+      gender,
+      timezone: timezone || 'Asia/Seoul',
+      language: language || 'ko',
+    });
+
+    // Return preview with payment CTA
+    res.status(200).json({
+      ...preview,
+      isPaid: false,
+      message: language === 'en'
+        ? 'This is a preview. Unlock full analysis with premium!'
+        : '이것은 미리보기입니다. 프리미엄으로 전체 해석을 확인하세요!',
+      upgradeUrl: '/payment',
+    });
+
+  } catch (error) {
+    console.error('[Saju Route] Preview error:', error);
+
+    if (error.message.includes('Manseryeok calculation failed')) {
+      return res.status(500).json({
+        error: 'Failed to calculate Four Pillars. Please check birth data.',
+        code: 'CALCULATION_ERROR',
+      });
+    }
+
+    res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
+  }
+});
+
+/**
  * POST /saju/calculate
- * Generate premium Saju reading
+ * Generate premium Saju reading (FULL VERSION)
  * Requires: JWT authentication + completed payment
  */
 router.post('/calculate', authMiddleware, async (req, res) => {

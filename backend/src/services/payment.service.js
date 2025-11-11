@@ -1,200 +1,734 @@
-// backend/src/services/payment.service.v5.js
-// Level 5: Payment Service with Supabase Database Integration
+// backend/src/services/payment.service.js
+// Level 7: Real Payment Service (Toss Payments + PayPal + Stripe)
 
-const { supabaseAdmin, handleSupabaseError } = require('../config/supabase');
+const { supabaseAdmin } = require('../config/supabase');
+const axios = require('axios');
 
 /**
- * Create a new payment record (for testing Level 5)
- * In production, this will be called by webhook from Toss Payments/Stripe
+ * Payment Service
  *
- * @param {Object} params
- * @param {string} params.userId - User ID
- * @param {string} params.orderId - Unique order ID
- * @param {number} params.amount - Payment amount
- * @param {string} params.currency - Currency code (KRW, USD, etc.)
- * @param {string} params.productType - 'basic' or 'deluxe'
- * @param {string} params.paymentMethod - 'toss', 'stripe', or 'mock'
- * @returns {Promise<Object>} Created payment record
+ * Supports three payment gateways:
+ * 1. Toss Payments (PRIMARY - Korea) - Native Korean payment gateway, best for KRW
+ * 2. PayPal (PRIMARY - International) - Available in Korea, works globally
+ * 3. Stripe (OPTIONAL - International) - Requires non-Korean business registration
+ *
+ * Priority: Toss and PayPal are EQUAL priority, choose based on user location/preference
  */
-async function createPayment(params) {
-  const {
-    userId,
-    orderId,
-    amount,
-    currency = 'KRW',
-    productType = 'basic',
-    paymentMethod = 'mock',
-  } = params;
 
+// ========================================
+// TOSS PAYMENTS (PRIMARY - Korea)
+// ========================================
+
+/**
+ * Create Toss payment order
+ * @param {string} userId - User UUID
+ * @param {number} amount - Payment amount in KRW
+ * @param {string} orderName - Order description
+ * @returns {object} Payment creation result
+ */
+async function createTossPayment(userId, amount, orderName = '사주팔자 프리미엄 해석') {
   try {
-    console.log('[Payment Service] Creating payment:', { orderId, amount, currency });
+    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Insert payment into database
-    const { data, error } = await supabaseAdmin
+    // Store payment intent in database
+    const { data: payment, error } = await supabaseAdmin
       .from('payments')
-      .insert([
-        {
-          user_id: userId,
-          order_id: orderId,
-          amount: amount,
-          currency: currency,
-          status: 'pending', // Will be updated to 'completed' after payment
-          payment_method: paymentMethod,
-          product_type: productType,
-        },
-      ])
+      .insert([{
+        user_id: userId,
+        order_id: orderId,
+        amount: amount,
+        currency: 'KRW',
+        status: 'pending',
+        payment_method: 'toss',
+        order_name: orderName,
+        metadata: {
+          created_at: new Date().toISOString(),
+        }
+      }])
       .select()
       .single();
 
     if (error) {
-      console.error('[Payment Service] Insert failed:', error);
-      throw handleSupabaseError(error) || new Error('Failed to create payment');
+      console.error('[Payment Service] Database error:', error);
+      throw new Error('Failed to create payment record');
     }
 
-    console.log('[Payment Service] Payment created:', data.id);
-    return data;
+    console.log('[Payment Service] Toss payment created:', {
+      orderId,
+      amount,
+      paymentId: payment.id,
+    });
+
+    return {
+      success: true,
+      orderId: orderId,
+      paymentId: payment.id,
+      amount: amount,
+      currency: 'KRW',
+      customerName: orderName,
+      // Client will use this to initiate Toss payment
+      tossConfig: {
+        clientKey: process.env.TOSS_CLIENT_KEY,
+        orderId: orderId,
+        orderName: orderName,
+        amount: amount,
+        successUrl: `${process.env.FRONTEND_URL}/payment/success`,
+        failUrl: `${process.env.FRONTEND_URL}/payment/fail`,
+      }
+    };
 
   } catch (error) {
-    console.error('[Payment Service] Error in createPayment:', error);
+    console.error('[Payment Service] Create Toss payment error:', error);
     throw error;
   }
 }
 
 /**
- * Update payment status (e.g., from 'pending' to 'completed')
- *
+ * Confirm Toss payment (after user approval)
+ * Called from webhook or success callback
+ * @param {string} paymentKey - Toss payment key
  * @param {string} orderId - Order ID
- * @param {string} status - New status: 'completed', 'failed', 'refunded'
- * @param {string} paymentKey - Payment key from payment gateway (optional)
- * @returns {Promise<Object>} Updated payment record
+ * @param {number} amount - Payment amount
+ * @returns {object} Confirmation result
  */
-async function updatePaymentStatus(orderId, status, paymentKey = null) {
+async function confirmTossPayment(paymentKey, orderId, amount) {
   try {
-    console.log('[Payment Service] Updating payment status:', { orderId, status });
+    // Call Toss API to confirm payment
+    const tossSecretKey = process.env.TOSS_SECRET_KEY;
+    const encodedKey = Buffer.from(tossSecretKey + ':').toString('base64');
 
-    const updateData = {
-      status: status,
-    };
+    const response = await axios.post(
+      'https://api.tosspayments.com/v1/payments/confirm',
+      {
+        paymentKey: paymentKey,
+        orderId: orderId,
+        amount: amount,
+      },
+      {
+        headers: {
+          'Authorization': `Basic ${encodedKey}`,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
 
-    if (status === 'completed') {
-      updateData.completed_at = new Date().toISOString();
-    }
+    const tossPayment = response.data;
 
-    if (paymentKey) {
-      updateData.payment_key = paymentKey;
-    }
-
-    const { data, error } = await supabaseAdmin
+    // Update payment record in database
+    const { data: payment, error } = await supabaseAdmin
       .from('payments')
-      .update(updateData)
+      .update({
+        status: 'completed',
+        payment_key: paymentKey,
+        confirmed_at: new Date().toISOString(),
+        metadata: {
+          ...tossPayment,
+          confirmed_at: new Date().toISOString(),
+        }
+      })
       .eq('order_id', orderId)
       .select()
       .single();
 
     if (error) {
-      throw handleSupabaseError(error) || new Error('Payment not found');
+      console.error('[Payment Service] Failed to update payment:', error);
+      throw new Error('Payment confirmation failed');
     }
 
-    console.log('[Payment Service] Payment updated:', data.id);
-    return data;
+    console.log('[Payment Service] Toss payment confirmed:', {
+      orderId,
+      paymentKey,
+      status: payment.status,
+    });
+
+    return {
+      success: true,
+      payment: payment,
+      tossPayment: tossPayment,
+    };
 
   } catch (error) {
-    console.error('[Payment Service] Error updating payment:', error);
+    console.error('[Payment Service] Confirm Toss payment error:', error);
+
+    // Update payment as failed
+    await supabaseAdmin
+      .from('payments')
+      .update({
+        status: 'failed',
+        metadata: {
+          error: error.message,
+          failed_at: new Date().toISOString(),
+        }
+      })
+      .eq('order_id', orderId);
+
     throw error;
   }
 }
+
+/**
+ * Handle Toss webhook
+ * @param {object} webhookData - Webhook payload from Toss
+ * @returns {object} Webhook processing result
+ */
+async function handleTossWebhook(webhookData) {
+  try {
+    const { eventType, data } = webhookData;
+
+    console.log('[Payment Service] Toss webhook received:', eventType);
+
+    if (eventType === 'PAYMENT_COMPLETED') {
+      const { orderId, paymentKey, amount } = data;
+      return await confirmTossPayment(paymentKey, orderId, amount);
+    }
+
+    return { success: true, message: 'Webhook processed' };
+
+  } catch (error) {
+    console.error('[Payment Service] Toss webhook error:', error);
+    throw error;
+  }
+}
+
+// ========================================
+// PAYPAL (PRIMARY - International)
+// ========================================
+
+/**
+ * Create PayPal payment order
+ * @param {string} userId - User UUID
+ * @param {number} amount - Payment amount in USD
+ * @param {string} description - Payment description
+ * @returns {object} Payment creation result
+ */
+async function createPayPalPayment(userId, amount, description = 'Premium Fortune Reading') {
+  try {
+    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Get PayPal access token
+    const auth = Buffer.from(
+      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
+    ).toString('base64');
+
+    const tokenResponse = await axios.post(
+      `${process.env.PAYPAL_API_BASE_URL}/v1/oauth2/token`,
+      'grant_type=client_credentials',
+      {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      }
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+
+    // Create PayPal order
+    const orderResponse = await axios.post(
+      `${process.env.PAYPAL_API_BASE_URL}/v2/checkout/orders`,
+      {
+        intent: 'CAPTURE',
+        purchase_units: [{
+          reference_id: orderId,
+          description: description,
+          amount: {
+            currency_code: 'USD',
+            value: amount.toFixed(2)
+          }
+        }],
+        application_context: {
+          return_url: `${process.env.FRONTEND_URL}/payment/success`,
+          cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
+          brand_name: 'ChatJu Premium',
+          user_action: 'PAY_NOW'
+        }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+
+    const paypalOrder = orderResponse.data;
+
+    // Store payment intent in database
+    const { data: payment, error } = await supabaseAdmin
+      .from('payments')
+      .insert([{
+        user_id: userId,
+        order_id: orderId,
+        amount: amount,
+        currency: 'USD',
+        status: 'pending',
+        payment_method: 'paypal',
+        payment_key: paypalOrder.id,
+        order_name: description,
+        metadata: {
+          paypal_order_id: paypalOrder.id,
+          created_at: new Date().toISOString(),
+        }
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Payment Service] Database error:', error);
+      throw new Error('Failed to create payment record');
+    }
+
+    // Get approval URL
+    const approvalLink = paypalOrder.links.find(link => link.rel === 'approve');
+
+    console.log('[Payment Service] PayPal payment created:', {
+      orderId,
+      amount,
+      paypalOrderId: paypalOrder.id,
+    });
+
+    return {
+      success: true,
+      orderId: orderId,
+      paymentId: payment.id,
+      amount: amount,
+      currency: 'USD',
+      paypalOrderId: paypalOrder.id,
+      approvalUrl: approvalLink ? approvalLink.href : null,
+    };
+
+  } catch (error) {
+    console.error('[Payment Service] Create PayPal payment error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Capture PayPal payment (after user approval)
+ * @param {string} paypalOrderId - PayPal order ID
+ * @returns {object} Capture result
+ */
+async function capturePayPalPayment(paypalOrderId) {
+  try {
+    // Get PayPal access token
+    const auth = Buffer.from(
+      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
+    ).toString('base64');
+
+    const tokenResponse = await axios.post(
+      `${process.env.PAYPAL_API_BASE_URL}/v1/oauth2/token`,
+      'grant_type=client_credentials',
+      {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      }
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+
+    // Capture payment
+    const captureResponse = await axios.post(
+      `${process.env.PAYPAL_API_BASE_URL}/v2/checkout/orders/${paypalOrderId}/capture`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+
+    const captureData = captureResponse.data;
+
+    if (captureData.status !== 'COMPLETED') {
+      throw new Error(`PayPal capture failed: ${captureData.status}`);
+    }
+
+    // Update payment record in database
+    const { data: payment, error } = await supabaseAdmin
+      .from('payments')
+      .update({
+        status: 'completed',
+        confirmed_at: new Date().toISOString(),
+        metadata: {
+          paypal_capture: captureData,
+          confirmed_at: new Date().toISOString(),
+        }
+      })
+      .eq('payment_key', paypalOrderId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Payment Service] Failed to update payment:', error);
+      throw new Error('Payment confirmation failed');
+    }
+
+    console.log('[Payment Service] PayPal payment captured:', {
+      paypalOrderId,
+      status: payment.status,
+    });
+
+    return {
+      success: true,
+      payment: payment,
+      paypalCapture: captureData,
+    };
+
+  } catch (error) {
+    console.error('[Payment Service] Capture PayPal payment error:', error);
+
+    // Update payment as failed
+    await supabaseAdmin
+      .from('payments')
+      .update({
+        status: 'failed',
+        metadata: {
+          error: error.message,
+          failed_at: new Date().toISOString(),
+        }
+      })
+      .eq('payment_key', paypalOrderId);
+
+    throw error;
+  }
+}
+
+/**
+ * Handle PayPal webhook
+ * @param {object} webhookData - Webhook payload from PayPal
+ * @returns {object} Webhook processing result
+ */
+async function handlePayPalWebhook(webhookData) {
+  try {
+    const { event_type, resource } = webhookData;
+
+    console.log('[Payment Service] PayPal webhook received:', event_type);
+
+    // Handle different webhook events
+    switch (event_type) {
+      case 'CHECKOUT.ORDER.APPROVED':
+        // Order approved but not captured yet
+        return { success: true, message: 'Order approved' };
+
+      case 'PAYMENT.CAPTURE.COMPLETED':
+        // Payment captured successfully
+        const orderId = resource.supplementary_data?.related_ids?.order_id;
+        if (orderId) {
+          return await capturePayPalPayment(orderId);
+        }
+        return { success: true, message: 'Payment captured' };
+
+      case 'PAYMENT.CAPTURE.DENIED':
+      case 'PAYMENT.CAPTURE.REFUNDED':
+        // Update payment as failed/refunded
+        const failedOrderId = resource.supplementary_data?.related_ids?.order_id;
+        if (failedOrderId) {
+          await supabaseAdmin
+            .from('payments')
+            .update({
+              status: event_type.includes('DENIED') ? 'failed' : 'refunded',
+              metadata: {
+                event_type: event_type,
+                failed_at: new Date().toISOString(),
+              }
+            })
+            .eq('payment_key', failedOrderId);
+        }
+        return { success: true, message: 'Payment status updated' };
+
+      default:
+        return { success: true, message: 'Event ignored' };
+    }
+
+  } catch (error) {
+    console.error('[Payment Service] PayPal webhook error:', error);
+    throw error;
+  }
+}
+
+// ========================================
+// STRIPE (OPTIONAL - International)
+// ========================================
+
+/**
+ * Create Stripe payment intent
+ * @param {string} userId - User UUID
+ * @param {number} amount - Payment amount in USD cents
+ * @param {string} description - Payment description
+ * @returns {object} Payment intent result
+ */
+async function createStripePayment(userId, amount, description = 'Premium Fortune Reading') {
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Create Stripe payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount, // Amount in cents
+      currency: 'usd',
+      description: description,
+      metadata: {
+        orderId: orderId,
+        userId: userId,
+      },
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    // Store payment intent in database
+    const { data: payment, error } = await supabaseAdmin
+      .from('payments')
+      .insert([{
+        user_id: userId,
+        order_id: orderId,
+        amount: amount,
+        currency: 'USD',
+        status: 'pending',
+        payment_method: 'stripe',
+        payment_key: paymentIntent.id,
+        order_name: description,
+        metadata: {
+          stripe_client_secret: paymentIntent.client_secret,
+          created_at: new Date().toISOString(),
+        }
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Payment Service] Database error:', error);
+      throw new Error('Failed to create payment record');
+    }
+
+    console.log('[Payment Service] Stripe payment created:', {
+      orderId,
+      amount,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    return {
+      success: true,
+      orderId: orderId,
+      paymentId: payment.id,
+      amount: amount,
+      currency: 'USD',
+      clientSecret: paymentIntent.client_secret,
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    };
+
+  } catch (error) {
+    console.error('[Payment Service] Create Stripe payment error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Confirm Stripe payment
+ * @param {string} paymentIntentId - Stripe payment intent ID
+ * @returns {object} Confirmation result
+ */
+async function confirmStripePayment(paymentIntentId) {
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    // Retrieve payment intent from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== 'succeeded') {
+      throw new Error(`Payment not succeeded: ${paymentIntent.status}`);
+    }
+
+    // Update payment record in database
+    const { data: payment, error } = await supabaseAdmin
+      .from('payments')
+      .update({
+        status: 'completed',
+        confirmed_at: new Date().toISOString(),
+        metadata: {
+          stripe_payment_intent: paymentIntent,
+          confirmed_at: new Date().toISOString(),
+        }
+      })
+      .eq('payment_key', paymentIntentId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Payment Service] Failed to update payment:', error);
+      throw new Error('Payment confirmation failed');
+    }
+
+    console.log('[Payment Service] Stripe payment confirmed:', {
+      paymentIntentId,
+      status: payment.status,
+    });
+
+    return {
+      success: true,
+      payment: payment,
+      stripePayment: paymentIntent,
+    };
+
+  } catch (error) {
+    console.error('[Payment Service] Confirm Stripe payment error:', error);
+
+    // Update payment as failed
+    await supabaseAdmin
+      .from('payments')
+      .update({
+        status: 'failed',
+        metadata: {
+          error: error.message,
+          failed_at: new Date().toISOString(),
+        }
+      })
+      .eq('payment_key', paymentIntentId);
+
+    throw error;
+  }
+}
+
+/**
+ * Handle Stripe webhook
+ * @param {object} event - Stripe webhook event
+ * @returns {object} Webhook processing result
+ */
+async function handleStripeWebhook(event) {
+  try {
+    console.log('[Payment Service] Stripe webhook received:', event.type);
+
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        return await confirmStripePayment(event.data.object.id);
+
+      case 'payment_intent.payment_failed':
+        await supabaseAdmin
+          .from('payments')
+          .update({
+            status: 'failed',
+            metadata: {
+              error: 'Payment failed',
+              failed_at: new Date().toISOString(),
+            }
+          })
+          .eq('payment_key', event.data.object.id);
+        return { success: true, message: 'Payment failure recorded' };
+
+      default:
+        return { success: true, message: 'Event ignored' };
+    }
+
+  } catch (error) {
+    console.error('[Payment Service] Stripe webhook error:', error);
+    throw error;
+  }
+}
+
+// ========================================
+// COMMON FUNCTIONS
+// ========================================
 
 /**
  * Get payment by order ID
- *
  * @param {string} orderId - Order ID
- * @returns {Promise<Object>} Payment record
+ * @returns {object} Payment record
  */
-async function getPayment(orderId) {
+async function getPaymentByOrderId(orderId) {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data: payment, error } = await supabaseAdmin
       .from('payments')
       .select('*')
       .eq('order_id', orderId)
       .single();
 
     if (error) {
-      throw handleSupabaseError(error) || new Error('Payment not found');
+      console.error('[Payment Service] Get payment error:', error);
+      throw new Error('Payment not found');
     }
 
-    return data;
+    return payment;
 
   } catch (error) {
-    console.error('[Payment Service] Error fetching payment:', error);
+    console.error('[Payment Service] Get payment error:', error);
     throw error;
   }
 }
 
 /**
- * Get all payments for a user
- *
- * @param {string} userId - User ID
- * @param {number} limit - Max number of payments to return
- * @returns {Promise<Array>} List of payment records
+ * Get payment by ID
+ * @param {string} paymentId - Payment UUID
+ * @returns {object} Payment record
  */
-async function getUserPayments(userId, limit = 20) {
+async function getPaymentById(paymentId) {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data: payment, error } = await supabaseAdmin
+      .from('payments')
+      .select('*')
+      .eq('id', paymentId)
+      .single();
+
+    if (error) {
+      console.error('[Payment Service] Get payment error:', error);
+      throw new Error('Payment not found');
+    }
+
+    return payment;
+
+  } catch (error) {
+    console.error('[Payment Service] Get payment error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get user's payment history
+ * @param {string} userId - User UUID
+ * @returns {array} List of payments
+ */
+async function getUserPayments(userId) {
+  try {
+    const { data: payments, error } = await supabaseAdmin
       .from('payments')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .order('created_at', { ascending: false });
 
     if (error) {
-      throw handleSupabaseError(error);
+      console.error('[Payment Service] Get user payments error:', error);
+      throw new Error('Failed to retrieve payments');
     }
 
-    return data || [];
+    return payments;
 
   } catch (error) {
-    console.error('[Payment Service] Error fetching user payments:', error);
-    throw error;
-  }
-}
-
-/**
- * Create test payment (for Level 5 testing only)
- * This automatically sets status to 'completed' to simplify testing
- *
- * @param {string} userId - User ID
- * @returns {Promise<Object>} Created and completed payment
- */
-async function createTestPayment(userId) {
-  const orderId = `pay_test_${Date.now()}`;
-
-  try {
-    // Create payment
-    const payment = await createPayment({
-      userId: userId,
-      orderId: orderId,
-      amount: 13000,
-      currency: 'KRW',
-      productType: 'basic',
-      paymentMethod: 'mock',
-    });
-
-    // Immediately mark as completed (for testing)
-    const completed = await updatePaymentStatus(orderId, 'completed');
-
-    console.log('[Payment Service] Test payment created and completed:', orderId);
-    return completed;
-
-  } catch (error) {
-    console.error('[Payment Service] Error creating test payment:', error);
+    console.error('[Payment Service] Get user payments error:', error);
     throw error;
   }
 }
 
 module.exports = {
-  createPayment,
-  updatePaymentStatus,
-  getPayment,
+  // Toss Payments (PRIMARY for Korea)
+  createTossPayment,
+  confirmTossPayment,
+  handleTossWebhook,
+
+  // PayPal (PRIMARY for International)
+  createPayPalPayment,
+  capturePayPalPayment,
+  handlePayPalWebhook,
+
+  // Stripe (OPTIONAL for International)
+  createStripePayment,
+  confirmStripePayment,
+  handleStripeWebhook,
+
+  // Common
+  getPaymentByOrderId,
+  getPaymentById,
   getUserPayments,
-  createTestPayment,
 };

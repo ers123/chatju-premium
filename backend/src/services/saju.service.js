@@ -21,6 +21,83 @@ async function loadMansaeCalculator() {
 }
 
 /**
+ * Generate FREE Saju preview/teaser (no authentication required)
+ * Returns: Basic Four Pillars + truncated AI interpretation
+ *
+ * @param {Object} params
+ * @param {string} params.birthDate - Birth date (YYYY-MM-DD)
+ * @param {string} params.birthTime - Birth time (HH:MM) or null
+ * @param {string} params.gender - 'male' or 'female'
+ * @param {string} params.timezone - IANA timezone string
+ * @param {string} params.language - 'ko' or 'en'
+ * @returns {Promise<Object>} Preview result (no database storage)
+ */
+async function generateSajuPreview(params) {
+  const {
+    birthDate,
+    birthTime = null,
+    gender,
+    timezone = 'Asia/Seoul',
+    language = 'ko',
+  } = params;
+
+  try {
+    console.log('[Saju Service] Starting preview generation:', {
+      birthDate,
+      birthTime,
+      gender,
+    });
+
+    // Step 1: Load and calculate Manseryeok (same as paid version)
+    const mansaeCalculator = await loadMansaeCalculator();
+
+    // Convert gender format (male/female → 남/여)
+    const genderKorean = gender === 'male' ? '남' : '여';
+
+    // Calculate with time or without
+    const timeToUse = birthTime || '12:00'; // Default to noon if no time
+    const manseryeokResult = mansaeCalculator(birthDate, timeToUse, genderKorean);
+
+    // Validate calculation result
+    if (manseryeokResult.error) {
+      throw new Error(`Manseryeok calculation failed: ${manseryeokResult.error}`);
+    }
+
+    if (!manseryeokResult.pillars) {
+      throw new Error('Invalid Manseryeok result structure');
+    }
+
+    console.log('[Saju Service] Preview Manseryeok calculation successful');
+
+    // Step 2: Generate PREVIEW AI interpretation (shorter version)
+    const aiPreview = await generateAIPreview(
+      manseryeokResult,
+      language,
+      birthTime === null // indicate if time is unknown
+    );
+
+    console.log('[Saju Service] Preview interpretation generated');
+
+    // Step 3: Return preview (NO database storage)
+    return {
+      manseryeok: manseryeokResult,
+      aiPreview: aiPreview,
+      metadata: {
+        birthDate,
+        birthTime,
+        gender,
+        language,
+        timezone,
+      },
+    };
+
+  } catch (error) {
+    console.error('[Saju Service] Error in generateSajuPreview:', error);
+    throw error;
+  }
+}
+
+/**
  * Generate premium Saju reading with Manseryeok calculation and AI interpretation
  * NOW WITH REAL DATABASE STORAGE!
  *
@@ -229,6 +306,112 @@ async function getUserReadings(userId, limit = 20) {
 }
 
 /**
+ * Generate AI preview/teaser (shorter version for free users)
+ *
+ * @param {Object} manseryeokData - Calculated Four Pillars from mansae-calculator
+ * @param {string} language - Target language
+ * @param {boolean} timeUnknown - Whether birth time is unknown
+ * @returns {Promise<Object>} AI preview (truncated)
+ */
+async function generateAIPreview(manseryeokData, language, timeUnknown) {
+  const { pillars, elements } = manseryeokData;
+
+  // Construct language-specific prompt (PREVIEW VERSION - shorter)
+  const timeDisclaimer = timeUnknown
+    ? '\n**참고: 태어난 시간을 모르므로 시주(時柱) 분석은 정오(12시)를 기준으로 합니다.**\n'
+    : '';
+
+  const prompts = {
+    ko: `당신은 20년 경력의 사주명리학 전문가입니다. 다음 사주팔자를 간단히 분석해주세요 (미리보기용):
+${timeDisclaimer}
+**사주팔자:**
+- 년주(年柱): ${pillars.year.korean} (${pillars.year.element})
+- 월주(月柱): ${pillars.month.korean} (${pillars.month.element})
+- 일주(日柱): ${pillars.day.korean} (${pillars.day.element}) - 일간(日干) 중심
+- 시주(時柱): ${pillars.hour.korean} (${pillars.hour.element})
+
+**오행 분포:**
+${Object.entries(elements).map(([elem, count]) => `- ${elem}: ${count}개`).join('\n')}
+
+**미리보기 분석 (간단 버전):**
+1. **전체 운세 개요** (1-2문장): 사주의 전반적 기운과 특징
+2. **핵심 성격** (2-3문장): 타고난 기질과 가장 두드러진 특징
+3. **한 줄 조언** (1문장): 가장 중요한 삶의 조언
+
+**작성 원칙:**
+- 긍정적이고 흥미로운 톤
+- 더 알고 싶게 만드는 미리보기
+- 총 4-6문장으로 간결하게`,
+
+    en: `You are an expert in Korean Saju (Four Pillars of Destiny) with 20 years of experience. Please provide a brief analysis (preview version):
+${timeUnknown ? '\n**Note: Birth time is unknown, so the Hour Pillar is based on noon (12:00).**\n' : ''}
+**Four Pillars:**
+- Year Pillar: ${pillars.year.korean} (${pillars.year.element})
+- Month Pillar: ${pillars.month.korean} (${pillars.month.element})
+- Day Pillar: ${pillars.day.korean} (${pillars.day.element}) - Day Master
+- Hour Pillar: ${pillars.hour.korean} (${pillars.hour.element})
+
+**Element Distribution:**
+${Object.entries(elements).map(([elem, count]) => `- ${elem}: ${count}`).join('\n')}
+
+**Preview Analysis (Short Version):**
+1. **Overall Fortune** (1-2 sentences): General energy and key characteristics
+2. **Core Personality** (2-3 sentences): Innate temperament and most prominent traits
+3. **One-Line Advice** (1 sentence): Most important life guidance
+
+**Writing Principles:**
+- Positive and intriguing tone
+- Make readers want to know more
+- Keep it brief: 4-6 sentences total`,
+  };
+
+  const prompt = prompts[language] || prompts.ko;
+
+  try {
+    console.log('[Saju Service] Calling OpenAI API for preview...');
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a professional Saju fortune-teller providing brief, intriguing previews that make people want the full reading.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 300, // Much shorter than paid version (800-1500)
+      temperature: 0.7,
+    });
+
+    const previewText = completion.choices[0].message.content;
+
+    console.log('[Saju Service] Preview response received:', {
+      length: previewText.length,
+      tokens: completion.usage.total_tokens,
+    });
+
+    // Return truncated preview
+    return {
+      shortText: previewText,
+      sections: parsePreviewSections(previewText),
+      metadata: {
+        model: 'gpt-4o-mini',
+        tokens: completion.usage.total_tokens,
+        generatedAt: new Date().toISOString(),
+        isPreview: true,
+      },
+    };
+
+  } catch (error) {
+    console.error('[Saju Service] Error generating AI preview:', error);
+    throw new Error(`Failed to generate preview: ${error.message}`);
+  }
+}
+
+/**
  * Generate AI interpretation of Manseryeok data
  * (Unchanged from Level 4)
  *
@@ -343,6 +526,34 @@ ${Object.entries(elements).map(([elem, count]) => `- ${elem}: ${count}`).join('\
 }
 
 /**
+ * Parse preview text into sections (simplified version)
+ *
+ * @param {string} text - Preview text
+ * @returns {Object} Parsed sections
+ */
+function parsePreviewSections(text) {
+  const sections = {
+    overview: '',
+    personality: '',
+    advice: '',
+  };
+
+  // Split by numbered sections (1. 2. 3.)
+  const parts = text.split(/\d+\.\s+\*?\*?/);
+
+  if (parts.length >= 4) {
+    sections.overview = parts[1]?.trim() || '';
+    sections.personality = parts[2]?.trim() || '';
+    sections.advice = parts[3]?.trim() || '';
+  } else {
+    // Fallback: just use full text
+    sections.overview = text;
+  }
+
+  return sections;
+}
+
+/**
  * Parse interpretation text into sections
  * (Unchanged from Level 4)
  *
@@ -376,6 +587,7 @@ function parseInterpretationSections(text) {
 }
 
 module.exports = {
+  generateSajuPreview, // NEW: Free preview function
   generateSajuReading,
   getReading,
   getUserReadings,

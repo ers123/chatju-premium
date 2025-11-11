@@ -113,23 +113,20 @@ app.post('/saveChatHistory', (req, res) => {
 });
 
 // ============================================
-// 프리미엄 사주 엔드포인트 (NEW)
+// API Routes
 // ============================================
+
+// Authentication routes (Level 6)
+const authRoutes = require('./src/routes/auth.routes');
+app.use('/auth', authRoutes);
+
+// Premium Saju routes (Level 5)
 const sajuRoutes = require('./src/routes/saju.routes');
 app.use('/saju', sajuRoutes);
 
-// Mock Payment 엔드포인트 (개발 전용)
-if (process.env.NODE_ENV === 'development') {
-  const paymentMockRoutes = require('./src/routes/payment.mock.routes');
-  app.use('/payment', paymentMockRoutes);
-  console.log('🧪 Mock Payment routes enabled');
-}
-
-// TODO: Add more routes as implemented
-// const authRoutes = require('./src/routes/auth.routes');
-// const paymentRoutes = require('./src/routes/payment.routes');
-// app.use('/auth', authRoutes);
-// app.use('/payment', paymentRoutes);
+// Real payment routes (Level 7)
+const paymentRoutes = require('./src/routes/payment.routes');
+app.use('/payment', paymentRoutes);
 
 // ============================================
 // 헬스체크 엔드포인트
@@ -142,7 +139,9 @@ app.get('/', (req, res) => {
         version: '1.0.0',
         endpoints: {
             free: '/fortuneTell',
+            auth: '/auth/*',
             premium: '/saju/calculate',
+            payment: '/payment/*',
             health: '/'
         }
     });
@@ -165,7 +164,13 @@ if (require.main === module) {
         console.log('Available endpoints:');
         console.log(`  GET  http://localhost:${PORT}/`);
         console.log(`  POST http://localhost:${PORT}/fortuneTell`);
+        console.log(`  POST http://localhost:${PORT}/auth/signup`);
+        console.log(`  POST http://localhost:${PORT}/auth/signin`);
+        console.log(`  POST http://localhost:${PORT}/saju/preview (FREE)`);
         console.log(`  POST http://localhost:${PORT}/saju/calculate`);
+        console.log(`  POST http://localhost:${PORT}/payment/toss/create (PRIMARY - Korea)`);
+        console.log(`  POST http://localhost:${PORT}/payment/paypal/create (PRIMARY - International)`);
+        console.log(`  POST http://localhost:${PORT}/payment/stripe/create (Optional)`);
         console.log('=================================');
     });
 }
