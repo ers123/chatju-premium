@@ -1,0 +1,171 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ============================================
+   ChatJu Premium - Design System
+   Korean-inspired modern minimalist aesthetic
+   ============================================ */
+
+:root {
+  /* Brand Colors */
+  --navy: #1a365d; /* Primary - Trust, tradition */
+  --gold: #d4af37; /* Accent - Premium, royal */
+  --off-white: #f7f7f7; /* Background - Clean, modern */
+  --charcoal: #2d3748; /* Text - Readability */
+
+  /* Element Colors (Five Elements - 오행) */
+  --wood: #10b981; /* 목(木) - Emerald */
+  --fire: #ef4444; /* 화(火) - Red */
+  --earth: #f59e0b; /* 토(土) - Amber */
+  --metal: #6b7280; /* 금(金) - Gray */
+  --water: #3b82f6; /* 수(水) - Blue */
+
+  /* Semantic Colors */
+  --background: #ffffff;
+  --foreground: var(--charcoal);
+  --primary: var(--navy);
+  --accent: var(--gold);
+  --muted: var(--off-white);
+  --border: #e5e7eb;
+
+  /* Status Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* Spacing */
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  /* Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  /* Element Colors */
+  --color-wood: var(--wood);
+  --color-fire: var(--fire);
+  --color-earth: var(--earth);
+  --color-metal: var(--metal);
+  --color-water: var(--water);
+
+  /* Status Colors */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  /* Typography */
+  --font-sans: 'Inter', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  --font-korean: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+}
+
+/* Korean text should use Noto Sans KR */
+:lang(ko) {
+  font-family: var(--font-korean);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Remove default margins */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Improve text rendering */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--primary);
+}
+
+/* Custom scrollbar (webkit browsers) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--metal);
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Disable focus outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+/* Korean-inspired divider */
+.divider-korean {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border) 20%,
+    var(--border) 80%,
+    transparent
+  );
+}
