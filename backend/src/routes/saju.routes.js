@@ -5,6 +5,11 @@ const express = require('express');
 const router = express.Router();
 const sajuService = require('../services/saju.service');
 const authMiddleware = require('../middleware/auth');
+const { validateBirthInfo, validateUUIDParam, sanitizeStrings } = require('../middleware/validation');
+const { sajuPreviewLimiter, sajuPremiumLimiter, readLimiter } = require('../middleware/rateLimit');
+
+// Apply sanitization to all routes
+router.use(sanitizeStrings);
 
 /**
  * POST /saju/preview
@@ -12,7 +17,7 @@ const authMiddleware = require('../middleware/auth');
  * No authentication required - open to everyone
  * Returns: Basic Four Pillars + truncated AI interpretation
  */
-router.post('/preview', async (req, res) => {
+router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) => {
   try {
     const {
       birthDate,
@@ -96,7 +101,7 @@ router.post('/preview', async (req, res) => {
  * Generate premium Saju reading (FULL VERSION)
  * Requires: JWT authentication + completed payment
  */
-router.post('/calculate', authMiddleware, async (req, res) => {
+router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo, async (req, res) => {
   try {
     const {
       orderId,

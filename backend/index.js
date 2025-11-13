@@ -4,6 +4,7 @@ const { OpenAI } = require('openai');
 const express = require('express');
 const cors = require('cors');
 const serverless = require('serverless-http');
+const { generalLimiter } = require('./src/middleware/rateLimit');
 
 const app = express();
 
@@ -19,6 +20,9 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Apply general rate limiting to all routes
+app.use(generalLimiter);
 
 // OpenAI 클라이언트 초기화
 const client = new OpenAI({
