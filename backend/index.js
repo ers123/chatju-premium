@@ -8,10 +8,10 @@ const serverless = require('serverless-http');
 const app = express();
 
 // CORS 설정
-const corsOptions = { 
-    origin: ['https://chatju.pages.dev', 'http://localhost:8080'],
-    credentials: false,
-    methods: ['GET', 'POST', 'OPTIONS'],
+const corsOptions = {
+    origin: ['https://chatju.pages.dev', 'http://localhost:8080', 'http://localhost:3001'],
+    credentials: true, // Enable credentials for authenticated requests
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 };
 
@@ -22,7 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // OpenAI 클라이언트 초기화
 const client = new OpenAI({
-    apiKey: process.env.OPENAI,
+    apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI, // Support both naming conventions
 });
 
 // 시스템 메시지 상수
@@ -159,7 +159,7 @@ if (require.main === module) {
         console.log('=================================');
         console.log(`📍 Port: ${PORT}`);
         console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`🤖 OpenAI: ${process.env.OPENAI ? 'Connected ✅' : 'Not configured ❌'}`);
+        console.log(`🤖 OpenAI: ${(process.env.OPENAI_API_KEY || process.env.OPENAI) ? 'Connected ✅' : 'Not configured ❌'}`);
         console.log('=================================');
         console.log('Available endpoints:');
         console.log(`  GET  http://localhost:${PORT}/`);

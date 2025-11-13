@@ -1,7 +1,8 @@
 -- ChatJu Premium Database Schema
--- Version: 1.0
--- Date: November 7, 2025
+-- Version: 1.1
+-- Date: November 13, 2025
 -- Database: Supabase PostgreSQL
+-- Changelog: Added PayPal to payment methods, added order_name and confirmed_at fields
 
 -- =============================================================================
 -- USERS TABLE
@@ -40,9 +41,11 @@ CREATE TABLE IF NOT EXISTS payments (
   amount INTEGER NOT NULL CHECK (amount > 0),
   currency TEXT DEFAULT 'KRW' CHECK (currency IN ('KRW', 'USD', 'EUR', 'CNY')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
-  payment_method TEXT CHECK (payment_method IN ('toss', 'stripe', 'mock')),
+  payment_method TEXT CHECK (payment_method IN ('toss', 'paypal', 'stripe', 'mock')),
   payment_key TEXT,
   product_type TEXT NOT NULL CHECK (product_type IN ('basic', 'deluxe')),
+  order_name TEXT,
+  confirmed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   completed_at TIMESTAMP WITH TIME ZONE,
   metadata JSONB DEFAULT '{}'::jsonb
