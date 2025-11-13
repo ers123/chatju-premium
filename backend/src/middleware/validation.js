@@ -1,6 +1,8 @@
 // backend/src/middleware/validation.js
 // Input Validation Middleware
 
+const { validationError } = require('../utils/responses');
+
 /**
  * Validation middleware to ensure data integrity and security
  * Prevents invalid data from reaching services and database
@@ -85,15 +87,10 @@ function isValidAmount(amount) {
 }
 
 /**
- * Generic validation error response
+ * Helper to send validation error (now uses standardized response)
  */
-function validationError(res, field, message) {
-  return res.status(400).json({
-    success: false,
-    error: `Validation error: ${field}`,
-    message: message,
-    code: 'VALIDATION_ERROR'
-  });
+function sendValidationError(res, field, message) {
+  return sendValidationError(res, field, message);
 }
 
 // ========================================
@@ -108,15 +105,15 @@ function validateAuthRequest(req, res, next) {
 
   // Validate email
   if (!email) {
-    return validationError(res, 'email', 'Email is required');
+    return sendValidationError(res, 'email', 'Email is required');
   }
   if (!isValidEmail(email)) {
-    return validationError(res, 'email', 'Invalid email format');
+    return sendValidationError(res, 'email', 'Invalid email format');
   }
 
   // Validate language preference (optional)
   if (language_preference && !isValidLanguage(language_preference)) {
-    return validationError(res, 'language_preference', 'Invalid language (must be ko, en, or zh)');
+    return sendValidationError(res, 'language_preference', 'Invalid language (must be ko, en, or zh)');
   }
 
   next();
@@ -129,13 +126,13 @@ function validateOTPRequest(req, res, next) {
   const { email, token } = req.body;
 
   if (!email || !token) {
-    return validationError(res, 'email/token', 'Email and token are required');
+    return sendValidationError(res, 'email/token', 'Email and token are required');
   }
   if (!isValidEmail(email)) {
-    return validationError(res, 'email', 'Invalid email format');
+    return sendValidationError(res, 'email', 'Invalid email format');
   }
   if (typeof token !== 'string' || token.length < 6) {
-    return validationError(res, 'token', 'Invalid token format');
+    return sendValidationError(res, 'token', 'Invalid token format');
   }
 
   next();
@@ -149,33 +146,33 @@ function validateBirthInfo(req, res, next) {
 
   // Validate birth date (required)
   if (!birthDate) {
-    return validationError(res, 'birthDate', 'Birth date is required');
+    return sendValidationError(res, 'birthDate', 'Birth date is required');
   }
   if (!isValidDate(birthDate)) {
-    return validationError(res, 'birthDate', 'Invalid date format (use YYYY-MM-DD)');
+    return sendValidationError(res, 'birthDate', 'Invalid date format (use YYYY-MM-DD)');
   }
 
   // Validate birth time (optional)
   if (birthTime && !isValidTime(birthTime)) {
-    return validationError(res, 'birthTime', 'Invalid time format (use HH:MM)');
+    return sendValidationError(res, 'birthTime', 'Invalid time format (use HH:MM)');
   }
 
   // Validate gender (required)
   if (!gender) {
-    return validationError(res, 'gender', 'Gender is required');
+    return sendValidationError(res, 'gender', 'Gender is required');
   }
   if (!isValidGender(gender)) {
-    return validationError(res, 'gender', 'Invalid gender (must be male or female)');
+    return sendValidationError(res, 'gender', 'Invalid gender (must be male or female)');
   }
 
   // Validate language (optional)
   if (language && !isValidLanguage(language)) {
-    return validationError(res, 'language', 'Invalid language (must be ko, en, or zh)');
+    return sendValidationError(res, 'language', 'Invalid language (must be ko, en, or zh)');
   }
 
   // Validate timezone (optional, just check if string)
   if (timezone && typeof timezone !== 'string') {
-    return validationError(res, 'timezone', 'Timezone must be a string');
+    return sendValidationError(res, 'timezone', 'Timezone must be a string');
   }
 
   next();
@@ -189,26 +186,26 @@ function validatePaymentRequest(req, res, next) {
 
   // Validate amount
   if (!amount) {
-    return validationError(res, 'amount', 'Amount is required');
+    return sendValidationError(res, 'amount', 'Amount is required');
   }
   if (!isValidAmount(amount)) {
-    return validationError(res, 'amount', 'Amount must be a positive integer');
+    return sendValidationError(res, 'amount', 'Amount must be a positive integer');
   }
 
   // Validate currency (optional, defaults in service)
   if (currency && !isValidCurrency(currency)) {
-    return validationError(res, 'currency', 'Invalid currency (must be KRW, USD, EUR, or CNY)');
+    return sendValidationError(res, 'currency', 'Invalid currency (must be KRW, USD, EUR, or CNY)');
   }
 
   // Validate product type
   if (product_type && !isValidProductType(product_type)) {
-    return validationError(res, 'product_type', 'Invalid product type (must be basic or deluxe)');
+    return sendValidationError(res, 'product_type', 'Invalid product type (must be basic or deluxe)');
   }
 
   // Security: Check amount limits
   const maxAmount = currency === 'KRW' ? 100000 : 200; // 100k KRW or $200 USD
   if (amount > maxAmount) {
-    return validationError(res, 'amount', `Amount exceeds maximum allowed (${maxAmount} ${currency || 'KRW'})`);
+    return sendValidationError(res, 'amount', `Amount exceeds maximum allowed (${maxAmount} ${currency || 'KRW'})`);
   }
 
   next();
@@ -221,11 +218,11 @@ function validateTossConfirmation(req, res, next) {
   const { paymentKey, orderId, amount } = req.body;
 
   if (!paymentKey || !orderId || !amount) {
-    return validationError(res, 'payment', 'Payment key, order ID, and amount are required');
+    return sendValidationError(res, 'payment', 'Payment key, order ID, and amount are required');
   }
 
   if (!isValidAmount(amount)) {
-    return validationError(res, 'amount', 'Amount must be a positive integer');
+    return sendValidationError(res, 'amount', 'Amount must be a positive integer');
   }
 
   next();
@@ -238,11 +235,11 @@ function validatePayPalCapture(req, res, next) {
   const { paypalOrderId } = req.body;
 
   if (!paypalOrderId) {
-    return validationError(res, 'paypalOrderId', 'PayPal order ID is required');
+    return sendValidationError(res, 'paypalOrderId', 'PayPal order ID is required');
   }
 
   if (typeof paypalOrderId !== 'string' || paypalOrderId.length < 10) {
-    return validationError(res, 'paypalOrderId', 'Invalid PayPal order ID format');
+    return sendValidationError(res, 'paypalOrderId', 'Invalid PayPal order ID format');
   }
 
   next();
@@ -256,11 +253,11 @@ function validateUUIDParam(paramName = 'id') {
     const id = req.params[paramName];
 
     if (!id) {
-      return validationError(res, paramName, `${paramName} is required`);
+      return sendValidationError(res, paramName, `${paramName} is required`);
     }
 
     if (!isValidUUID(id)) {
-      return validationError(res, paramName, `Invalid ${paramName} format (must be UUID)`);
+      return sendValidationError(res, paramName, `Invalid ${paramName} format (must be UUID)`);
     }
 
     next();
@@ -274,11 +271,11 @@ function validateOrderIdParam(req, res, next) {
   const orderId = req.params.orderId;
 
   if (!orderId) {
-    return validationError(res, 'orderId', 'Order ID is required');
+    return sendValidationError(res, 'orderId', 'Order ID is required');
   }
 
   if (typeof orderId !== 'string' || orderId.length < 10) {
-    return validationError(res, 'orderId', 'Invalid order ID format');
+    return sendValidationError(res, 'orderId', 'Invalid order ID format');
   }
 
   next();

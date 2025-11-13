@@ -18,6 +18,13 @@ const {
   webhookLimiter,
   readLimiter
 } = require('../middleware/rateLimit');
+const {
+  verifyTossWebhook,
+  verifyStripeWebhook,
+  verifyPayPalWebhook,
+  webhookLogger,
+  preventReplayAttack
+} = require('../middleware/webhookVerify');
 
 // Apply sanitization to all routes
 router.use(sanitizeStrings);
@@ -97,7 +104,13 @@ router.post('/toss/confirm', paymentConfirmLimiter, validateTossConfirmation, as
  *
  * Body: Toss webhook payload
  */
-router.post('/toss/webhook', webhookLimiter, express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/toss/webhook',
+  webhookLimiter,
+  express.raw({ type: 'application/json' }),
+  webhookLogger('toss'),
+  verifyTossWebhook,
+  preventReplayAttack(),
+  async (req, res) => {
   try {
     const webhookData = JSON.parse(req.body.toString());
 
@@ -190,7 +203,13 @@ router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, asy
  *
  * Body: PayPal webhook payload
  */
-router.post('/paypal/webhook', webhookLimiter, express.json(), async (req, res) => {
+router.post('/paypal/webhook',
+  webhookLimiter,
+  express.json(),
+  webhookLogger('paypal'),
+  verifyPayPalWebhook,
+  preventReplayAttack(),
+  async (req, res) => {
   try {
     const webhookData = req.body;
 
@@ -252,7 +271,13 @@ router.post('/stripe/create', authMiddleware, paymentCreationLimiter, validatePa
  * Headers:
  * - stripe-signature: Webhook signature for verification
  */
-router.post('/stripe/webhook', webhookLimiter, express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/stripe/webhook',
+  webhookLimiter,
+  express.raw({ type: 'application/json' }),
+  webhookLogger('stripe'),
+  verifyStripeWebhook,
+  preventReplayAttack(),
+  async (req, res) => {
   try {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const sig = req.headers['stripe-signature'];
