@@ -90,7 +90,7 @@ function isValidAmount(amount) {
  * Helper to send validation error (now uses standardized response)
  */
 function sendValidationError(res, field, message) {
-  return sendValidationError(res, field, message);
+  return validationError(res, field, message);
 }
 
 // ========================================
