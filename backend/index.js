@@ -6,6 +6,7 @@ const cors = require('cors');
 const serverless = require('serverless-http');
 const { generalLimiter } = require('./src/middleware/rateLimit');
 const logger = require('./src/utils/logger');
+const { globalErrorHandler } = require('./src/utils/responses');
 
 const app = express();
 
