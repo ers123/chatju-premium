@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatJu - Interactive Guidance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafaf9;
+            color: #1c1917;
+        }
+        
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .message-user {
+            background: #1c1917;
+            color: white;
+            padding: 1rem 1.25rem;
+            border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+            max-width: 70%;
+            margin-left: auto;
+        }
+        
+        .message-ai {
+            background: white;
+            color: #1c1917;
+            padding: 1rem 1.25rem;
+            border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+            max-width: 75%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        
+        .input-container {
+            background: white;
+            border-top: 1px solid #e7e5e4;
+            padding: 1rem;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            border: 1px solid #e7e5e4;
+            border-radius: 1.5rem;
+            font-size: 0.9375rem;
+            resize: none;
+            max-height: 120px;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+        }
+        
+        .send-button {
+            background: #1c1917;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 1.5rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .send-button:hover {
+            background: #292524;
+        }
+        
+        .send-button:disabled {
+            background: #d6d3d1;
+            cursor: not-allowed;
+        }
+        
+        .suggestion-chip {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid #e7e5e4;
+            border-radius: 1.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .suggestion-chip:hover {
+            border-color: #d97706;
+            background: #fffbf5;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Header -->
+        <header class="bg-white border-b border-stone-200 px-6 py-4">
+            <div class="max-w-4xl mx-auto flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-semibold">Chat with ChatJu</h1>
+                    <p class="text-sm text-stone-500">Ask anything about your reading</p>
+                </div>
+                <button class="text-sm text-stone-600 hover:text-stone-900">
+                    ← Back to Reading
+                </button>
+            </div>
+        </header>
+        
+        <!-- Chat Messages -->
+        <div class="flex-1 overflow-y-auto px-6 py-8">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <!-- AI Message -->
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <span class="text-sm">✨</span>
+                    </div>
+                    <div class="message-ai">
+                        <p class="leading-relaxed">
+                            Hello! I'm here to help you understand your Saju reading better. I can answer questions about your personality, career path, relationships, or upcoming fortune periods. What would you like to explore?
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Suggestions -->
+                <div class="flex flex-wrap gap-2 max-w-4xl">
+                    <button class="suggestion-chip">What career suits me best?</button>
+                    <button class="suggestion-chip">Tell me about relationships</button>
+                    <button class="suggestion-chip">When is a good time to start a business?</button>
+                    <button class="suggestion-chip">How can I improve my fortune?</button>
+                </div>
+                
+                <!-- User Message -->
+                <div class="flex justify-end">
+                    <div class="message-user">
+                        <p class="leading-relaxed">
+                            What career path would be most suitable for me based on my elements?
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- AI Response -->
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <span class="text-sm">✨</span>
+                    </div>
+                    <div class="message-ai">
+                        <p class="leading-relaxed mb-3">
+                            Based on your Metal and Earth elements, you're naturally suited for careers that require:
+                        </p>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start">
+                                <span class="text-amber-600 mr-2">•</span>
+                                <span><strong>Analytical thinking:</strong> Finance, data analysis, research</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-amber-600 mr-2">•</span>
+                                <span><strong>Structure & systems:</strong> Engineering, architecture, operations</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-amber-600 mr-2">•</span>
+                                <span><strong>Precision & detail:</strong> Legal, accounting, quality control</span>
+                            </li>
+                        </ul>
+                        <p class="leading-relaxed mt-3 text-sm text-stone-600">
+                            Your practical Earth element keeps you grounded, while Metal gives you the sharp analytical edge needed for these fields.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Input Area -->
+        <div class="input-container">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex gap-3 items-end">
+                    <textarea 
+                        class="chat-input" 
+                        placeholder="Ask a follow-up question..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button">
+                        Send
+                    </button>
+                </div>
+                <p class="text-xs text-stone-500 mt-2 text-center">
+                    ChatJu uses AI to interpret your Saju chart. Always consult a professional for important decisions.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-resize textarea
+        const textarea = document.querySelector('.chat-input');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+        
+        // Suggestion chips
+        document.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                textarea.value = this.textContent;
+                textarea.focus();
+            });
+        });
+    </script>
+</body>
+</html>

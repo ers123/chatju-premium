@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatJu - Your Reading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafaf9;
+            color: #1c1917;
+        }
+        
+        .serif-font {
+            font-family: 'Crimson Pro', Georgia, serif;
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        
+        .element-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .wood { background: #dcfce7; color: #166534; }
+        .fire { background: #fee2e2; color: #991b1b; }
+        .earth { background: #fef3c7; color: #92400e; }
+        .metal { background: #f3f4f6; color: #374151; }
+        .water { background: #dbeafe; color: #1e40af; }
+    </style>
+</head>
+<body class="min-h-screen p-6">
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto mb-8">
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-semibold">Your Saju Reading</h1>
+            <button class="px-4 py-2 text-sm bg-stone-900 text-white rounded-lg hover:bg-stone-800">
+                Download PDF
+            </button>
+        </div>
+    </header>
+    
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Quick Summary -->
+        <div class="section-card">
+            <h2 class="text-2xl font-semibold mb-4">Your Elements</h2>
+            <div class="flex flex-wrap gap-3">
+                <span class="element-badge metal">天干: 庚金 (Metal)</span>
+                <span class="element-badge earth">地支: 戌土 (Earth)</span>
+                <span class="element-badge water">藏干: 壬水 (Water)</span>
+            </div>
+        </div>
+        
+        <!-- Personality Analysis -->
+        <div class="section-card">
+            <h2 class="text-2xl font-semibold mb-4">Personality Insights</h2>
+            <div class="space-y-4 text-stone-700 leading-relaxed">
+                <p>
+                    Your dominant Metal element suggests a natural inclination toward structure, analysis, and precision. You possess strong organizational abilities and excel at bringing order to complex situations.
+                </p>
+                <p>
+                    The Earth foundation provides stability and practicality to your character. You're someone who values tangible results and prefers tested methods over experimental approaches.
+                </p>
+                <div class="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                    <h3 class="font-semibold text-amber-900 mb-2">Strength</h3>
+                    <p class="text-sm text-amber-800">Strategic thinking, attention to detail, reliable decision-making</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Career Guidance -->
+        <div class="section-card">
+            <h2 class="text-2xl font-semibold mb-4">Career Path</h2>
+            <div class="space-y-4 text-stone-700 leading-relaxed">
+                <p>
+                    Your elemental composition indicates strong potential in fields requiring analytical precision and systematic thinking. Consider careers in:
+                </p>
+                <ul class="space-y-2 ml-6">
+                    <li class="flex items-start">
+                        <span class="text-amber-600 mr-2">•</span>
+                        <span>Financial analysis and strategic planning</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-amber-600 mr-2">•</span>
+                        <span>Engineering and systems design</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-amber-600 mr-2">•</span>
+                        <span>Legal and compliance roles</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Fortune Timeline -->
+        <div class="section-card">
+            <h2 class="text-2xl font-semibold mb-4">Next 12 Months</h2>
+            <div class="space-y-6">
+                <div class="border-l-4 border-green-500 pl-4">
+                    <h3 class="font-semibold mb-1">Q1 2025 - Growth Phase</h3>
+                    <p class="text-sm text-stone-600">Career opportunities emerge, favorable for new initiatives</p>
+                </div>
+                <div class="border-l-4 border-amber-500 pl-4">
+                    <h3 class="font-semibold mb-1">Q2 2025 - Consolidation</h3>
+                    <p class="text-sm text-stone-600">Focus on strengthening existing foundations</p>
+                </div>
+                <div class="border-l-4 border-blue-500 pl-4">
+                    <h3 class="font-semibold mb-1">Q3 2025 - Opportunities</h3>
+                    <p class="text-sm text-stone-600">Relationship and partnership developments</p>
+                </div>
+                <div class="border-l-4 border-purple-500 pl-4">
+                    <h3 class="font-semibold mb-1">Q4 2025 - Reflection</h3>
+                    <p class="text-sm text-stone-600">Time for strategic planning and goal setting</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CTA -->
+        <div class="section-card bg-stone-900 text-white text-center">
+            <h2 class="text-2xl font-semibold mb-4">Want to dive deeper?</h2>
+            <p class="mb-6 text-stone-300">Ask follow-up questions through our interactive chat</p>
+            <button class="px-8 py-3 bg-white text-stone-900 rounded-lg font-medium hover:bg-stone-100">
+                Start Chat Session
+            </button>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatJu - Birth Information</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafaf9;
+            color: #1c1917;
+        }
+        
+        .input-field {
+            padding: 0.875rem 1rem;
+            border: 1px solid #e7e5e4;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+        }
+        
+        .radio-option {
+            position: relative;
+            padding: 1rem;
+            border: 1px solid #e7e5e4;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .radio-option:hover {
+            border-color: #d6d3d1;
+            background: #fafaf9;
+        }
+        
+        .radio-option input[type="radio"]:checked + .radio-content {
+            border-color: #d97706;
+        }
+        
+        .radio-option input[type="radio"]:checked ~ .check-indicator {
+            background: #d97706;
+            border-color: #d97706;
+        }
+        
+        .radio-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        .check-indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e7e5e4;
+            border-radius: 50%;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .check-indicator::after {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            margin: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        input[type="radio"]:checked ~ .check-indicator::after {
+            opacity: 1;
+        }
+        
+        .btn-primary {
+            background: #1c1917;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            background: #292524;
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary:disabled {
+            background: #d6d3d1;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .info-badge {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            border-left: 3px solid #d97706;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-2xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-semibold mb-4">Enter Your Birth Details</h1>
+            <p class="text-lg text-stone-600">Accurate information ensures precise readings</p>
+        </div>
+        
+        <!-- Form Card -->
+        <div class="bg-white rounded-2xl p-8 shadow-sm border border-stone-200">
+            <form class="space-y-8">
+                <!-- Name -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Full Name</label>
+                    <input type="text" class="input-field w-full" placeholder="Enter your name" required>
+                </div>
+                
+                <!-- Calendar Type Selection -->
+                <div>
+                    <label class="block text-sm font-medium mb-3">Calendar Type</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="radio-option">
+                            <input type="radio" name="calendar" value="solar" checked>
+                            <div class="flex items-center gap-3 radio-content">
+                                <div class="check-indicator"></div>
+                                <div>
+                                    <div class="font-medium">Solar Calendar</div>
+                                    <div class="text-xs text-stone-500 mt-0.5">양력 (Gregorian)</div>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="calendar" value="lunar">
+                            <div class="flex items-center gap-3 radio-content">
+                                <div class="check-indicator"></div>
+                                <div>
+                                    <div class="font-medium">Lunar Calendar</div>
+                                    <div class="text-xs text-stone-500 mt-0.5">음력 (Traditional)</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="info-badge mt-3">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"></path>
+                            </svg>
+                            <span>Most birth certificates use solar calendar. Choose lunar if you're certain.</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Birth Date -->
+                <div>
+                    <label class="block text-sm font-medium mb-3">Birth Date</label>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs text-stone-500 mb-2">Year</label>
+                            <input type="number" class="input-field w-full" placeholder="1990" min="1900" max="2025" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-stone-500 mb-2">Month</label>
+                            <input type="number" class="input-field w-full" placeholder="12" min="1" max="12" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-stone-500 mb-2">Day</label>
+                            <input type="number" class="input-field w-full" placeholder="25" min="1" max="31" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Birth Time -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Birth Time (24-hour format)</label>
+                    <input type="time" class="input-field w-full" required>
+                    <div class="mt-3 space-y-2">
+                        <div class="info-badge">
+                            <div class="flex items-start gap-2">
+                                <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"></path>
+                                </svg>
+                                <span>Exact birth time is crucial for accurate time pillar (時柱) calculation</span>
+                            </div>
+                        </div>
+                        <label class="flex items-center gap-2 text-sm text-stone-600 cursor-pointer">
+                            <input type="checkbox" class="rounded border-stone-300">
+                            <span>I don't know my exact birth time (we'll use 12:00 PM)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Gender -->
+                <div>
+                    <label class="block text-sm font-medium mb-3">Gender</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="radio-option">
+                            <input type="radio" name="gender" value="male" required>
+                            <div class="flex items-center gap-3 radio-content">
+                                <div class="check-indicator"></div>
+                                <span class="font-medium">Male</span>
+                            </div>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="gender" value="female" required>
+                            <div class="flex items-center gap-3 radio-content">
+                                <div class="check-indicator"></div>
+                                <span class="font-medium">Female</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Birth Location -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Birth Location</label>
+                    <input type="text" class="input-field w-full" placeholder="e.g., Seoul, South Korea" required>
+                    <div class="info-badge mt-3">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"></path>
+                            </svg>
+                            <span>Location is needed for precise time zone and longitude adjustments</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Privacy Agreement -->
+                <div class="pt-4">
+                    <label class="flex items-start gap-3 text-sm text-stone-600 cursor-pointer">
+                        <input type="checkbox" class="mt-1 rounded border-stone-300" required>
+                        <span>I agree to the processing of my birth information for Saju analysis. All data is encrypted and never shared with third parties.</span>
+                    </label>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="pt-2">
+                    <button type="submit" class="btn-primary">
+                        Generate My Reading
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="mt-8 space-y-4">
+            <!-- Privacy Note -->
+            <div class="text-center text-sm text-stone-500">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path>
+                    </svg>
+                    <span>Your information is encrypted and secure</span>
+                </div>
+            </div>
+            
+            <!-- Why This Info -->
+            <details class="bg-stone-50 rounded-lg p-4 border border-stone-200">
+                <summary class="text-sm font-medium cursor-pointer text-stone-700">
+                    Why do we need this information?
+                </summary>
+                <div class="mt-3 text-sm text-stone-600 space-y-2">
+                    <p><strong>Calendar Type:</strong> Saju calculations use the traditional 24 solar terms calendar. We convert lunar dates accurately to ensure precision.</p>
+                    <p><strong>Exact Time:</strong> Your time pillar (時柱) changes every 2 hours and is crucial for accurate personality and destiny analysis.</p>
+                    <p><strong>Location:</strong> Longitude differences affect the precise time calculation. We adjust for regional time zones and historical standard time changes.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+    
+    <script>
+        // Form validation
+        const form = document.querySelector('form');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Calculating Your Saju...';
+            
+            // Simulate processing
+            setTimeout(() => {
+                // Redirect to results page
+                window.location.href = '3-results-dashboard.html';
+            }, 2000);
+        });
+        
+        // Unknown birth time checkbox handler
+        const unknownTimeCheckbox = document.querySelector('input[type="checkbox"]:not([required])');
+        const timeInput = document.querySelector('input[type="time"]');
+        
+        unknownTimeCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                timeInput.value = '12:00';
+                timeInput.disabled = true;
+                timeInput.classList.add('bg-stone-100');
+            } else {
+                timeInput.disabled = false;
+                timeInput.classList.remove('bg-stone-100');
+            }
+        });
+    </script>
+</body>
+</html>
