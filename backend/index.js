@@ -4,14 +4,16 @@ const { OpenAI } = require('openai');
 const express = require('express');
 const cors = require('cors');
 const serverless = require('serverless-http');
+const { generalLimiter } = require('./src/middleware/rateLimit');
+const logger = require('./src/utils/logger');
 
 const app = express();
 
 // CORS 설정
-const corsOptions = { 
-    origin: ['https://chatju.pages.dev', 'http://localhost:8080'],
-    credentials: false,
-    methods: ['GET', 'POST', 'OPTIONS'],
+const corsOptions = {
+    origin: ['https://chatju.pages.dev', 'http://localhost:8080', 'http://localhost:3001'],
+    credentials: true, // Enable credentials for authenticated requests
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 };
 
@@ -20,9 +22,15 @@ app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Add request logging middleware
+app.use(logger.requestLogger);
+
+// Apply general rate limiting to all routes
+app.use(generalLimiter);
+
 // OpenAI 클라이언트 초기화
 const client = new OpenAI({
-    apiKey: process.env.OPENAI,
+    apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI, // Support both naming conventions
 });
 
 // 시스템 메시지 상수
@@ -69,8 +77,11 @@ function buildMessages(userMessages, assistantMessages) {
 // ============================================
 app.post('/fortuneTell', async (req, res) => {
     try {
-        console.log('[Free Fortune] Received request:', req.body);
-        
+        logger.debug('Free Fortune: Received request', {
+            userMessagesCount: req.body.userMessages?.length || 0,
+            assistantMessagesCount: req.body.assistantMessages?.length || 0
+        });
+
         const { userMessages = [], assistantMessages = [] } = req.body;
         const messages = buildMessages(userMessages, assistantMessages);
 
@@ -82,15 +93,18 @@ app.post('/fortuneTell', async (req, res) => {
         });
 
         const fortune = completion.choices[0].message.content;
-        console.log('[Free Fortune] Response generated');
+        logger.info('Free Fortune: Response generated', {
+            tokens: completion.usage.total_tokens,
+            model: 'gpt-4o-mini'
+        });
 
         res.json({ assistant: fortune });
-        
+
     } catch (error) {
-        console.error('[Free Fortune] Error:', error);
-        res.status(500).json({ 
+        logger.logError(error, { context: 'Free Fortune' });
+        res.status(500).json({
             error: '운세 요청 중 오류가 발생했습니다.',
-            details: error.message 
+            details: error.message
         });
     }
 });
@@ -98,16 +112,16 @@ app.post('/fortuneTell', async (req, res) => {
 app.post('/saveChatHistory', (req, res) => {
     try {
         const { userMessages, assistantMessages } = req.body;
-        console.log('[Chat History] Saved:', { 
-            userCount: userMessages.length, 
-            assistantCount: assistantMessages.length 
+        logger.debug('Chat History: Saved', {
+            userCount: userMessages?.length || 0,
+            assistantCount: assistantMessages?.length || 0
         });
         res.status(200).json({ message: 'Chat history saved successfully' });
     } catch (error) {
-        console.error('[Chat History] Error:', error);
-        res.status(500).json({ 
+        logger.logError(error, { context: 'Chat History' });
+        res.status(500).json({
             error: '채팅 기록 저장 중 오류가 발생했습니다.',
-            details: error.message 
+            details: error.message
         });
     }
 });
@@ -148,30 +162,35 @@ app.get('/', (req, res) => {
 });
 
 // ============================================
+// Global Error Handler (must be last!)
+// ============================================
+app.use(globalErrorHandler);
+
+// ============================================
 // 로컬 개발 서버 (중요!)
 // ============================================
 if (require.main === module) {
     // 로컬에서 직접 실행할 때만 서버 시작
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-        console.log('=================================');
-        console.log('🚀 ChatJu Backend Server Started');
-        console.log('=================================');
-        console.log(`📍 Port: ${PORT}`);
-        console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`🤖 OpenAI: ${process.env.OPENAI ? 'Connected ✅' : 'Not configured ❌'}`);
-        console.log('=================================');
-        console.log('Available endpoints:');
-        console.log(`  GET  http://localhost:${PORT}/`);
-        console.log(`  POST http://localhost:${PORT}/fortuneTell`);
-        console.log(`  POST http://localhost:${PORT}/auth/signup`);
-        console.log(`  POST http://localhost:${PORT}/auth/signin`);
-        console.log(`  POST http://localhost:${PORT}/saju/preview (FREE)`);
-        console.log(`  POST http://localhost:${PORT}/saju/calculate`);
-        console.log(`  POST http://localhost:${PORT}/payment/toss/create (PRIMARY - Korea)`);
-        console.log(`  POST http://localhost:${PORT}/payment/paypal/create (PRIMARY - International)`);
-        console.log(`  POST http://localhost:${PORT}/payment/stripe/create (Optional)`);
-        console.log('=================================');
+        logger.info('=================================');
+        logger.info('🚀 ChatJu Backend Server Started');
+        logger.info('=================================');
+        logger.info(`📍 Port: ${PORT}`);
+        logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger.info(`🤖 OpenAI: ${(process.env.OPENAI_API_KEY || process.env.OPENAI) ? 'Connected ✅' : 'Not configured ❌'}`);
+        logger.info('=================================');
+        logger.info('Available endpoints:');
+        logger.info(`  GET  http://localhost:${PORT}/`);
+        logger.info(`  POST http://localhost:${PORT}/fortuneTell`);
+        logger.info(`  POST http://localhost:${PORT}/auth/signup`);
+        logger.info(`  POST http://localhost:${PORT}/auth/signin`);
+        logger.info(`  POST http://localhost:${PORT}/saju/preview (FREE)`);
+        logger.info(`  POST http://localhost:${PORT}/saju/calculate`);
+        logger.info(`  POST http://localhost:${PORT}/payment/toss/create (PRIMARY - Korea)`);
+        logger.info(`  POST http://localhost:${PORT}/payment/paypal/create (PRIMARY - International)`);
+        logger.info(`  POST http://localhost:${PORT}/payment/stripe/create (Optional)`);
+        logger.info('=================================');
     });
 }
 

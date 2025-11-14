@@ -195,17 +195,11 @@ async function handleTossWebhook(webhookData) {
 // ========================================
 
 /**
- * Create PayPal payment order
- * @param {string} userId - User UUID
- * @param {number} amount - Payment amount in USD
- * @param {string} description - Payment description
- * @returns {object} Payment creation result
+ * Get PayPal access token (reusable helper)
+ * @returns {Promise<string>} Access token
  */
-async function createPayPalPayment(userId, amount, description = 'Premium Fortune Reading') {
+async function getPayPalAccessToken() {
   try {
-    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Get PayPal access token
     const auth = Buffer.from(
       `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
     ).toString('base64');
@@ -221,7 +215,26 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
       }
     );
 
-    const accessToken = tokenResponse.data.access_token;
+    return tokenResponse.data.access_token;
+  } catch (error) {
+    console.error('[Payment Service] Failed to get PayPal access token:', error);
+    throw new Error('PayPal authentication failed');
+  }
+}
+
+/**
+ * Create PayPal payment order
+ * @param {string} userId - User UUID
+ * @param {number} amount - Payment amount in USD
+ * @param {string} description - Payment description
+ * @returns {object} Payment creation result
+ */
+async function createPayPalPayment(userId, amount, description = 'Premium Fortune Reading') {
+  try {
+    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Get PayPal access token
+    const accessToken = await getPayPalAccessToken();
 
     // Create PayPal order
     const orderResponse = await axios.post(
@@ -311,22 +324,7 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
 async function capturePayPalPayment(paypalOrderId) {
   try {
     // Get PayPal access token
-    const auth = Buffer.from(
-      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
-    ).toString('base64');
-
-    const tokenResponse = await axios.post(
-      `${process.env.PAYPAL_API_BASE_URL}/v1/oauth2/token`,
-      'grant_type=client_credentials',
-      {
-        headers: {
-          'Authorization': `Basic ${auth}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }
-      }
-    );
-
-    const accessToken = tokenResponse.data.access_token;
+    const accessToken = await getPayPalAccessToken();
 
     // Capture payment
     const captureResponse = await axios.post(

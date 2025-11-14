@@ -5,6 +5,29 @@ const express = require('express');
 const router = express.Router();
 const paymentService = require('../services/payment.service');
 const authMiddleware = require('../middleware/auth');
+const {
+  validatePaymentRequest,
+  validateTossConfirmation,
+  validatePayPalCapture,
+  validateOrderIdParam,
+  sanitizeStrings
+} = require('../middleware/validation');
+const {
+  paymentCreationLimiter,
+  paymentConfirmLimiter,
+  webhookLimiter,
+  readLimiter
+} = require('../middleware/rateLimit');
+const {
+  verifyTossWebhook,
+  verifyStripeWebhook,
+  verifyPayPalWebhook,
+  webhookLogger,
+  preventReplayAttack
+} = require('../middleware/webhookVerify');
+
+// Apply sanitization to all routes
+router.use(sanitizeStrings);
 
 /**
  * POST /payment/toss/create
@@ -15,7 +38,7 @@ const authMiddleware = require('../middleware/auth');
  * - amount: number (required) - Amount in KRW
  * - orderName: string (optional) - Order description
  */
-router.post('/toss/create', authMiddleware, async (req, res) => {
+router.post('/toss/create', authMiddleware, paymentCreationLimiter, validatePaymentRequest, async (req, res) => {
   try {
     const { amount, orderName } = req.body;
     const userId = req.user.id;
@@ -50,7 +73,7 @@ router.post('/toss/create', authMiddleware, async (req, res) => {
  * - orderId: string (required) - Order ID
  * - amount: number (required) - Payment amount
  */
-router.post('/toss/confirm', async (req, res) => {
+router.post('/toss/confirm', paymentConfirmLimiter, validateTossConfirmation, async (req, res) => {
   try {
     const { paymentKey, orderId, amount } = req.body;
 
@@ -81,7 +104,13 @@ router.post('/toss/confirm', async (req, res) => {
  *
  * Body: Toss webhook payload
  */
-router.post('/toss/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/toss/webhook',
+  webhookLimiter,
+  express.raw({ type: 'application/json' }),
+  webhookLogger('toss'),
+  verifyTossWebhook,
+  preventReplayAttack(),
+  async (req, res) => {
   try {
     const webhookData = JSON.parse(req.body.toString());
 
@@ -110,7 +139,7 @@ router.post('/toss/webhook', express.raw({ type: 'application/json' }), async (r
  * - amount: number (required) - Amount in USD (e.g., 10.00 = $10.00)
  * - description: string (optional) - Payment description
  */
-router.post('/paypal/create', authMiddleware, async (req, res) => {
+router.post('/paypal/create', authMiddleware, paymentCreationLimiter, validatePaymentRequest, async (req, res) => {
   try {
     const { amount, description } = req.body;
     const userId = req.user.id;
@@ -143,7 +172,7 @@ router.post('/paypal/create', authMiddleware, async (req, res) => {
  * Body:
  * - paypalOrderId: string (required) - PayPal order ID
  */
-router.post('/paypal/capture', async (req, res) => {
+router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, async (req, res) => {
   try {
     const { paypalOrderId } = req.body;
 
@@ -174,7 +203,13 @@ router.post('/paypal/capture', async (req, res) => {
  *
  * Body: PayPal webhook payload
  */
-router.post('/paypal/webhook', express.json(), async (req, res) => {
+router.post('/paypal/webhook',
+  webhookLimiter,
+  express.json(),
+  webhookLogger('paypal'),
+  verifyPayPalWebhook,
+  preventReplayAttack(),
+  async (req, res) => {
   try {
     const webhookData = req.body;
 
@@ -203,7 +238,7 @@ router.post('/paypal/webhook', express.json(), async (req, res) => {
  * - amount: number (required) - Amount in USD cents (e.g., 1000 = $10.00)
  * - description: string (optional) - Payment description
  */
-router.post('/stripe/create', authMiddleware, async (req, res) => {
+router.post('/stripe/create', authMiddleware, paymentCreationLimiter, validatePaymentRequest, async (req, res) => {
   try {
     const { amount, description } = req.body;
     const userId = req.user.id;
@@ -236,7 +271,13 @@ router.post('/stripe/create', authMiddleware, async (req, res) => {
  * Headers:
  * - stripe-signature: Webhook signature for verification
  */
-router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/stripe/webhook',
+  webhookLimiter,
+  express.raw({ type: 'application/json' }),
+  webhookLogger('stripe'),
+  verifyStripeWebhook,
+  preventReplayAttack(),
+  async (req, res) => {
   try {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const sig = req.headers['stripe-signature'];
@@ -281,7 +322,7 @@ router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async 
  * Get payment status by order ID
  * Requires authentication
  */
-router.get('/:orderId', authMiddleware, async (req, res) => {
+router.get('/:orderId', authMiddleware, readLimiter, validateOrderIdParam, async (req, res) => {
   try {
     const { orderId } = req.params;
     const userId = req.user.id;
@@ -315,7 +356,7 @@ router.get('/:orderId', authMiddleware, async (req, res) => {
  * Get current user's payment history
  * Requires authentication
  */
-router.get('/history/me', authMiddleware, async (req, res) => {
+router.get('/history/me', authMiddleware, readLimiter, async (req, res) => {
   try {
     const userId = req.user.id;
 

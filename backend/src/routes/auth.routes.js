@@ -5,6 +5,11 @@ const express = require('express');
 const router = express.Router();
 const authService = require('../services/auth.service');
 const authMiddleware = require('../middleware/auth');
+const { validateAuthRequest, validateOTPRequest, sanitizeStrings } = require('../middleware/validation');
+const { authLimiter } = require('../middleware/rateLimit');
+
+// Apply sanitization to all routes
+router.use(sanitizeStrings);
 
 /**
  * POST /auth/signup
@@ -14,7 +19,7 @@ const authMiddleware = require('../middleware/auth');
  * - email: string (required)
  * - language_preference: string (optional, default: 'ko')
  */
-router.post('/signup', async (req, res) => {
+router.post('/signup', authLimiter, validateAuthRequest, async (req, res) => {
   try {
     const { email, language_preference = 'ko' } = req.body;
 
@@ -67,7 +72,7 @@ router.post('/signup', async (req, res) => {
  * Body:
  * - email: string (required)
  */
-router.post('/signin', async (req, res) => {
+router.post('/signin', authLimiter, validateAuthRequest, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -103,7 +108,7 @@ router.post('/signin', async (req, res) => {
  * - email: string (required)
  * - token: string (required)
  */
-router.post('/verify', async (req, res) => {
+router.post('/verify', authLimiter, validateOTPRequest, async (req, res) => {
   try {
     const { email, token } = req.body;
 
