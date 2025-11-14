@@ -1,5 +1,6 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&display=swap');
+@import "tailwindcss";
 
 /* ============================================
    ChatJu Premium - Design System
@@ -174,9 +175,6 @@ h1, h2, h3, h4, h5, h6 {
    Updated Design System (Minimalist)
    Based on HTML mockups - Stone/Amber theme
    ============================================ */
-
-/* Serif Font for accents */
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&display=swap');
 
 /* Utility Classes */
 .serif-font {
