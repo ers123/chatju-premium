@@ -9,6 +9,7 @@ const { globalErrorHandler } = require('./src/utils/responses');
 const { getOpenAIClient } = require('./src/config/openai');
 const { buildMessages } = require('./src/config/prompts');
 const logger = require('./src/utils/logger');
+const { globalErrorHandler } = require('./src/utils/responses');
 
 const app = express();
 
