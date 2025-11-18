@@ -68,14 +68,18 @@ router.post('/toss/create', authMiddleware, paymentCreationLimiter, validatePaym
  * Confirm Toss payment after user approval
  * Called from frontend after payment widget success
  *
+ * SECURITY: Requires authentication to prevent unauthorized payment confirmation
+ * Verifies payment ownership before confirming to prevent race conditions
+ *
  * Body:
  * - paymentKey: string (required) - Toss payment key
  * - orderId: string (required) - Order ID
  * - amount: number (required) - Payment amount
  */
-router.post('/toss/confirm', paymentConfirmLimiter, validateTossConfirmation, async (req, res) => {
+router.post('/toss/confirm', authMiddleware, paymentConfirmLimiter, validateTossConfirmation, async (req, res) => {
   try {
     const { paymentKey, orderId, amount } = req.body;
+    const userId = req.user.id;
 
     if (!paymentKey || !orderId || !amount) {
       return res.status(400).json({
@@ -84,12 +88,37 @@ router.post('/toss/confirm', paymentConfirmLimiter, validateTossConfirmation, as
       });
     }
 
+    // SECURITY: Verify payment ownership before confirming
+    // Prevents race conditions and unauthorized payment confirmation
+    const payment = await paymentService.getPaymentByOrderId(orderId);
+
+    if (payment.user_id !== userId) {
+      console.warn('[Payment Routes] Payment ownership verification failed', {
+        orderId,
+        paymentUserId: payment.user_id,
+        requestUserId: userId,
+      });
+      return res.status(403).json({
+        error: 'Access denied - payment belongs to different user',
+        code: 'ACCESS_DENIED',
+      });
+    }
+
+    // Ownership verified - proceed with confirmation
     const result = await paymentService.confirmTossPayment(paymentKey, orderId, amount);
 
     res.status(200).json(result);
 
   } catch (error) {
     console.error('[Payment Routes] Confirm Toss payment error:', error);
+
+    if (error.message === 'Payment not found') {
+      return res.status(404).json({
+        error: 'Payment not found',
+        code: 'PAYMENT_NOT_FOUND',
+      });
+    }
+
     res.status(500).json({
       error: error.message || 'Payment confirmation failed',
       code: 'PAYMENT_CONFIRM_ERROR',
@@ -169,12 +198,16 @@ router.post('/paypal/create', authMiddleware, paymentCreationLimiter, validatePa
  * Capture PayPal payment after user approval
  * Called from frontend after PayPal approval
  *
+ * SECURITY: Requires authentication to prevent unauthorized payment capture
+ * Verifies payment ownership before capturing to prevent race conditions
+ *
  * Body:
  * - paypalOrderId: string (required) - PayPal order ID
  */
-router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, async (req, res) => {
+router.post('/paypal/capture', authMiddleware, paymentConfirmLimiter, validatePayPalCapture, async (req, res) => {
   try {
     const { paypalOrderId } = req.body;
+    const userId = req.user.id;
 
     if (!paypalOrderId) {
       return res.status(400).json({
@@ -183,12 +216,37 @@ router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, asy
       });
     }
 
+    // SECURITY: Verify payment ownership before capturing
+    // Prevents race conditions and unauthorized payment capture
+    const payment = await paymentService.getPaymentByPaymentKey(paypalOrderId);
+
+    if (payment.user_id !== userId) {
+      console.warn('[Payment Routes] Payment ownership verification failed', {
+        paypalOrderId,
+        paymentUserId: payment.user_id,
+        requestUserId: userId,
+      });
+      return res.status(403).json({
+        error: 'Access denied - payment belongs to different user',
+        code: 'ACCESS_DENIED',
+      });
+    }
+
+    // Ownership verified - proceed with capture
     const result = await paymentService.capturePayPalPayment(paypalOrderId);
 
     res.status(200).json(result);
 
   } catch (error) {
     console.error('[Payment Routes] Capture PayPal payment error:', error);
+
+    if (error.message === 'Payment not found') {
+      return res.status(404).json({
+        error: 'Payment not found',
+        code: 'PAYMENT_NOT_FOUND',
+      });
+    }
+
     res.status(500).json({
       error: error.message || 'Payment capture failed',
       code: 'PAYMENT_CAPTURE_ERROR',

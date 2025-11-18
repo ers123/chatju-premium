@@ -2,6 +2,7 @@
 // Input Validation Middleware
 
 const { validationError } = require('../utils/responses');
+const xss = require('xss');
 
 /**
  * Validation middleware to ensure data integrity and security
@@ -288,12 +289,19 @@ function validateOrderIdParam(req, res, next) {
 
 /**
  * Sanitize string inputs to prevent XSS
+ * Uses industry-standard xss library for comprehensive protection
+ * against XSS attacks including event handlers, javascript: URLs, etc.
  */
 function sanitizeStrings(req, res, next) {
   const sanitize = (str) => {
     if (typeof str !== 'string') return str;
-    // Remove potentially dangerous characters
-    return str.replace(/[<>]/g, '');
+    // Use xss library for comprehensive XSS protection
+    // This handles: <script>, event handlers, javascript: URLs, SVG attacks, etc.
+    return xss(str, {
+      whiteList: {}, // No HTML tags allowed
+      stripIgnoreTag: true, // Strip unrecognized tags
+      stripIgnoreTagBody: ['script'], // Remove script content
+    });
   };
 
   // Sanitize body
