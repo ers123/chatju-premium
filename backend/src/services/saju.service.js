@@ -1,23 +1,35 @@
 // backend/src/services/saju.service.v5.js
 // Level 5: Saju Reading Service with Supabase Database Integration
 
-const { OpenAI } = require('openai');
 const { supabaseAdmin, handleSupabaseError } = require('../config/supabase');
+const { getOpenAIClient } = require('../config/openai');
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI,
-});
+// Use shared OpenAI client instance (optimized)
+const openai = getOpenAIClient();
 
-// Dynamic import for ES6 module (mansae-calculator)
-let calculateMansae;
+// Dynamic import for ES6 module (mansae-calculator) - Load once at module initialization
+let calculateMansae = null;
+let calculatorLoadPromise = null;
 
 async function loadMansaeCalculator() {
-  if (!calculateMansae) {
-    const module = await import('mansae-calculator/mansae.js');
-    calculateMansae = module.default;
+  // If already loaded, return immediately
+  if (calculateMansae) {
+    return calculateMansae;
   }
-  return calculateMansae;
+
+  // If loading is in progress, wait for it
+  if (calculatorLoadPromise) {
+    return calculatorLoadPromise;
+  }
+
+  // Start loading and cache the promise
+  calculatorLoadPromise = import('mansae-calculator/mansae.js')
+    .then(module => {
+      calculateMansae = module.default;
+      return calculateMansae;
+    });
+
+  return calculatorLoadPromise;
 }
 
 /**
