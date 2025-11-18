@@ -12,9 +12,16 @@
     "test:integration": "jest --testPathPattern=tests/integration",
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.js",
-    "lint:fix": "eslint src/**/*.js --fix"
+    "lint:fix": "eslint src/**/*.js --fix",
+    "deploy": "serverless deploy --stage prod",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:remove": "serverless remove --stage prod",
+    "logs": "serverless logs -f api --stage prod --tail",
+    "offline": "serverless offline"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.0",
+    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.39.0",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
@@ -33,6 +40,7 @@
     "eslint": "^8.56.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.10",
+    "serverless-offline": "^13.3.0",
     "supertest": "^6.3.3"
   },
   "engines": {

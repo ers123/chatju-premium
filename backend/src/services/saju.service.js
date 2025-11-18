@@ -1,11 +1,11 @@
 // backend/src/services/saju.service.v5.js
 // Level 5: Saju Reading Service with Supabase Database Integration
 
+const { getAIService } = require('./ai.service');
 const { supabaseAdmin, handleSupabaseError } = require('../config/supabase');
-const { getOpenAIClient } = require('../config/openai');
 
-// Use shared OpenAI client instance (optimized)
-const openai = getOpenAIClient();
+// Initialize AI service (supports OpenAI, Gemini, Claude)
+const aiService = getAIService();
 
 // Dynamic import for ES6 module (mansae-calculator) - Load once at module initialization
 let calculateMansae = null;
@@ -380,29 +380,29 @@ ${Object.entries(elements).map(([elem, count]) => `- ${elem}: ${count}`).join('\
   const prompt = prompts[language] || prompts.ko;
 
   try {
-    console.log('[Saju Service] Calling OpenAI API for preview...');
+    console.log('[Saju Service] Calling AI service for preview...');
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a professional Saju fortune-teller providing brief, intriguing previews that make people want the full reading.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_tokens: 300, // Much shorter than paid version (800-1500)
+    // Use AI service (supports OpenAI, Gemini, Claude)
+    const result = await aiService.generateFortune([
+      {
+        role: 'system',
+        content: 'You are a professional Saju fortune-teller providing brief, intriguing previews that make people want the full reading.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ], {
+      maxTokens: 300, // Much shorter than paid version (800-1500)
       temperature: 0.7,
     });
 
-    const previewText = completion.choices[0].message.content;
+    const previewText = result.content;
 
     console.log('[Saju Service] Preview response received:', {
       length: previewText.length,
-      tokens: completion.usage.total_tokens,
+      tokens: result.tokensUsed,
+      provider: result.provider,
     });
 
     // Return truncated preview
@@ -410,8 +410,9 @@ ${Object.entries(elements).map(([elem, count]) => `- ${elem}: ${count}`).join('\
       shortText: previewText,
       sections: parsePreviewSections(previewText),
       metadata: {
-        model: 'gpt-4o-mini',
-        tokens: completion.usage.total_tokens,
+        provider: result.provider,
+        model: result.model,
+        tokens: result.tokensUsed,
         generatedAt: new Date().toISOString(),
         isPreview: true,
       },
@@ -495,29 +496,29 @@ ${Object.entries(elements).map(([elem, count]) => `- ${elem}: ${count}`).join('\
   const maxTokens = productType === 'deluxe' ? 1500 : 800;
 
   try {
-    console.log('[Saju Service] Calling OpenAI API...');
+    console.log('[Saju Service] Calling AI service...');
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a professional Saju fortune-teller providing insightful, personalized readings based on traditional Korean astrology.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_tokens: maxTokens,
+    // Use AI service (supports OpenAI, Gemini, Claude)
+    const result = await aiService.generateFortune([
+      {
+        role: 'system',
+        content: 'You are a professional Saju fortune-teller providing insightful, personalized readings based on traditional Korean astrology.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ], {
+      maxTokens: maxTokens,
       temperature: 0.7,
     });
 
-    const interpretationText = completion.choices[0].message.content;
+    const interpretationText = result.content;
 
-    console.log('[Saju Service] OpenAI response received:', {
+    console.log('[Saju Service] AI response received:', {
       length: interpretationText.length,
-      tokens: completion.usage.total_tokens,
+      tokens: result.tokensUsed,
+      provider: result.provider,
     });
 
     // Return structured interpretation
@@ -525,8 +526,9 @@ ${Object.entries(elements).map(([elem, count]) => `- ${elem}: ${count}`).join('\
       fullText: interpretationText,
       sections: parseInterpretationSections(interpretationText),
       metadata: {
-        model: 'gpt-4o-mini',
-        tokens: completion.usage.total_tokens,
+        provider: result.provider,
+        model: result.model,
+        tokens: result.tokensUsed,
         generatedAt: new Date().toISOString(),
       },
     };
