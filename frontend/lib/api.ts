@@ -251,6 +251,34 @@ export const apiClient = {
     const response = await api.get<Payment[]>('/payment/history');
     return response.data;
   },
+
+  // ===========================================
+  // Admin - AI Provider Management
+  // ===========================================
+
+  /**
+   * Get current AI provider information (requires authentication)
+   */
+  getAIProviderInfo: async (): Promise<any> => {
+    const response = await api.get('/admin/ai-provider');
+    return response.data;
+  },
+
+  /**
+   * Switch AI provider (requires authentication)
+   */
+  switchAIProvider: async (provider: 'openai' | 'gemini' | 'claude'): Promise<any> => {
+    const response = await api.post('/admin/ai-provider', { provider });
+    return response.data;
+  },
+
+  /**
+   * Get admin statistics (requires authentication)
+   */
+  getAdminStats: async (): Promise<any> => {
+    const response = await api.get('/admin/stats');
+    return response.data;
+  },
 };
 
 // ---------------------------------------------

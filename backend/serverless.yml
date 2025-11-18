@@ -1,0 +1,244 @@
+# ============================================
+# ChatJu Premium - AWS Lambda Deployment
+# ============================================
+# Deploy backend Express.js app to AWS Lambda using Serverless Framework
+#
+# Prerequisites:
+# 1. Install Serverless Framework: npm install -g serverless
+# 2. Configure AWS credentials: serverless config credentials --provider aws --key YOUR_KEY --secret YOUR_SECRET
+# 3. Install dependencies: npm install
+#
+# Deployment:
+# - Development: serverless deploy --stage dev
+# - Production: serverless deploy --stage prod
+#
+# Remove deployment:
+# - serverless remove --stage prod
+
+service: chatju-premium-backend
+
+# Framework version constraint
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'ap-northeast-2'} # Seoul region (Korea)
+  memorySize: 512 # MB - 512 is good balance for AI API calls
+  timeout: 30 # seconds - AI calls can take time
+
+  # Environment variables (CRITICAL: Set these in AWS Console or use .env)
+  environment:
+    NODE_ENV: production
+    AI_PROVIDER: ${env:AI_PROVIDER, 'gemini'} # Default to Gemini (free tier)
+
+    # AI Provider API Keys (set at least one)
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    GEMINI_API_KEY: ${env:GEMINI_API_KEY, ''}
+    ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
+
+    # Supabase Configuration
+    SUPABASE_URL: ${env:SUPABASE_URL}
+    SUPABASE_ANON_KEY: ${env:SUPABASE_ANON_KEY}
+    SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_ROLE_KEY}
+
+    # Payment Gateway API Keys
+    TOSS_SECRET_KEY: ${env:TOSS_SECRET_KEY}
+    TOSS_CLIENT_KEY: ${env:TOSS_CLIENT_KEY}
+    PAYPAL_CLIENT_ID: ${env:PAYPAL_CLIENT_ID}
+    PAYPAL_CLIENT_SECRET: ${env:PAYPAL_CLIENT_SECRET}
+    STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY, ''}
+    STRIPE_PUBLISHABLE_KEY: ${env:STRIPE_PUBLISHABLE_KEY, ''}
+
+    # CORS Configuration (production only allows production domain)
+    CORS_ORIGIN: https://chatju.pages.dev
+
+  # IAM Role Statements (permissions for Lambda)
+  iam:
+    role:
+      statements:
+        # CloudWatch Logs (for logging)
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: 'arn:aws:logs:*:*:*'
+
+# ============================================
+# Functions (Lambda handlers)
+# ============================================
+functions:
+  api:
+    handler: index.handler
+    description: ChatJu Premium Backend API
+    events:
+      # HTTP API Gateway - handles all routes
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+          cors:
+            allowedOrigins:
+              - https://chatju.pages.dev
+            allowedHeaders:
+              - Content-Type
+              - Authorization
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowCredentials: true
+
+      # Root path
+      - httpApi:
+          path: /
+          method: ANY
+          cors:
+            allowedOrigins:
+              - https://chatju.pages.dev
+            allowedHeaders:
+              - Content-Type
+              - Authorization
+            allowedMethods:
+              - GET
+              - POST
+            allowCredentials: true
+
+# ============================================
+# Plugins
+# ============================================
+plugins:
+  - serverless-offline # For local testing: serverless offline
+
+# ============================================
+# Package Configuration
+# ============================================
+package:
+  patterns:
+    # Include
+    - 'index.js'
+    - 'src/**'
+    - 'node_modules/**'
+    - 'package.json'
+
+    # Exclude (reduce package size)
+    - '!.git/**'
+    - '!.env*'
+    - '!.gitignore'
+    - '!README.md'
+    - '!test/**'
+    - '!*.test.js'
+    - '!coverage/**'
+    - '!docs/**'
+
+# ============================================
+# Custom Configuration
+# ============================================
+custom:
+  # Serverless Offline Plugin (for local testing)
+  serverless-offline:
+    httpPort: 3000
+    host: 0.0.0.0
+
+  # API Gateway throttling (prevent abuse)
+  apiGatewayThrottling:
+    maxRequestsPerSecond: 100
+    maxConcurrentRequests: 50
+
+# ============================================
+# Resources (CloudFormation)
+# ============================================
+resources:
+  Resources:
+    # CloudWatch Log Group (30 day retention)
+    ApiLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-api
+        RetentionInDays: 30
+
+  # Outputs (display after deployment)
+  Outputs:
+    ApiUrl:
+      Description: 'API Gateway endpoint URL'
+      Value:
+        Fn::Sub: 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+
+    ApiId:
+      Description: 'API Gateway ID'
+      Value:
+        Ref: HttpApi
+
+    FunctionArn:
+      Description: 'Lambda Function ARN'
+      Value:
+        Fn::GetAtt: [ApiLambdaFunction, Arn]
+
+# ============================================
+# DEPLOYMENT GUIDE
+# ============================================
+#
+# 1. Install Serverless Framework:
+#    npm install -g serverless
+#
+# 2. Configure AWS credentials:
+#    serverless config credentials --provider aws --key YOUR_ACCESS_KEY --secret YOUR_SECRET_KEY
+#
+# 3. Install serverless-offline plugin (optional, for local testing):
+#    npm install --save-dev serverless-offline
+#
+# 4. Set environment variables:
+#    - Option A: Create .env file in backend/ directory
+#    - Option B: Set in AWS Lambda Console after deployment
+#    - Option C: Use AWS Systems Manager Parameter Store
+#
+#    Required variables:
+#    - SUPABASE_URL
+#    - SUPABASE_ANON_KEY
+#    - SUPABASE_SERVICE_ROLE_KEY
+#    - At least one AI provider key (GEMINI_API_KEY recommended)
+#    - TOSS_SECRET_KEY (for Korean payments)
+#    - PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET (for international payments)
+#
+# 5. Deploy to AWS:
+#    cd backend
+#    serverless deploy --stage prod
+#
+# 6. After deployment:
+#    - Copy the API Gateway URL from output
+#    - Update frontend/.env.production with NEXT_PUBLIC_API_URL=<YOUR_API_URL>
+#    - Redeploy frontend to Cloudflare Pages
+#
+# 7. Test deployment:
+#    curl https://YOUR_API_URL.execute-api.ap-northeast-2.amazonaws.com/
+#
+# 8. View logs:
+#    serverless logs -f api --stage prod --tail
+#
+# 9. Remove deployment (if needed):
+#    serverless remove --stage prod
+#
+# ============================================
+# COST ESTIMATION (AWS Free Tier)
+# ============================================
+#
+# Lambda:
+# - 1M requests/month FREE
+# - 400,000 GB-seconds compute FREE
+# - Typical ChatJu usage: ~10K-50K requests/month = FREE
+#
+# API Gateway:
+# - First 12 months: 1M requests FREE
+# - After: $1.00 per million requests
+#
+# CloudWatch Logs:
+# - 5GB ingestion FREE
+# - Typical usage: ~1-2GB/month = FREE
+#
+# TOTAL ESTIMATED COST: $0-5/month (within free tier for most startups)
+#
+# ============================================

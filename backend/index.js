@@ -1,12 +1,12 @@
 require('dotenv').config();
 
-const { OpenAI } = require('openai');
 const express = require('express');
 const cors = require('cors');
 const serverless = require('serverless-http');
 const { generalLimiter } = require('./src/middleware/rateLimit');
 const logger = require('./src/utils/logger');
 const { globalErrorHandler } = require('./src/utils/responses');
+const { getAIService } = require('./src/services/ai.service');
 
 const app = express();
 
@@ -33,10 +33,8 @@ app.use(logger.requestLogger);
 // Apply general rate limiting to all routes
 app.use(generalLimiter);
 
-// OpenAI 클라이언트 초기화
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI, // Support both naming conventions
-});
+// Initialize AI Service (supports OpenAI, Gemini, Claude)
+const aiService = getAIService();
 
 // 시스템 메시지 상수
 const SYSTEM_MESSAGES = [
@@ -90,20 +88,25 @@ app.post('/fortuneTell', async (req, res) => {
         const { userMessages = [], assistantMessages = [] } = req.body;
         const messages = buildMessages(userMessages, assistantMessages);
 
-        const completion = await client.chat.completions.create({
-            messages: messages,
-            model: "gpt-4o-mini",
-            max_tokens: 250,
+        // Use AI Service (supports OpenAI, Gemini, Claude)
+        const result = await aiService.generateFortune(messages, {
+            maxTokens: 250,
             temperature: 0.7,
         });
 
-        const fortune = completion.choices[0].message.content;
         logger.info('Free Fortune: Response generated', {
-            tokens: completion.usage.total_tokens,
-            model: 'gpt-4o-mini'
+            tokens: result.tokensUsed,
+            provider: result.provider,
+            model: result.model
         });
 
-        res.json({ assistant: fortune });
+        res.json({
+            assistant: result.content,
+            metadata: {
+                provider: result.provider,
+                model: result.model,
+            }
+        });
 
     } catch (error) {
         logger.logError(error, { context: 'Free Fortune' });
@@ -147,6 +150,10 @@ app.use('/saju', sajuRoutes);
 const paymentRoutes = require('./src/routes/payment.routes');
 app.use('/payment', paymentRoutes);
 
+// Admin routes (Settings & Statistics)
+const adminRoutes = require('./src/routes/admin.routes');
+app.use('/admin', adminRoutes);
+
 // ============================================
 // 헬스체크 엔드포인트
 // ============================================
@@ -161,6 +168,7 @@ app.get('/', (req, res) => {
             auth: '/auth/*',
             premium: '/saju/calculate',
             payment: '/payment/*',
+            admin: '/admin/*',
             health: '/'
         }
     });
@@ -192,7 +200,13 @@ if (require.main === module) {
         }
 
         logger.info(`🔒 CORS: Allowing origins: ${allowedOrigins.join(', ')}`);
-        logger.info(`🤖 OpenAI: ${(process.env.OPENAI_API_KEY || process.env.OPENAI) ? 'Connected ✅' : 'Not configured ❌'}`);
+
+        // AI Provider status
+        const providerInfo = aiService.getProviderInfo();
+        const currentProvider = providerInfo.details[providerInfo.current];
+        logger.info(`🤖 AI Provider: ${currentProvider.name} (${providerInfo.current})`);
+        logger.info(`   Model: ${currentProvider.model}`);
+        logger.info(`   Available: ${providerInfo.available.map(p => providerInfo.details[p].name).join(', ')}`);
         logger.info('=================================');
         logger.info('Available endpoints:');
         logger.info(`  GET  http://localhost:${PORT}/`);
