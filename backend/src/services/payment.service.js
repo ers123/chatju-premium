@@ -3,6 +3,7 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const axios = require('axios');
+const logger = require('../utils/logger');
 
 /**
  * Payment Service
@@ -49,14 +50,15 @@ async function createTossPayment(userId, amount, orderName = '사주팔자 프�
       .single();
 
     if (error) {
-      console.error('[Payment Service] Database error:', error);
+      logger.error('Payment DB error', { error: error.message, context: 'createTossPayment' });
       throw new Error('Failed to create payment record');
     }
 
-    console.log('[Payment Service] Toss payment created:', {
+    // SECURITY: Don't log payment amounts in production
+    logger.info('Toss payment created', {
       orderId,
-      amount,
       paymentId: payment.id,
+      currency: 'KRW'
     });
 
     return {
@@ -131,13 +133,12 @@ async function confirmTossPayment(paymentKey, orderId, amount) {
       .single();
 
     if (error) {
-      console.error('[Payment Service] Failed to update payment:', error);
+      logger.error('Payment update failed', { error: error.message, orderId, context: 'confirmTossPayment' });
       throw new Error('Payment confirmation failed');
     }
 
-    console.log('[Payment Service] Toss payment confirmed:', {
+    logger.info('Toss payment confirmed', {
       orderId,
-      paymentKey,
       status: payment.status,
     });
 

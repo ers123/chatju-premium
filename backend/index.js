@@ -10,9 +10,13 @@ const { globalErrorHandler } = require('./src/utils/responses');
 
 const app = express();
 
-// CORS 설정
+// CORS 설정 (Environment-aware)
+const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? ['https://chatju.pages.dev'] // Production: Only allow production domain
+    : ['https://chatju.pages.dev', 'http://localhost:8080', 'http://localhost:3001']; // Development: Allow local dev servers
+
 const corsOptions = {
-    origin: ['https://chatju.pages.dev', 'http://localhost:8080', 'http://localhost:3001'],
+    origin: allowedOrigins,
     credentials: true, // Enable credentials for authenticated requests
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -179,6 +183,15 @@ if (require.main === module) {
         logger.info('=================================');
         logger.info(`📍 Port: ${PORT}`);
         logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+
+        // SECURITY WARNING: Check if NODE_ENV is set correctly
+        if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'production') {
+            logger.warn('⚠️  WARNING: NODE_ENV is not set to "production"');
+            logger.warn('⚠️  Stack traces and error details will be exposed in API responses');
+            logger.warn('⚠️  Set NODE_ENV=production in AWS Lambda environment variables');
+        }
+
+        logger.info(`🔒 CORS: Allowing origins: ${allowedOrigins.join(', ')}`);
         logger.info(`🤖 OpenAI: ${(process.env.OPENAI_API_KEY || process.env.OPENAI) ? 'Connected ✅' : 'Not configured ❌'}`);
         logger.info('=================================');
         logger.info('Available endpoints:');
