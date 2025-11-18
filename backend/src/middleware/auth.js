@@ -2,6 +2,7 @@
 // Level 5: Real Supabase JWT Authentication Middleware
 
 const { supabase } = require('../config/supabase');
+const logger = require('../utils/logger');
 
 /**
  * Middleware to verify JWT token from Supabase Auth
@@ -37,7 +38,10 @@ async function authMiddleware(req, res, next) {
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error) {
-      console.error('[Auth Middleware] Token verification failed:', error.message);
+      logger.warn('Token verification failed', {
+        code: 'INVALID_TOKEN',
+        error: error.message
+      });
       return res.status(401).json({
         error: 'Invalid or expired token',
         code: 'INVALID_TOKEN',
@@ -46,6 +50,7 @@ async function authMiddleware(req, res, next) {
     }
 
     if (!data.user) {
+      logger.warn('User not found for valid token', { code: 'USER_NOT_FOUND' });
       return res.status(401).json({
         error: 'User not found',
         code: 'USER_NOT_FOUND',
@@ -59,11 +64,15 @@ async function authMiddleware(req, res, next) {
       emailConfirmed: data.user.email_confirmed_at !== null,
     };
 
-    console.log('[Auth Middleware] User authenticated:', req.user.email);
+    // SECURITY: Don't log email (PII), only log userId
+    logger.debug('User authenticated', { userId: req.user.id });
     next();
 
   } catch (error) {
-    console.error('[Auth Middleware] Unexpected error:', error);
+    logger.error('Auth middleware unexpected error', {
+      error: error.message,
+      stack: error.stack
+    });
     return res.status(500).json({
       error: 'Authentication error',
       code: 'AUTH_ERROR',
@@ -100,7 +109,7 @@ async function optionalAuthMiddleware(req, res, next) {
       req.user = null;
     }
   } catch (error) {
-    console.error('[Optional Auth] Error:', error);
+    logger.debug('Optional auth failed', { error: error.message });
     req.user = null;
   }
 
