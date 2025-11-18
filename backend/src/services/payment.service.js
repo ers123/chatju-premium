@@ -684,6 +684,32 @@ async function getPaymentById(paymentId) {
 }
 
 /**
+ * Get payment by payment key (PayPal order ID, Toss payment key, etc.)
+ * @param {string} paymentKey - Payment key from gateway
+ * @returns {object} Payment record
+ */
+async function getPaymentByPaymentKey(paymentKey) {
+  try {
+    const { data: payment, error } = await supabaseAdmin
+      .from('payments')
+      .select('*')
+      .eq('payment_key', paymentKey)
+      .single();
+
+    if (error) {
+      console.error('[Payment Service] Get payment by key error:', error);
+      throw new Error('Payment not found');
+    }
+
+    return payment;
+
+  } catch (error) {
+    console.error('[Payment Service] Get payment by key error:', error);
+    throw error;
+  }
+}
+
+/**
  * Get user's payment history
  * @param {string} userId - User UUID
  * @returns {array} List of payments
@@ -728,5 +754,6 @@ module.exports = {
   // Common
   getPaymentByOrderId,
   getPaymentById,
+  getPaymentByPaymentKey,
   getUserPayments,
 };
