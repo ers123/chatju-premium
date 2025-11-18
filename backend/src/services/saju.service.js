@@ -7,15 +7,29 @@ const { supabaseAdmin, handleSupabaseError } = require('../config/supabase');
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
 
-// Dynamic import for ES6 module (mansae-calculator)
-let calculateMansae;
+// Dynamic import for ES6 module (mansae-calculator) - Load once at module initialization
+let calculateMansae = null;
+let calculatorLoadPromise = null;
 
 async function loadMansaeCalculator() {
-  if (!calculateMansae) {
-    const module = await import('mansae-calculator/mansae.js');
-    calculateMansae = module.default;
+  // If already loaded, return immediately
+  if (calculateMansae) {
+    return calculateMansae;
   }
-  return calculateMansae;
+
+  // If loading is in progress, wait for it
+  if (calculatorLoadPromise) {
+    return calculatorLoadPromise;
+  }
+
+  // Start loading and cache the promise
+  calculatorLoadPromise = import('mansae-calculator/mansae.js')
+    .then(module => {
+      calculateMansae = module.default;
+      return calculateMansae;
+    });
+
+  return calculatorLoadPromise;
 }
 
 /**

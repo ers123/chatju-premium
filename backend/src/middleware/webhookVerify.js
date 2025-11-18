@@ -165,17 +165,16 @@ function verifyStripeWebhook(req, res, next) {
 /**
  * Verify PayPal webhook signature
  *
- * PayPal webhooks should be verified using PayPal SDK.
- * This is a placeholder implementation.
+ * PayPal uses webhook signature verification to ensure webhooks are authentic.
+ * The signature includes transmission_id, transmission_time, cert_url, and auth_algo headers.
  *
- * For production, implement using:
- * https://github.com/paypal/PayPal-node-SDK/blob/master/samples/notifications/webhook-verify.js
+ * For production, this implementation verifies using PayPal's REST API endpoint.
  *
  * @param {Object} req - Express request
  * @param {Object} res - Express response
  * @param {Function} next - Next middleware
  */
-function verifyPayPalWebhook(req, res, next) {
+async function verifyPayPalWebhook(req, res, next) {
   try {
     const webhookId = process.env.PAYPAL_WEBHOOK_ID;
 
@@ -185,9 +184,85 @@ function verifyPayPalWebhook(req, res, next) {
       return next();
     }
 
-    // TODO: Implement PayPal webhook verification using PayPal SDK
-    // For now, we'll just log and proceed
-    logger.info('PayPal webhook received (verification not yet implemented)', {
+    // Get verification headers from PayPal webhook
+    const transmissionId = req.headers['paypal-transmission-id'];
+    const transmissionTime = req.headers['paypal-transmission-time'];
+    const certUrl = req.headers['paypal-cert-url'];
+    const transmissionSig = req.headers['paypal-transmission-sig'];
+    const authAlgo = req.headers['paypal-auth-algo'];
+
+    // Check if all required headers are present
+    if (!transmissionId || !transmissionTime || !certUrl || !transmissionSig || !authAlgo) {
+      logger.error('PayPal webhook verification failed - missing required headers', {
+        hasTransmissionId: !!transmissionId,
+        hasTransmissionTime: !!transmissionTime,
+        hasCertUrl: !!certUrl,
+        hasTransmissionSig: !!transmissionSig,
+        hasAuthAlgo: !!authAlgo
+      });
+
+      return res.status(401).json({
+        success: false,
+        error: 'Missing PayPal webhook verification headers',
+        code: 'WEBHOOK_HEADERS_MISSING'
+      });
+    }
+
+    // Get PayPal access token
+    const axios = require('axios');
+    const auth = Buffer.from(
+      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
+    ).toString('base64');
+
+    const tokenResponse = await axios.post(
+      `${process.env.PAYPAL_API_BASE_URL}/v1/oauth2/token`,
+      'grant_type=client_credentials',
+      {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      }
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+
+    // Verify webhook signature using PayPal API
+    const verificationResponse = await axios.post(
+      `${process.env.PAYPAL_API_BASE_URL}/v1/notifications/verify-webhook-signature`,
+      {
+        transmission_id: transmissionId,
+        transmission_time: transmissionTime,
+        cert_url: certUrl,
+        auth_algo: authAlgo,
+        transmission_sig: transmissionSig,
+        webhook_id: webhookId,
+        webhook_event: req.body
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+
+    const verificationStatus = verificationResponse.data.verification_status;
+
+    if (verificationStatus !== 'SUCCESS') {
+      logger.error('PayPal webhook verification failed', {
+        status: verificationStatus,
+        eventType: req.body.event_type
+      });
+
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid PayPal webhook signature',
+        code: 'WEBHOOK_SIGNATURE_INVALID'
+      });
+    }
+
+    logger.info('PayPal webhook verified successfully', {
       eventType: req.body.event_type,
       resourceId: req.body.resource?.id
     });
@@ -196,6 +271,13 @@ function verifyPayPalWebhook(req, res, next) {
 
   } catch (error) {
     logger.logError(error, { context: 'PayPal webhook verification' });
+
+    // In development, log error but allow webhook through
+    if (process.env.NODE_ENV !== 'production') {
+      logger.warn('PayPal webhook verification failed in development - allowing through');
+      return next();
+    }
+
     return res.status(500).json({
       success: false,
       error: 'Webhook verification error',

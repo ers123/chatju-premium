@@ -88,10 +88,15 @@ function isValidAmount(amount) {
 }
 
 /**
- * Helper to send validation error (now uses standardized response)
+ * Helper to send validation error (uses standardized response)
  */
 function sendValidationError(res, field, message) {
-  return validationError(res, field, message);
+  return res.status(400).json({
+    success: false,
+    error: `Validation error: ${field}`,
+    message: message,
+    code: 'VALIDATION_ERROR',
+  });
 }
 
 // ========================================
