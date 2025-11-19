@@ -109,7 +109,14 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="py-12 px-6 bg-white border-t border-stone-200 text-center text-sm text-stone-600">
-        © 2025 ChatJu Premium. All rights reserved.
+        <div className="mb-4">
+          © 2025 ChatJu Premium. All rights reserved.
+        </div>
+        <div className="text-xs text-stone-400">
+          <Link href="/admin/settings" className="hover:text-stone-600 transition-colors">
+            Admin
+          </Link>
+        </div>
       </footer>
     </>
   )
