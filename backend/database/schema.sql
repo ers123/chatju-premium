@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS payments (
   amount INTEGER NOT NULL CHECK (amount > 0),
   currency TEXT DEFAULT 'KRW' CHECK (currency IN ('KRW', 'USD', 'EUR', 'CNY')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
-  payment_method TEXT CHECK (payment_method IN ('toss', 'paypal', 'stripe', 'mock')),
+  payment_method TEXT CHECK (payment_method IN ('toss', 'paypal', 'stripe', 'paddle', 'mock')),
   payment_key TEXT,
   product_type TEXT NOT NULL CHECK (product_type IN ('basic', 'deluxe')),
   order_name TEXT,
@@ -165,6 +165,18 @@ SELECT indexname, tablename
 FROM pg_indexes
 WHERE schemaname = 'public'
 AND tablename IN ('users', 'payments', 'readings');
+
+-- =============================================================================
+-- MIGRATIONS (FOR EXISTING DATABASES)
+-- =============================================================================
+
+-- Migration: Add 'paypal' and 'paddle' to payment_method enum
+-- Run this in Supabase SQL Editor if updating an existing database:
+--
+-- ALTER TABLE payments
+-- DROP CONSTRAINT payments_payment_method_check,
+-- ADD CONSTRAINT payments_payment_method_check
+-- CHECK (payment_method IN ('toss', 'stripe', 'paypal', 'paddle', 'mock'));
 
 -- =============================================================================
 -- NOTES

@@ -1,5 +1,5 @@
 // backend/src/routes/payment.routes.js
-// Level 7: Real Payment Routes (Toss Payments + Stripe)
+// Level 7: Real Payment Routes (Toss Payments + PayPal + Stripe + Paddle)
 
 const express = require('express');
 const router = express.Router();
@@ -370,6 +370,80 @@ router.post('/stripe/webhook',
     console.error('[Payment Routes] Stripe webhook error:', error);
     res.status(500).json({
       error: 'Webhook processing failed',
+      code: 'WEBHOOK_ERROR',
+    });
+  }
+});
+
+/**
+ * POST /payment/paddle/create
+ * Create Paddle checkout session for Overlay checkout (International users - MoR)
+ * Requires authentication
+ *
+ * Body:
+ * - productType: string (required) - 'basic' or 'deluxe'
+ * - email: string (required) - Customer email address
+ */
+router.post('/paddle/create', authMiddleware, async (req, res) => {
+  try {
+    const { productType, email } = req.body;
+    const userId = req.user.id;
+
+    if (!productType || !email) {
+      return res.status(400).json({
+        error: 'productType and email are required',
+        code: 'MISSING_FIELDS',
+      });
+    }
+
+    if (!['basic', 'deluxe'].includes(productType)) {
+      return res.status(400).json({
+        error: 'productType must be "basic" or "deluxe"',
+        code: 'INVALID_PRODUCT_TYPE',
+      });
+    }
+
+    const result = await paymentService.createPaddlePayment(userId, productType, email);
+
+    res.status(200).json(result);
+
+  } catch (error) {
+    console.error('[Payment Routes] Create Paddle payment error:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to create payment',
+      code: 'PAYMENT_CREATE_ERROR',
+    });
+  }
+});
+
+/**
+ * POST /payment/paddle/webhook
+ * Webhook endpoint for Paddle
+ * Called by Paddle when payment events occur
+ * No authentication - verified by Paddle signature
+ *
+ * Headers:
+ * - paddle-signature: Webhook signature for verification
+ */
+router.post('/paddle/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const signature = req.headers['paddle-signature'];
+
+    if (!signature) {
+      return res.status(400).json({
+        error: 'Missing Paddle-Signature header',
+        code: 'MISSING_SIGNATURE',
+      });
+    }
+
+    const result = await paymentService.handlePaddleWebhook(req.body, signature);
+
+    res.status(200).json(result);
+
+  } catch (error) {
+    console.error('[Payment Routes] Paddle webhook error:', error);
+    res.status(400).json({
+      error: error.message || 'Webhook processing failed',
       code: 'WEBHOOK_ERROR',
     });
   }

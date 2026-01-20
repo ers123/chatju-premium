@@ -16,6 +16,8 @@ import type {
   PayPalPaymentResponse,
   StripePaymentRequest,
   StripePaymentResponse,
+  PaddlePaymentRequest,
+  PaddlePaymentResponse,
   Payment,
   ApiResponse,
   ApiError,
@@ -229,6 +231,19 @@ export const apiClient = {
    */
   createStripePayment: async (data: StripePaymentRequest): Promise<StripePaymentResponse> => {
     const response = await api.post<StripePaymentResponse>('/payment/stripe/create', data);
+    return response.data;
+  },
+
+  // ===========================================
+  // Payment - Paddle (RECOMMENDED - International MoR)
+  // ===========================================
+
+  /**
+   * Create Paddle checkout session (International users - Merchant of Record)
+   * Paddle handles VAT/GST automatically
+   */
+  createPaddlePayment: async (data: PaddlePaymentRequest): Promise<PaddlePaymentResponse> => {
+    const response = await api.post<PaddlePaymentResponse>('/payment/paddle/create', data);
     return response.data;
   },
 

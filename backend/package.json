@@ -22,6 +22,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
     "@google/generative-ai": "^0.24.1",
+    "@paddle/paddle-node-sdk": "^3.5.0",
     "@supabase/supabase-js": "^2.39.0",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
@@ -29,7 +30,8 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.4.1",
     "helmet": "^8.1.0",
-    "mansae-calculator": "git+https://github.com/ers123/manse-calculator.git",
+    "mansae-calculator": "github:ers123/manse-calculator",
+    "manseryeok": "^1.0.1",
     "openai": "^5.1.0",
     "serverless-http": "^3.2.0",
     "stripe": "^19.3.0",

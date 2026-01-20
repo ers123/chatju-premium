@@ -1,5 +1,5 @@
 // backend/src/services/payment.service.js
-// Level 7: Real Payment Service (Toss Payments + PayPal + Stripe)
+// Level 7: Real Payment Service (Toss Payments + PayPal + Stripe + Paddle)
 
 const { supabaseAdmin } = require('../config/supabase');
 const axios = require('axios');
@@ -8,12 +8,15 @@ const logger = require('../utils/logger');
 /**
  * Payment Service
  *
- * Supports three payment gateways:
+ * Supports four payment gateways:
  * 1. Toss Payments (PRIMARY - Korea) - Native Korean payment gateway, best for KRW
  * 2. PayPal (PRIMARY - International) - Available in Korea, works globally
  * 3. Stripe (OPTIONAL - International) - Requires non-Korean business registration
+ * 4. Paddle (RECOMMENDED - International) - Merchant of Record, handles VAT/GST automatically
  *
- * Priority: Toss and PayPal are EQUAL priority, choose based on user location/preference
+ * Priority:
+ * - Korea: Toss Payments (KRW)
+ * - International: Paddle (automatic tax handling) or PayPal (fallback)
  */
 
 // ========================================
@@ -629,6 +632,204 @@ async function handleStripeWebhook(event) {
 }
 
 // ========================================
+// PADDLE (RECOMMENDED - International with MoR)
+// ========================================
+
+// Initialize Paddle client lazily to avoid errors when API key not configured
+let paddleClient = null;
+
+function getPaddleClient() {
+  if (!paddleClient && process.env.PADDLE_API_KEY) {
+    const { Paddle, Environment } = require('@paddle/paddle-node-sdk');
+    paddleClient = new Paddle(process.env.PADDLE_API_KEY, {
+      environment: process.env.PADDLE_ENVIRONMENT === 'production'
+        ? Environment.production
+        : Environment.sandbox
+    });
+  }
+  return paddleClient;
+}
+
+/**
+ * Create Paddle checkout session for Overlay checkout
+ * Returns data needed by frontend Paddle.js
+ * @param {string} userId - User UUID
+ * @param {string} productType - 'basic' or 'deluxe'
+ * @param {string} customerEmail - Customer email address
+ * @returns {object} Checkout configuration for frontend
+ */
+async function createPaddlePayment(userId, productType, customerEmail) {
+  try {
+    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Select price ID based on product type
+    const priceId = productType === 'deluxe'
+      ? process.env.PADDLE_PRICE_DELUXE
+      : process.env.PADDLE_PRICE_BASIC;
+
+    if (!priceId) {
+      throw new Error(`Paddle price ID not configured for product type: ${productType}`);
+    }
+
+    // Create pending payment record
+    const { data: payment, error } = await supabaseAdmin
+      .from('payments')
+      .insert([{
+        user_id: userId,
+        order_id: orderId,
+        amount: 1, // Placeholder, will be updated from webhook when completed
+        currency: 'USD',
+        status: 'pending',
+        payment_method: 'paddle',
+        product_type: productType,
+        order_name: productType === 'deluxe' ? '사주풀이 Deluxe' : '사주풀이 Basic',
+        metadata: {
+          priceId,
+          customerEmail,
+          created_at: new Date().toISOString(),
+        }
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Payment Service] Database error:', error);
+      throw new Error('Failed to create payment record');
+    }
+
+    console.log('[Payment Service] Paddle payment created:', {
+      orderId,
+      productType,
+      paymentId: payment.id,
+    });
+
+    // Return data for frontend Paddle.js Overlay checkout
+    return {
+      success: true,
+      orderId: orderId,
+      paymentId: payment.id,
+      priceId: priceId,
+      customData: { orderId, userId },
+      customerEmail: customerEmail,
+      clientToken: process.env.PADDLE_CLIENT_TOKEN,
+    };
+
+  } catch (error) {
+    console.error('[Payment Service] Create Paddle payment error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle Paddle webhook events
+ * @param {Buffer|string} rawBody - Raw request body
+ * @param {string} signature - Paddle-Signature header value
+ * @returns {object} Webhook processing result
+ */
+async function handlePaddleWebhook(rawBody, signature) {
+  try {
+    const paddle = getPaddleClient();
+
+    if (!paddle) {
+      throw new Error('Paddle client not configured');
+    }
+
+    // Verify signature and unmarshal event
+    let event;
+    try {
+      event = paddle.webhooks.unmarshal(
+        rawBody.toString(),
+        process.env.PADDLE_WEBHOOK_SECRET,
+        signature
+      );
+    } catch (err) {
+      console.error('[Payment Service] Paddle webhook signature verification failed:', err);
+      throw new Error('Invalid webhook signature');
+    }
+
+    console.log('[Payment Service] Paddle webhook received:', event.eventType);
+
+    const customData = event.data?.customData || {};
+    const { orderId, userId } = customData;
+
+    if (!orderId) {
+      console.warn('[Payment Service] Paddle webhook missing orderId in customData');
+      return { received: true, message: 'No orderId in customData' };
+    }
+
+    switch (event.eventType) {
+      case 'transaction.completed': {
+        const totalAmount = parseInt(event.data.details?.totals?.total || 0);
+        const { error } = await supabaseAdmin
+          .from('payments')
+          .update({
+            status: 'completed',
+            payment_key: event.data.id,
+            amount: totalAmount,
+            confirmed_at: new Date().toISOString(),
+            metadata: {
+              paddleTransactionId: event.data.id,
+              paddleCustomerId: event.data.customerId,
+              currency: event.data.currencyCode,
+              completed_at: new Date().toISOString(),
+            }
+          })
+          .eq('order_id', orderId);
+
+        if (error) {
+          console.error('[Payment Service] Failed to update payment:', error);
+        }
+
+        console.log('[Payment Service] Paddle payment completed:', {
+          orderId,
+          transactionId: event.data.id,
+          amount: totalAmount,
+        });
+        break;
+      }
+
+      case 'transaction.payment_failed': {
+        const { error } = await supabaseAdmin
+          .from('payments')
+          .update({
+            status: 'failed',
+            metadata: {
+              error: event.data.payments?.[0]?.errorCode || 'Payment failed',
+              paddleTransactionId: event.data.id,
+              failed_at: new Date().toISOString(),
+            }
+          })
+          .eq('order_id', orderId);
+
+        if (error) {
+          console.error('[Payment Service] Failed to update payment:', error);
+        }
+
+        console.log('[Payment Service] Paddle payment failed:', {
+          orderId,
+          transactionId: event.data.id,
+        });
+        break;
+      }
+
+      case 'transaction.updated':
+        // Log for debugging, no action needed
+        console.log('[Payment Service] Paddle transaction updated:', event.data.id);
+        break;
+
+      default:
+        console.log('[Payment Service] Unhandled Paddle event:', event.eventType);
+    }
+
+    return { received: true, eventType: event.eventType };
+
+  } catch (error) {
+    console.error('[Payment Service] Handle Paddle webhook error:', error);
+    throw error;
+  }
+}
+
+// ========================================
 // COMMON FUNCTIONS
 // ========================================
 
@@ -751,6 +952,10 @@ module.exports = {
   createStripePayment,
   confirmStripePayment,
   handleStripeWebhook,
+
+  // Paddle (RECOMMENDED for International - MoR)
+  createPaddlePayment,
+  handlePaddleWebhook,
 
   // Common
   getPaymentByOrderId,

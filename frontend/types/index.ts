@@ -139,8 +139,9 @@ export interface SajuReading {
 // Payment Types
 // ---------------------------------------------
 
-export type PaymentMethod = 'toss' | 'paypal' | 'stripe';
+export type PaymentMethod = 'toss' | 'paypal' | 'stripe' | 'paddle';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
+export type PaddleProductType = 'basic' | 'deluxe';
 
 export interface Payment {
   id: string;
@@ -195,6 +196,24 @@ export interface StripePaymentResponse {
   clientSecret: string;
   amount: number;
   currency: string;
+}
+
+export interface PaddlePaymentRequest {
+  productType: PaddleProductType;
+  email: string;
+}
+
+export interface PaddlePaymentResponse {
+  success: boolean;
+  orderId: string;
+  paymentId: string;
+  priceId: string;
+  customData: {
+    orderId: string;
+    userId: string;
+  };
+  customerEmail: string;
+  clientToken: string;
 }
 
 // ---------------------------------------------
