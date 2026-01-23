@@ -3,6 +3,7 @@
 
 const { getAIService } = require('./ai.service');
 const { supabaseAdmin, handleSupabaseError } = require('../config/supabase');
+const { calculateFullFortuneCycles } = require('./daeun.service');
 
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
@@ -81,7 +82,21 @@ async function generateSajuPreview(params) {
 
     console.log('[Saju Service] Preview Manseryeok calculation successful');
 
-    // Step 2: Generate PREVIEW AI interpretation (shorter version)
+    // Step 2: Calculate fortune cycles (대운/세운) - Premium feature
+    const fortuneCycles = calculateFullFortuneCycles(
+      manseryeokResult,
+      birthDate,
+      genderKorean,
+      new Date().getFullYear()
+    );
+
+    console.log('[Saju Service] Fortune cycles calculated:', {
+      currentAge: fortuneCycles.currentAge,
+      daeunDirection: fortuneCycles.daeunInfo.direction,
+      currentDaeun: fortuneCycles.currentDaeun?.pillar?.korean,
+    });
+
+    // Step 3: Generate PREVIEW AI interpretation (shorter version)
     const aiPreview = await generateAIPreview(
       manseryeokResult,
       language,
@@ -90,9 +105,20 @@ async function generateSajuPreview(params) {
 
     console.log('[Saju Service] Preview interpretation generated');
 
-    // Step 3: Return preview (NO database storage)
+    // Step 4: Return preview (NO database storage)
+    // Note: For preview, we only include basic fortune cycle info
     return {
       manseryeok: manseryeokResult,
+      fortuneCycles: {
+        dayMaster: fortuneCycles.dayMaster,
+        currentAge: fortuneCycles.currentAge,
+        daeunInfo: fortuneCycles.daeunInfo,
+        currentDaeun: fortuneCycles.currentDaeun,
+        currentSeun: fortuneCycles.currentSeun,
+        // Full data hidden in preview - teaser only
+        isPreview: true,
+        fullDataAvailable: 'Upgrade to Premium for complete 대운/세운 analysis',
+      },
       aiPreview: aiPreview,
       metadata: {
         birthDate,
@@ -188,7 +214,21 @@ async function generateSajuReading(params) {
       hour: manseryeokResult.pillars.hour.korean,
     });
 
-    // Step 3: Generate AI interpretation
+    // Step 3: Calculate fortune cycles (대운/세운) - Full Premium version
+    const fortuneCycles = calculateFullFortuneCycles(
+      manseryeokResult,
+      birthDate,
+      genderKorean,
+      new Date().getFullYear()
+    );
+
+    console.log('[Saju Service] Fortune cycles calculated for premium:', {
+      currentAge: fortuneCycles.currentAge,
+      daeunCount: fortuneCycles.daeunList.length,
+      seunCount: fortuneCycles.seunList.length,
+    });
+
+    // Step 4: Generate AI interpretation
     const aiInterpretation = await generateAIInterpretation(
       manseryeokResult,
       language,
@@ -198,7 +238,13 @@ async function generateSajuReading(params) {
 
     console.log('[Saju Service] AI interpretation generated');
 
-    // Step 4: Store reading in database (NEW - Real persistence!)
+    // Step 5: Store reading in database (NEW - Real persistence!)
+    // Include fortune cycles in saju_data for complete storage
+    const completeReadingData = {
+      ...manseryeokResult,
+      fortuneCycles: fortuneCycles,
+    };
+
     const { data: reading, error: insertError } = await supabaseAdmin
       .from('readings')
       .insert([
@@ -209,7 +255,7 @@ async function generateSajuReading(params) {
           birth_time: birthTime,
           gender: gender,
           subject_name: subjectName,
-          saju_data: manseryeokResult,
+          saju_data: completeReadingData,
           ai_interpretation: aiInterpretation,
           language: language,
           product_type: payment.product_type,
@@ -225,10 +271,11 @@ async function generateSajuReading(params) {
 
     console.log('[Saju Service] Reading saved to database:', reading.id);
 
-    // Step 5: Return complete reading with database ID
+    // Step 6: Return complete reading with database ID
     return {
       readingId: reading.id, // Real UUID from database!
       manseryeok: manseryeokResult,
+      fortuneCycles: fortuneCycles, // Full 대운/세운 data for Premium
       aiInterpretation: aiInterpretation,
       createdAt: reading.created_at,
       viewUrl: `https://chatju.pages.dev/reading/${reading.id}`,
