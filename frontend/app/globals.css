@@ -1,353 +1,324 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 @import "tailwindcss";
 
 /* ============================================
-   ChatJu Premium - Design System
-   Korean-inspired modern minimalist aesthetic
+   ChatJu - Modern Oriental Luxury Design System
+   설화수, 오설록 inspired Korean aesthetic
    ============================================ */
 
 :root {
-  /* Brand Colors */
-  --navy: #1a365d; /* Primary - Trust, tradition */
-  --gold: #d4af37; /* Accent - Premium, royal */
-  --off-white: #f7f7f7; /* Background - Clean, modern */
-  --charcoal: #2d3748; /* Text - Readability */
+  /* Modern Oriental Luxury Palette */
+  --hanji: #FAF8F6;           /* 한지 - Warm cream ivory background */
+  --sage-dark: #2D3A35;       /* 먹쑥 - Deep sage with ink undertone */
+  --warm-gold: #B69B7D;       /* 황동 - Muted brass gold */
+  --warm-gold-light: #D4C4A8; /* 연금 - Light gold */
+  --text-primary: #433E3B;    /* 송연 - Warm charcoal brown */
+  --text-secondary: #6B6560;  /* 회갈 - Muted brown gray */
+  --border-soft: #EBE5DF;     /* 백토 - Soft warm border */
+  --card-bg: rgba(255, 255, 255, 0.85);
 
-  /* Element Colors (Five Elements - 오행) */
-  --wood: #10b981; /* 목(木) - Emerald */
-  --fire: #ef4444; /* 화(火) - Red */
-  --earth: #f59e0b; /* 토(土) - Amber */
-  --metal: #6b7280; /* 금(金) - Gray */
-  --water: #3b82f6; /* 수(水) - Blue */
+  /* Five Elements - Refined (오행) */
+  --wood: #5A7D6B;    /* 목 - Muted sage green */
+  --fire: #C67B6F;    /* 화 - Dusty rose coral */
+  --earth: #C4A574;   /* 토 - Warm sand */
+  --metal: #8B8D8F;   /* 금 - Soft pewter */
+  --water: #6B8BA4;   /* 수 - Muted slate blue */
 
-  /* Semantic Colors */
-  --background: #ffffff;
-  --foreground: var(--charcoal);
-  --primary: var(--navy);
-  --accent: var(--gold);
-  --muted: var(--off-white);
-  --border: #e5e7eb;
-
-  /* Status Colors */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --info: #3b82f6;
-
-  /* Spacing */
-  --radius: 0.5rem;
+  /* Shadows - Soft, paper-like */
+  --shadow-soft: 0 8px 30px rgba(45, 58, 53, 0.04);
+  --shadow-card: 0 4px 20px rgba(45, 58, 53, 0.06);
+  --shadow-hover: 0 12px 40px rgba(45, 58, 53, 0.08);
 }
 
 @theme inline {
   /* Colors */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-accent: var(--accent);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
-
-  /* Element Colors */
-  --color-wood: var(--wood);
-  --color-fire: var(--fire);
-  --color-earth: var(--earth);
-  --color-metal: var(--metal);
-  --color-water: var(--water);
-
-  /* Status Colors */
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-  --color-info: var(--info);
+  --color-hanji: var(--hanji);
+  --color-sage: var(--sage-dark);
+  --color-gold: var(--warm-gold);
+  --color-gold-light: var(--warm-gold-light);
+  --color-text: var(--text-primary);
+  --color-text-muted: var(--text-secondary);
+  --color-border: var(--border-soft);
 
   /* Typography */
-  --font-sans: 'Inter', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
-  --font-korean: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+  --font-serif: 'Gowun Batang', 'Nanum Myeongjo', Georgia, serif;
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Korean text should use Noto Sans KR */
-:lang(ko) {
-  font-family: var(--font-korean);
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Smooth scrolling */
+/* Base Styles */
 html {
   scroll-behavior: smooth;
 }
 
-/* Remove default margins */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Improve text rendering */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--primary);
+body {
+  background: var(--hanji);
+  color: var(--text-primary);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  line-height: 1.9; /* Relaxed leading for luxury feel */
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar (webkit browsers) */
+/* Typography - Headings use elegant serif with tight tracking */
+h1, h2, h3, h4 {
+  font-family: 'Gowun Batang', 'Nanum Myeongjo', serif;
+  font-weight: 400;
+  color: var(--sage-dark);
+  letter-spacing: -0.02em; /* Tighter heading tracking */
+  line-height: 1.4;
+}
+
+/* Font classes */
+.font-serif-ko {
+  font-family: 'Gowun Batang', 'Nanum Myeongjo', serif;
+}
+
+.font-sans-ko {
+  font-family: 'Pretendard', -apple-system, sans-serif;
+}
+
+/* Scrollbar - Refined */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--muted);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: var(--border-soft);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--metal);
+  background: var(--warm-gold);
 }
 
-/* Focus styles for accessibility */
+/* Focus States */
 :focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--warm-gold);
   outline-offset: 2px;
 }
 
-/* Disable focus outline for mouse users */
 :focus:not(:focus-visible) {
   outline: none;
 }
 
-/* Animation utilities */
+/* ============================================
+   Texture & Materials - PREMIUM POLISH
+   ============================================ */
+
+/* Hanji Noise Texture Overlay */
+.texture-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.04; /* Slightly increased for visibility */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Premium Glass Effect */
+.glass-premium {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.01),
+    0 2px 4px -1px rgba(0, 0, 0, 0.01),
+    inset 0 0 20px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================
+   Animations - Gentle & Refined
+   ============================================ */
+
 @keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUp {
   from {
     opacity: 0;
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
+/* Organic breathing motion - nonlinear */
+@keyframes breathe {
+  0% {
+    transform: scale(1) translateY(0);
   }
-  to {
-    transform: translateY(0);
-    opacity: 1;
+  50% {
+    transform: scale(1.03) translateY(-4px);
   }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Organic float - distinct from breathe */
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(1deg); }
+  66% { transform: translateY(-5px) rotate(-1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
-.animate-slide-up {
-  animation: slideUp 0.4s ease-out;
+.animate-fade-up {
+  animation: fadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
-/* Korean-inspired divider */
+.animate-breathe {
+  animation: breathe 8s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 12s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+/* Staggered entrance animations */
+.stagger-1 { animation-delay: 0.15s; }
+.stagger-2 { animation-delay: 0.3s; }
+.stagger-3 { animation-delay: 0.45s; }
+.stagger-4 { animation-delay: 0.6s; }
+.stagger-5 { animation-delay: 0.75s; }
+
+/* ============================================
+   Component Styles
+   ============================================ */
+
+/* Card - Paper floating effect with new glass */
+.card-paper {
+  @apply glass-premium;
+  border-radius: 1.5rem;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-paper:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -4px rgba(45, 58, 53, 0.08); /* Deeper, softer shadow */
+  background: rgba(255, 255, 255, 0.75);
+}
+
+/* Button - Rounded luxury */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2.5rem;
+  background: var(--sage-dark);
+  color: var(--hanji);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-primary:hover {
+  background: #3D4A45;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2.5rem;
+  background: transparent;
+  color: var(--sage-dark);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border-soft);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-secondary:hover {
+  border-color: var(--warm-gold);
+  color: var(--warm-gold);
+  background: rgba(182, 155, 125, 0.05);
+}
+
+/* Divider - Korean style */
 .divider-korean {
   width: 100%;
   height: 1px;
   background: linear-gradient(
     90deg,
     transparent,
-    var(--border) 20%,
-    var(--border) 80%,
+    var(--border-soft) 20%,
+    var(--border-soft) 80%,
     transparent
   );
 }
 
-/* ============================================
-   Updated Design System (Minimalist)
-   Based on HTML mockups - Stone/Amber theme
-   ============================================ */
-
-/* Utility Classes */
-.serif-font {
-  font-family: 'Crimson Pro', Georgia, serif;
+/* Gold accent line */
+.accent-line {
+  width: 40px;
+  height: 1px;
+  background: var(--warm-gold);
 }
 
-.accent-gold {
-  color: #c9a962;
+/* Selection color */
+::selection {
+  background: rgba(182, 155, 125, 0.2);
+  color: var(--sage-dark);
 }
 
-/* Button Styles */
-.btn-primary {
-  background: #1c1917;
-  color: white;
-  padding: 0.875rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  border: none;
-  cursor: pointer;
+/* Gradient backgrounds */
+.bg-gradient-soft {
+  background: linear-gradient(
+    180deg,
+    var(--hanji) 0%,
+    rgba(235, 229, 223, 0.3) 100%
+  );
 }
 
-.btn-primary:hover {
-  background: #292524;
-  transform: translateY(-1px);
-}
-
-.btn-primary:disabled {
-  background: #d6d3d1;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-secondary {
-  background: white;
-  border: 1px solid #e7e5e4;
-  padding: 0.875rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background: #fafaf9;
-}
-
-/* Input Fields */
-.input-field {
-  padding: 0.875rem 1rem;
-  border: 1px solid #e7e5e4;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-  background: white;
-  width: 100%;
-}
-
-.input-field:focus {
-  outline: none;
-  border-color: #d97706;
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
-}
-
-.input-field:disabled {
-  background: #f5f5f4;
-  cursor: not-allowed;
-}
-
-/* Cards */
-.section-card {
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e7e5e4;
-}
-
-/* Info Badges */
-.info-badge {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  border-left: 3px solid #d97706;
-}
-
-/* Element Badges (Five Elements) */
-.element-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.element-wood {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.element-fire {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.element-earth {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.element-metal {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.element-water {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-/* Chat Messages */
-.message-user {
-  background: #1c1917;
-  color: white;
-  padding: 1rem 1.25rem;
-  border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
-  max-width: 70%;
-  margin-left: auto;
-}
-
-.message-ai {
-  background: white;
-  color: #1c1917;
-  padding: 1rem 1.25rem;
-  border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
-  max-width: 75%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-/* Radio Options */
-.radio-option {
-  position: relative;
-  padding: 1rem;
-  border: 1px solid #e7e5e4;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: white;
-}
-
-.radio-option:hover {
-  border-color: #d6d3d1;
-  background: #fafaf9;
-}
-
-.radio-option input[type="radio"]:checked + .radio-content {
-  border-color: #d97706;
-}
-
-/* Suggestion Chips */
-.suggestion-chip {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  background: white;
-  border: 1px solid #e7e5e4;
-  border-radius: 1.5rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.suggestion-chip:hover {
-  border-color: #d97706;
-  background: #fffbf5;
+.bg-gradient-warm {
+  background: linear-gradient(
+    135deg,
+    rgba(182, 155, 125, 0.08) 0%,
+    transparent 50%,
+    rgba(45, 58, 53, 0.03) 100%
+  );
 }

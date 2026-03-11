@@ -24,12 +24,13 @@ export interface AuthState {
 
 export interface LoginCredentials {
   email: string;
-  password: string;
+  password?: string; // Optional for magic link auth
 }
 
 export interface SignupCredentials {
   email: string;
-  password: string;
+  password?: string; // Optional for magic link auth
+  name?: string;
   full_name?: string;
 }
 
@@ -38,9 +39,10 @@ export interface SignupCredentials {
 // ---------------------------------------------
 
 export interface BirthInfo {
-  birthDate: string; // YYYY-MM-DD format
+  birthDate: string; // YYYY-MM-DD format or YYYY.MM.DD
   birthTime?: string; // HH:MM format (24-hour)
   gender: 'male' | 'female';
+  isLunar?: boolean; // true for lunar calendar
   timezone?: string; // e.g., 'Asia/Seoul'
   language?: 'ko' | 'en';
 }
