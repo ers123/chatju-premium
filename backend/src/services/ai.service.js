@@ -6,18 +6,21 @@ const logger = require('../utils/logger');
 /**
  * Unified AI Service
  *
- * Supports multiple AI providers with seamless switching:
- * - OpenAI (GPT-4o-mini) - Best Korean support, $0.15/1M tokens
- * - Google Gemini (Flash) - FREE tier, 1.5M tokens/day, $0.075/1M after
- * - Anthropic Claude (Haiku) - Fast, $0.25/1M tokens
+ * Supports multiple AI providers with ordered fallback chain:
+ * - OpenAI GPT-5.2 (Primary) — Best quality Korean, $0.074/report
+ * - Anthropic Claude Sonnet 4.6 (Fallback 1) — Comparable quality, $0.081/report
+ * - Google Gemini 3 Flash Preview (Fallback 2) — Cost-effective, $0.016/report
  *
  * Configuration via environment variable:
- * AI_PROVIDER=gemini|openai|claude (default: gemini)
+ * AI_PROVIDER=openai|claude|gemini (default: openai)
  */
+
+// Explicit fallback order — quality-first
+const FALLBACK_ORDER = ['openai', 'claude', 'gemini'];
 
 class AIService {
   constructor() {
-    this.provider = process.env.AI_PROVIDER || 'gemini';
+    this.provider = process.env.AI_PROVIDER || 'openai';
     this.clients = {};
     this.initializeClients();
   }
@@ -26,13 +29,14 @@ class AIService {
    * Initialize AI provider clients based on available API keys
    */
   initializeClients() {
-    // OpenAI
-    if (process.env.OPENAI_API_KEY) {
+    // OpenAI (supports both OPENAI_API_KEY and OPENAI for backwards compatibility)
+    const openaiKey = process.env.OPENAI_API_KEY || process.env.OPENAI;
+    if (openaiKey) {
       const { OpenAI } = require('openai');
       this.clients.openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: openaiKey,
       });
-      logger.info('OpenAI client initialized', { provider: 'openai' });
+      logger.info('OpenAI client initialized');
     }
 
     // Google Gemini
@@ -60,9 +64,19 @@ class AIService {
     // Validate current provider
     if (!this.clients[this.provider]) {
       logger.warn(`Configured provider '${this.provider}' not available, falling back to first available`);
-      this.provider = Object.keys(this.clients)[0];
+      this.provider = this.getFirstAvailableProvider();
       logger.info(`Using fallback provider: ${this.provider}`);
     }
+  }
+
+  /**
+   * Get first available provider following FALLBACK_ORDER
+   */
+  getFirstAvailableProvider() {
+    for (const p of FALLBACK_ORDER) {
+      if (this.clients[p]) return p;
+    }
+    return Object.keys(this.clients)[0];
   }
 
   /**
@@ -76,7 +90,8 @@ class AIService {
     const {
       maxTokens = 250,
       temperature = 0.7,
-      provider = this.provider, // Allow override per request
+      provider = this.provider,
+      _triedProviders = [], // Internal: track failed providers for multi-hop fallback
     } = options;
 
     try {
@@ -129,13 +144,17 @@ class AIService {
         stack: error.stack,
       });
 
-      // Try fallback to another provider if available
-      if (provider === this.provider) {
-        const fallbackProvider = this.getFallbackProvider(provider);
-        if (fallbackProvider) {
-          logger.warn(`Retrying with fallback provider: ${fallbackProvider}`);
-          return this.generateFortune(messages, { ...options, provider: fallbackProvider });
-        }
+      // Multi-hop fallback: try next provider in FALLBACK_ORDER
+      const tried = [..._triedProviders, provider];
+      const fallbackProvider = this.getFallbackProvider(tried);
+
+      if (fallbackProvider) {
+        logger.warn(`Retrying with fallback provider: ${fallbackProvider} (tried: ${tried.join(', ')})`);
+        return this.generateFortune(messages, {
+          ...options,
+          provider: fallbackProvider,
+          _triedProviders: tried,
+        });
       }
 
       throw error;
@@ -143,29 +162,32 @@ class AIService {
   }
 
   /**
-   * Generate with OpenAI (GPT-4o-mini)
+   * Generate with OpenAI (GPT-5.4-mini)
+   * Fastest, best Korean quality, great cost-efficiency
    */
   async generateWithOpenAI(messages, maxTokens, temperature) {
     const completion = await this.clients.openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5.4-mini',
       messages,
-      max_tokens: maxTokens,
+      max_completion_tokens: maxTokens,
       temperature,
     });
 
     return {
       content: completion.choices[0].message.content,
       usage: completion.usage,
-      model: 'gpt-4o-mini',
+      model: 'gpt-5.4-mini',
     };
   }
 
   /**
-   * Generate with Google Gemini (Flash)
+   * Generate with Google Gemini 3 Flash Preview
+   * - Strong Korean support at low cost
+   * - $0.50/1M input, $3.00/1M output
    */
   async generateWithGemini(messages, maxTokens, temperature) {
     const model = this.clients.gemini.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3-flash-preview',
       generationConfig: {
         maxOutputTokens: maxTokens,
         temperature,
@@ -184,12 +206,14 @@ class AIService {
     return {
       content: response.text(),
       tokensUsed: response.usageMetadata?.totalTokenCount || 0,
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3-flash-preview',
     };
   }
 
   /**
-   * Generate with Anthropic Claude (Haiku)
+   * Generate with Anthropic Claude Sonnet 4.6
+   * - Excellent structured Korean output
+   * - $3.00/1M input, $15.00/1M output
    */
   async generateWithClaude(messages, maxTokens, temperature) {
     // Separate system messages from conversation
@@ -202,7 +226,7 @@ class AIService {
       }));
 
     const response = await this.clients.claude.messages.create({
-      model: 'claude-3-haiku-20240307',
+      model: 'claude-sonnet-4-6',
       max_tokens: maxTokens,
       temperature,
       system: systemMessage,
@@ -212,7 +236,7 @@ class AIService {
     return {
       content: response.content[0].text,
       tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
-      model: 'claude-3-haiku',
+      model: 'claude-sonnet-4-6',
     };
   }
 
@@ -244,11 +268,15 @@ class AIService {
   }
 
   /**
-   * Get fallback provider if current one fails
+   * Get next fallback provider, respecting FALLBACK_ORDER and skipping already-tried ones
    */
-  getFallbackProvider(currentProvider) {
-    const availableProviders = Object.keys(this.clients).filter(p => p !== currentProvider);
-    return availableProviders[0] || null;
+  getFallbackProvider(triedProviders) {
+    for (const p of FALLBACK_ORDER) {
+      if (this.clients[p] && !triedProviders.includes(p)) {
+        return p;
+      }
+    }
+    return null;
   }
 
   /**
@@ -257,25 +285,26 @@ class AIService {
   getProviderInfo() {
     const providerDetails = {
       openai: {
-        name: 'OpenAI GPT-4o-mini',
-        cost: '$0.15 per 1M tokens',
-        features: ['Best Korean support', 'Reliable', 'Production-ready'],
-      },
-      gemini: {
-        name: 'Google Gemini 1.5 Flash',
-        cost: 'FREE (1.5M tokens/day), then $0.075/1M',
-        features: ['Free tier', 'Fast', 'Multi-language'],
+        name: 'OpenAI GPT-5.2',
+        cost: '$1.75/1M input, $14.00/1M output (~$0.074/report)',
+        features: ['Best Korean quality', 'Frontier reasoning', 'Production-ready'],
       },
       claude: {
-        name: 'Anthropic Claude 3 Haiku',
-        cost: '$0.25 per 1M tokens',
-        features: ['Very fast', 'High quality', 'Latest model'],
+        name: 'Anthropic Claude Sonnet 4.6',
+        cost: '$3.00/1M input, $15.00/1M output (~$0.081/report)',
+        features: ['Excellent structured output', 'Strong Korean', 'Great formatting'],
+      },
+      gemini: {
+        name: 'Google Gemini 3 Flash Preview',
+        cost: '$0.50/1M input, $3.00/1M output (~$0.016/report)',
+        features: ['Cost-effective', 'Fast', 'Good Korean support'],
       },
     };
 
     return {
       current: this.provider,
       available: Object.keys(this.clients),
+      fallbackOrder: FALLBACK_ORDER.filter(p => this.clients[p]),
       details: providerDetails,
     };
   }

@@ -335,18 +335,19 @@ function getElementName(element) {
 
 /**
  * 대운 종합 요약 생성
+ * 대운은 "길흉"이 아니라 "환경 맥락의 전환"
  */
 function generateOverallDaeunSummary(stemTenGod, branchTenGod, pillar) {
-  const positiveGods = ['정관', '정인', '정재', '식신'];
-  const stemPositive = positiveGods.includes(stemTenGod);
-  const branchPositive = positiveGods.includes(branchTenGod);
+  const supportiveGods = ['정관', '정인', '정재', '식신'];
+  const stemSupportive = supportiveGods.includes(stemTenGod);
+  const branchSupportive = supportiveGods.includes(branchTenGod);
 
-  if (stemPositive && branchPositive) {
-    return `길운(吉運): ${pillar.korean} 대운은 천간과 지지 모두 좋은 기운. 안정과 성취의 시기.`;
-  } else if (stemPositive || branchPositive) {
-    return `반길반흉(半吉半凶): ${pillar.korean} 대운은 좋은 면과 어려운 면이 공존. 선택적 행동 필요.`;
+  if (stemSupportive && branchSupportive) {
+    return `${pillar.korean} 대운: 안정적이고 지원적인 환경이 조성되는 10년. 타고난 강점을 발휘하기 좋은 무대.`;
+  } else if (stemSupportive || branchSupportive) {
+    return `${pillar.korean} 대운: 안정과 변화가 공존하는 10년. 기회를 선택적으로 잡되, 균형 감각이 필요한 시기.`;
   } else {
-    return `도전운(挑戰運): ${pillar.korean} 대운은 시련과 변화가 있으나, 극복 시 큰 성장 가능.`;
+    return `${pillar.korean} 대운: 도전과 변화가 많은 10년이지만, 이 시기의 시련이 가장 큰 성장의 씨앗이 됩니다.`;
   }
 }
 
@@ -545,6 +546,9 @@ function calculateFullFortuneCycles(manseryeokResult, birthDate, gender, current
     seunList.push(calculateSeun(y, dayMaster));
   }
 
+  // Detect 아홉수 / 대운 전환기
+  const transitionPeriod = detectTransitionPeriod(currentAge, currentDaeun);
+
   return {
     dayMaster: {
       stem: dayMaster.stem,
@@ -561,6 +565,7 @@ function calculateFullFortuneCycles(manseryeokResult, birthDate, gender, current
     },
     currentAge: currentAge,
     currentDaeun: currentDaeun,
+    transitionPeriod: transitionPeriod, // 아홉수 / 대운 전환기 정보
     daeunList: daeunList,
     currentSeun: seunList[0],
     seunList: seunList,
@@ -588,7 +593,45 @@ function getDayMasterDescription(stem) {
 }
 
 /**
+ * 아홉수(대운 전환기) 감지
+ * 대운이 10년 주기이므로, 대운 마지막 1~2년은 전환기.
+ * 환절기에 감기 걸리기 쉽듯, 이 시기에 변화와 적응이 필요.
+ * (아홉수는 대운 전환기와 관련 — 불행이 아닌 적응기)
+ *
+ * @param {number} currentAge - 현재 나이
+ * @param {Object} currentDaeun - 현재 대운
+ * @returns {Object|null} 전환기 정보
+ */
+function detectTransitionPeriod(currentAge, currentDaeun) {
+  if (!currentDaeun) return null;
+
+  const yearsIntoDaeun = currentAge - currentDaeun.ageStart;
+  const yearsRemaining = currentDaeun.ageEnd - currentAge;
+
+  if (yearsRemaining <= 1) {
+    return {
+      isTransition: true,
+      type: 'ending',
+      message: `현재 ${currentDaeun.pillar.korean} 대운이 마무리되는 전환기입니다. 환절기처럼 새로운 환경에 적응할 준비가 필요한 시기입니다.`,
+      yearsRemaining,
+    };
+  }
+
+  if (yearsIntoDaeun <= 1) {
+    return {
+      isTransition: true,
+      type: 'beginning',
+      message: `새로운 ${currentDaeun.pillar.korean} 대운이 막 시작된 시기입니다. 삶의 무대 배경이 전환되고 있으므로 적응기로 보세요.`,
+      yearsIntoDaeun,
+    };
+  }
+
+  return { isTransition: false };
+}
+
+/**
  * 종합 운세 요약 생성
+ * 대운은 "행운"이 아닌 "시간 규모의 환경 변화"
  */
 function generateFortuneSummary(currentDaeun, currentSeun, dayMaster) {
   if (!currentDaeun) {
@@ -598,14 +641,17 @@ function generateFortuneSummary(currentDaeun, currentSeun, dayMaster) {
   const daeunGod = currentDaeun.tenGod.combined;
   const seunGod = currentSeun.tenGod.combined;
 
-  return `현재 ${currentDaeun.pillar.korean} 대운(${daeunGod})과 ${currentSeun.year}년 ${currentSeun.pillar.korean}년(${seunGod})이 교차하는 시기입니다. ` +
-    `${currentDaeun.interpretation.overall} ` +
-    `올해는 ${currentSeun.interpretation.keywords.join(', ')}의 기운이 강합니다.`;
+  let summary = `현재 ${currentDaeun.pillar.korean} 대운(${daeunGod}) — 이 10년 동안의 삶의 무대 배경 위에서, ` +
+    `${currentSeun.year}년 ${currentSeun.pillar.korean}(${seunGod}) 세운이 구체적인 흐름을 만듭니다. ` +
+    `올해의 주요 기운: ${currentSeun.interpretation.keywords.join(', ')}.`;
+
+  return summary;
 }
 
 module.exports = {
   calculateFullFortuneCycles,
   calculateSeun,
+  detectTransitionPeriod,
   getStemIndex,
   getBranchIndex,
   STEMS,

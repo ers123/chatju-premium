@@ -39,12 +39,25 @@ export interface SignupCredentials {
 // ---------------------------------------------
 
 export interface BirthInfo {
+  // Child information
   birthDate: string; // YYYY-MM-DD format or YYYY.MM.DD
   birthTime?: string; // HH:MM format (24-hour)
   gender: 'male' | 'female';
   isLunar?: boolean; // true for lunar calendar
   timezone?: string; // e.g., 'Asia/Seoul'
-  language?: 'ko' | 'en';
+  language?: 'ko' | 'en' | 'ja' | 'zh';
+  // Location for True Solar Time (진태양시) correction
+  birthPlace?: string; // City name (e.g., '서울', 'sydney')
+  latitude?: number; // Direct latitude (-90 to 90)
+  longitude?: number; // Direct longitude (-180 to 180)
+  // Parent information (for relationship analysis)
+  parentBirthDate?: string; // Parent's birth date
+  parentBirthTime?: string; // Parent's birth time
+  parentRole?: 'mother' | 'father'; // Which parent
+  parentGender?: 'M' | 'F'; // Parent's gender
+  // Twin information
+  twinOrder?: 1 | 2; // 1 = first born, 2 = second born
+  twinSiblingName?: string; // Twin sibling's name
 }
 
 export interface Pillar {
@@ -69,29 +82,54 @@ export interface Elements {
   water: number; // 수(水)
 }
 
+export interface SolarTimeCorrection {
+  applied: boolean;
+  solarTimeCorrection: number; // minutes
+  isSouthernHemisphere: boolean;
+  adjustedTime: string | null; // e.g., "12:03"
+  adjustedDate: string | null; // e.g., "1979-04-05" (if date shifted)
+  birthPlace: string | null;
+  historicalTzNote: string | null;
+  note: string; // Human-readable description
+}
+
 export interface ManseryeokResult {
   pillars: FourPillars;
   elements: Elements;
   dayMaster: string; // 일간 (日干)
-  solarDate: string;
-  lunarDate: string;
+  solarDate?: string;
+  lunarDate?: string;
+  corrections?: SolarTimeCorrection; // 진태양시 보정 정보
 }
 
 export interface AIInterpretation {
   fullText: string;
   sections: {
+    // Legacy fields
     personality?: string;
     career?: string;
     relationships?: string;
     health?: string;
     wealth?: string;
     advice?: string;
+    // Premium 8-section structure
+    coreProfile?: string;        // 1. 사주 핵심 프로필
+    parentChildAnalysis?: string; // 2. 부모-자녀 관계 분석
+    developmentGuide?: string;   // 3. 연령별 발달 가이드
+    careerAptitude?: string;     // 4. 진로/적성 심층 분석
+    fortuneCycles?: string;      // 5. 대운/세운 운세 흐름
+    monthlyFortune?: string;     // 6. 월별 운세 리포트
+    elementBalance?: string;     // 7. 오행 밸런스 & 개운법
+    weeklyActions?: string;      // 8. 이번 주 실천 과제
+    preamble?: string;           // Intro text before sections
   };
   metadata: {
     model: string;
     tokens: number;
     generatedAt: string;
     isPreview?: boolean;
+    reportType?: string;
+    hasParentAnalysis?: boolean;
   };
 }
 
@@ -134,6 +172,8 @@ export interface SajuReading {
   language: 'ko' | 'en';
   manseryeok_result: ManseryeokResult;
   ai_interpretation: AIInterpretation;
+  interpretation?: string;
+  premiumSections?: Record<string, string>;
   created_at: string;
 }
 
@@ -141,9 +181,8 @@ export interface SajuReading {
 // Payment Types
 // ---------------------------------------------
 
-export type PaymentMethod = 'toss' | 'paypal' | 'stripe' | 'paddle';
+export type PaymentMethod = 'paypal';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
-export type PaddleProductType = 'basic' | 'deluxe';
 
 export interface Payment {
   id: string;
@@ -159,20 +198,6 @@ export interface Payment {
   updated_at: string;
 }
 
-export interface TossPaymentRequest {
-  amount: number;
-  orderName: string; // e.g., "사주팔자 프리미엄 해석"
-}
-
-export interface TossPaymentResponse {
-  success: boolean;
-  orderId: string;
-  amount: number;
-  orderName: string;
-  successUrl: string;
-  failUrl: string;
-}
-
 export interface PayPalPaymentRequest {
   amount: number;
   description: string; // e.g., "Premium Fortune Reading"
@@ -185,37 +210,6 @@ export interface PayPalPaymentResponse {
   approvalUrl: string;
   amount: number;
   currency: string;
-}
-
-export interface StripePaymentRequest {
-  amount: number; // in cents (e.g., 1000 = $10)
-  description: string;
-}
-
-export interface StripePaymentResponse {
-  success: boolean;
-  orderId: string;
-  clientSecret: string;
-  amount: number;
-  currency: string;
-}
-
-export interface PaddlePaymentRequest {
-  productType: PaddleProductType;
-  email: string;
-}
-
-export interface PaddlePaymentResponse {
-  success: boolean;
-  orderId: string;
-  paymentId: string;
-  priceId: string;
-  customData: {
-    orderId: string;
-    userId: string;
-  };
-  customerEmail: string;
-  clientToken: string;
 }
 
 // ---------------------------------------------
@@ -320,7 +314,11 @@ export interface BirthInfoFormData {
   timeUnknown: boolean;
   gender: 'male' | 'female';
   timezone: string;
-  language: 'ko' | 'en';
+  language: 'ko' | 'en' | 'ja' | 'zh';
+  birthPlace?: string;
+  isTwin?: boolean;
+  twinOrder?: 1 | 2;
+  twinSiblingName?: string;
 }
 
 export interface PaymentFormData {

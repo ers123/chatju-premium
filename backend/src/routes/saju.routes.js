@@ -1,5 +1,5 @@
 // backend/src/routes/saju.routes.js
-// API routes for premium Saju calculation
+// API routes for premium Saju calculation - RELATIONSHIP FOCUSED
 
 const express = require('express');
 const router = express.Router();
@@ -7,24 +7,51 @@ const sajuService = require('../services/saju.service');
 const authMiddleware = require('../middleware/auth');
 const { validateBirthInfo, validateUUIDParam, sanitizeStrings } = require('../middleware/validation');
 const { sajuPreviewLimiter, sajuPremiumLimiter, readLimiter } = require('../middleware/rateLimit');
+const { calculateMansae } = require('../utils/mansae-wrapper');
 
 // Apply sanitization to all routes
 router.use(sanitizeStrings);
 
 /**
+ * Helper: Validate and calculate parent manseryeok
+ */
+function calculateParentManseryeok(parentBirthDate, parentBirthTime, parentRole) {
+  if (!parentBirthDate || !parentRole) return null;
+
+  try {
+    // Parent gender: mother = female, father = male
+    const parentGender = parentRole === 'mother' ? '여' : '남';
+    const timeToUse = parentBirthTime || '12:00';
+    return calculateMansae(parentBirthDate, timeToUse, parentGender);
+  } catch (error) {
+    console.warn('[Saju Route] Parent manseryeok calculation failed:', error.message);
+    return null;
+  }
+}
+
+/**
  * POST /saju/preview
- * Generate FREE Saju preview/teaser
+ * Generate FREE Saju preview/teaser - NOW WITH RELATIONSHIP ANALYSIS
  * No authentication required - open to everyone
- * Returns: Basic Four Pillars + truncated AI interpretation
+ * Returns: Basic Four Pillars + relationship-focused AI interpretation
  */
 router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) => {
   try {
     const {
+      // Child info
       birthDate,
       birthTime,
       gender,
       timezone,
       language,
+      // Location info (optional, for solar time correction)
+      birthPlace,
+      latitude,
+      longitude,
+      // Parent info (optional but recommended)
+      parentBirthDate,
+      parentBirthTime,
+      parentRole, // 'mother' or 'father'
     } = req.body;
 
     // Validate required fields
@@ -35,9 +62,10 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
       });
     }
 
-    // Validate birth date format (YYYY-MM-DD)
+    // Validate birth date format (YYYY-MM-DD or YYYY.MM.DD)
+    const normalizedBirthDate = birthDate.replace(/\./g, '-');
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(birthDate)) {
+    if (!dateRegex.test(normalizedBirthDate)) {
       return res.status(400).json({
         error: 'Invalid birthDate format. Use YYYY-MM-DD',
       });
@@ -60,21 +88,36 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
       });
     }
 
-    // Generate preview (free version)
+    // Calculate parent manseryeok if provided
+    let parentManseryeok = null;
+    if (parentBirthDate && parentRole) {
+      const normalizedParentDate = parentBirthDate.replace(/\./g, '-');
+      parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole);
+    }
+
+    // Generate preview (free version with relationship focus)
     const preview = await sajuService.generateSajuPreview({
-      birthDate,
+      birthDate: normalizedBirthDate,
       birthTime,
       gender,
       timezone: timezone || 'Asia/Seoul',
       language: language || 'ko',
+      // Location for solar time correction
+      birthPlace,
+      latitude,
+      longitude,
+      // Parent data for relationship analysis
+      parentManseryeok,
+      parentRole,
     });
 
-    // Return preview with payment CTA
+    // Return preview with relationship context
     res.status(200).json({
       ...preview,
       isPaid: false,
-      message: language === 'en'
-        ? 'This is a preview. Unlock full analysis with premium!'
+      hasParentAnalysis: !!parentManseryeok,
+      message: parentManseryeok
+        ? '부모-자녀 관계 미리보기입니다. 프리미엄으로 갈등 해결 가이드를 받아보세요!'
         : '이것은 미리보기입니다. 프리미엄으로 전체 해석을 확인하세요!',
       upgradeUrl: '/payment',
     });
@@ -111,6 +154,18 @@ router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo,
       timezone,
       language,
       subjectName,
+      // Location for solar time correction
+      birthPlace,
+      latitude,
+      longitude,
+      // Optional parent data for relationship analysis
+      parentBirthDate,
+      parentBirthTime,
+      parentRole,   // 'mother' or 'father'
+      parentGender, // 'M' or 'F' (overrides role-derived gender if provided)
+      // Optional twin info
+      twinOrder,      // 1 (first born) or 2 (second born)
+      twinSiblingName, // sibling's name (optional)
     } = req.body;
 
     // Validate required fields
@@ -146,6 +201,16 @@ router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo,
       });
     }
 
+    // Calculate parent manseryeok if parent birth date and role are provided
+    let parentManseryeok = null;
+    if (parentBirthDate && parentRole) {
+      const normalizedParentDate = parentBirthDate.replace(/\./g, '-');
+      parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole);
+      if (parentManseryeok) {
+        console.log('[Saju Route] Parent manseryeok calculated for role:', parentRole);
+      }
+    }
+
     // Get user ID from JWT (set by authMiddleware)
     const userId = req.user.id;
 
@@ -159,6 +224,14 @@ router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo,
       timezone: timezone || 'Asia/Seoul',
       language: language || 'ko',
       subjectName,
+      // Location for solar time correction
+      birthPlace,
+      latitude,
+      longitude,
+      parentManseryeok,
+      parentRole: parentRole || null,
+      // Twin info
+      twinInfo: twinOrder ? { order: twinOrder, siblingName: twinSiblingName || null } : null,
     });
 
     // Return success response

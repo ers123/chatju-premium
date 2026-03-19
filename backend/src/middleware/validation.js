@@ -70,7 +70,7 @@ function isValidCurrency(currency) {
  * Validate payment method
  */
 function isValidPaymentMethod(method) {
-  return ['toss', 'paypal', 'stripe', 'mock'].includes(method);
+  return ['paypal'].includes(method);
 }
 
 /**
@@ -81,10 +81,10 @@ function isValidProductType(type) {
 }
 
 /**
- * Validate amount (positive integer)
+ * Validate amount (positive number, up to 2 decimal places)
  */
 function isValidAmount(amount) {
-  return typeof amount === 'number' && amount > 0 && Number.isInteger(amount);
+  return typeof amount === 'number' && amount > 0 && isFinite(amount);
 }
 
 /**
@@ -145,10 +145,44 @@ function validateOTPRequest(req, res, next) {
 }
 
 /**
+ * Validate parent role value
+ */
+function isValidParentRole(role) {
+  return ['father', 'mother'].includes(role);
+}
+
+/**
+ * Validate parent gender value (M or F shorthand used internally)
+ */
+function isValidParentGender(gender) {
+  return ['M', 'F'].includes(gender);
+}
+
+/**
+ * Validate latitude (-90 to 90)
+ */
+function isValidLatitude(lat) {
+  return typeof lat === 'number' && lat >= -90 && lat <= 90 && isFinite(lat);
+}
+
+/**
+ * Validate longitude (-180 to 180)
+ */
+function isValidLongitude(lng) {
+  return typeof lng === 'number' && lng >= -180 && lng <= 180 && isFinite(lng);
+}
+
+/**
  * Validate Saju birth info request
  */
 function validateBirthInfo(req, res, next) {
-  const { birthDate, birthTime, gender, language, timezone } = req.body;
+  const {
+    birthDate, birthTime, gender, language, timezone,
+    // Optional location fields for solar time correction
+    birthPlace, latitude, longitude,
+    // Optional parent fields
+    parentBirthDate, parentBirthTime, parentRole, parentGender,
+  } = req.body;
 
   // Validate birth date (required)
   if (!birthDate) {
@@ -181,6 +215,49 @@ function validateBirthInfo(req, res, next) {
     return sendValidationError(res, 'timezone', 'Timezone must be a string');
   }
 
+  // Validate location fields (optional, for solar time correction)
+  if (birthPlace !== undefined && birthPlace !== null && birthPlace !== '') {
+    if (typeof birthPlace !== 'string' || birthPlace.length > 100) {
+      return sendValidationError(res, 'birthPlace', 'Birth place must be a string (max 100 chars)');
+    }
+  }
+  if (latitude !== undefined && latitude !== null) {
+    if (!isValidLatitude(latitude)) {
+      return sendValidationError(res, 'latitude', 'Latitude must be between -90 and 90');
+    }
+  }
+  if (longitude !== undefined && longitude !== null) {
+    if (!isValidLongitude(longitude)) {
+      return sendValidationError(res, 'longitude', 'Longitude must be between -180 and 180');
+    }
+  }
+
+  // Validate parent fields (all optional, but if provided must be valid)
+  if (parentBirthDate !== undefined && parentBirthDate !== null && parentBirthDate !== '') {
+    const normalizedParentDate = parentBirthDate.replace(/\./g, '-');
+    if (!isValidDate(normalizedParentDate)) {
+      return sendValidationError(res, 'parentBirthDate', 'Invalid parentBirthDate format (use YYYY-MM-DD)');
+    }
+  }
+
+  if (parentBirthTime !== undefined && parentBirthTime !== null && parentBirthTime !== '') {
+    if (!isValidTime(parentBirthTime)) {
+      return sendValidationError(res, 'parentBirthTime', 'Invalid parentBirthTime format (use HH:MM)');
+    }
+  }
+
+  if (parentRole !== undefined && parentRole !== null && parentRole !== '') {
+    if (!isValidParentRole(parentRole)) {
+      return sendValidationError(res, 'parentRole', 'Invalid parentRole (must be "father" or "mother")');
+    }
+  }
+
+  if (parentGender !== undefined && parentGender !== null && parentGender !== '') {
+    if (!isValidParentGender(parentGender)) {
+      return sendValidationError(res, 'parentGender', 'Invalid parentGender (must be "M" or "F")');
+    }
+  }
+
   next();
 }
 
@@ -195,7 +272,7 @@ function validatePaymentRequest(req, res, next) {
     return sendValidationError(res, 'amount', 'Amount is required');
   }
   if (!isValidAmount(amount)) {
-    return sendValidationError(res, 'amount', 'Amount must be a positive integer');
+    return sendValidationError(res, 'amount', 'Amount must be a positive number');
   }
 
   // Validate currency (optional, defaults in service)
@@ -212,23 +289,6 @@ function validatePaymentRequest(req, res, next) {
   const maxAmount = currency === 'KRW' ? 100000 : 200; // 100k KRW or $200 USD
   if (amount > maxAmount) {
     return sendValidationError(res, 'amount', `Amount exceeds maximum allowed (${maxAmount} ${currency || 'KRW'})`);
-  }
-
-  next();
-}
-
-/**
- * Validate Toss payment confirmation
- */
-function validateTossConfirmation(req, res, next) {
-  const { paymentKey, orderId, amount } = req.body;
-
-  if (!paymentKey || !orderId || !amount) {
-    return sendValidationError(res, 'payment', 'Payment key, order ID, and amount are required');
-  }
-
-  if (!isValidAmount(amount)) {
-    return sendValidationError(res, 'amount', 'Amount must be a positive integer');
   }
 
   next();
@@ -337,13 +397,16 @@ module.exports = {
   isValidPaymentMethod,
   isValidProductType,
   isValidAmount,
+  isValidParentRole,
+  isValidParentGender,
+  isValidLatitude,
+  isValidLongitude,
 
   // Middleware
   validateAuthRequest,
   validateOTPRequest,
   validateBirthInfo,
   validatePaymentRequest,
-  validateTossConfirmation,
   validatePayPalCapture,
   validateUUIDParam,
   validateOrderIdParam,
