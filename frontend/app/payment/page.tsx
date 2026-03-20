@@ -153,16 +153,20 @@ function PaymentContent() {
       const sajuInput = sessionStorage.getItem('sajuInput')
       if (!sajuInput) { setError(t.payment.errorNoBirthInfo); setIsProcessing(false); return }
       const birthInfo = JSON.parse(sajuInput)
-      const result = await apiClient.calculateWithPromo({
+      // Fire request — don't await response (API Gateway may timeout at 30s)
+      // Lambda continues running and will send email regardless
+      apiClient.calculateWithPromo({
         promoCode: promoCode.trim(), email: email.trim(), subjectName: birthInfo.name,
         birthDate: birthInfo.birthDate, birthTime: birthInfo.birthTime, gender: birthInfo.gender,
         timezone: birthInfo.timezone, language: birthInfo.language, birthPlace: birthInfo.birthPlace,
         latitude: birthInfo.latitude, longitude: birthInfo.longitude,
         parentBirthDate: birthInfo.parentBirthDate, parentBirthTime: birthInfo.parentBirthTime,
         parentRole: birthInfo.parentRole, twinOrder: birthInfo.twinOrder, twinSiblingName: birthInfo.twinSiblingName,
-      })
+      }).catch(() => {}) // Ignore timeout errors — Lambda still runs
+
+      // Wait a moment for the request to be received by server, then redirect
+      await new Promise(r => setTimeout(r, 3000))
       sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: `promo_${promoCode.trim()}`, promoCode: promoCode.trim(), email: email.trim(), completedAt: new Date().toISOString() }))
-      sessionStorage.setItem('promo_reading', JSON.stringify(result))
       router.push('/payment/success')
     } catch (err: any) { setError(err.error || t.payment.errorReportGenerate) }
     finally { setIsProcessing(false) }
