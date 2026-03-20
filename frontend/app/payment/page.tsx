@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
 import { apiClient } from '@/lib/api'
+import { useLanguage } from '@/app/lib/i18n/context'
 import type { PromoValidateResponse } from '@/types'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
@@ -53,8 +54,11 @@ declare global {
   }
 }
 
+const INCLUDED_ICONS = ['🌊', '🌳', '👨‍👩‍👧', '💪', '🔮', '🧘', '✅', '📧']
+
 function PaymentContent() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [sdkReady, setSdkReady] = useState(false)
@@ -77,7 +81,7 @@ function PaymentContent() {
       apiClient.validatePromoCode(promoParam).then((result) => {
         setPromoResult(result)
         if (!result.valid) {
-          setError(result.error || '유효하지 않은 프로모 코드입니다.')
+          setError(result.error || t.payment.promoInvalid)
           setIsPromoFlow(false)
         }
       }).catch(() => { setIsPromoFlow(false) })
@@ -89,7 +93,7 @@ function PaymentContent() {
       return
     }
     setIsLoading(false)
-  }, [router])
+  }, [router, t])
 
   useEffect(() => {
     if (!sdkReady || isLoading || !window.paypal || buttonsRenderedRef.current) return
@@ -104,9 +108,9 @@ function PaymentContent() {
               sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, amount: PRODUCT_AMOUNT }))
               return response.paypalOrderId
             }
-            throw new Error('주문 생성에 실패했습니다.')
+            throw new Error(t.payment.errorCreateOrder)
           } catch (err: any) {
-            setError(err.error || '주문 생성 중 오류가 발생했습니다.')
+            setError(err.error || t.payment.errorCreateOrderProcess)
             throw err
           }
         },
@@ -119,15 +123,15 @@ function PaymentContent() {
               sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString() }))
               sessionStorage.removeItem('pending_order')
               router.push('/payment/success')
-            } else { setError('결제 확인에 실패했습니다.') }
-          } catch (err: any) { setError(err.error || '결제 처리 중 오류가 발생했습니다.') }
+            } else { setError(t.payment.errorCapturePayment) }
+          } catch (err: any) { setError(err.error || t.payment.errorProcessPayment) }
           finally { setIsProcessing(false) }
         },
-        onError: () => { setError('결제 중 오류가 발생했습니다. 다시 시도해주세요.') },
+        onError: () => { setError(t.payment.errorPaymentGeneral) },
         onCancel: () => {},
       }).render('#paypal-button-container')
-    } catch { setError('결제 시스템 초기화에 실패했습니다.') }
-  }, [sdkReady, isLoading, router, promoResult])
+    } catch { setError(t.payment.errorPaymentInit) }
+  }, [sdkReady, isLoading, router, promoResult, t])
 
   const handlePromoValidate = async () => {
     if (!promoCode.trim()) return
@@ -136,18 +140,18 @@ function PaymentContent() {
       const result = await apiClient.validatePromoCode(promoCode.trim())
       setPromoResult(result)
       if (result.valid) { setIsPromoFlow(true) }
-      else { setError(result.error || '유효하지 않은 프로모 코드입니다.') }
-    } catch (err: any) { setError(err.error || '프로모 코드 검증 중 오류가 발생했습니다.') }
+      else { setError(result.error || t.payment.promoInvalid) }
+    } catch (err: any) { setError(err.error || t.payment.promoValidateError) }
     finally { setPromoValidating(false) }
   }
 
   const handlePromoSubmit = async () => {
-    if (!email.trim()) { setError('이메일을 입력해주세요.'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('올바른 이메일 주소를 입력해주세요.'); return }
+    if (!email.trim()) { setError(t.payment.emailRequired); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError(t.payment.emailInvalid); return }
     setIsProcessing(true); setError('')
     try {
       const sajuInput = sessionStorage.getItem('sajuInput')
-      if (!sajuInput) { setError('생년월일 정보가 없습니다. 처음부터 다시 시도해주세요.'); setIsProcessing(false); return }
+      if (!sajuInput) { setError(t.payment.errorNoBirthInfo); setIsProcessing(false); return }
       const birthInfo = JSON.parse(sajuInput)
       const result = await apiClient.calculateWithPromo({
         promoCode: promoCode.trim(), email: email.trim(), subjectName: birthInfo.name,
@@ -160,7 +164,7 @@ function PaymentContent() {
       sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: `promo_${promoCode.trim()}`, promoCode: promoCode.trim(), completedAt: new Date().toISOString() }))
       sessionStorage.setItem('promo_reading', JSON.stringify(result))
       router.push('/payment/success')
-    } catch (err: any) { setError(err.error || '리포트 생성 중 오류가 발생했습니다.') }
+    } catch (err: any) { setError(err.error || t.payment.errorReportGenerate) }
     finally { setIsProcessing(false) }
   }
 
@@ -174,7 +178,7 @@ function PaymentContent() {
       <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={s.center}>
           <div style={{ ...s.spinner, width: '3rem', height: '3rem', borderWidth: '4px', marginBottom: '1rem' }} />
-          <p style={s.textMuted}>결제 정보를 준비하고 있습니다...</p>
+          <p style={s.textMuted}>{t.payment.loading}</p>
         </div>
       </div>
     )
@@ -200,7 +204,7 @@ function PaymentContent() {
               </div>
               <span style={s.logoName}>소명</span>
             </Link>
-            <button onClick={() => router.back()} style={s.back}>← 뒤로가기</button>
+            <button onClick={() => router.back()} style={s.back}>{t.payment.backButton}</button>
           </div>
         </header>
 
@@ -212,19 +216,19 @@ function PaymentContent() {
                 👨‍👩‍👧
               </div>
               <div>
-                <h1 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#2D3A35', marginBottom: '0.25rem' }}>사주팔자 프리미엄 분석</h1>
-                <p style={{ ...s.textMuted, marginBottom: '0.75rem' }}>부모-자녀 궁합 분석 · 연령별 발달 가이드 · 진로 심층 분석</p>
+                <h1 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#2D3A35', marginBottom: '0.25rem' }}>{t.payment.productTitle}</h1>
+                <p style={{ ...s.textMuted, marginBottom: '0.75rem' }}>{t.payment.productSubtitle}</p>
                 {promoResult?.valid ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#5A7A66' }}>무료</span>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#5A7A66' }}>{t.payment.free}</span>
                     <span style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'line-through' }}>$4.99</span>
-                    <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#5A7A66', background: 'rgba(90,122,102,0.1)', borderRadius: '4px' }}>프로모 코드 적용</span>
+                    <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#5A7A66', background: 'rgba(90,122,102,0.1)', borderRadius: '4px' }}>{t.payment.promoAppliedBadge}</span>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#C5A059' }}>$4.99</span>
                     <span style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'line-through' }}>$9.99</span>
-                    <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#C67B6F', background: 'rgba(198,123,111,0.1)', borderRadius: '4px' }}>50% OFF</span>
+                    <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#C67B6F', background: 'rgba(198,123,111,0.1)', borderRadius: '4px' }}>{t.payment.discountBadge}</span>
                   </div>
                 )}
               </div>
@@ -233,34 +237,25 @@ function PaymentContent() {
 
           {/* What's Included */}
           <div style={s.card}>
-            <h2 style={s.h2}>프리미엄에 포함된 내용</h2>
-            {[
-              { icon: '🌊', text: '아이의 타고난 기질 심층 분석' },
-              { icon: '🌳', text: '부모 양육 스타일 분석' },
-              { icon: '👨‍👩‍👧', text: '부모-자녀 관계 패턴 & 갈등 해법' },
-              { icon: '💪', text: '아이의 강점·약점 & 스트레스 신호' },
-              { icon: '🔮', text: '올해 운세 흐름 (대운/세운)' },
-              { icon: '🧘', text: '오행 밸런스 생활 조절법' },
-              { icon: '✅', text: '바로 실천할 수 있는 7가지 미션' },
-              { icon: '📧', text: 'PDF 리포트 + 이메일 발송' },
-            ].map((item, i) => (
+            <h2 style={s.h2}>{t.payment.includedTitle}</h2>
+            {t.payment.includedItems.map((text, i) => (
               <div key={i} style={s.row}>
-                <span style={{ fontSize: '1.125rem' }}>{item.icon}</span>
-                <span style={s.text}>{item.text}</span>
+                <span style={{ fontSize: '1.125rem' }}>{INCLUDED_ICONS[i]}</span>
+                <span style={s.text}>{text}</span>
               </div>
             ))}
           </div>
 
           {/* Promo Code */}
           <div style={s.card}>
-            <h2 style={s.h2}>프로모 코드</h2>
+            <h2 style={s.h2}>{t.payment.promoCodeTitle}</h2>
             {promoResult?.valid ? (
               <div style={s.promoApplied}>
                 <div>
-                  <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#5A7A66', margin: 0 }}>{promoResult.promoCode?.code} 적용 완료</p>
-                  <p style={{ ...s.textMuted, margin: '0.25rem 0 0' }}>{promoResult.promoCode?.partnerName} 제휴 혜택</p>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#5A7A66', margin: 0 }}>{promoResult.promoCode?.code} {t.payment.promoApplied}</p>
+                  <p style={{ ...s.textMuted, margin: '0.25rem 0 0' }}>{promoResult.promoCode?.partnerName} {t.payment.promoPartnerBenefit}</p>
                 </div>
-                <button onClick={handlePromoClear} style={{ ...s.back, fontSize: '0.75rem' }}>취소</button>
+                <button onClick={handlePromoClear} style={{ ...s.back, fontSize: '0.75rem' }}>{t.payment.promoCancel}</button>
               </div>
             ) : (
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -269,7 +264,7 @@ function PaymentContent() {
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                   onKeyDown={(e) => e.key === 'Enter' && handlePromoValidate()}
-                  placeholder="프로모 코드 입력"
+                  placeholder={t.payment.promoCodePlaceholder}
                   style={{ ...s.input, flex: 1, width: 'auto' }}
                 />
                 <button
@@ -277,7 +272,7 @@ function PaymentContent() {
                   disabled={promoValidating || !promoCode.trim()}
                   style={{ ...s.btnSmall, opacity: promoValidating || !promoCode.trim() ? 0.5 : 1 }}
                 >
-                  {promoValidating ? '확인중...' : '적용'}
+                  {promoValidating ? t.payment.promoValidating : t.payment.promoApply}
                 </button>
               </div>
             )}
@@ -286,8 +281,8 @@ function PaymentContent() {
           {/* Email (promo flow) */}
           {promoResult?.valid && (
             <div style={s.card}>
-              <h2 style={s.h2}>이메일 주소</h2>
-              <p style={{ ...s.textMuted, marginBottom: '0.75rem' }}>리포트를 이메일로도 받아보실 수 있습니다.</p>
+              <h2 style={s.h2}>{t.payment.emailTitle}</h2>
+              <p style={{ ...s.textMuted, marginBottom: '0.75rem' }}>{t.payment.emailSubtitle}</p>
               <input
                 type="email"
                 value={email}
@@ -309,32 +304,32 @@ function PaymentContent() {
                 {isProcessing ? (
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                     <span style={s.spinner} />
-                    리포트 생성 중...
+                    {t.payment.generatingReport}
                   </span>
-                ) : '무료로 리포트 받기'}
+                ) : t.payment.getReportFree}
               </button>
               {isProcessing && (
                 <p style={{ ...s.textMuted, textAlign: 'center', marginTop: '1rem', lineHeight: 1.6 }}>
-                  AI가 리포트를 작성하고 있습니다 (30~40초 소요).<br />
-                  이메일로도 발송되니, 창을 닫으셔도 됩니다.
+                  {t.payment.aiGenerating}<br />
+                  {t.payment.emailAlsoSent}
                 </p>
               )}
               {error && <div style={s.error}>{error}</div>}
             </div>
           ) : (
             <div style={s.card}>
-              <h2 style={s.h2}>결제 수단</h2>
+              <h2 style={s.h2}>{t.payment.paymentMethodTitle}</h2>
               {isProcessing && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 0' }}>
                   <div style={{ ...s.spinner, width: '2rem', height: '2rem', borderWidth: '3px', marginRight: '0.75rem' }} />
-                  <p style={s.textMuted}>결제를 처리하고 있습니다...</p>
+                  <p style={s.textMuted}>{t.payment.processingPayment}</p>
                 </div>
               )}
               <div id="paypal-button-container" style={{ display: isProcessing ? 'none' : 'block' }} />
               {!sdkReady && !isProcessing && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 0' }}>
                   <div style={{ ...s.spinner, width: '1.5rem', height: '1.5rem', borderWidth: '2px', marginRight: '0.75rem' }} />
-                  <p style={{ ...s.textMuted, fontSize: '0.875rem' }}>결제 시스템을 불러오는 중...</p>
+                  <p style={{ ...s.textMuted, fontSize: '0.875rem' }}>{t.payment.loadingPaymentSystem}</p>
                 </div>
               )}
               {error && <div style={s.error}>{error}</div>}
@@ -343,11 +338,11 @@ function PaymentContent() {
 
           {/* Terms */}
           <p style={{ ...s.textMuted, textAlign: 'center', lineHeight: 1.8, marginTop: '1.5rem' }}>
-            {promoResult?.valid ? '리포트를 받으시면' : '결제를 진행하시면'}{' '}
-            <Link href="/terms" style={{ color: '#C5A059' }}>이용약관</Link>,{' '}
-            <Link href="/privacy" style={{ color: '#C5A059' }}>개인정보처리방침</Link>,{' '}
-            <Link href="/refund" style={{ color: '#C5A059' }}>환불정책</Link>에 동의하게 됩니다.
-            <br />결과 생성 시작 시 청약철회가 제한될 수 있습니다.
+            {promoResult?.valid ? t.payment.termsPromo : t.payment.termsPaid}{' '}
+            <Link href="/terms" style={{ color: '#C5A059' }}>{t.payment.termsOfService}</Link>,{' '}
+            <Link href="/privacy" style={{ color: '#C5A059' }}>{t.payment.privacyPolicy}</Link>,{' '}
+            <Link href="/refund" style={{ color: '#C5A059' }}>{t.payment.refundPolicy}</Link>{t.payment.termsAgree}
+            <br />{t.payment.termsWithdrawal}
           </p>
 
           {/* Security */}
@@ -356,7 +351,7 @@ function PaymentContent() {
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-            <span>{promoResult?.valid ? '안전한 리포트 생성' : 'PayPal 안전 결제'}</span>
+            <span>{promoResult?.valid ? t.payment.securityPromo : t.payment.securityPaypal}</span>
           </div>
         </main>
       </div>
@@ -368,7 +363,7 @@ function LoadingFallback() {
   return (
     <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={s.center}>
-        <p style={s.textMuted}>로딩 중...</p>
+        <p style={s.textMuted}>Loading...</p>
       </div>
     </div>
   )

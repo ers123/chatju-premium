@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useLanguage } from '@/app/lib/i18n/context'
 
 interface Message {
   id: string
@@ -10,13 +11,8 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'ai',
-      content: "안녕하셔요, 반갑습니다. 귀하의 타고난 기운과 하늘의 흐름을 함께 짚어드릴 소명(昭明)의 AI 도사입니다. 성격, 진로, 연애 혹은 다가올 운의 흐름에 대해 무엇이든 편안하게 물어보셔요."
-    }
-  ])
+  const { t } = useLanguage()
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [hoveredSuggestion, setHoveredSuggestion] = useState<number | null>(null)
@@ -27,12 +23,14 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const suggestions = [
-    '나에게 가장 잘 맞는 직업은?',
-    '올해의 전반적인 운세가 궁금해요',
-    '나의 타고난 성격적 강점은?',
-    '재물운을 높이려면 어떻게 해야 할까요?'
-  ]
+  // Set welcome message based on language
+  useEffect(() => {
+    setMessages([{
+      id: '1',
+      role: 'ai',
+      content: t.chat.welcomeMessage
+    }])
+  }, [t.chat.welcomeMessage])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -127,7 +125,7 @@ export default function ChatPage() {
             </Link>
             <div style={{ width: '1px', height: '1.5rem', background: '#EBE5DF' }} />
             <div>
-              <h1 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.2em', color: '#1A3D2E', textTransform: 'uppercase', margin: 0 }}>Celestial Consultation</h1>
+              <h1 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.2em', color: '#1A3D2E', textTransform: 'uppercase', margin: 0 }}>{t.chat.headerTitle}</h1>
             </div>
           </div>
           <Link
@@ -147,7 +145,7 @@ export default function ChatPage() {
             onMouseEnter={() => setRegistryHovered(true)}
             onMouseLeave={() => setRegistryHovered(false)}
           >
-            &#8592; Registry
+            {t.chat.registry}
           </Link>
         </div>
       </header>
@@ -181,7 +179,7 @@ export default function ChatPage() {
                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                   marginTop: '0.25rem'
                 }}>
-                  <span style={{ fontSize: '10px', color: '#C5A059', fontWeight: 700, fontFamily: 'serif' }}>도사</span>
+                  <span style={{ fontSize: '10px', color: '#C5A059', fontWeight: 700, fontFamily: 'serif' }}>{t.chat.avatarLabel}</span>
                 </div>
               )}
               <div style={{
@@ -215,7 +213,7 @@ export default function ChatPage() {
                     color: '#C5A059',
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase'
-                  }}>The Insight</div>
+                  }}>{t.chat.insightLabel}</div>
                 )}
                 <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{message.content}</p>
               </div>
@@ -225,7 +223,7 @@ export default function ChatPage() {
           {/* Show suggestions only after first AI message */}
           {messages.length === 1 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', paddingTop: '1rem' }}>
-              {suggestions.map((suggestion, index) => (
+              {t.chat.suggestions.map((suggestion, index) => (
                 <button
                   key={index}
                   onClick={() => handleSuggestionClick(suggestion)}
@@ -263,7 +261,7 @@ export default function ChatPage() {
                 flexShrink: 0,
                 border: '1px solid rgba(197,160,89,0.2)'
               }}>
-                <span style={{ fontSize: '10px', color: '#C5A059', fontWeight: 700, fontFamily: 'serif' }}>도사</span>
+                <span style={{ fontSize: '10px', color: '#C5A059', fontWeight: 700, fontFamily: 'serif' }}>{t.chat.avatarLabel}</span>
               </div>
               <div style={{
                 background: 'rgba(255,255,255,0.5)',
@@ -301,7 +299,7 @@ export default function ChatPage() {
               onKeyDown={handleKeyDown}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
-              placeholder="하늘의 뜻을 물으셔요..."
+              placeholder={t.chat.placeholder}
               style={{
                 width: '100%',
                 padding: '1.25rem 5rem 1.25rem 1.5rem',
@@ -353,7 +351,7 @@ export default function ChatPage() {
             </button>
           </div>
           <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(26,61,46,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>Private &amp; Eternal Channel</p>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(26,61,46,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>{t.chat.footerLabel}</p>
             <div style={{ height: '1px', width: '3rem', background: '#EBE5DF' }} />
           </div>
         </div>

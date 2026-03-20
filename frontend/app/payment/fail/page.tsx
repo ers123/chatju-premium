@@ -4,10 +4,12 @@ import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useLanguage } from '@/app/lib/i18n/context'
 
 function PaymentFailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useLanguage()
 
   const reason = searchParams.get('reason') || ''
   const orderId = searchParams.get('orderId')
@@ -15,8 +17,8 @@ function PaymentFailContent() {
   const isCancelled = reason === 'cancelled'
 
   const message = isCancelled
-    ? '결제가 취소되었습니다.'
-    : reason || '결제 처리 중 오류가 발생했습니다. 다시 시도해주세요.'
+    ? t.payment.failCancelledMsg
+    : reason || t.payment.failDefaultMsg
 
   return (
     <div style={{ minHeight: '100vh', background: '#FDFCFA' }}>
@@ -78,7 +80,7 @@ function PaymentFailContent() {
             color: '#2D3A35',
             marginBottom: '0.5rem',
           }}>
-            {isCancelled ? '결제가 취소되었습니다' : '결제에 실패했습니다'}
+            {isCancelled ? t.payment.failCancelled : t.payment.failTitle}
           </h1>
 
           {/* Message */}
@@ -102,9 +104,9 @@ function PaymentFailContent() {
               backgroundColor: 'rgba(235, 229, 223, 0.4)',
               borderRadius: '12px',
             }}>
-              <p style={{ fontSize: '0.75rem', color: '#8B8580', marginBottom: '0.5rem' }}>오류 정보</p>
+              <p style={{ fontSize: '0.75rem', color: '#8B8580', marginBottom: '0.5rem' }}>{t.payment.failErrorInfo}</p>
               <p style={{ fontSize: '0.875rem', color: '#6B5E52', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                주문번호: {orderId}
+                {t.payment.failOrderId}: {orderId}
               </p>
             </div>
           )}
@@ -131,7 +133,7 @@ function PaymentFailContent() {
                 cursor: 'pointer',
               }}
             >
-              다시 시도하기
+              {t.payment.failRetry}
             </button>
 
             <Link
@@ -150,11 +152,11 @@ function PaymentFailContent() {
                 boxSizing: 'border-box',
               }}
             >
-              무료 분석 결과로 돌아가기
+              {t.payment.failBackToResults}
             </Link>
 
             <Link href="/" style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'none' }}>
-              홈으로 돌아가기
+              {t.payment.failGoHome}
             </Link>
           </div>
 
@@ -166,7 +168,7 @@ function PaymentFailContent() {
             border: '1px solid rgba(235, 229, 223, 0.6)',
             borderRadius: '1.25rem',
           }}>
-            <h3 style={{ fontFamily: 'serif', color: '#2D3A35', marginBottom: '0.75rem' }}>결제가 계속 실패하나요?</h3>
+            <h3 style={{ fontFamily: 'serif', color: '#2D3A35', marginBottom: '0.75rem' }}>{t.payment.failHelpTitle}</h3>
             <ul style={{
               fontSize: '0.875rem',
               color: '#6B5E52',
@@ -178,26 +180,20 @@ function PaymentFailContent() {
               flexDirection: 'column',
               gap: '0.5rem',
             }}>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                <span style={{ color: '#C5A059' }}>•</span>
-                <span>PayPal 계정 잔액 또는 연결된 카드를 확인해보세요</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                <span style={{ color: '#C5A059' }}>•</span>
-                <span>다른 브라우저나 시크릿 모드를 사용해보세요</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                <span style={{ color: '#C5A059' }}>•</span>
-                <span>PayPal 계정에 로그인하여 결제 제한 여부를 확인해보세요</span>
-              </li>
+              {t.payment.failHelpItems.map((item, i) => (
+                <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                  <span style={{ color: '#C5A059' }}>•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(235, 229, 223, 0.6)' }}>
               <p style={{ fontSize: '0.875rem', color: '#8B8580' }}>
-                그래도 문제가 해결되지 않으면{' '}
+                {t.payment.failContactPrefix}{' '}
                 <a href="mailto:support@harmonyon.kr" style={{ color: '#C5A059', textDecoration: 'none' }}>
                   support@harmonyon.kr
                 </a>
-                로 문의해주세요.
+                {t.payment.failContactSuffix}
               </p>
             </div>
           </div>
@@ -233,7 +229,7 @@ function LoadingFallback() {
             animation: 'spin 1s linear infinite',
           }} />
         </div>
-        <p style={{ color: '#8B8580' }}>로딩 중...</p>
+        <p style={{ color: '#8B8580' }}>Loading...</p>
       </div>
     </div>
   )

@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api'
+import { useLanguage } from '@/app/lib/i18n/context'
 
 export default function SignUpPage() {
+  const { t } = useLanguage()
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -22,7 +24,7 @@ export default function SignUpPage() {
       await apiClient.signup({ email: formData.email, name: formData.name })
       setSuccess(true)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '회원가입에 실패했습니다.')
+      setError(err instanceof Error ? err.message : t.auth.signupFailed)
     } finally {
       setIsLoading(false)
     }
@@ -89,22 +91,22 @@ export default function SignUpPage() {
               color: '#2D3A35',
               marginBottom: '0.75rem',
               marginTop: 0
-            }}>가입을 환영합니다!</h2>
+            }}>{t.auth.signupWelcome}</h2>
             <p style={{
               color: '#6B6560',
               marginBottom: '2rem',
               lineHeight: 1.6,
               fontSize: '0.9375rem'
             }}>
-              <span style={{ color: '#2D3A35', fontWeight: 500 }}>{formData.email}</span>으로<br />
-              확인 이메일을 전송했습니다.
+              <span style={{ color: '#2D3A35', fontWeight: 500 }}>{formData.email}</span>{t.auth.confirmEmailSentTo}<br />
+              {t.auth.confirmEmailSent}
             </p>
             <p style={{
               fontSize: '0.875rem',
               color: '#8B8580',
               marginBottom: '2rem'
             }}>
-              이메일의 링크를 클릭하여 가입을 완료해주세요.
+              {t.auth.clickLinkToComplete}
             </p>
             <Link href="/auth/signin">
               <button style={{
@@ -118,7 +120,7 @@ export default function SignUpPage() {
                 color: '#C5A059',
                 boxShadow: '0 4px 12px rgba(45,58,53,0.15)'
               }}>
-                로그인 페이지로
+                {t.auth.goToLogin}
               </button>
             </Link>
           </div>
@@ -138,13 +140,13 @@ export default function SignUpPage() {
                 marginBottom: '0.5rem',
                 marginTop: 0,
                 letterSpacing: '-0.02em'
-              }}>회원가입</h2>
+              }}>{t.auth.signupTitle}</h2>
               <p style={{
                 color: '#6B6560',
                 fontSize: '0.9375rem',
                 margin: 0
               }}>
-                프리미엄 서비스를 시작하세요
+                {t.auth.signupSubtitle}
               </p>
             </div>
 
@@ -157,7 +159,7 @@ export default function SignUpPage() {
                   marginBottom: '0.75rem',
                   fontWeight: 500
                 }}>
-                  이름
+                  {t.auth.nameLabel}
                 </label>
                 <input
                   type="text"
@@ -165,7 +167,7 @@ export default function SignUpPage() {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  placeholder="홍길동"
+                  placeholder={t.auth.namePlaceholder}
                   required
                   style={{
                     width: '100%',
@@ -189,7 +191,7 @@ export default function SignUpPage() {
                   marginBottom: '0.75rem',
                   fontWeight: 500
                 }}>
-                  이메일
+                  {t.auth.emailLabelShort}
                 </label>
                 <input
                   type="email"
@@ -256,19 +258,19 @@ export default function SignUpPage() {
                       <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    처리 중...
+                    {t.auth.processing}
                   </span>
                 ) : (
-                  '가입하기'
+                  t.auth.signupButton
                 )}
               </button>
 
               <p style={{ fontSize: '0.75rem', color: '#8B8580', textAlign: 'center', margin: 0 }}>
-                가입하시면{' '}
-                <Link href="/terms" style={{ color: '#C5A059', textDecoration: 'none' }}>이용약관</Link>
-                {' '}및{' '}
-                <Link href="/privacy" style={{ color: '#C5A059', textDecoration: 'none' }}>개인정보처리방침</Link>
-                에 동의하게 됩니다.
+                {t.auth.termsAgreePre}{' '}
+                <Link href="/terms" style={{ color: '#C5A059', textDecoration: 'none' }}>{t.auth.terms}</Link>
+                {' '}{t.auth.termsAnd}{' '}
+                <Link href="/privacy" style={{ color: '#C5A059', textDecoration: 'none' }}>{t.auth.privacy}</Link>
+                {t.auth.termsAgreePost}
               </p>
             </form>
 
@@ -285,19 +287,19 @@ export default function SignUpPage() {
                 color: '#6B6560',
                 fontWeight: 500
               }}>
-                또는
+                {t.auth.or}
               </span>
             </div>
 
             <div style={{ textAlign: 'center' }}>
               <p style={{ color: '#6B6560', fontSize: '0.875rem', margin: 0 }}>
-                이미 계정이 있으신가요?{' '}
+                {t.auth.alreadyHaveAccount}{' '}
                 <Link href="/auth/signin" style={{
                   color: '#B69B7D',
                   fontWeight: 500,
                   textDecoration: 'none'
                 }}>
-                  로그인
+                  {t.auth.login}
                 </Link>
               </p>
             </div>
@@ -306,7 +308,7 @@ export default function SignUpPage() {
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <p style={{ fontSize: '0.75rem', color: 'rgba(107,101,96,0.5)' }}>
-            © 2025 소명. All rights reserved.
+            {t.auth.copyright}
           </p>
         </div>
       </div>

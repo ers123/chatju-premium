@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api'
+import { useLanguage } from '@/app/lib/i18n/context'
 
 export default function SignInPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -32,7 +34,7 @@ export default function SignInPage() {
       await apiClient.login({ email })
       setSuccess(true)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '로그인 링크 전송에 실패했습니다.')
+      setError(err instanceof Error ? err.message : t.auth.loginFailed)
     } finally {
       setIsLoading(false)
     }
@@ -59,10 +61,10 @@ export default function SignInPage() {
         sessionStorage.removeItem('redirect_after_login')
         router.push(redirect || '/')
       } else {
-        setError(data.error || 'Dev login failed')
+        setError(data.error || t.auth.devLoginFailed)
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Dev login failed')
+      setError(err instanceof Error ? err.message : t.auth.devLoginFailed)
     } finally {
       setIsLoading(false)
     }
@@ -129,15 +131,15 @@ export default function SignInPage() {
               color: '#2D3A35',
               marginBottom: '0.75rem',
               marginTop: 0
-            }}>이메일을 확인하세요</h2>
+            }}>{t.auth.checkEmail}</h2>
             <p style={{
               color: '#6B6560',
               marginBottom: '2rem',
               lineHeight: 1.6,
               fontSize: '0.9375rem'
             }}>
-              <span style={{ color: '#2D3A35', fontWeight: 500 }}>{email}</span>으로<br />
-              로그인 링크를 전송했습니다.
+              <span style={{ color: '#2D3A35', fontWeight: 500 }}>{email}</span>{t.auth.loginLinkSentTo}<br />
+              {t.auth.loginLinkSent}
             </p>
             {redirectPath === '/payment' && (
               <p style={{
@@ -146,11 +148,11 @@ export default function SignInPage() {
                 fontWeight: 500,
                 marginBottom: '1rem'
               }}>
-                로그인 후 결제 페이지로 자동 이동됩니다
+                {t.auth.redirectAfterLoginSuccess}
               </p>
             )}
             <p style={{ fontSize: '0.75rem', color: '#8B8580' }}>
-              이메일이 도착하지 않았다면 스팸함을 확인해주세요.
+              {t.auth.checkSpam}
             </p>
           </div>
         ) : (
@@ -169,13 +171,13 @@ export default function SignInPage() {
                 marginBottom: '0.5rem',
                 marginTop: 0,
                 letterSpacing: '-0.02em'
-              }}>환영합니다</h2>
+              }}>{t.auth.welcome}</h2>
               <p style={{
                 color: '#6B6560',
                 fontSize: '0.9375rem',
                 margin: 0
               }}>
-                천년의 지혜와 만나는 시작점입니다
+                {t.auth.welcomeSubtitle}
               </p>
               {redirectPath === '/payment' && (
                 <p style={{
@@ -184,7 +186,7 @@ export default function SignInPage() {
                   color: '#B69B7D',
                   fontWeight: 500
                 }}>
-                  로그인 후 결제 페이지로 이동합니다
+                  {t.auth.redirectAfterLogin}
                 </p>
               )}
             </div>
@@ -198,7 +200,7 @@ export default function SignInPage() {
                   marginBottom: '0.75rem',
                   fontWeight: 500
                 }}>
-                  이메일 주소
+                  {t.auth.emailLabel}
                 </label>
                 <input
                   type="email"
@@ -263,10 +265,10 @@ export default function SignInPage() {
                       <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    전송 중...
+                    {t.auth.sending}
                   </span>
                 ) : (
-                  '로그인 링크 받기'
+                  t.auth.getLoginLink
                 )}
               </button>
             </form>
@@ -284,19 +286,19 @@ export default function SignInPage() {
                 color: '#6B6560',
                 fontWeight: 500
               }}>
-                또는
+                {t.auth.or}
               </span>
             </div>
 
             <div style={{ textAlign: 'center' }}>
               <p style={{ color: '#6B6560', fontSize: '0.875rem', margin: 0 }}>
-                처음이신가요?{' '}
+                {t.auth.newUser}{' '}
                 <Link href="/auth/signup" style={{
                   color: '#B69B7D',
                   fontWeight: 500,
                   textDecoration: 'none'
                 }}>
-                  회원가입
+                  {t.auth.signup}
                 </Link>
               </p>
             </div>
@@ -319,9 +321,9 @@ export default function SignInPage() {
                     cursor: 'pointer'
                   }}
                 >
-                  Dev Login (skip magic link)
+                  {t.auth.devLogin}
                 </button>
-                <p style={{ fontSize: '10px', textAlign: 'center', marginTop: '0.25rem', color: 'rgba(198, 123, 111, 0.6)' }}>Development only — not visible in production</p>
+                <p style={{ fontSize: '10px', textAlign: 'center', marginTop: '0.25rem', color: 'rgba(198, 123, 111, 0.6)' }}>{t.auth.devLoginNote}</p>
               </div>
             )}
           </div>
@@ -329,7 +331,7 @@ export default function SignInPage() {
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <p style={{ fontSize: '0.75rem', color: 'rgba(107,101,96,0.5)' }}>
-            © 2025 소명. All rights reserved.
+            {t.auth.copyright}
           </p>
         </div>
       </div>

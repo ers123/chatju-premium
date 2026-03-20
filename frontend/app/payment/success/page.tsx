@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useLanguage } from '@/app/lib/i18n/context'
 
 // Shared styles
 const s = {
@@ -28,6 +29,7 @@ const s = {
 
 function PaymentSuccessContent() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [status, setStatus] = useState<'checking' | 'success' | 'error'>('checking')
   const [error, setError] = useState('')
   const [orderIdState, setOrderIdState] = useState('')
@@ -43,14 +45,14 @@ function PaymentSuccessContent() {
         setOrderIdState(completed.orderId || '')
         setStatus('success')
       } catch {
-        setError('결제 정보를 불러올 수 없습니다.')
+        setError(t.payment.successLoadError)
         setStatus('error')
       }
     } else {
-      setError('결제 정보를 찾을 수 없습니다. 이미 처리되었거나 유효하지 않은 접근입니다.')
+      setError(t.payment.successNotFound)
       setStatus('error')
     }
-  }, [])
+  }, [t])
 
   if (status === 'checking') {
     return (
@@ -61,8 +63,8 @@ function PaymentSuccessContent() {
             <div style={{ position: 'absolute', inset: 0, border: '4px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>💳</div>
           </div>
-          <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35', marginBottom: '0.5rem' }}>결제 확인 중</h2>
-          <p style={{ color: '#8B8580' }}>잠시만 기다려주세요...</p>
+          <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35', marginBottom: '0.5rem' }}>{t.payment.successChecking}</h2>
+          <p style={{ color: '#8B8580' }}>{t.payment.successWait}</p>
         </div>
       </div>
     )
@@ -75,20 +77,20 @@ function PaymentSuccessContent() {
           <div style={{ width: '5rem', height: '5rem', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(198, 123, 111, 0.1)' }}>
             <span style={{ fontSize: '2.5rem' }}>😢</span>
           </div>
-          <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35', marginBottom: '0.5rem' }}>결제 확인 실패</h2>
+          <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35', marginBottom: '0.5rem' }}>{t.payment.successCheckFailed}</h2>
           <p style={{ color: '#8B8580', marginBottom: '1.5rem' }}>{error}</p>
           <p style={{ fontSize: '0.875rem', color: '#8B8580', marginBottom: '1.5rem' }}>
-            문제가 지속되면 support@harmonyon.kr로 문의해주세요.
+            {t.payment.successContactSupport}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <button
               onClick={() => router.push('/payment')}
               style={s.btnPrimary}
             >
-              다시 시도하기
+              {t.payment.successRetry}
             </button>
             <Link href="/" style={{ ...s.link, textAlign: 'center' }}>
-              홈으로 돌아가기
+              {t.payment.successGoHome}
             </Link>
           </div>
         </div>
@@ -118,27 +120,27 @@ function PaymentSuccessContent() {
               <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h1 style={{ fontFamily: 'serif', fontSize: '1.5rem', color: '#2D3A35', marginBottom: '0.5rem' }}>결제가 완료되었습니다!</h1>
+          <h1 style={{ fontFamily: 'serif', fontSize: '1.5rem', color: '#2D3A35', marginBottom: '0.5rem' }}>{t.payment.successTitle}</h1>
           <p style={{ color: '#8B8580' }}>
-            프리미엄 분석을 시작할 준비가 되었습니다.
+            {t.payment.successSubtitle}
           </p>
         </div>
 
         {/* Order Summary */}
         <div style={s.card}>
-          <h2 style={s.h2}>주문 내역</h2>
+          <h2 style={s.h2}>{t.payment.successOrderTitle}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#6B5E52' }}>상품명</span>
-              <span style={{ fontWeight: 500, color: '#2D3A35' }}>사주팔자 프리미엄 분석</span>
+              <span style={{ color: '#6B5E52' }}>{t.payment.successProductLabel}</span>
+              <span style={{ fontWeight: 500, color: '#2D3A35' }}>{t.payment.productTitle}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#6B5E52' }}>결제 금액</span>
+              <span style={{ color: '#6B5E52' }}>{t.payment.successAmountLabel}</span>
               <span style={{ fontWeight: 700, color: '#C5A059' }}>$4.99</span>
             </div>
             {orderIdState && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#6B5E52' }}>주문 번호</span>
+                <span style={{ color: '#6B5E52' }}>{t.payment.successOrderIdLabel}</span>
                 <span style={{ fontSize: '0.875rem', color: '#8B8580', fontFamily: 'monospace' }}>{orderIdState}</span>
               </div>
             )}
@@ -147,17 +149,12 @@ function PaymentSuccessContent() {
 
         {/* Next Steps */}
         <div style={{ color: '#fff', padding: '1.5rem', marginBottom: '1rem', background: 'linear-gradient(135deg, #2D3A35, #3D5A4E)', borderRadius: '1rem' }}>
-          <h2 style={{ fontFamily: 'serif', marginBottom: '1rem' }}>다음 단계</h2>
+          <h2 style={{ fontFamily: 'serif', marginBottom: '1rem' }}>{t.payment.successNextSteps}</h2>
           <p style={{ marginBottom: '1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
-            이제 부모님 정보와 아이 정보를 입력하시면 심층 분석 결과를 받아보실 수 있습니다.
+            {t.payment.successNextDesc}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {[
-              '부모님 생년월일 입력',
-              '아이 생년월일 입력',
-              'AI가 심층 분석 수행',
-              '맞춤 리포트 제공'
-            ].map((step, i) => (
+            {t.payment.successSteps.map((step, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{ width: '1.5rem', height: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem', fontWeight: 700, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.2)' }}>
                   {i + 1}
@@ -177,21 +174,21 @@ function PaymentSuccessContent() {
             }}
             style={s.btnPrimary}
           >
-            프리미엄 분석 시작하기
+            {t.payment.successStartAnalysis}
           </button>
           <Link href="/" style={{ ...s.link, textAlign: 'center' }}>
-            나중에 하기
+            {t.payment.successLater}
           </Link>
         </div>
 
         {/* Support */}
         <div style={{ marginTop: '2.5rem', textAlign: 'center' }}>
           <p style={{ fontSize: '0.875rem', color: '#8B8580' }}>
-            문의사항이 있으시면{' '}
+            {t.payment.successSupportText}{' '}
             <a href="mailto:support@harmonyon.kr" style={{ color: '#C5A059', textDecoration: 'none' }}>
               support@harmonyon.kr
             </a>
-            로 연락해주세요.
+            {t.payment.successSupportSuffix}
           </p>
         </div>
       </main>
@@ -207,7 +204,7 @@ function LoadingFallback() {
           <div style={{ position: 'absolute', inset: 0, border: '4px solid #EBE5DF', borderRadius: '50%' }} />
           <div style={{ position: 'absolute', inset: 0, border: '4px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         </div>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35', marginBottom: '0.5rem' }}>로딩 중...</h2>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35', marginBottom: '0.5rem' }}>Loading...</h2>
       </div>
     </div>
   )
