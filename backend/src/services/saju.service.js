@@ -293,33 +293,30 @@ async function generateSajuReading(params) {
 
     // Step 6: Fire-and-forget email delivery (if deliveryEmail provided)
     if (deliveryEmail) {
-      setImmediate(async () => {
-        try {
-          const emailService = require('./email.service');
-          await emailService.sendReportEmail({
-            email: deliveryEmail,
-            childName: subjectName,
-            readingId: reading.id,
-            manseryeok: manseryeokResult,
-            aiInterpretation,
-            birthDate,
-            gender,
-            language,
-          });
-          // Update email status
-          await supabaseAdmin
-            .from('readings')
-            .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
-            .eq('id', reading.id);
-          console.log('[Saju Service] Report email sent to:', deliveryEmail);
-        } catch (emailErr) {
-          console.error('[Saju Service] Email delivery failed:', emailErr.message);
-          await supabaseAdmin
-            .from('readings')
-            .update({ email_status: 'failed' })
-            .eq('id', reading.id);
-        }
-      });
+      try {
+        const emailService = require('./email.service');
+        await emailService.sendReportEmail({
+          email: deliveryEmail,
+          childName: subjectName,
+          readingId: reading.id,
+          manseryeok: manseryeokResult,
+          aiInterpretation,
+          birthDate,
+          gender,
+          language,
+        });
+        await supabaseAdmin
+          .from('readings')
+          .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
+          .eq('id', reading.id);
+        console.log('[Saju Service] Report email sent to:', deliveryEmail);
+      } catch (emailErr) {
+        console.error('[Saju Service] Email delivery failed:', emailErr.message);
+        await supabaseAdmin
+          .from('readings')
+          .update({ email_status: 'failed' })
+          .eq('id', reading.id);
+      }
     }
 
     // Step 7: Return complete reading with database ID
