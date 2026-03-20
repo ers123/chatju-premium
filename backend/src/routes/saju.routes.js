@@ -379,55 +379,44 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       readingId: null, // Will be updated after reading is created
     });
 
-    // Step 5: Respond immediately — reading will be generated and emailed
-    res.status(202).json({
-      accepted: true,
-      message: '리포트 생성이 시작되었습니다. 이메일로 발송됩니다.',
-      email,
+    // Step 5: Generate reading synchronously (Lambda needs to complete before exiting)
+    const reading = await sajuService.generateSajuReading({
+      userId: null,
+      orderId: null,
+      birthDate: normalizedBirthDate,
+      birthTime,
+      gender,
+      timezone: timezone || 'Asia/Seoul',
+      language: language || 'ko',
+      subjectName,
+      birthPlace,
+      latitude,
+      longitude,
+      parentManseryeok,
+      parentRole: parentRole || null,
+      twinInfo: twinOrder ? { order: twinOrder, siblingName: twinSiblingName || null } : null,
+      promoCodeId: promoResult.promoCode.id,
+      deliveryEmail: email,
+      skipPaymentCheck: true,
+    });
+
+    // Update usage record with reading ID
+    if (usagePlaceholder?.id) {
+      const { supabaseAdmin } = require('../config/supabase');
+      await supabaseAdmin
+        .from('promo_usage')
+        .update({ reading_id: reading.readingId })
+        .eq('id', usagePlaceholder.id);
+    }
+
+    console.log('[Saju Route] Promo reading generated:', {
+      readingId: reading.readingId,
       promoCode: promoResult.promoCode.code,
+      email,
     });
 
-    // Step 6: Generate reading in background (Lambda continues after response)
-    setImmediate(async () => {
-      try {
-        const reading = await sajuService.generateSajuReading({
-          userId: null,
-          orderId: null,
-          birthDate: normalizedBirthDate,
-          birthTime,
-          gender,
-          timezone: timezone || 'Asia/Seoul',
-          language: language || 'ko',
-          subjectName,
-          birthPlace,
-          latitude,
-          longitude,
-          parentManseryeok,
-          parentRole: parentRole || null,
-          twinInfo: twinOrder ? { order: twinOrder, siblingName: twinSiblingName || null } : null,
-          promoCodeId: promoResult.promoCode.id,
-          deliveryEmail: email,
-          skipPaymentCheck: true,
-        });
-
-        // Update usage record with reading ID
-        if (usagePlaceholder?.id) {
-          const { supabaseAdmin } = require('../config/supabase');
-          await supabaseAdmin
-            .from('promo_usage')
-            .update({ reading_id: reading.readingId })
-            .eq('id', usagePlaceholder.id);
-        }
-
-        console.log('[Saju Route] Promo reading generated (async):', {
-          readingId: reading.readingId,
-          promoCode: promoResult.promoCode.code,
-          email,
-        });
-      } catch (bgError) {
-        console.error('[Saju Route] Background promo reading failed:', bgError.message);
-      }
-    });
+    // Step 6: Return reading data (email is sent fire-and-forget from saju.service)
+    res.status(200).json(reading);
 
   } catch (error) {
     console.error('[Saju Route] Promo calculate error:', error);

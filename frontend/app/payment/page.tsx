@@ -153,7 +153,7 @@ function PaymentContent() {
       const sajuInput = sessionStorage.getItem('sajuInput')
       if (!sajuInput) { setError(t.payment.errorNoBirthInfo); setIsProcessing(false); return }
       const birthInfo = JSON.parse(sajuInput)
-      await apiClient.calculateWithPromo({
+      const result = await apiClient.calculateWithPromo({
         promoCode: promoCode.trim(), email: email.trim(), subjectName: birthInfo.name,
         birthDate: birthInfo.birthDate, birthTime: birthInfo.birthTime, gender: birthInfo.gender,
         timezone: birthInfo.timezone, language: birthInfo.language, birthPlace: birthInfo.birthPlace,
@@ -162,6 +162,7 @@ function PaymentContent() {
         parentRole: birthInfo.parentRole, twinOrder: birthInfo.twinOrder, twinSiblingName: birthInfo.twinSiblingName,
       })
       sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: `promo_${promoCode.trim()}`, promoCode: promoCode.trim(), email: email.trim(), completedAt: new Date().toISOString() }))
+      sessionStorage.setItem('promo_reading', JSON.stringify(result))
       router.push('/payment/success')
     } catch (err: any) { setError(err.error || t.payment.errorReportGenerate) }
     finally { setIsProcessing(false) }
