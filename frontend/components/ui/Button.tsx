@@ -4,18 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[#DDD6CC] focus-visible:ring-offset-2",
   {
     variants: {
       variant: {
-        default: "bg-stone-900 text-white hover:bg-stone-800 shadow-sm",
-        destructive: "bg-red-500 text-white hover:bg-red-600 shadow-sm",
-        outline: "border border-stone-200 bg-white shadow-xs hover:bg-stone-50 hover:text-stone-900",
-        secondary: "bg-stone-200 text-stone-800 hover:bg-stone-300 shadow-sm",
-        ghost: "hover:bg-stone-100 hover:text-stone-900",
-        link: "text-amber-600 underline-offset-4 hover:underline",
-        gold: "bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600 shadow-lg shadow-amber-500/25",
-        premium: "bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-amber-100 border border-amber-500/30 hover:border-amber-400/50 shadow-lg",
+        default: "bg-[#2D3A35] text-white hover:bg-[#1A3D2E]",
+        destructive: "bg-[#C67B6F] text-white hover:bg-[#B56A5E]",
+        outline: "border border-[#EBE5DF] bg-[#FEFDFB] hover:bg-[#EBE5DF] hover:text-[#2D3A35]",
+        secondary: "bg-[#EBE5DF] text-[#2D3A35] hover:bg-[#DDD6CC]",
+        ghost: "hover:bg-[#EBE5DF] hover:text-[#2D3A35]",
+        link: "text-[#C5A059] underline-offset-4 hover:underline",
+        gold: "bg-gradient-to-r from-[#C5A059] to-[#B8922D] text-white hover:from-[#B8922D] hover:to-[#A68328]",
+        premium: "bg-gradient-to-r from-[#2D3A35] via-[#1A3D2E] to-[#2D3A35] text-[#C5A059] border border-[#C5A059]/30 hover:border-[#C5A059]/50",
       },
       size: {
         default: "h-10 px-4 py-2",

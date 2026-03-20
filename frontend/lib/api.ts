@@ -10,14 +10,8 @@ import type {
   BirthInfo,
   SajuPreview,
   SajuReading,
-  TossPaymentRequest,
-  TossPaymentResponse,
   PayPalPaymentRequest,
   PayPalPaymentResponse,
-  StripePaymentRequest,
-  StripePaymentResponse,
-  PaddlePaymentRequest,
-  PaddlePaymentResponse,
   Payment,
   ApiResponse,
   ApiError,
@@ -78,11 +72,13 @@ api.interceptors.response.use(
 
       // Handle authentication errors
       if (error.response.status === 401) {
-        // Clear token and redirect to login
+        // Clear token and redirect to signin
         if (typeof window !== 'undefined') {
           localStorage.removeItem('chatju_token');
           localStorage.removeItem('chatju_user');
-          window.location.href = '/auth/login';
+          // Store current path for redirect after login
+          sessionStorage.setItem('redirect_after_login', window.location.pathname);
+          window.location.href = '/auth/signin';
         }
       }
 
@@ -119,7 +115,7 @@ export const apiClient = {
    * Log in an existing user
    */
   login: async (credentials: LoginCredentials): Promise<{ user: User; token: string }> => {
-    const response = await api.post<{ user: User; token: string }>('/auth/login', credentials);
+    const response = await api.post<{ user: User; token: string }>('/auth/signin', credentials);
     return response.data;
   },
 
@@ -177,31 +173,7 @@ export const apiClient = {
   },
 
   // ===========================================
-  // Payment - Toss Payments (PRIMARY - Korea)
-  // ===========================================
-
-  /**
-   * Create Toss Payments order (Korean users)
-   */
-  createTossPayment: async (data: TossPaymentRequest): Promise<TossPaymentResponse> => {
-    const response = await api.post<TossPaymentResponse>('/payment/toss/create', data);
-    return response.data;
-  },
-
-  /**
-   * Confirm Toss Payments (after user approval)
-   */
-  confirmTossPayment: async (paymentKey: string, orderId: string, amount: number): Promise<Payment> => {
-    const response = await api.post<Payment>('/payment/toss/confirm', {
-      paymentKey,
-      orderId,
-      amount,
-    });
-    return response.data;
-  },
-
-  // ===========================================
-  // Payment - PayPal (PRIMARY - International)
+  // Payment - PayPal
   // ===========================================
 
   /**
@@ -219,31 +191,6 @@ export const apiClient = {
     const response = await api.post<Payment>('/payment/paypal/capture', {
       paypalOrderId,
     });
-    return response.data;
-  },
-
-  // ===========================================
-  // Payment - Stripe (OPTIONAL - International)
-  // ===========================================
-
-  /**
-   * Create Stripe payment intent (International users - optional)
-   */
-  createStripePayment: async (data: StripePaymentRequest): Promise<StripePaymentResponse> => {
-    const response = await api.post<StripePaymentResponse>('/payment/stripe/create', data);
-    return response.data;
-  },
-
-  // ===========================================
-  // Payment - Paddle (RECOMMENDED - International MoR)
-  // ===========================================
-
-  /**
-   * Create Paddle checkout session (International users - Merchant of Record)
-   * Paddle handles VAT/GST automatically
-   */
-  createPaddlePayment: async (data: PaddlePaymentRequest): Promise<PaddlePaymentResponse> => {
-    const response = await api.post<PaddlePaymentResponse>('/payment/paddle/create', data);
     return response.data;
   },
 

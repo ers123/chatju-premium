@@ -23,7 +23,7 @@ ChatJu Premium is an AI-powered Korean fortune-telling service (사주팔자/Saj
 │  ├── /auth/* (signup, signin, verify, me)                   │
 │  ├── /saju/preview (free preview, no auth)                  │
 │  ├── /saju/calculate (premium, requires payment)            │
-│  └── /payment/* (Toss, PayPal, Stripe)                      │
+│  └── /payment/* (PayPal)                                    │
 └──────────────────────────┬──────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
@@ -43,7 +43,7 @@ const { default: calculateMansae } = await import('mansae-calculator/mansae.js')
 
 **Authentication**: JWT-based via Supabase Auth. The `authMiddleware` extracts user ID and attaches to `req.user`.
 
-**Payment Flow**: Free preview → Payment (Toss/PayPal) → Premium reading stored in database.
+**Payment Flow**: Free preview → Payment (PayPal) → Premium reading stored in database.
 
 **Supabase Clients**: Two clients exist in `backend/src/config/supabase.js`:
 - `supabase` - Uses anon key, respects RLS
@@ -87,7 +87,7 @@ node tests/test-level7-payments.js  # Payment integration test
 Backend requires `.env` with:
 - `OPENAI` or `OPENAI_API_KEY` - OpenAI API key
 - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY` - Supabase credentials
-- Payment credentials: `TOSS_CLIENT_KEY`, `TOSS_SECRET_KEY`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `STRIPE_SECRET_KEY`
+- Payment credentials: `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`
 
 Frontend requires `.env.local` for API endpoints.
 
@@ -115,8 +115,8 @@ Frontend requires `.env.local` for API endpoints.
 | `POST /auth/signup` | No | Register with email |
 | `POST /auth/signin` | No | Magic link login |
 | `GET /auth/me` | JWT | Get current user |
-| `POST /payment/toss/create` | JWT | Create Toss payment order |
 | `POST /payment/paypal/create` | JWT | Create PayPal order |
+| `POST /payment/paypal/capture` | JWT | Capture PayPal payment |
 
 ## Korean Terminology
 

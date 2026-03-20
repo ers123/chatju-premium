@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LanguageProvider } from "./lib/i18n/context";
 
 export const metadata: Metadata = {
   title: "소명 | 우리 아이 사주로 숨겨진 재능 발견하기",
@@ -13,20 +14,13 @@ export const metadata: Metadata = {
     siteName: "소명",
     locale: "ko_KR",
     type: "website",
-    images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "소명 - 프라이빗 사주 분석",
-      },
-    ],
+    images: [],
   },
   twitter: {
     card: "summary_large_image",
     title: "소명 | 우리 아이 사주로 숨겨진 재능 발견하기",
     description: "밤새 고민하지 마세요. 천년의 지혜가 당신 곁에 있습니다.",
-    images: ["/og-image.jpg"],
+    images: [],
   },
   robots: {
     index: true,
@@ -44,11 +38,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <head>
-        <meta name="naver-site-verification" content="placeholder" />
-      </head>
+      <head />
       <body className="antialiased" suppressHydrationWarning>
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

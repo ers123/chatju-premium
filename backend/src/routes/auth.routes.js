@@ -247,4 +247,81 @@ router.patch('/me', authMiddleware, async (req, res) => {
   }
 });
 
+// ========================================
+// DEV-ONLY: Test login bypass
+// ========================================
+if (process.env.NODE_ENV !== 'production') {
+  const { supabaseAdmin } = require('../config/supabase');
+
+  /**
+   * POST /auth/dev-login
+   * Development-only endpoint: creates a test user and returns a valid session.
+   * This endpoint does NOT exist in production.
+   *
+   * Body:
+   * - email: string (optional, defaults to dev-test@somyung.local)
+   */
+  router.post('/dev-login', async (req, res) => {
+    try {
+      const email = req.body.email || 'dev-test@somyung.local';
+      const password = 'dev-test-password-12345!';
+
+      const { supabase } = require('../config/supabase');
+
+      // Step 1: Try to create the user; if exists, update password to match
+      const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { language_preference: 'ko' },
+      });
+
+      if (createError && createError.message.includes('already been registered')) {
+        // User exists — find them and update password so we can sign in
+        const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = listData?.users?.find(u => u.email === email);
+        if (existingUser) {
+          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { password });
+        }
+      }
+
+      // Step 2: Sign in with password to get a real session
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        throw new Error(`Sign in failed: ${signInError.message}`);
+      }
+
+      // Step 3: Ensure user profile exists in users table
+      await supabaseAdmin
+        .from('users')
+        .upsert([{ id: signInData.user.id, email }], { onConflict: 'email' });
+
+      console.log('[Auth] DEV LOGIN:', email, '-> user:', signInData.user.id);
+
+      res.status(200).json({
+        success: true,
+        user: {
+          id: signInData.user.id,
+          email: signInData.user.email,
+        },
+        session: {
+          access_token: signInData.session.access_token,
+          refresh_token: signInData.session.refresh_token,
+          expires_at: signInData.session.expires_at,
+        },
+      });
+    } catch (error) {
+      console.error('[Auth] Dev login error:', error);
+      res.status(500).json({
+        error: error.message || 'Dev login failed',
+        code: 'DEV_LOGIN_ERROR',
+      });
+    }
+  });
+}
+
 module.exports = router;

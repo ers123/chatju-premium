@@ -8,41 +8,73 @@
    ============================================ */
 
 :root {
-  /* Modern Oriental Luxury Palette */
-  --hanji: #FAF8F6;           /* 한지 - Warm cream ivory background */
-  --sage-dark: #2D3A35;       /* 먹쑥 - Deep sage with ink undertone */
-  --warm-gold: #B69B7D;       /* 황동 - Muted brass gold */
-  --warm-gold-light: #D4C4A8; /* 연금 - Light gold */
-  --text-primary: #433E3B;    /* 송연 - Warm charcoal brown */
-  --text-secondary: #6B6560;  /* 회갈 - Muted brown gray */
-  --border-soft: #EBE5DF;     /* 백토 - Soft warm border */
-  --card-bg: rgba(255, 255, 255, 0.85);
+  /* Modern Oriental Luxury Palette - Warm Premium */
+  --warm-sand: #FEFDFB;
+  /* Warm Cream - Background */
+  --forest-dark: #1A3D2E;
+  /* Deep Forest Green - Primary */
+  --royal-gold: #B8922D;
+  /* Rich Gold - Accent */
+  --gold-light: #D4AF9B;
+  /* Soft Gold */
+  --text-primary: #2C2420;
+  /* Warm Charcoal Brown */
+  --text-secondary: #6B5E52;
+  /* Warm Muted Gray */
+  --border-soft: #DDD6CC;
+  /* Warm Earthy Border */
+  --card-bg: rgba(255, 255, 255, 0.9);
 
   /* Five Elements - Refined (오행) */
-  --wood: #5A7D6B;    /* 목 - Muted sage green */
-  --fire: #C67B6F;    /* 화 - Dusty rose coral */
-  --earth: #C4A574;   /* 토 - Warm sand */
-  --metal: #8B8D8F;   /* 금 - Soft pewter */
-  --water: #6B8BA4;   /* 수 - Muted slate blue */
+  --wood: #5A7A66;
+  /* 목 - Muted Sage */
+  --fire: #A85544;
+  /* 화 - Warm Terracotta */
+  --earth: #BBA575;
+  /* 토 - Warm Ochre */
+  --metal: #6B7578;
+  /* 금 - Soft Slate */
+  --water: #556B7E;
+  /* 수 - Muted Indigo */
 
-  /* Shadows - Soft, paper-like */
-  --shadow-soft: 0 8px 30px rgba(45, 58, 53, 0.04);
-  --shadow-card: 0 4px 20px rgba(45, 58, 53, 0.06);
-  --shadow-hover: 0 12px 40px rgba(45, 58, 53, 0.08);
+  /* Typography Scale */
+  --font-display: clamp(28px, 5vw, 52px);
+  --font-h1: clamp(28px, 4vw, 36px);
+  --font-h2: clamp(24px, 3vw, 28px);
+  --font-h3: clamp(18px, 2vw, 20px);
+  --font-body-lg: clamp(16px, 1.5vw, 18px);
+  --font-body: 16px;
+  --font-body-sm: 14px;
+  --font-label: 15px;
+
+  /* Spacing (8px grid) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+
+  /* Shadows - Soft, premium */
+  --shadow-soft: 0 8px 32px rgba(26, 47, 35, 0.03);
+  --shadow-card: 0 4px 24px rgba(26, 47, 35, 0.05);
+  --shadow-hover: 0 16px 48px rgba(26, 47, 35, 0.1);
 }
 
 @theme inline {
   /* Colors */
-  --color-hanji: var(--hanji);
-  --color-sage: var(--sage-dark);
-  --color-gold: var(--warm-gold);
-  --color-gold-light: var(--warm-gold-light);
+  --color-sand: var(--warm-sand);
+  --color-forest: var(--forest-dark);
+  --color-gold: var(--royal-gold);
+  --color-gold-light: var(--gold-light);
   --color-text: var(--text-primary);
   --color-text-muted: var(--text-secondary);
   --color-border: var(--border-soft);
 
   /* Typography */
-  --font-serif: 'Gowun Batang', 'Nanum Myeongjo', Georgia, serif;
+  --font-serif: 'Nanum Myeongjo', Georgia, serif;
   --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -58,28 +90,35 @@ html {
 }
 
 body {
-  background: var(--hanji);
+  background: var(--warm-sand);
   color: var(--text-primary);
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 400;
-  line-height: 1.9; /* Relaxed leading for luxury feel */
+  line-height: 1.7;
+  /* Refined for better readability and style */
   letter-spacing: -0.01em;
+  /* Slightly tighter across the board */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* Typography - Headings use elegant serif with tight tracking */
-h1, h2, h3, h4 {
-  font-family: 'Gowun Batang', 'Nanum Myeongjo', serif;
-  font-weight: 400;
-  color: var(--sage-dark);
-  letter-spacing: -0.02em; /* Tighter heading tracking */
-  line-height: 1.4;
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Nanum Myeongjo', serif;
+  font-weight: 700;
+  color: var(--forest-dark);
+  letter-spacing: -0.03em;
+  /* Tighter heading tracking for premium feel */
+  line-height: 1.25;
+  word-break: keep-all;
 }
 
 /* Font classes */
 .font-serif-ko {
-  font-family: 'Gowun Batang', 'Nanum Myeongjo', serif;
+  font-family: 'Nanum Myeongjo', serif;
 }
 
 .font-sans-ko {
@@ -106,7 +145,7 @@ h1, h2, h3, h4 {
 
 /* Focus States */
 :focus-visible {
-  outline: 2px solid var(--warm-gold);
+  outline: 2px solid var(--royal-gold);
   outline-offset: 2px;
 }
 
@@ -123,22 +162,26 @@ h1, h2, h3, h4 {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.04; /* Slightly increased for visibility */
+  opacity: 0.04;
+  /* Slightly increased for visibility */
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 0;
 }
 
-/* Premium Glass Effect */
-.glass-premium {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.01),
-    0 2px 4px -1px rgba(0, 0, 0, 0.01),
-    inset 0 0 20px 0 rgba(255, 255, 255, 0.3);
+@layer utilities {
+
+  /* Premium Glass Effect */
+  .glass-premium {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.01),
+      0 2px 4px -1px rgba(0, 0, 0, 0.01),
+      inset 0 0 20px 0 rgba(255, 255, 255, 0.3);
+  }
 }
 
 /* ============================================
@@ -146,8 +189,13 @@ h1, h2, h3, h4 {
    ============================================ */
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeUp {
@@ -155,6 +203,7 @@ h1, h2, h3, h4 {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -166,9 +215,11 @@ h1, h2, h3, h4 {
   0% {
     transform: scale(1) translateY(0);
   }
+
   50% {
     transform: scale(1.03) translateY(-4px);
   }
+
   100% {
     transform: scale(1) translateY(0);
   }
@@ -176,15 +227,35 @@ h1, h2, h3, h4 {
 
 /* Organic float - distinct from breathe */
 @keyframes float {
-  0% { transform: translateY(0px) rotate(0deg); }
-  33% { transform: translateY(-10px) rotate(1deg); }
-  66% { transform: translateY(-5px) rotate(-1deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  33% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+
+  66% {
+    transform: translateY(-5px) rotate(-1deg);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.1); }
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
 }
 
 .animate-fade-in {
@@ -207,12 +278,35 @@ h1, h2, h3, h4 {
   animation: pulse-glow 4s ease-in-out infinite;
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 /* Staggered entrance animations */
-.stagger-1 { animation-delay: 0.15s; }
-.stagger-2 { animation-delay: 0.3s; }
-.stagger-3 { animation-delay: 0.45s; }
-.stagger-4 { animation-delay: 0.6s; }
-.stagger-5 { animation-delay: 0.75s; }
+.stagger-1 {
+  animation-delay: 0.15s;
+}
+
+.stagger-2 {
+  animation-delay: 0.3s;
+}
+
+.stagger-3 {
+  animation-delay: 0.45s;
+}
+
+.stagger-4 {
+  animation-delay: 0.6s;
+}
+
+.stagger-5 {
+  animation-delay: 0.75s;
+}
 
 /* ============================================
    Component Styles
@@ -220,15 +314,24 @@ h1, h2, h3, h4 {
 
 /* Card - Paper floating effect with new glass */
 .card-paper {
-  @apply glass-premium;
-  border-radius: 1.5rem;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.5);
+  /* More translucent */
+  backdrop-filter: blur(24px);
+  /* Higher blur for luxury */
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 10px 40px -10px rgba(45, 58, 53, 0.03),
+    inset 0 0 20px 0 rgba(255, 255, 255, 0.2);
+  border-radius: 1.25rem;
+  /* Less 'bubbly' rounding */
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card-paper:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -4px rgba(45, 58, 53, 0.08); /* Deeper, softer shadow */
-  background: rgba(255, 255, 255, 0.75);
+  transform: translateY(-8px);
+  box-shadow: 0 30px 60px -12px rgba(45, 58, 53, 0.08);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 /* Button - Rounded luxury */
@@ -236,24 +339,29 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 2.5rem;
-  background: var(--sage-dark);
-  color: var(--hanji);
+  padding: 1.125rem 3rem;
+  background: var(--forest-dark);
+  color: var(--warm-sand);
   font-family: 'Pretendard', sans-serif;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   border: none;
   border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--shadow-soft);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 12px 24px rgba(26, 47, 35, 0.1);
 }
 
 .btn-primary:hover {
-  background: #3D4A45;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-hover);
+  background: #244A36;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(26, 61, 46, 0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 16px rgba(26, 61, 46, 0.1);
 }
 
 .btn-secondary {
@@ -262,63 +370,214 @@ h1, h2, h3, h4 {
   justify-content: center;
   padding: 1rem 2.5rem;
   background: transparent;
-  color: var(--sage-dark);
+  color: var(--forest-dark);
   font-family: 'Pretendard', sans-serif;
   font-size: 0.9375rem;
   font-weight: 500;
   letter-spacing: 0.02em;
-  border: 1px solid var(--border-soft);
+  border: 1.5px solid var(--border-soft);
   border-radius: 9999px;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-secondary:hover {
-  border-color: var(--warm-gold);
-  color: var(--warm-gold);
-  background: rgba(182, 155, 125, 0.05);
+  border-color: var(--royal-gold);
+  color: var(--royal-gold);
+  background: rgba(184, 146, 45, 0.05);
+}
+
+.btn-secondary:active {
+  background: rgba(184, 146, 45, 0.1);
 }
 
 /* Divider - Korean style */
 .divider-korean {
   width: 100%;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--border-soft) 20%,
-    var(--border-soft) 80%,
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      var(--border-soft) 20%,
+      var(--border-soft) 80%,
+      transparent);
 }
 
 /* Gold accent line */
 .accent-line {
   width: 40px;
-  height: 1px;
-  background: var(--warm-gold);
+  height: 1.5px;
+  background: var(--royal-gold);
 }
 
 /* Selection color */
 ::selection {
-  background: rgba(182, 155, 125, 0.2);
-  color: var(--sage-dark);
+  background: rgba(184, 146, 45, 0.2);
+  color: var(--forest-dark);
 }
 
 /* Gradient backgrounds */
 .bg-gradient-soft {
-  background: linear-gradient(
-    180deg,
-    var(--hanji) 0%,
-    rgba(235, 229, 223, 0.3) 100%
-  );
+  background: linear-gradient(180deg,
+      var(--warm-sand) 0%,
+      rgba(226, 221, 214, 0.3) 100%);
 }
 
 .bg-gradient-warm {
-  background: linear-gradient(
-    135deg,
-    rgba(182, 155, 125, 0.08) 0%,
-    transparent 50%,
-    rgba(45, 58, 53, 0.03) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(197, 160, 89, 0.08) 0%,
+      transparent 50%,
+      rgba(26, 47, 35, 0.04) 100%);
+}
+
+/* ============================================
+   Scroll Reveal - Professional entrance
+   ============================================ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+/* ============================================
+   Card Interactions - Depth & Polish
+   ============================================ */
+
+.card-interactive {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(44, 36, 32, 0.12);
+}
+
+/* Feature card image zoom on hover */
+.card-image-zoom {
+  overflow: hidden;
+}
+
+.card-image-zoom img {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-image-zoom:hover img {
+  transform: scale(1.04);
+}
+
+/* ============================================
+   Section Dividers - Organic breaks
+   ============================================ */
+
+.section-divider {
+  width: 48px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--royal-gold), transparent);
+  margin: 0 auto 40px;
+}
+
+/* ============================================
+   FAQ Accordion - Smooth expand
+   ============================================ */
+
+.faq-answer {
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease;
+}
+
+/* ============================================
+   Button hover glow
+   ============================================ */
+
+.btn-glow {
+  position: relative;
+}
+
+.btn-glow::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(184, 146, 45, 0.3), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+  filter: blur(12px);
+}
+
+.btn-glow:hover::after {
+  opacity: 1;
+}
+
+/* ============================================
+   Responsive - Mobile First
+   ============================================ */
+
+@media (max-width: 768px) {
+  body {
+    font-size: 15px;
+  }
+
+  /* Override inline grid styles via class */
+  .grid-responsive-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .grid-responsive-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Reduce section padding on mobile */
+  section {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  /* Navigation mobile */
+  nav > div {
+    padding: 0 20px !important;
+    height: 60px !important;
+  }
+
+  /* Hero adjustments */
+  h1 {
+    font-size: clamp(28px, 7vw, 36px) !important;
+  }
+
+  h2 {
+    font-size: clamp(24px, 5vw, 32px) !important;
+  }
+
+  /* Cards: less padding on mobile */
+  .card-interactive {
+    padding: 24px !important;
+  }
+
+  /* Pricing grid */
+  .pricing-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Footer grid */
+  footer > div > div:first-child {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 24px !important;
+  }
+
+  /* Trust badges wrap better */
+  .trust-badges {
+    gap: 8px !important;
+  }
 }

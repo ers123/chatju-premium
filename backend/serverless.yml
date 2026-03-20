@@ -18,7 +18,7 @@
 service: chatju-premium-backend
 
 # Framework version constraint
-frameworkVersion: '3'
+frameworkVersion: '3 || 4'
 
 provider:
   name: aws
@@ -34,25 +34,30 @@ provider:
     AI_PROVIDER: ${env:AI_PROVIDER, 'gemini'} # Default to Gemini (free tier)
 
     # AI Provider API Keys (set at least one)
-    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    OPENAI_API_KEY: ${env:OPENAI, ''}
     GEMINI_API_KEY: ${env:GEMINI_API_KEY, ''}
     ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
 
     # Supabase Configuration
     SUPABASE_URL: ${env:SUPABASE_URL}
     SUPABASE_ANON_KEY: ${env:SUPABASE_ANON_KEY}
-    SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_ROLE_KEY}
+    SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_KEY, ''}
 
-    # Payment Gateway API Keys
-    TOSS_SECRET_KEY: ${env:TOSS_SECRET_KEY}
-    TOSS_CLIENT_KEY: ${env:TOSS_CLIENT_KEY}
-    PAYPAL_CLIENT_ID: ${env:PAYPAL_CLIENT_ID}
-    PAYPAL_CLIENT_SECRET: ${env:PAYPAL_CLIENT_SECRET}
+    # Payment Gateway API Keys (optional - using Paddle)
+    TOSS_SECRET_KEY: ${env:TOSS_SECRET_KEY, ''}
+    TOSS_CLIENT_KEY: ${env:TOSS_CLIENT_KEY, ''}
+    PAYPAL_CLIENT_ID: ${env:PAYPAL_CLIENT_ID, ''}
+    PAYPAL_CLIENT_SECRET: ${env:PAYPAL_CLIENT_SECRET, ''}
     STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY, ''}
     STRIPE_PUBLISHABLE_KEY: ${env:STRIPE_PUBLISHABLE_KEY, ''}
 
+    # Paddle Configuration (primary payment)
+    PADDLE_API_KEY: ${env:PADDLE_API_KEY, ''}
+    PADDLE_WEBHOOK_SECRET: ${env:PADDLE_WEBHOOK_SECRET, ''}
+    PADDLE_ENVIRONMENT: ${env:PADDLE_ENVIRONMENT, 'sandbox'}
+
     # CORS Configuration (production only allows production domain)
-    CORS_ORIGIN: https://chatju.pages.dev
+    CORS_ORIGIN: https://somyung.pages.dev
 
   # IAM Role Statements (permissions for Lambda)
   iam:
@@ -80,7 +85,7 @@ functions:
           method: ANY
           cors:
             allowedOrigins:
-              - https://chatju.pages.dev
+              - https://somyung.pages.dev
             allowedHeaders:
               - Content-Type
               - Authorization
@@ -99,7 +104,7 @@ functions:
           method: ANY
           cors:
             allowedOrigins:
-              - https://chatju.pages.dev
+              - https://somyung.pages.dev
             allowedHeaders:
               - Content-Type
               - Authorization
@@ -112,6 +117,7 @@ functions:
 # Plugins
 # ============================================
 plugins:
+  - serverless-dotenv-plugin # Load .env file
   - serverless-offline # For local testing: serverless offline
 
 # ============================================

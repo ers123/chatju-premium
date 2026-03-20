@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Level 7 Payment Integration Test
-// Tests Toss Payments and Stripe integration
+// Tests PayPal payment integration
 
 require('dotenv').config();
 const { supabaseAdmin } = require('../src/config/supabase');
@@ -20,10 +20,8 @@ async function testLevel7Payments() {
     // Test 1: Check required environment variables
     console.log('Test 1: Checking payment environment variables...');
     const requiredEnvVars = [
-      'TOSS_CLIENT_KEY',
-      'TOSS_SECRET_KEY',
-      'STRIPE_SECRET_KEY',
-      'STRIPE_PUBLISHABLE_KEY',
+      'PAYPAL_CLIENT_ID',
+      'PAYPAL_CLIENT_SECRET',
       'FRONTEND_URL'
     ];
 
@@ -48,12 +46,9 @@ async function testLevel7Payments() {
     console.log('\nTest 2: Verifying payment service functions...');
     const paymentService = require('../src/services/payment.service');
     const requiredFunctions = [
-      'createTossPayment',
-      'confirmTossPayment',
-      'handleTossWebhook',
-      'createStripePayment',
-      'confirmStripePayment',
-      'handleStripeWebhook',
+      'createPayPalPayment',
+      'capturePayPalPayment',
+      'handlePayPalWebhook',
       'getPaymentByOrderId',
       'getPaymentById',
       'getUserPayments',
@@ -81,11 +76,9 @@ async function testLevel7Payments() {
       const paymentRoutes = require('../src/routes/payment.routes');
       console.log('✅ Payment routes loaded successfully');
       console.log('   Available endpoints:');
-      console.log('   - POST /payment/toss/create');
-      console.log('   - POST /payment/toss/confirm');
-      console.log('   - POST /payment/toss/webhook');
-      console.log('   - POST /payment/stripe/create');
-      console.log('   - POST /payment/stripe/webhook');
+      console.log('   - POST /payment/paypal/create');
+      console.log('   - POST /payment/paypal/capture');
+      console.log('   - POST /payment/paypal/webhook');
       console.log('   - GET /payment/:orderId');
       console.log('   - GET /payment/history/me');
       testsPassed++;
@@ -110,48 +103,28 @@ async function testLevel7Payments() {
       testsPassed++;
     }
 
-    // Test 5: Test Toss payment creation (structure only, no API call)
-    console.log('\nTest 5: Testing Toss payment structure...');
+    // Test 5: Test PayPal payment structure
+    console.log('\nTest 5: Testing PayPal payment structure...');
     try {
-      // We won't actually create payment without valid credentials
-      // Just verify the function structure
       if (allEnvVarsPresent) {
-        console.log('✅ Toss payment service ready');
+        console.log('✅ PayPal payment service ready');
         console.log('   Can create orders with real credentials');
       } else {
-        console.log('⚠️  Toss credentials not configured');
-        console.log('   Add TOSS_CLIENT_KEY and TOSS_SECRET_KEY to .env');
+        console.log('⚠️  PayPal credentials not configured');
+        console.log('   Add PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET to .env');
       }
       testsPassed++;
     } catch (error) {
-      console.error('❌ Toss payment structure error:', error.message);
+      console.error('❌ PayPal payment structure error:', error.message);
       testsFailed++;
     }
 
-    // Test 6: Test Stripe payment creation (structure only, no API call)
-    console.log('\nTest 6: Testing Stripe payment structure...');
-    try {
-      // We won't actually create payment without valid credentials
-      // Just verify the function structure
-      if (process.env.STRIPE_SECRET_KEY) {
-        console.log('✅ Stripe payment service ready');
-        console.log('   Can create payment intents with real credentials');
-      } else {
-        console.log('⚠️  Stripe credentials not configured');
-        console.log('   Add STRIPE_SECRET_KEY to .env');
-      }
-      testsPassed++;
-    } catch (error) {
-      console.error('❌ Stripe payment structure error:', error.message);
-      testsFailed++;
-    }
-
-    // Test 7: Verify axios is installed (required for Toss API calls)
-    console.log('\nTest 7: Checking axios dependency...');
+    // Test 6: Verify axios is installed (required for PayPal API calls)
+    console.log('\nTest 6: Checking axios dependency...');
     try {
       const axios = require('axios');
       console.log('✅ axios is installed');
-      console.log('   Toss API calls will work');
+      console.log('   PayPal API calls will work');
       testsPassed++;
     } catch (error) {
       console.error('❌ axios not installed');
@@ -159,21 +132,8 @@ async function testLevel7Payments() {
       testsFailed++;
     }
 
-    // Test 8: Verify stripe package is installed
-    console.log('\nTest 8: Checking stripe dependency...');
-    try {
-      const stripe = require('stripe');
-      console.log('✅ stripe package is installed');
-      console.log('   Stripe API calls will work');
-      testsPassed++;
-    } catch (error) {
-      console.error('❌ stripe package not installed');
-      console.log('   Run: npm install stripe');
-      testsFailed++;
-    }
-
-    // Test 9: Test user payments retrieval
-    console.log('\nTest 9: Testing user payments retrieval...');
+    // Test 7: Test user payments retrieval
+    console.log('\nTest 7: Testing user payments retrieval...');
     try {
       const payments = await paymentService.getUserPayments(TEST_USER_ID);
       console.log('✅ User payments retrieval works');
@@ -196,32 +156,24 @@ async function testLevel7Payments() {
       console.log('\n✅ LEVEL 7 CODE SETUP COMPLETE!');
       console.log('\nTo fully test payment integration:');
       console.log('\n📋 Next Steps:');
-      console.log('1. Get Toss Payments credentials:');
-      console.log('   - Sign up at https://developers.tosspayments.com');
-      console.log('   - Get Client Key and Secret Key');
+      console.log('1. Get PayPal credentials:');
+      console.log('   - Sign up at https://developer.paypal.com');
+      console.log('   - Create sandbox app');
       console.log('   - Add to .env file:');
-      console.log('     TOSS_CLIENT_KEY=test_ck_...');
-      console.log('     TOSS_SECRET_KEY=test_sk_...');
+      console.log('     PAYPAL_CLIENT_ID=...');
+      console.log('     PAYPAL_CLIENT_SECRET=...');
       console.log('');
-      console.log('2. Get Stripe credentials:');
-      console.log('   - Sign up at https://stripe.com');
-      console.log('   - Get API keys from Dashboard');
-      console.log('   - Add to .env file:');
-      console.log('     STRIPE_SECRET_KEY=sk_test_...');
-      console.log('     STRIPE_PUBLISHABLE_KEY=pk_test_...');
-      console.log('');
-      console.log('3. Set Frontend URL:');
+      console.log('2. Set Frontend URL:');
       console.log('   - Add to .env file:');
       console.log('     FRONTEND_URL=https://chatju.pages.dev');
       console.log('');
-      console.log('4. Test with real payments:');
+      console.log('3. Test with real payments:');
       console.log('   - Start server: npm run dev');
-      console.log('   - Create payment: POST /payment/toss/create');
-      console.log('   - Confirm payment: POST /payment/toss/confirm');
+      console.log('   - Create payment: POST /payment/paypal/create');
+      console.log('   - Capture payment: POST /payment/paypal/capture');
       console.log('');
-      console.log('5. Set up webhooks:');
-      console.log('   - Toss: https://your-api.com/payment/toss/webhook');
-      console.log('   - Stripe: https://your-api.com/payment/stripe/webhook');
+      console.log('4. Set up webhooks:');
+      console.log('   - PayPal: https://your-api.com/payment/paypal/webhook');
       console.log('');
       console.log('Next: Complete payment gateway setup and test!');
       console.log('');

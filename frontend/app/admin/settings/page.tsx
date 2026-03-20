@@ -38,7 +38,7 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     const token = localStorage.getItem('chatju_token');
     if (!token) {
-      router.push('/auth/login');
+      router.push('/auth/signin');
       return;
     }
 
@@ -66,7 +66,7 @@ export default function AdminSettingsPage() {
 
       if (err.response?.status === 401) {
         localStorage.removeItem('chatju_token');
-        router.push('/auth/login');
+        router.push('/auth/signin');
       } else {
         setError(err.response?.data?.error || 'Failed to load AI provider information');
       }
@@ -106,7 +106,7 @@ export default function AdminSettingsPage() {
 
       if (err.response?.status === 401) {
         localStorage.removeItem('chatju_token');
-        router.push('/auth/login');
+        router.push('/auth/signin');
       } else {
         setError(err.response?.data?.error || 'Failed to switch AI provider');
       }
@@ -117,49 +117,75 @@ export default function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FEFDFB' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading settings...</p>
+          <div
+            className="animate-spin rounded-full h-12 w-12 mx-auto mb-4"
+            style={{ border: '4px solid #EBE5DF', borderTopColor: '#1A3D2E' }}
+          ></div>
+          <p style={{ color: '#6B5E52' }}>Loading settings...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#FEFDFB' }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="text-indigo-600 hover:text-indigo-800 mb-4 flex items-center"
+            className="mb-4 flex items-center"
+            style={{ color: '#1A3D2E' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#0F2A1E')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#1A3D2E')}
           >
             ← Back
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Settings</h1>
-          <p className="mt-2 text-gray-600">Manage AI provider and system configuration</p>
+          <h1 className="text-3xl font-bold" style={{ color: '#2D3A35' }}>Admin Settings</h1>
+          <p className="mt-2" style={{ color: '#6B5E52' }}>Manage AI provider and system configuration</p>
         </div>
 
         {/* Success Message */}
         {successMessage && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+          <div
+            className="mb-6 px-4 py-3 rounded-lg"
+            style={{
+              backgroundColor: 'rgba(90, 125, 107, 0.1)',
+              border: '1px solid rgba(90, 125, 107, 0.3)',
+              color: '#5A7D6B',
+            }}
+          >
             ✅ {successMessage}
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+          <div
+            className="mb-6 px-4 py-3 rounded-lg"
+            style={{
+              backgroundColor: 'rgba(198, 123, 111, 0.1)',
+              border: '1px solid rgba(198, 123, 111, 0.3)',
+              color: '#C67B6F',
+            }}
+          >
             ❌ {error}
           </div>
         )}
 
         {/* AI Provider Section */}
-        <div className="bg-white shadow-md rounded-lg overflow-hidden mb-6">
-          <div className="px-6 py-4 bg-indigo-50 border-b border-indigo-100">
-            <h2 className="text-xl font-semibold text-gray-900">AI Provider Configuration</h2>
-            <p className="text-sm text-gray-600 mt-1">
+        <div className="card-paper overflow-hidden mb-6">
+          <div
+            className="px-6 py-4 border-b"
+            style={{
+              backgroundColor: 'rgba(26, 61, 46, 0.05)',
+              borderColor: '#EBE5DF',
+            }}
+          >
+            <h2 className="text-xl font-semibold" style={{ color: '#2D3A35' }}>AI Provider Configuration</h2>
+            <p className="text-sm mt-1" style={{ color: '#6B5E52' }}>
               Choose which AI model to use for fortune-telling interpretations
             </p>
           </div>
@@ -168,17 +194,23 @@ export default function AdminSettingsPage() {
             {providerInfo && (
               <>
                 {/* Current Provider */}
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div
+                  className="mb-6 p-4 rounded-lg"
+                  style={{
+                    backgroundColor: 'rgba(85, 107, 126, 0.08)',
+                    border: '1px solid rgba(85, 107, 126, 0.2)',
+                  }}
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Current Provider</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-sm mb-1" style={{ color: '#6B5E52' }}>Current Provider</p>
+                      <p className="text-2xl font-bold" style={{ color: '#2D3A35' }}>
                         {providerInfo.details[providerInfo.current].name}
                       </p>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm mt-1" style={{ color: '#6B5E52' }}>
                         Model: {providerInfo.details[providerInfo.current].model}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm" style={{ color: '#6B5E52' }}>
                         Cost: {providerInfo.details[providerInfo.current].costPer1MTokens}
                       </p>
                     </div>
@@ -188,7 +220,7 @@ export default function AdminSettingsPage() {
 
                 {/* Provider Options */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: '#2D3A35' }}>
                     Available Providers
                   </h3>
 
@@ -199,24 +231,28 @@ export default function AdminSettingsPage() {
                     return (
                       <div
                         key={providerId}
-                        className={`p-4 border rounded-lg transition-all ${
+                        className="p-4 border rounded-lg transition-all"
+                        style={
                           isCurrent
-                            ? 'border-indigo-500 bg-indigo-50'
-                            : 'border-gray-200 hover:border-indigo-300'
-                        }`}
+                            ? { borderColor: '#1A3D2E', backgroundColor: 'rgba(26, 61, 46, 0.05)' }
+                            : { borderColor: '#EBE5DF' }
+                        }
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <h4 className="text-lg font-semibold text-gray-900 flex items-center">
+                            <h4 className="text-lg font-semibold flex items-center" style={{ color: '#2D3A35' }}>
                               {provider.name}
                               {isCurrent && (
-                                <span className="ml-2 px-2 py-1 text-xs bg-indigo-600 text-white rounded">
+                                <span
+                                  className="ml-2 px-2 py-1 text-xs rounded"
+                                  style={{ backgroundColor: '#1A3D2E', color: 'white' }}
+                                >
                                   Active
                                 </span>
                               )}
                             </h4>
-                            <p className="text-sm text-gray-600 mt-1">Model: {provider.model}</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm mt-1" style={{ color: '#6B5E52' }}>Model: {provider.model}</p>
+                            <p className="text-sm" style={{ color: '#6B5E52' }}>
                               Cost: {provider.costPer1MTokens}
                             </p>
                           </div>
@@ -224,11 +260,12 @@ export default function AdminSettingsPage() {
                           <button
                             onClick={() => handleSwitchProvider(providerId)}
                             disabled={isCurrent || switching}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                            className={`px-4 py-2 rounded-lg font-medium transition-colors${switching ? ' opacity-50 cursor-wait' : ''}`}
+                            style={
                               isCurrent
-                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                            } ${switching ? 'opacity-50 cursor-wait' : ''}`}
+                                ? { backgroundColor: '#EBE5DF', color: '#8B8580', cursor: 'not-allowed' }
+                                : { backgroundColor: '#1A3D2E', color: 'white' }
+                            }
                           >
                             {isCurrent ? 'Current' : switching ? 'Switching...' : 'Switch'}
                           </button>
@@ -245,21 +282,25 @@ export default function AdminSettingsPage() {
                       return (
                         <div
                           key={providerId}
-                          className="p-4 border border-gray-200 rounded-lg bg-gray-50 opacity-60"
+                          className="p-4 border rounded-lg opacity-60"
+                          style={{ borderColor: '#EBE5DF', backgroundColor: '#FEFDFB' }}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
-                              <h4 className="text-lg font-semibold text-gray-600 flex items-center">
+                              <h4 className="text-lg font-semibold flex items-center" style={{ color: '#6B5E52' }}>
                                 {provider.name}
-                                <span className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded">
+                                <span
+                                  className="ml-2 px-2 py-1 text-xs rounded"
+                                  style={{ backgroundColor: 'rgba(198, 123, 111, 0.15)', color: '#C67B6F' }}
+                                >
                                   Not Configured
                                 </span>
                               </h4>
-                              <p className="text-sm text-gray-500 mt-1">Model: {provider.model}</p>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm mt-1" style={{ color: '#8B8580' }}>Model: {provider.model}</p>
+                              <p className="text-sm" style={{ color: '#8B8580' }}>
                                 Cost: {provider.costPer1MTokens}
                               </p>
-                              <p className="text-xs text-gray-500 mt-2">
+                              <p className="text-xs mt-2" style={{ color: '#8B8580' }}>
                                 Add API key to environment variables to enable
                               </p>
                             </div>
@@ -274,16 +315,19 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* Future Features Section */}
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Statistics (Coming Soon)</h2>
+        <div className="card-paper overflow-hidden">
+          <div
+            className="px-6 py-4 border-b"
+            style={{ backgroundColor: '#FEFDFB', borderColor: '#EBE5DF' }}
+          >
+            <h2 className="text-xl font-semibold" style={{ color: '#2D3A35' }}>Statistics (Coming Soon)</h2>
           </div>
 
           <div className="p-6">
-            <p className="text-gray-600 mb-4">
+            <p className="mb-4" style={{ color: '#6B5E52' }}>
               Future features will include:
             </p>
-            <ul className="list-disc list-inside space-y-2 text-gray-600">
+            <ul className="list-disc list-inside space-y-2" style={{ color: '#6B5E52' }}>
               <li>Total users and active users</li>
               <li>Payment statistics and revenue tracking</li>
               <li>AI usage analytics (calls, tokens, costs)</li>

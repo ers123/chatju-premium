@@ -1,2 +1,2 @@
 // Payment Components
-export { PaddleCheckout } from './PaddleCheckout';
+// Only PayPal is used (via CDN script in payment page)

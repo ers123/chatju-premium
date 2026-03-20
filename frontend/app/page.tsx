@@ -1,261 +1,347 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import Image from 'next/image'
+import Footer from '@/components/Footer'
+import { useLanguage } from './lib/i18n/context'
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 
-// Ambient Glow Orb
-const AmbientOrb = ({ className = '', style = {} }: { className?: string; style?: React.CSSProperties }) => (
-  <div
-    className={`absolute rounded-full blur-[80px] opacity-40 mix-blend-multiply animate-pulse-glow pointer-events-none ${className}`}
-    style={style}
-  />
-)
+// 카카오 SDK 타입 정의
+declare global {
+  interface Window {
+    Kakao?: {
+      init: (key: string) => void;
+      isInitialized: () => boolean;
+      Share: {
+        sendDefault: (options: {
+          objectType: string;
+          content: {
+            title: string;
+            description: string;
+            imageUrl: string;
+            link: { mobileWebUrl: string; webUrl: string };
+          };
+          buttons: Array<{
+            title: string;
+            link: { mobileWebUrl: string; webUrl: string };
+          }>;
+        }) => void;
+      };
+    };
+  }
+}
 
-// Decorative floating cloud - Refined
-const FloatingCloud = ({ className = '', style = {} }: { className?: string; style?: React.CSSProperties }) => (
-  <div className={`absolute opacity-[0.08] pointer-events-none ${className}`} style={style}>
-    <svg viewBox="0 0 120 50" fill="currentColor" className="w-40 h-16 text-[#B69B7D]">
-      <ellipse cx="35" cy="30" rx="28" ry="14" />
-      <ellipse cx="65" cy="25" rx="24" ry="18" />
-      <ellipse cx="90" cy="30" rx="20" ry="12" />
-    </svg>
-  </div>
-)
-
-// Refined Sparkle - Slower, subtler
-const Sparkle = ({ style = {} }: { style?: React.CSSProperties }) => (
-  <div className="absolute pointer-events-none animate-float" style={{ ...style }}>
-    <svg viewBox="0 0 24 24" fill="#B69B7D" className="w-3 h-3 opacity-30">
-      <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
-    </svg>
-  </div>
-)
-
-// KakaoTalk icon
-const KakaoIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-    <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.675 1.733 5.029 4.348 6.373-.168.63-.609 2.281-.697 2.635-.11.44.161.434.339.316.14-.093 2.23-1.52 3.124-2.131.618.091 1.255.139 1.886.139 5.523 0 10-3.463 10-7.332C21 6.463 17.523 3 12 3z" />
-  </svg>
-)
-
-// Check icon
-const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-)
-
-// Quote icon
-const QuoteIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 opacity-20">
-    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-  </svg>
-)
-
-// Icon components for features
-const BookIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-  </svg>
-)
-
-const HeartIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-  </svg>
-)
-
-const CompassIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-    <circle cx="12" cy="12" r="10" />
-    <polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88" fill="currentColor" opacity="0.3" />
-  </svg>
-)
-
-export default function LandingPage() {
-  const [scrolled, setScrolled] = useState(false)
+// Scroll reveal hook
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    const node = ref.current
+    if (!node) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    )
+    const elements = node.querySelectorAll('.reveal')
+    elements.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
   }, [])
 
-  // KakaoTalk share function
-  const handleKakaoShare = () => {
-    if (typeof window !== 'undefined' && (window as typeof window & { Kakao?: { Share?: { sendDefault: (config: unknown) => void } } }).Kakao?.Share) {
-      (window as typeof window & { Kakao: { Share: { sendDefault: (config: unknown) => void } } }).Kakao.Share.sendDefault({
+  return ref
+}
+
+export default function LandingPage() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const pageRef = useScrollReveal()
+  const { lang, setLang, t } = useLanguage()
+
+  // 카카오 SDK 초기화
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.5.0/kakao.min.js'
+    script.async = true
+    script.onload = () => {
+      if (window.Kakao && !window.Kakao.isInitialized()) {
+        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '')
+      }
+    }
+    document.head.appendChild(script)
+    return () => {
+      document.head.removeChild(script)
+    }
+  }, [])
+
+  const handleShare = useCallback(() => {
+    const url = 'https://somyung.kr'
+    const text = lang === 'ko' ? '사주 명리학 기반으로 아이의 타고난 기질과 맞춤 학습법을 알아보세요.'
+      : lang === 'ja' ? '四柱推命に基づいてお子様の気質と学習法を分析します。'
+      : lang === 'zh' ? '基于四柱命理分析孩子的天生气质和学习方法。'
+      : 'Discover your child\'s innate temperament through Saju-based analysis.'
+
+    const platform = t.share.platform
+
+    if (platform === 'kakao' && window.Kakao?.Share) {
+      window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: '소명 - 우리 아이 사주로 숨겨진 재능 발견하기',
-          description: '밤새 고민하지 마세요. 천년의 지혜로 아이의 타고난 기질을 알아보세요.',
-          imageUrl: 'https://somyung.kr/og-image.jpg',
-          link: {
-            mobileWebUrl: 'https://somyung.kr',
-            webUrl: 'https://somyung.kr',
-          },
+          title: '소명 - 우리 아이 기질 분석',
+          description: '사주 명리학 기반으로 아이의 타고난 기질과 맞춤 학습법을 알아보세요. 3분이면 충분해요!',
+          imageUrl: 'https://somyung.kr/assets/images/key_nature_sprout_1769231800309.png',
+          link: { mobileWebUrl: url, webUrl: url },
         },
-        buttons: [
-          {
-            title: '무료로 시작하기',
-            link: {
-              mobileWebUrl: 'https://somyung.kr/saju/input',
-              webUrl: 'https://somyung.kr/saju/input',
-            },
-          },
-        ],
+        buttons: [{ title: '무료로 분석받기', link: { mobileWebUrl: `${url}/saju/input`, webUrl: `${url}/saju/input` } }],
       })
+    } else if (platform === 'line') {
+      window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank')
+    } else if (platform === 'whatsapp') {
+      window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, '_blank')
     } else {
-      // Fallback: copy link
-      navigator.clipboard.writeText('https://somyung.kr')
-      alert('링크가 복사되었습니다!')
+      navigator.clipboard.writeText(url)
+      alert(lang === 'zh' ? '链接已复制！分享给朋友吧。' : 'Link copied!')
     }
-  }
+  }, [lang, t.share.platform])
+
+  // Platform-specific share button config
+  const shareConfig = {
+    kakao: { bg: '#FEE500', color: '#3C1E1E', shadow: 'rgba(254, 229, 0, 0.3)', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.675 1.733 5.029 4.348 6.373-.168.63-.609 2.281-.697 2.635-.11.44.161.434.339.316.14-.093 2.23-1.52 3.124-2.131.618.091 1.255.139 1.886.139 5.523 0 10-3.463 10-7.332C21 6.463 17.523 3 12 3z" /></svg> },
+    whatsapp: { bg: '#25D366', color: '#FFFFFF', shadow: 'rgba(37, 211, 102, 0.3)', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> },
+    line: { bg: '#06C755', color: '#FFFFFF', shadow: 'rgba(6, 199, 85, 0.3)', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.271.173-.508.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg> },
+    copy: { bg: '#2C2420', color: '#FFFFFF', shadow: 'rgba(44, 36, 32, 0.2)', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> },
+  } as const
+  const currentShare = shareConfig[t.share.platform as keyof typeof shareConfig] || shareConfig.copy
+
+  const images = [
+    '/assets/images/key_nature_sprout_new.png',
+    '/assets/images/key_talent_gemstone_1769231816379.png',
+    '/assets/images/key_future_path_1769231832370.png',
+  ]
 
   return (
-    <div className="relative min-h-screen overflow-hidden texture-noise">
-      {/* Ambient Background Orbs */}
-      <AmbientOrb className="bg-[#B69B7D] top-0 left-0 w-[500px] h-[500px] -translate-x-1/2 -translate-y-1/2 opacity-20" />
-      <AmbientOrb className="bg-[#5A7D6B] top-[40%] right-0 w-[600px] h-[600px] translate-x-1/2 opacity-15 animate-breathe" style={{ animationDelay: '2s' }} />
-      <AmbientOrb className="bg-[#C67B6F] bottom-0 left-20 w-[400px] h-[400px] opacity-10 animate-breathe" style={{ animationDelay: '4s' }} />
-
-      {/* Floating Elements (Clouds & Sparkles) */}
-      <FloatingCloud className="top-32 -left-16 animate-float" style={{ animationDelay: '0s' }} />
-      <FloatingCloud className="top-64 -right-10 animate-float" style={{ animationDelay: '2s' }} />
-      <FloatingCloud className="bottom-96 -left-8 animate-float" style={{ animationDelay: '4s' }} />
-
-      <Sparkle style={{ top: '15%', left: '10%', animationDelay: '0s' }} />
-      <Sparkle style={{ top: '25%', right: '15%', animationDelay: '1s' }} />
-      <Sparkle style={{ top: '45%', left: '8%', animationDelay: '2s' }} />
-
+    <div ref={pageRef} style={{
+      minHeight: '100vh',
+      background: '#FEFDFB',
+      fontFamily: '"Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
       {/* Navigation */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-xl border-b border-[#EBE5DF]/50' : 'bg-transparent'
-          }`}
-      >
-        <div className="max-w-[1100px] mx-auto px-6 py-5 flex justify-between items-center">
-          <Link href="/" className="no-underline">
-            <span className="font-serif-ko text-2xl text-[#2D3A35]">소명</span>
+      <nav style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        background: 'rgba(254, 253, 251, 0.92)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.04)'
+      }}>
+        <div style={{
+          maxWidth: '1100px',
+          margin: '0 auto',
+          padding: '0 40px',
+          height: '72px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <span style={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#2C2420',
+              letterSpacing: '-0.04em'
+            }}>
+              소명
+            </span>
           </Link>
-
-          <div className="flex items-center gap-8">
-            <a href="#reviews" className="text-sm text-[#6B6560] hover:text-[#2D3A35] transition-colors no-underline">후기</a>
-            <a href="#pricing" className="text-sm text-[#6B6560] hover:text-[#2D3A35] transition-colors no-underline">상담안내</a>
-            <Link href="/auth/signin">
-              <button className="px-5 py-2 text-sm text-[#FAF8F6] bg-[#2D3A35] rounded-full hover:bg-[#3D4A45] transition-all shadow-md hover:shadow-lg">
-                시작하기
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <LanguageSwitcher currentLang={lang} onSelect={setLang} />
+            <Link href="/saju/input">
+              <button style={{
+                height: '44px',
+                padding: '0 28px',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#FFFFFF',
+                background: '#2C2420',
+                border: 'none',
+                borderRadius: '22px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}>
+                {t.nav.start}
               </button>
             </Link>
           </div>
         </div>
       </nav>
 
+      {/* Free Beta Banner */}
+      <div style={{
+        position: 'fixed',
+        top: '72px',
+        left: 0,
+        right: 0,
+        zIndex: 49,
+        background: 'linear-gradient(90deg, #1A3D2E, #2C5238)',
+        padding: '10px 20px',
+        textAlign: 'center'
+      }}>
+        <span style={{
+          fontSize: '14px',
+          color: '#FFFFFF',
+          fontWeight: 500
+        }}>
+          {t.banner}
+        </span>
+      </div>
+
       {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center pt-28 pb-20 px-6 relative z-10">
-        <div className="max-w-[700px] mx-auto text-center">
-          {/* Decorative vertical line */}
-          <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-[#B69B7D] to-transparent mx-auto mb-6" />
-
-          <p className="font-sans-ko text-sm text-[#B69B7D] tracking-[0.2em] mb-8 animate-fade-in uppercase">
-            Private Fortune Lounge
-          </p>
-
-          {/* Main Headline */}
-          <h1 className="font-serif-ko text-[clamp(2.5rem,6vw,4rem)] font-normal text-[#2D3A35] leading-[1.3] mb-6 animate-fade-up">
-            우리 아이,<br />
-            <span className="relative inline-block px-2">
-              <span className="absolute inset-0 bg-[#B69B7D]/10 -skew-x-6 rounded-sm"></span>
-              <span className="relative text-[#2D3A35]">어떤 사람이 될까요?</span>
-            </span>
+      <section style={{
+        width: '100%',
+        padding: '200px 40px 100px',
+        textAlign: 'center'
+      }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+          <h1 style={{
+            fontSize: 'clamp(36px, 5.5vw, 52px)',
+            fontWeight: 700,
+            color: '#2C2420',
+            lineHeight: 1.2,
+            letterSpacing: '-0.04em',
+            marginBottom: '28px',
+            fontFamily: '"Nanum Myeongjo", serif'
+          }}>
+            {t.hero.title1}<br />
+            <span style={{ color: '#B8922D' }}>{t.hero.titleAccent}</span><br />
+            {t.hero.title2}
           </h1>
 
-          {/* Subtext */}
-          <div className="space-y-2 mb-12">
-            <p className="font-sans-ko text-[1.125rem] text-[#6B6560] animate-fade-in stagger-2">
-              밤새 고민하신 적 있으시죠.
-            </p>
-            <p className="font-sans-ko text-[1rem] text-[#8B8580] animate-fade-in stagger-3">
-              천년의 지혜로 아이의 숨겨진 가능성을 발견하세요.
-            </p>
-          </div>
+          <p style={{
+            fontSize: '19px',
+            color: '#666666',
+            lineHeight: 1.7,
+            marginBottom: '48px',
+            fontWeight: 400
+          }}>
+            {t.hero.subtitle}<br />
+            {t.hero.subtitle2}
+          </p>
 
-          {/* CTAs */}
-          <div className="flex flex-col gap-4 items-center animate-fade-in stagger-4">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            alignItems: 'center',
+            marginBottom: '28px'
+          }}>
             <Link href="/saju/input">
-              <button className="btn-primary text-lg px-12 py-4 shadow-[0_12px_36px_rgba(45,58,53,0.15)] hover:shadow-[0_16px_48px_rgba(45,58,53,0.2)]">
-                우리 아이 알아보기
+              <button style={{
+                height: '60px',
+                padding: '0 44px',
+                fontSize: '17px',
+                fontWeight: 600,
+                color: '#FFFFFF',
+                background: '#1A3D2E',
+                border: 'none',
+                borderRadius: '30px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(26, 61, 46, 0.25)',
+                transition: 'all 0.2s ease'
+              }}>
+                {t.hero.cta}
               </button>
             </Link>
-            <Link href="/chat" className="no-underline group">
-              <span className="text-sm text-[#B69B7D] border-b border-[#D4C4A8] pb-0.5 group-hover:text-[#2D3A35] group-hover:border-[#2D3A35] transition-colors">
-                나의 운세 먼저 보기
-              </span>
-            </Link>
           </div>
 
-          {/* Trust indicators */}
-          <div className="flex justify-center gap-8 mt-16 flex-wrap animate-fade-in stagger-5">
-            {['프라이빗 1:1 분석', '정통 만세력 기반', '즉시 결과 확인'].map((text, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="text-[#B69B7D]"><CheckIcon /></span>
-                <span className="text-xs text-[#6B6560] tracking-wide">{text}</span>
-              </div>
-            ))}
-          </div>
+          <p style={{
+            fontSize: '14px',
+            color: '#999999',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '20px'
+          }}>
+            <span>✓ {t.hero.check1}</span>
+            <span>✓ {t.hero.check2}</span>
+            <span>✓ {t.hero.check3}</span>
+          </p>
         </div>
       </section>
 
-      {/* Pain Point Recognition Section */}
-      <section className="py-24 px-6 relative z-10">
-        <div className="max-w-[1000px] mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] mb-4">
-              이런 고민, 혼자 하고 계셨나요?
+      {/* Feature Cards */}
+      <section style={{
+        width: '100%',
+        padding: '60px 40px 120px'
+      }}>
+        <div style={{
+          maxWidth: '1100px',
+          margin: '0 auto'
+        }}>
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: '56px' }}>
+            <h2 style={{
+              fontSize: '36px',
+              fontWeight: 700,
+              color: '#2C2420',
+              letterSpacing: '-0.03em',
+              fontFamily: '"Nanum Myeongjo", serif'
+            }}>
+              {t.features.heading}
             </h2>
-            <p className="text-[#6B6560]">
-              많은 엄마들이 같은 고민을 안고 찾아오셨어요
-            </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <BookIcon />,
-                worry: '"아이가 공부에 흥미가 없어요"',
-                answer: '타고난 학습 스타일이 따로 있어요',
-                color: '#5A7D6B'
-              },
-              {
-                icon: <HeartIcon />,
-                worry: '"왜 이렇게 예민한지 모르겠어요"',
-                answer: '섬세함이 오히려 큰 재능이에요',
-                color: '#C67B6F'
-              },
-              {
-                icon: <CompassIcon />,
-                worry: '"어떤 길로 이끌어줘야 할지..."',
-                answer: '아이만의 빛나는 방향이 있어요',
-                color: '#6B8BA4'
-              }
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="card-paper p-8 flex flex-col items-start"
-              >
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center mb-6"
-                  style={{ background: `${item.color}15`, color: item.color }}
-                >
-                  {item.icon}
+          <div className="grid-responsive-3" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '24px'
+          }}>
+            {t.features.items.map((item, idx) => (
+              <div key={idx} className={`reveal reveal-delay-${idx + 1} card-interactive card-image-zoom`} style={{
+                background: '#FFFFFF',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }}>
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '280px',
+                  background: '#F5F0EB'
+                }}>
+                  <Image
+                    src={images[idx]}
+                    alt={item.title}
+                    fill
+                    style={{
+                      objectFit: 'cover',
+                      objectPosition: 'center top'
+                    }}
+                  />
                 </div>
-                <p className="font-serif-ko text-lg text-[#433E3B] mb-4 leading-relaxed">
-                  {item.worry}
-                </p>
-                <div className="mt-auto flex items-center gap-2 pt-4 border-t border-[#EBE5DF]/50 w-full">
-                  <span className="text-[#B69B7D] text-lg">→</span>
-                  <p className="text-sm text-[#B69B7D] font-medium">
-                    {item.answer}
+                <div style={{ padding: '28px 24px' }}>
+                  <div style={{ width: '24px', height: '2px', background: '#B8922D', marginBottom: '16px' }} />
+                  <h3 style={{
+                    fontSize: '20px',
+                    fontWeight: 600,
+                    color: '#2C2420',
+                    marginBottom: '10px',
+                    letterSpacing: '-0.01em',
+                    fontFamily: '"Nanum Myeongjo", serif'
+                  }}>
+                    {item.title}
+                  </h3>
+                  <p style={{
+                    fontSize: '15px',
+                    color: '#6B5E52',
+                    lineHeight: 1.6,
+                    margin: 0
+                  }}>
+                    {item.desc}
                   </p>
                 </div>
               </div>
@@ -264,45 +350,221 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials Section - Dark Mode */}
-      <section id="reviews" className="py-24 px-6 bg-[#2D3A35] relative overflow-hidden">
-        {/* Pattern Overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23B69B7D' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }} />
-
-        <div className="max-w-[1000px] mx-auto relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] text-[#FAF8F6] mb-4">
-              엄마들이 경험한 변화
+      {/* Problem Section */}
+      <section style={{
+        width: '100%',
+        background: '#FFFFFF',
+        padding: '120px 40px'
+      }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: '64px' }}>
+            <h2 style={{
+              fontSize: '36px',
+              fontWeight: 700,
+              color: '#2C2420',
+              letterSpacing: '-0.03em',
+              fontFamily: '"Nanum Myeongjo", serif'
+            }}>
+              {t.problems.heading}
             </h2>
-            <p className="text-[#B69B7D]/80">
-              실제 이용하신 분들의 이야기예요
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                quote: '사실 혼내기만 했는데... 아이 성격을 이해하니까 대화가 달라졌어요. 왜 진작 몰랐을까 싶어요.',
-                author: '45세, 중학생 엄마'
-              },
-              {
-                quote: '둘째가 첫째랑 너무 달라서 걱정이었는데, 각자 다른 재능이 있다는 걸 알게 됐어요.',
-                author: '38세, 초등학생 엄마'
-              },
-              {
-                quote: '아이한테 맞는 학습법을 찾았어요. 억지로 시키던 걸 그만두니 오히려 성적이 올랐어요.',
-                author: '42세, 고등학생 엄마'
-              }
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="bg-[#3D4A45]/80 backdrop-blur-md rounded-[1.25rem] p-8 border border-[#B69B7D]/10 hover:border-[#B69B7D]/30 transition-colors"
-              >
-                <div className="text-[#B69B7D] mb-6"><QuoteIcon /></div>
-                <p className="font-sans-ko text-[#FAF8F6]/90 leading-loose mb-6">
-                  {item.quote}
+          <div className="grid-responsive-2" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '20px'
+          }}>
+            {t.problems.items.map((item, idx) => (
+              <div key={idx} className={`reveal reveal-delay-${(idx % 2) + 1}`} style={{
+                background: '#FEFDFB',
+                borderRadius: '20px',
+                padding: '32px',
+                border: '1px solid rgba(0, 0, 0, 0.04)'
+              }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  color: '#2C2420',
+                  marginBottom: '10px',
+                  letterSpacing: '-0.02em'
+                }}>
+                  &ldquo;{item.title}&rdquo;
+                </h3>
+                <p style={{
+                  fontSize: '15px',
+                  color: '#666666',
+                  lineHeight: 1.6,
+                  margin: 0
+                }}>
+                  {item.desc}
                 </p>
-                <p className="text-xs text-[#B69B7D] uppercase tracking-wider">
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section style={{
+        width: '100%',
+        background: '#F5EFED',
+        padding: '120px 40px'
+      }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: '72px' }}>
+            <h2 style={{
+              fontSize: '36px',
+              fontWeight: 700,
+              color: '#2C2420',
+              letterSpacing: '-0.03em',
+              fontFamily: '"Nanum Myeongjo", serif'
+            }}>
+              {t.howItWorks.heading}
+            </h2>
+          </div>
+
+          <div className="grid-responsive-3" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '24px'
+          }}>
+            {t.howItWorks.items.map((item, idx) => (
+              <div key={idx} className={`reveal reveal-delay-${idx + 1} card-interactive`} style={{
+                background: '#FFFFFF',
+                borderRadius: '8px',
+                padding: '32px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <div style={{
+                  width: '32px',
+                  height: '3px',
+                  background: '#B8922D',
+                  marginBottom: '20px',
+                  borderRadius: '2px'
+                }} />
+
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: 600,
+                  color: '#212529',
+                  marginBottom: '16px',
+                  letterSpacing: '-0.01em',
+                  lineHeight: 1.2
+                }}>
+                  {item.title}
+                </h3>
+
+                <p style={{
+                  fontSize: '16px',
+                  color: '#6C757D',
+                  lineHeight: 1.5,
+                  marginBottom: '24px',
+                  flex: 1
+                }}>
+                  {item.desc}
+                </p>
+
+                <div style={{
+                  borderLeft: '3px solid #B8922D',
+                  paddingLeft: '16px',
+                  background: '#F8F9FA',
+                  padding: '16px',
+                  borderRadius: '0 6px 6px 0'
+                }}>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#343A40',
+                    lineHeight: 1.6,
+                    margin: 0,
+                    fontStyle: 'italic'
+                  }}>
+                    &ldquo;{item.example}&rdquo;
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '64px' }}>
+            <Link href="/saju/input">
+              <button style={{
+                height: '60px',
+                padding: '0 48px',
+                fontSize: '17px',
+                fontWeight: 600,
+                color: '#FFFFFF',
+                background: '#1A3D2E',
+                border: 'none',
+                borderRadius: '30px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(26, 61, 46, 0.25)'
+              }}>
+                {t.howItWorks.cta}
+              </button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section style={{
+        width: '100%',
+        background: '#FFFFFF',
+        padding: '120px 40px'
+      }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: '64px' }}>
+            <h2 style={{
+              fontSize: '36px',
+              fontWeight: 700,
+              color: '#2C2420',
+              letterSpacing: '-0.03em',
+              fontFamily: '"Nanum Myeongjo", serif'
+            }}>
+              {t.testimonials.heading}
+            </h2>
+          </div>
+
+          <div className="grid-responsive-3" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '24px'
+          }}>
+            {t.testimonials.items.map((item, idx) => (
+              <div key={idx} className={`reveal reveal-delay-${idx + 1}`} style={{
+                background: '#FEFDFB',
+                borderRadius: '20px',
+                padding: '32px',
+                border: '1px solid rgba(0, 0, 0, 0.04)'
+              }}>
+                <span style={{
+                  display: 'inline-block',
+                  padding: '6px 14px',
+                  borderRadius: '100px',
+                  background: 'rgba(184, 146, 45, 0.12)',
+                  color: '#7A6420',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  marginBottom: '20px'
+                }}>
+                  {item.tag}
+                </span>
+                <p style={{
+                  fontSize: '16px',
+                  color: '#333333',
+                  lineHeight: 1.8,
+                  marginBottom: '24px'
+                }}>
+                  &ldquo;{item.quote}&rdquo;
+                </p>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#888888',
+                  fontWeight: 500,
+                  margin: 0
+                }}>
                   — {item.author}
                 </p>
               </div>
@@ -311,136 +573,330 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Five Types Section */}
-      <section className="py-24 px-6 relative z-10">
-        <div className="max-w-[900px] mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] mb-4">
-              우리 아이는 어떤 타입일까요?
-            </h2>
-            <p className="text-[#6B6560]">
-              사주로 알아보는 다섯 가지 기질
-            </p>
-          </div>
+      {/* Kakao Share Section */}
+      <section className="reveal" style={{
+        width: '100%',
+        background: '#FFFFFF',
+        padding: '80px 40px',
+        borderTop: '1px solid #F0F0F0',
+        borderBottom: '1px solid #F0F0F0'
+      }}>
+        <div style={{
+          maxWidth: '560px',
+          margin: '0 auto',
+          textAlign: 'center'
+        }}>
+          <h2 style={{
+            fontSize: '28px',
+            fontWeight: 700,
+            color: '#2C2420',
+            marginBottom: '14px',
+            letterSpacing: '-0.02em',
+            fontFamily: '"Nanum Myeongjo", serif'
+          }}>
+            {t.share.heading}
+          </h2>
+          <p style={{
+            fontSize: '16px',
+            color: '#666666',
+            marginBottom: '32px',
+            lineHeight: 1.6,
+            whiteSpace: 'pre-line'
+          }}>
+            {t.share.desc}
+          </p>
+          <button
+            onClick={handleShare}
+            style={{
+              height: '54px',
+              padding: '0 32px',
+              fontSize: '15px',
+              fontWeight: 600,
+              color: currentShare.color,
+              background: currentShare.bg,
+              border: 'none',
+              borderRadius: '27px',
+              cursor: 'pointer',
+              boxShadow: `0 2px 12px ${currentShare.shadow}`,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {currentShare.icon}
+            {t.share.button}
+          </button>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
-            {[
-              { icon: '🌳', name: '리더 타입', trait: '책임감 있고 든든한', color: '#5A7D6B' },
-              { icon: '🔥', name: '열정가 타입', trait: '에너지 넘치고 활발한', color: '#C67B6F' },
-              { icon: '⭐', name: '조화 타입', trait: '균형 잡히고 안정적인', color: '#C4A574' },
-              { icon: '✨', name: '감성가 타입', trait: '섬세하고 예술적인', color: '#8B8D8F' },
-              { icon: '💧', name: '사색가 타입', trait: '깊이 생각하고 지혜로운', color: '#6B8BA4' }
-            ].map((type, idx) => (
-              <div
-                key={idx}
-                className="card-paper p-6 text-center group cursor-default"
-              >
-                <div className="text-3xl mb-4 group-hover:scale-110 transition-transform duration-300 transform origin-center">{type.icon}</div>
-                <p className="font-serif-ko text-base mb-1 font-medium" style={{ color: type.color }}>
-                  {type.name}
-                </p>
-                <p className="text-xs text-[#6B6560]">{type.trait}</p>
-              </div>
+      {/* Trust Signals */}
+      <section className="reveal" style={{
+        width: '100%',
+        background: '#FEFDFB',
+        padding: '60px 40px'
+      }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '16px',
+            flexWrap: 'wrap'
+          }}>
+            {t.trust.map((badge, idx) => (
+              <span key={idx} style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '14px',
+                color: '#6B5E52',
+                fontWeight: 500,
+                padding: '10px 20px',
+                borderRadius: '100px',
+                background: 'rgba(184, 146, 45, 0.06)',
+                border: '1px solid rgba(184, 146, 45, 0.12)'
+              }}>
+                {badge}
+              </span>
             ))}
-          </div>
-
-          <div className="text-center">
-            <Link href="/saju/input">
-              <button className="btn-secondary px-10 py-3">
-                우리 아이 타입 알아보기
-              </button>
-            </Link>
           </div>
         </div>
       </section>
 
-      {/* Pricing Section - Gift framing */}
-      <section id="pricing" className="py-24 px-6 bg-gradient-to-b from-[#EBE5DF]/30 to-transparent">
-        <div className="max-w-[900px] mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] mb-4">
-              나와 아이를 위한 시간
+      {/* Pricing */}
+      <section id="pricing" style={{
+        width: '100%',
+        background: '#2A2420',
+        padding: '120px 40px'
+      }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: '64px' }}>
+            <h2 style={{
+              fontSize: '36px',
+              fontWeight: 700,
+              color: '#FFFFFF',
+              letterSpacing: '-0.03em',
+              marginBottom: '12px',
+              fontFamily: '"Nanum Myeongjo", serif'
+            }}>
+              {t.pricing.heading}
             </h2>
-            <p className="text-[#6B6560]">
-              원하시는 만큼, 깊이 있게 알아보세요
+            <p style={{ fontSize: '16px', color: '#888888' }}>
+              {t.pricing.subtitle}
             </p>
           </div>
 
-          <div className="flex flex-col gap-5">
-            {[
-              {
-                name: '인연',
-                price: '12,000',
-                desc: '아이의 기본 성향 이해하기',
-                features: ['타고난 기질 분석', '숨겨진 재능 발견', '기본 성격 유형'],
-                recommended: false
-              },
-              {
-                name: '화목',
-                price: '29,000',
-                desc: '온 가족의 조화 이해하기',
-                features: ['심층 성향 분석', '부모-자녀 궁합', '형제 관계 분석', '맞춤 양육 조언', '무제한 질문'],
-                recommended: true
-              },
-              {
-                name: '풍요',
-                price: '59,000',
-                desc: '삶의 모든 순간을 함께',
-                features: ['화목 코스 전체 포함', '학업/진로 심층 분석', '월별 운세', '길일 선택 안내', '전문 상담 연결'],
-                recommended: false
-              }
-            ].map((plan, idx) => (
-              <div
-                key={idx}
-                className={`relative rounded-[1.25rem] p-8 border transition-all ${plan.recommended
-                    ? 'bg-[#2D3A35] text-[#FAF8F6] border-none shadow-xl transform scale-[1.02]'
-                    : 'glass-premium border-[#EBE5DF] text-[#2D3A35]'
-                  }`}
-              >
-                {plan.recommended && (
-                  <div className="absolute top-0 left-8 -translate-y-1/2 bg-gradient-to-r from-[#B69B7D] to-[#C4A574] text-white px-4 py-1.5 rounded-full text-xs font-medium shadow-lg">
-                    가장 많이 선택해요
+          <div className="grid-responsive-2" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '20px'
+          }}>
+            {/* Free */}
+            <div className="reveal reveal-delay-1" style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              borderRadius: '24px',
+              padding: '40px 32px',
+              border: '1px solid rgba(255, 255, 255, 0.08)'
+            }}>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: 500,
+                color: '#FFFFFF',
+                marginBottom: '12px'
+              }}>{t.pricing.free.name}</h3>
+              <p style={{
+                fontSize: '40px',
+                fontWeight: 700,
+                color: '#FFFFFF',
+                marginBottom: '32px'
+              }}>{t.pricing.free.price}</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px' }}>
+                {t.pricing.free.features.map((item, i) => (
+                  <li key={i} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '15px',
+                    color: '#AAAAAA',
+                    marginBottom: '16px'
+                  }}>
+                    <span style={{ color: '#1A3D2E', fontSize: '18px' }}>✓</span> {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/saju/input" style={{ display: 'block' }}>
+                <button style={{
+                  width: '100%',
+                  height: '52px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: '#FFFFFF',
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '26px',
+                  cursor: 'pointer'
+                }}>
+                  {t.pricing.free.cta}
+                </button>
+              </Link>
+            </div>
+
+            {/* Premium */}
+            <div className="reveal reveal-delay-2" style={{
+              background: '#1A3D2E',
+              borderRadius: '24px',
+              padding: '40px 32px',
+              position: 'relative'
+            }}>
+              <span style={{
+                position: 'absolute',
+                top: '-14px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#B8922D',
+                color: '#FFFFFF',
+                fontSize: '12px',
+                fontWeight: 600,
+                padding: '6px 20px',
+                borderRadius: '100px'
+              }}>
+                {t.pricing.premium.badge}
+              </span>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: 500,
+                color: 'rgba(255, 255, 255, 0.8)',
+                marginBottom: '12px'
+              }}>{t.pricing.premium.name}</h3>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '4px' }}>
+                <p style={{
+                  fontSize: '40px',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  margin: 0
+                }}>{t.pricing.premium.price}</p>
+                <p style={{
+                  fontSize: '18px',
+                  fontWeight: 500,
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  textDecoration: 'line-through',
+                  margin: 0
+                }}>{t.pricing.premium.originalPrice}</p>
+              </div>
+              <p style={{
+                fontSize: '13px',
+                color: 'rgba(255, 255, 255, 0.6)',
+                marginBottom: '32px'
+              }}>{t.pricing.premium.note}</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px' }}>
+                {t.pricing.premium.features.map((item, i) => (
+                  <li key={i} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '15px',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    marginBottom: '16px'
+                  }}>
+                    <span style={{ fontSize: '18px' }}>✓</span> {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/saju/input" style={{ display: 'block' }}>
+                <button style={{
+                  width: '100%',
+                  height: '52px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: '#1A3D2E',
+                  background: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '26px',
+                  cursor: 'pointer'
+                }}>
+                  {t.pricing.premium.cta}
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section style={{
+        width: '100%',
+        background: '#FEFDFB',
+        padding: '120px 40px'
+      }}>
+        <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: '64px' }}>
+            <h2 style={{
+              fontSize: '36px',
+              fontWeight: 700,
+              color: '#2C2420',
+              letterSpacing: '-0.03em',
+              fontFamily: '"Nanum Myeongjo", serif'
+            }}>
+              {t.faq.heading}
+            </h2>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {t.faq.items.map((item, idx) => (
+              <div key={idx} style={{
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                border: '1px solid rgba(0, 0, 0, 0.04)',
+                overflow: 'hidden'
+              }}>
+                <button
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  style={{
+                    width: '100%',
+                    padding: '24px 28px',
+                    background: 'none',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    color: '#2C2420'
+                  }}>{item.q}</span>
+                  <span style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    background: openFaq === idx ? '#1A3D2E' : '#F5EFED',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: openFaq === idx ? '#FFFFFF' : '#666666',
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    transition: 'all 0.2s',
+                    flexShrink: 0
+                  }}>
+                    {openFaq === idx ? '−' : '+'}
+                  </span>
+                </button>
+                {openFaq === idx && (
+                  <div style={{ padding: '0 28px 24px' }}>
+                    <p style={{
+                      fontSize: '15px',
+                      color: '#666666',
+                      lineHeight: 1.8,
+                      margin: 0
+                    }}>
+                      {item.a}
+                    </p>
                   </div>
                 )}
-
-                <div className="flex flex-wrap items-center gap-8">
-                  {/* Name & Price */}
-                  <div className="min-w-[140px]">
-                    <p className={`font-serif-ko text-2xl mb-1 ${plan.recommended ? 'text-[#FAF8F6]' : 'text-[#2D3A35]'}`}>
-                      {plan.name}
-                    </p>
-                    <p className="font-serif-ko text-xl text-[#B69B7D] mb-2">
-                      ₩{plan.price}
-                    </p>
-                    <p className={`text-xs ${plan.recommended ? 'text-[#FAF8F6]/60' : 'text-[#6B6560]'}`}>
-                      {plan.desc}
-                    </p>
-                  </div>
-
-                  {/* Features */}
-                  <div className="flex-1 min-w-[200px]">
-                    <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
-                      {plan.features.map((f, fi) => (
-                        <li key={fi} className={`text-xs flex items-center gap-2 ${plan.recommended ? 'text-[#FAF8F6]/80' : 'text-[#6B6560]'}`}>
-                          <span className="text-[#B69B7D]"><CheckIcon /></span>
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* CTA */}
-                  <div>
-                    <Link href="/saju/input">
-                      <button className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${plan.recommended
-                          ? 'bg-gradient-to-r from-[#B69B7D] to-[#C4A574] text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5'
-                          : 'bg-transparent border border-[#EBE5DF] hover:border-[#B69B7D] hover:text-[#B69B7D]'
-                        }`}>
-                        선택하기
-                      </button>
-                    </Link>
-                  </div>
-                </div>
               </div>
             ))}
           </div>
@@ -448,55 +904,79 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 px-6 relative z-10 text-center">
-        <div className="max-w-[600px] mx-auto">
-          <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-[#B69B7D] to-transparent mx-auto mb-8" />
-
-          <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] mb-4">
-            오늘, 우리 아이를 이해하는<br />
-            <span className="text-[#B69B7D]">첫 걸음</span>을 시작하세요
+      <section className="reveal" style={{
+        width: '100%',
+        background: '#1A3D2E',
+        padding: '100px 40px'
+      }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{
+            fontSize: 'clamp(28px, 4vw, 40px)',
+            fontWeight: 700,
+            color: '#FFFFFF',
+            letterSpacing: '-0.03em',
+            marginBottom: '20px',
+            lineHeight: 1.3,
+            fontFamily: '"Nanum Myeongjo", serif'
+          }}>
+            {t.cta.title1}<br />{t.cta.title2}
           </h2>
-
-          <p className="text-[#6B6560] mb-10 leading-relaxed">
-            밤새 혼자 고민하지 마세요.<br />
-            천 년의 지혜가 당신 곁에 있습니다.
+          <p style={{
+            fontSize: '17px',
+            color: 'rgba(255, 255, 255, 0.8)',
+            marginBottom: '40px'
+          }}>
+            {t.cta.subtitle}
           </p>
-
-          <div className="flex flex-col gap-4 items-center">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            alignItems: 'center'
+          }}>
             <Link href="/saju/input">
-              <button className="btn-primary text-lg px-12 py-4 shadow-[0_12px_36px_rgba(45,58,53,0.15)] hover:shadow-[0_16px_48px_rgba(45,58,53,0.2)]">
-                무료로 시작하기
+              <button style={{
+                height: '60px',
+                padding: '0 48px',
+                fontSize: '17px',
+                fontWeight: 600,
+                color: '#1A3D2E',
+                background: '#FFFFFF',
+                border: 'none',
+                borderRadius: '30px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+              }}>
+                {t.cta.button}
               </button>
             </Link>
-
-            {/* KakaoTalk Share Button - Enhanced */}
             <button
-              onClick={handleKakaoShare}
-              className="flex items-center gap-2 px-6 py-3 bg-[#FEE500] text-[#3C1E1E] rounded-full text-sm font-medium hover:bg-[#FFEB33] transition-colors"
+              onClick={handleShare}
+              style={{
+                height: '60px',
+                padding: '0 48px',
+                fontSize: '17px',
+                fontWeight: 600,
+                color: currentShare.color,
+                background: currentShare.bg,
+                border: 'none',
+                borderRadius: '30px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: `0 4px 20px ${currentShare.shadow}`
+              }}
             >
-              <KakaoIcon />
-              카카오톡으로 공유하기
+              {currentShare.icon}
+              {t.cta.shareButton}
             </button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-[#EBE5DF]">
-        <div className="max-w-[1000px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-center md:text-left">
-            <span className="font-serif-ko text-lg text-[#B69B7D]">소명</span>
-            <p className="text-xs text-[#6B6560] mt-2">
-              © 2025 소명. All rights reserved.
-            </p>
-          </div>
-          <div className="flex gap-6">
-            <a href="#" className="text-xs text-[#6B6560] hover:text-[#2D3A35] no-underline">이용약관</a>
-            <a href="#" className="text-xs text-[#6B6560] hover:text-[#2D3A35] no-underline">개인정보처리방침</a>
-            <a href="#" className="text-xs text-[#6B6560] hover:text-[#2D3A35] no-underline">문의하기</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

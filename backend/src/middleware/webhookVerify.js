@@ -5,164 +5,6 @@ const crypto = require('crypto');
 const logger = require('../utils/logger');
 
 /**
- * Webhook Security
- *
- * Payment gateways send webhooks to notify us of payment events.
- * We must verify these webhooks to ensure they're authentic and not
- * from attackers trying to fake payment completions.
- *
- * Each gateway has its own verification method:
- * - Toss Payments: X-Signature header with HMAC-SHA256
- * - PayPal: Uses PayPal SDK verification (not implemented here)
- * - Stripe: stripe-signature header with HMAC-SHA256
- */
-
-/**
- * Verify Toss Payments webhook signature
- *
- * Toss sends webhooks with an X-Signature header containing HMAC-SHA256
- * of the request body using the secret key.
- *
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- */
-function verifyTossWebhook(req, res, next) {
-  try {
-    const signature = req.headers['x-signature'];
-    const secretKey = process.env.TOSS_SECRET_KEY;
-
-    // Skip verification if no secret key configured (development)
-    if (!secretKey) {
-      logger.warn('Toss webhook verification skipped - no secret key configured');
-      return next();
-    }
-
-    // Check if signature exists
-    if (!signature) {
-      logger.error('Toss webhook verification failed - no signature header');
-      return res.status(401).json({
-        success: false,
-        error: 'Webhook signature missing',
-        code: 'WEBHOOK_SIGNATURE_MISSING'
-      });
-    }
-
-    // Get raw body (must be raw buffer, not parsed JSON)
-    const rawBody = req.body.toString();
-
-    // Calculate expected signature
-    const expectedSignature = crypto
-      .createHmac('sha256', secretKey)
-      .update(rawBody)
-      .digest('base64');
-
-    // Compare signatures (timing-safe comparison)
-    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-      logger.error('Toss webhook verification failed - signature mismatch', {
-        receivedSignature: signature.substring(0, 10) + '...',
-        expectedSignature: expectedSignature.substring(0, 10) + '...'
-      });
-
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid webhook signature',
-        code: 'WEBHOOK_SIGNATURE_INVALID'
-      });
-    }
-
-    logger.info('Toss webhook verified successfully');
-    next();
-
-  } catch (error) {
-    logger.logError(error, { context: 'Toss webhook verification' });
-    return res.status(500).json({
-      success: false,
-      error: 'Webhook verification error',
-      code: 'WEBHOOK_VERIFICATION_ERROR'
-    });
-  }
-}
-
-/**
- * Verify Stripe webhook signature
- *
- * Stripe sends webhooks with a stripe-signature header containing:
- * - Timestamp
- * - Signature(s)
- *
- * We use the Stripe SDK to verify the signature.
- *
- * @param {Object} req - Express request
- * @param {Object} res - Express response
- * @param {Function} next - Next middleware
- */
-function verifyStripeWebhook(req, res, next) {
-  try {
-    const signature = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    // Skip verification if no webhook secret configured (development)
-    if (!webhookSecret) {
-      logger.warn('Stripe webhook verification skipped - no webhook secret configured');
-      return next();
-    }
-
-    // Check if signature exists
-    if (!signature) {
-      logger.error('Stripe webhook verification failed - no signature header');
-      return res.status(401).json({
-        success: false,
-        error: 'Webhook signature missing',
-        code: 'WEBHOOK_SIGNATURE_MISSING'
-      });
-    }
-
-    // Verify using Stripe SDK
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
-    try {
-      // constructEvent will throw if signature is invalid
-      const event = stripe.webhooks.constructEvent(
-        req.body, // Raw body buffer
-        signature,
-        webhookSecret
-      );
-
-      // Attach verified event to request
-      req.stripeEvent = event;
-
-      logger.info('Stripe webhook verified successfully', {
-        eventType: event.type,
-        eventId: event.id
-      });
-
-      next();
-
-    } catch (err) {
-      logger.error('Stripe webhook verification failed', {
-        error: err.message
-      });
-
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid webhook signature',
-        code: 'WEBHOOK_SIGNATURE_INVALID',
-        details: err.message
-      });
-    }
-
-  } catch (error) {
-    logger.logError(error, { context: 'Stripe webhook verification' });
-    return res.status(500).json({
-      success: false,
-      error: 'Webhook verification error',
-      code: 'WEBHOOK_VERIFICATION_ERROR'
-    });
-  }
-}
-
-/**
  * Verify PayPal webhook signature
  *
  * PayPal uses webhook signature verification to ensure webhooks are authentic.
@@ -290,7 +132,7 @@ async function verifyPayPalWebhook(req, res, next) {
  * Generic webhook verification middleware
  * Logs webhook receipt and basic validation
  *
- * @param {string} source - Webhook source (toss, stripe, paypal)
+ * @param {string} source - Webhook source (e.g. 'paypal')
  */
 function webhookLogger(source) {
   return (req, res, next) => {
@@ -349,8 +191,6 @@ function preventReplayAttack(toleranceSeconds = 300) {
 }
 
 module.exports = {
-  verifyTossWebhook,
-  verifyStripeWebhook,
   verifyPayPalWebhook,
   webhookLogger,
   preventReplayAttack,

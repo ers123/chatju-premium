@@ -14,8 +14,8 @@ const app = express();
 
 // CORS 설정 (Environment-aware)
 const allowedOrigins = process.env.NODE_ENV === 'production'
-    ? ['https://chatju.pages.dev'] // Production: Only allow production domain
-    : ['https://chatju.pages.dev', 'http://localhost:8080', 'http://localhost:3001']; // Development: Allow local dev servers
+    ? ['https://somyung.pages.dev'] // Production: Only allow production domain
+    : ['https://somyung.pages.dev', 'http://localhost:8080', 'http://localhost:3001']; // Development: Allow local dev servers
 
 const corsOptions = {
     origin: allowedOrigins,
@@ -178,9 +178,7 @@ if (require.main === module) {
         logger.info(`  POST http://localhost:${PORT}/auth/signin`);
         logger.info(`  POST http://localhost:${PORT}/saju/preview (FREE)`);
         logger.info(`  POST http://localhost:${PORT}/saju/calculate`);
-        logger.info(`  POST http://localhost:${PORT}/payment/toss/create (PRIMARY - Korea)`);
-        logger.info(`  POST http://localhost:${PORT}/payment/paypal/create (PRIMARY - International)`);
-        logger.info(`  POST http://localhost:${PORT}/payment/stripe/create (Optional)`);
+        logger.info(`  POST http://localhost:${PORT}/payment/paypal/create`);
         logger.info('=================================');
     });
 }

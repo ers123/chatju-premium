@@ -155,23 +155,17 @@ export function usdToKrw(usd: number): number {
  */
 export function getPaymentMethodName(method: string, language: 'ko' | 'en'): string {
   const names: Record<string, Record<string, string>> = {
-    toss: { ko: '토스페이', en: 'Toss Payments' },
     paypal: { ko: '페이팔', en: 'PayPal' },
-    stripe: { ko: '신용카드', en: 'Credit Card' },
   };
 
   return names[method]?.[language] || method;
 }
 
 /**
- * Determine payment method priority based on user location
+ * Get available payment methods
  */
-export function getPaymentMethodPriority(userLanguage: 'ko' | 'en'): string[] {
-  if (userLanguage === 'ko') {
-    return ['toss', 'paypal', 'stripe'];
-  } else {
-    return ['paypal', 'toss', 'stripe'];
-  }
+export function getPaymentMethodPriority(_userLanguage: 'ko' | 'en'): string[] {
+  return ['paypal'];
 }
 
 // ---------------------------------------------
