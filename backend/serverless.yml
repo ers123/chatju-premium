@@ -26,7 +26,7 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'ap-northeast-2'} # Seoul region (Korea)
   memorySize: 512 # MB - 512 is good balance for AI API calls
-  timeout: 30 # seconds - AI calls can take time
+  timeout: 60 # seconds - AI generation + PDF + email can take 40-50s
 
   # Environment variables (CRITICAL: Set these in AWS Console or use .env)
   environment:
