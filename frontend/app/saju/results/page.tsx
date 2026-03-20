@@ -150,7 +150,7 @@ function OhaengBalanceChart({ balance, ohaengElements, elementCount }: { balance
 
 export default function ResultsPage() {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const sr = t.sajuResults
   const [result, setResult] = useState<SajuResult | null>(null)
   const [inputData, setInputData] = useState<{ name: string; birthDate: string; birthTime: string } | null>(null)
@@ -184,6 +184,7 @@ export default function ResultsPage() {
           birthTime: input.birthTime,
           gender: input.gender,
           isLunar: input.calendar === 'lunar',
+          language: lang,
           // Location for solar time correction
           birthPlace: input.birthPlace,
           // Twin info
@@ -279,6 +280,7 @@ export default function ResultsPage() {
           birthTime: input.birthTime,
           gender: input.gender,
           isLunar: input.calendar === 'lunar',
+          language: lang,
           // Location for solar time correction
           birthPlace: input.birthPlace,
           // Twin info
