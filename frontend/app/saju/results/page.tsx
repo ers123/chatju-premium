@@ -31,20 +31,20 @@ interface SajuResult {
 
 // Icons
 const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: '1rem', height: '1rem' }}>
     <polyline points="20 6 9 17 4 12" />
   </svg>
 )
 
 const LockIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '1.25rem', height: '1.25rem' }}>
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
   </svg>
 )
 
 const StarIcon = ({ filled = true }: { filled?: boolean }) => (
-  <svg viewBox="0 0 20 20" fill={filled ? "#B8922D" : "#E2DDD6"} className="w-4 h-4">
+  <svg viewBox="0 0 20 20" fill={filled ? "#B8922D" : "#E2DDD6"} style={{ width: '1rem', height: '1rem' }}>
     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
   </svg>
 )
@@ -90,20 +90,20 @@ function FourPillarsDisplay({ pillars, t }: { pillars: SajuResult['fourPillars']
   const pillarLabels = { 년주: t.pillarYear, 월주: t.pillarMonth, 일주: t.pillarDay, 시주: t.pillarHour }
 
   return (
-    <div className="grid grid-cols-4 gap-2 md:gap-4">
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
       {pillarOrder.map((key) => {
         const pillar = pillars[key]
         return (
-          <div key={key} className="text-center">
-            <div className="text-xs mb-2" style={{ color: '#8B8580' }}>{pillarLabels[key]}</div>
-            <div className="bg-[#1A3D2E] rounded-xl overflow-hidden">
-              <div className="py-3 md:py-4 border-b border-white/10">
-                <div className="text-2xl md:text-3xl font-bold text-white">{pillar.천간}</div>
-                <div className="text-xs text-[#B8922D] mt-1">{pillar.천간오행}</div>
+          <div key={key} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '0.75rem', marginBottom: '0.5rem', color: '#8B8580' }}>{pillarLabels[key]}</div>
+            <div style={{ background: '#1A3D2E', borderRadius: '0.75rem', overflow: 'hidden' }}>
+              <div style={{ padding: '0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{pillar.천간}</div>
+                <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{pillar.천간오행}</div>
               </div>
-              <div className="py-3 md:py-4">
-                <div className="text-2xl md:text-3xl font-bold text-white">{pillar.지지}</div>
-                <div className="text-xs text-[#B8922D] mt-1">{pillar.지지오행}</div>
+              <div style={{ padding: '0.75rem 0' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{pillar.지지}</div>
+                <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{pillar.지지오행}</div>
               </div>
             </div>
           </div>
@@ -118,26 +118,25 @@ function OhaengBalanceChart({ balance, ohaengElements, elementCount }: { balance
   const maxValue = Math.max(...Object.values(balance), 1)
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {ohaengElements.map(({ key, name }) => {
         const value = balance[key] || 0
         const percentage = (value / maxValue) * 100
         const visual = elementVisuals[key]
 
         return (
-          <div key={key} className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ backgroundColor: `${visual.color}20` }}>
+          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', backgroundColor: `${visual.color}20` }}>
               {visual.emoji}
             </div>
-            <div className="flex-1">
-              <div className="flex justify-between text-sm mb-1">
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
                 <span style={{ color: '#6B5E52' }}>{name}</span>
-                <span className="font-bold" style={{ color: visual.color }}>{value}{elementCount}</span>
+                <span style={{ fontWeight: 700, color: visual.color }}>{value}{elementCount}</span>
               </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#EBE5DF' }}>
+              <div style={{ height: '0.5rem', borderRadius: '9999px', overflow: 'hidden', backgroundColor: '#EBE5DF' }}>
                 <div
-                  className="h-full rounded-full transition-all duration-1000"
-                  style={{ width: `${percentage}%`, backgroundColor: visual.color }}
+                  style={{ height: '100%', borderRadius: '9999px', transition: 'all 1s', width: `${percentage}%`, backgroundColor: visual.color }}
                 />
               </div>
             </div>
@@ -176,31 +175,41 @@ export default function ResultsPage() {
         if (!completed.orderId) return
 
         setPremiumLoading(true)
-        const stored = sessionStorage.getItem('sajuInput')
-        if (!stored) return
-        const input = JSON.parse(stored)
 
-        const reading = await apiClient.getFullReading(completed.orderId, {
-          birthDate: input.birthDate,
-          birthTime: input.birthTime,
-          gender: input.gender,
-          isLunar: input.calendar === 'lunar',
-          language: lang,
-          // Location for solar time correction
-          birthPlace: input.birthPlace,
-          // Twin info
-          twinOrder: input.twinOrder,
-          twinSiblingName: input.twinSiblingName,
-          // Parent data
-          parentBirthDate: input.parentBirthDate,
-          parentBirthTime: input.parentBirthTime,
-          parentRole: input.parentRole,
-          parentGender: input.parentGender,
-        })
+        // Check for promo reading (already fetched, stored in session)
+        const promoReadingRaw = sessionStorage.getItem('promo_reading')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let r: any = null
+
+        if (promoReadingRaw) {
+          r = JSON.parse(promoReadingRaw)
+          sessionStorage.removeItem('promo_reading') // One-time use
+        } else {
+          const stored = sessionStorage.getItem('sajuInput')
+          if (!stored) return
+          const input = JSON.parse(stored)
+
+          const reading = await apiClient.getFullReading(completed.orderId, {
+            birthDate: input.birthDate,
+            birthTime: input.birthTime,
+            gender: input.gender,
+            isLunar: input.calendar === 'lunar',
+            language: lang,
+            // Location for solar time correction
+            birthPlace: input.birthPlace,
+            // Twin info
+            twinOrder: input.twinOrder,
+            twinSiblingName: input.twinSiblingName,
+            // Parent data
+            parentBirthDate: input.parentBirthDate,
+            parentBirthTime: input.parentBirthTime,
+            parentRole: input.parentRole,
+            parentGender: input.parentGender,
+          })
+          r = reading
+        }
 
         // Backend returns aiInterpretation: { fullText, sections, metadata }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const r = reading as any
         if (r.aiInterpretation?.fullText) {
           setPremiumReport({ fullText: r.aiInterpretation.fullText, ...(r.aiInterpretation.sections || {}) })
         } else if (r.premiumSections) {
@@ -504,27 +513,26 @@ export default function ResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCFA]">
+    <div style={{ minHeight: '100vh', background: '#FDFCFA' }}>
       {/* Header */}
-      <header className="sticky top-0 z-10 glass-premium" style={{ borderBottom: '1px solid rgba(235, 229, 223, 0.6)' }}>
-        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="no-underline flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#1A3D2E] flex items-center justify-center">
-              <span className="font-serif text-xs text-[#B8922D] font-bold">소</span>
+      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(235,229,223,0.6)' }}>
+        <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: '#1A3D2E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'serif', fontSize: '0.75rem', color: '#B8922D', fontWeight: 700 }}>소</span>
             </div>
-            <span className="font-serif text-xl text-[#1A3D2E]">소명</span>
+            <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>소명</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button
               onClick={handlePdfExport}
-              className="px-4 py-2 text-sm font-semibold rounded-lg hover:border-[#B8922D] transition-all"
-              style={{ border: '1px solid #EBE5DF' }}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: '0.5rem', border: '1px solid #EBE5DF', background: 'none', cursor: 'pointer' }}
             >
               {sr.savePdf}
             </button>
             <button
               onClick={() => router.push('/chat')}
-              className="px-4 py-2 text-sm font-bold text-white bg-[#B8922D] rounded-lg hover:bg-[#D4B67D] transition-all"
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 700, color: '#FFFFFF', background: '#B8922D', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}
             >
               {sr.aiConsult}
             </button>
@@ -532,74 +540,74 @@ export default function ResultsPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8" ref={reportRef}>
+      <main style={{ maxWidth: '48rem', margin: '0 auto', padding: '2rem 1.5rem' }} ref={reportRef}>
         {/* Hero Result Card */}
-        <section className="card-paper rounded-3xl p-6 md:p-10 mb-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#B8922D]/10 text-[#B8922D] text-sm font-semibold mb-4">
+        <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '9999px', background: 'rgba(184,146,45,0.1)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>
               ✨ {sr.freeBadge}
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#1A3D2E] mb-2">
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginBottom: '0.5rem' }}>
               {inputData?.name}{sr.analysisTitle}
             </h1>
             <p style={{ color: '#8B8580' }}>
               {inputData?.birthDate} {inputData?.birthTime}
             </p>
-            <p className="text-sm mt-2 font-medium" style={{ color: '#8B8580' }}>{sr.analysisSubtitle}</p>
+            <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', fontWeight: 500, color: '#8B8580' }}>{sr.analysisSubtitle}</p>
           </div>
 
           {/* Main Temperament */}
-          <div className="rounded-2xl p-6 mb-8" style={{ backgroundColor: dominantVisual.bgColor }}>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-white shadow-sm">
+          <div style={{ borderRadius: '1rem', padding: '1.5rem', marginBottom: '2rem', backgroundColor: dominantVisual.bgColor }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ width: '4rem', height: '4rem', borderRadius: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.875rem', background: '#FFFFFF', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                 {dominantVisual.emoji}
               </div>
               <div>
-                <div className="text-sm" style={{ color: '#8B8580' }}>{sr.coreTemperament}</div>
-                <div className="text-2xl font-bold" style={{ color: dominantVisual.color }}>
+                <div style={{ fontSize: '0.875rem', color: '#8B8580' }}>{sr.coreTemperament}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: dominantVisual.color }}>
                   {dominantElInfo.name}{sr.temperamentSuffix}
                 </div>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
               {dominantElInfo.traits.map((trait, i) => (
-                <span key={i} className="px-3 py-1 rounded-full bg-white text-sm font-medium" style={{ color: dominantVisual.color }}>
+                <span key={i} style={{ padding: '0.25rem 0.75rem', borderRadius: '9999px', background: '#FFFFFF', fontSize: '0.875rem', fontWeight: 500, color: dominantVisual.color }}>
                   {trait}
                 </span>
               ))}
             </div>
-            <p className="leading-relaxed" style={{ color: '#6B5E52' }}>
+            <p style={{ lineHeight: 1.7, color: '#6B5E52' }}>
               {inputData?.name}{sr.temperamentDesc1}<strong style={{ color: dominantVisual.color }}>{dominantElInfo.name}</strong>{sr.temperamentDesc2}{dominantElInfo.traits.slice(0, 2).join(', ')}{sr.temperamentDesc3}
             </p>
           </div>
 
           {/* AI Interpretation */}
           {result.preview && (
-            <div className="rounded-2xl p-6 mb-8 bg-gradient-to-br from-[#F8F6F3] to-[#FFF8E1] border border-[#B8922D]/20">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-[#B8922D]/10 flex items-center justify-center text-lg">🔮</div>
-                <h3 className="text-lg font-bold text-[#1A3D2E]">{sr.aiInterpretation}</h3>
+            <div style={{ borderRadius: '1rem', padding: '1.5rem', marginBottom: '2rem', background: 'linear-gradient(to bottom right, #F8F6F3, #FFF8E1)', border: '1px solid rgba(184,146,45,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(184,146,45,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem' }}>🔮</div>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1A3D2E' }}>{sr.aiInterpretation}</h3>
               </div>
-              <div className="leading-relaxed whitespace-pre-line text-[0.95rem]" style={{ color: '#6B5E52' }}>
+              <div style={{ lineHeight: 1.7, whiteSpace: 'pre-line', fontSize: '0.95rem', color: '#6B5E52' }}>
                 {result.preview}
               </div>
             </div>
           )}
 
           {/* Four Pillars */}
-          <div className="mb-8">
-            <h3 className="text-lg font-bold font-serif text-[#1A3D2E] mb-4">{sr.fourPillars}</h3>
+          <div style={{ marginBottom: '2rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginBottom: '1rem' }}>{sr.fourPillars}</h3>
             <FourPillarsDisplay pillars={result.fourPillars} t={sr} />
 
             {/* Solar Time Correction Note */}
             {corrections?.applied && (
-              <div className="mt-3 px-4 py-3 rounded-xl border border-[#E2DDD6] bg-[#FAF8F5]">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-base">🕐</span>
-                  <span className="text-[#6B5E52]">{corrections.note}</span>
+              <div style={{ marginTop: '0.75rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', border: '1px solid #E2DDD6', background: '#FAF8F5' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                  <span style={{ fontSize: '1rem' }}>🕐</span>
+                  <span style={{ color: '#6B5E52' }}>{corrections.note}</span>
                 </div>
                 {corrections.adjustedTime && (
-                  <div className="text-xs text-[#9CA3AF] mt-1 ml-7">
+                  <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.25rem', marginLeft: '1.75rem' }}>
                     보정된 출생 시각: {corrections.adjustedTime}
                     {corrections.isSouthernHemisphere && ' (남반구 만세력 적용)'}
                   </div>
@@ -610,72 +618,72 @@ export default function ResultsPage() {
 
           {/* Ohaeng Balance */}
           <div>
-            <h3 className="text-lg font-bold font-serif text-[#1A3D2E] mb-4">{sr.ohaengBalance}</h3>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginBottom: '1rem' }}>{sr.ohaengBalance}</h3>
             <OhaengBalanceChart balance={result.ohaengBalance} ohaengElements={sr.ohaengElements} elementCount={sr.elementCount} />
           </div>
         </section>
 
 
         {/* FREE: Learning Style */}
-        <section className="card-paper rounded-3xl p-6 md:p-10 mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-[#E8F5E9] flex items-center justify-center text-xl">📚</div>
+        <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>📚</div>
             <div>
-              <div className="text-xs text-[#5A7A66] font-bold">{sr.learningFree}</div>
-              <h2 className="text-xl font-bold font-serif text-[#1A3D2E]">{sr.learningTitle}</h2>
+              <div style={{ fontSize: '0.75rem', color: '#5A7A66', fontWeight: 700 }}>{sr.learningFree}</div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E' }}>{sr.learningTitle}</h2>
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Recommended Learning Style */}
-            <div className="p-5 rounded-2xl" style={{ backgroundColor: dominantVisual.bgColor }}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">{dominantVisual.emoji}</span>
-                <h4 className="font-bold" style={{ color: dominantVisual.color }}>
+            <div style={{ padding: '1.25rem', borderRadius: '1rem', backgroundColor: dominantVisual.bgColor }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '1.125rem' }}>{dominantVisual.emoji}</span>
+                <h4 style={{ fontWeight: 700, color: dominantVisual.color }}>
                   {dominantElInfo.name}{sr.learningMethod}
                 </h4>
               </div>
-              <p className="leading-relaxed mb-4" style={{ color: '#6B5E52' }}>{dominantElInfo.learningStyle}</p>
-              <div className="flex items-start gap-2 p-3 bg-white/50 rounded-xl">
-                <span className="text-lg">⚠️</span>
-                <p className="text-sm" style={{ color: '#6B5E52' }}>{dominantElInfo.caution}</p>
+              <p style={{ lineHeight: 1.7, marginBottom: '1rem', color: '#6B5E52' }}>{dominantElInfo.learningStyle}</p>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.5)', borderRadius: '0.75rem' }}>
+                <span style={{ fontSize: '1.125rem' }}>⚠️</span>
+                <p style={{ fontSize: '0.875rem', color: '#6B5E52' }}>{dominantElInfo.caution}</p>
               </div>
             </div>
 
             {/* Weak Element Supplement */}
-            <div className="p-5 rounded-2xl" style={{ backgroundColor: '#F8F6F3' }}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">{weakVisual.emoji}</span>
-                <h4 className="font-bold" style={{ color: '#6B5E52' }}>
+            <div style={{ padding: '1.25rem', borderRadius: '1rem', backgroundColor: '#F8F6F3' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '1.125rem' }}>{weakVisual.emoji}</span>
+                <h4 style={{ fontWeight: 700, color: '#6B5E52' }}>
                   {weakElInfo.name}{sr.supplementTitle}
                 </h4>
               </div>
-              <p className="leading-relaxed" style={{ color: '#6B5E52' }}>
+              <p style={{ lineHeight: 1.7, color: '#6B5E52' }}>
                 {inputData?.name}{sr.supplementDesc1}<strong>{weakElInfo.name}</strong>{sr.supplementDesc2}
                 {getSupplementText(weakElement)}
               </p>
             </div>
 
             {/* Quick Tips */}
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl bg-[#F8F6F3] text-center">
-                <div className="text-2xl mb-2">🕐</div>
-                <div className="font-bold text-[#1A3D2E] text-sm mb-1">{sr.optimalTime}</div>
-                <div className="text-sm" style={{ color: '#6B5E52' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+              <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#F8F6F3', textAlign: 'center' }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🕐</div>
+                <div style={{ fontWeight: 700, color: '#1A3D2E', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{sr.optimalTime}</div>
+                <div style={{ fontSize: '0.875rem', color: '#6B5E52' }}>
                   {getTimeText(dominantElement)}
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-[#F8F6F3] text-center">
-                <div className="text-2xl mb-2">📍</div>
-                <div className="font-bold text-[#1A3D2E] text-sm mb-1">{sr.recommendedEnv}</div>
-                <div className="text-sm" style={{ color: '#6B5E52' }}>
+              <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#F8F6F3', textAlign: 'center' }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📍</div>
+                <div style={{ fontWeight: 700, color: '#1A3D2E', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{sr.recommendedEnv}</div>
+                <div style={{ fontSize: '0.875rem', color: '#6B5E52' }}>
                   {getEnvText(dominantElement)}
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-[#F8F6F3] text-center">
-                <div className="text-2xl mb-2">🎯</div>
-                <div className="font-bold text-[#1A3D2E] text-sm mb-1">{sr.motivation}</div>
-                <div className="text-sm" style={{ color: '#6B5E52' }}>
+              <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#F8F6F3', textAlign: 'center' }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🎯</div>
+                <div style={{ fontWeight: 700, color: '#1A3D2E', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{sr.motivation}</div>
+                <div style={{ fontSize: '0.875rem', color: '#6B5E52' }}>
                   {getMotiveText(dominantElement)}
                 </div>
               </div>
@@ -688,57 +696,57 @@ export default function ResultsPage() {
         {premiumReport ? (
           <>
             {/* Premium Report Header */}
-            <section className="bg-gradient-to-br from-[#1A3D2E] to-[#2D4A3E] rounded-3xl p-6 md:p-10 text-white mb-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-[#B8922D]/10 rounded-full blur-3xl" />
-              <div className="relative z-10 text-center">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#B8922D]/20 text-[#B8922D] text-sm font-bold mb-4">
+            <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '1.5rem', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, right: 0, width: '10rem', height: '10rem', background: 'rgba(184,146,45,0.1)', borderRadius: '50%', filter: 'blur(48px)' }} />
+              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 1rem', borderRadius: '9999px', background: 'rgba(184,146,45,0.2)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 700, marginBottom: '1rem' }}>
                   <CheckIcon /> 프리미엄 분석 완료
                 </div>
-                <h2 className="text-2xl font-bold font-serif">{sr.premiumTitle}</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif' }}>{sr.premiumTitle}</h2>
               </div>
             </section>
 
             {/* Premium Report — rendered as markdown */}
-            <section className="card-paper rounded-3xl p-6 md:p-10 mb-8">
-              <div className="premium-report-content prose prose-sm max-w-none" style={{ color: '#4B4035' }}>
+            <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
+              <div style={{ color: '#4B4035', maxWidth: 'none' }}>
                 <ReactMarkdown
                   components={{
                     h2: ({ children }) => (
-                      <h2 className="text-xl font-bold font-serif text-[#1A3D2E] mt-10 mb-4 pb-2" style={{ borderBottom: '1px solid #EBE5DF' }}>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginTop: '2.5rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #EBE5DF' }}>
                         {children}
                       </h2>
                     ),
                     h3: ({ children }) => (
-                      <h3 className="text-lg font-semibold text-[#1A3D2E] mt-6 mb-3">{children}</h3>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1A3D2E', marginTop: '1.5rem', marginBottom: '0.75rem' }}>{children}</h3>
                     ),
                     p: ({ children }) => (
-                      <p className="mb-4 leading-relaxed" style={{ color: '#4B4035' }}>{children}</p>
+                      <p style={{ marginBottom: '1rem', lineHeight: 1.7, color: '#4B4035' }}>{children}</p>
                     ),
                     strong: ({ children }) => (
-                      <strong className="font-semibold" style={{ color: '#1A3D2E' }}>{children}</strong>
+                      <strong style={{ fontWeight: 600, color: '#1A3D2E' }}>{children}</strong>
                     ),
                     ul: ({ children }) => (
-                      <ul className="mb-4 ml-1 space-y-2">{children}</ul>
+                      <ul style={{ marginBottom: '1rem', marginLeft: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>{children}</ul>
                     ),
                     ol: ({ children }) => (
-                      <ol className="mb-4 ml-1 space-y-2 list-decimal list-inside">{children}</ol>
+                      <ol style={{ marginBottom: '1rem', marginLeft: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', listStyleType: 'decimal', listStylePosition: 'inside' }}>{children}</ol>
                     ),
                     li: ({ children }) => (
-                      <li className="leading-relaxed" style={{ color: '#4B4035' }}>{children}</li>
+                      <li style={{ lineHeight: 1.7, color: '#4B4035' }}>{children}</li>
                     ),
                     hr: () => (
-                      <hr className="my-8" style={{ borderColor: '#EBE5DF' }} />
+                      <hr style={{ margin: '2rem 0', borderColor: '#EBE5DF' }} />
                     ),
                     table: ({ children }) => (
-                      <div className="overflow-x-auto mb-4">
-                        <table className="w-full text-sm border-collapse" style={{ borderColor: '#EBE5DF' }}>{children}</table>
+                      <div style={{ overflowX: 'auto', marginBottom: '1rem' }}>
+                        <table style={{ width: '100%', fontSize: '0.875rem', borderCollapse: 'collapse', borderColor: '#EBE5DF' }}>{children}</table>
                       </div>
                     ),
                     th: ({ children }) => (
-                      <th className="px-3 py-2 text-left font-semibold text-[#1A3D2E]" style={{ borderBottom: '2px solid #EBE5DF', backgroundColor: '#FAF8F5' }}>{children}</th>
+                      <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#1A3D2E', borderBottom: '2px solid #EBE5DF', backgroundColor: '#FAF8F5' }}>{children}</th>
                     ),
                     td: ({ children }) => (
-                      <td className="px-3 py-2" style={{ borderBottom: '1px solid #F3F0ED' }}>{children}</td>
+                      <td style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #F3F0ED' }}>{children}</td>
                     ),
                   }}
                 >
@@ -751,43 +759,42 @@ export default function ResultsPage() {
             </section>
           </>
         ) : premiumLoading ? (
-          <section className="card-paper rounded-3xl p-6 md:p-10 mb-8 text-center">
-            <div className="relative w-16 h-16 mx-auto mb-4">
-              <div className="absolute inset-0 border-4 rounded-full" style={{ borderColor: '#EBE5DF' }} />
-              <div className="absolute inset-0 border-4 rounded-full animate-spin" style={{ borderColor: '#B8922D', borderTopColor: 'transparent' }} />
+          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
+            <div style={{ position: 'relative', width: '4rem', height: '4rem', margin: '0 auto 1rem' }}>
+              <div style={{ position: 'absolute', inset: 0, border: '4px solid #EBE5DF', borderRadius: '50%' }} />
+              <div style={{ position: 'absolute', inset: 0, border: '4px solid #B8922D', borderRadius: '50%', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
             </div>
-            <h3 className="text-lg font-bold text-[#1A3D2E] mb-2">프리미엄 분석 생성 중...</h3>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.5rem' }}>프리미엄 분석 생성 중...</h3>
             <p style={{ color: '#8B8580' }}>AI가 심층 분석을 수행하고 있습니다. 잠시만 기다려주세요.</p>
           </section>
         ) : premiumError ? (
-          <section className="card-paper rounded-3xl p-6 md:p-10 mb-8 text-center">
+          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
             <p style={{ color: '#C67B6F' }}>{premiumError}</p>
           </section>
         ) : (
-          <section className="bg-gradient-to-br from-[#1A3D2E] to-[#2D4A3E] rounded-3xl p-6 md:p-10 text-white mb-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-[#B8922D]/10 rounded-full blur-3xl" />
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-4">
+          <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '1.5rem', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, width: '10rem', height: '10rem', background: 'rgba(184,146,45,0.1)', borderRadius: '50%', filter: 'blur(48px)' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <LockIcon />
-                <span className="text-sm font-semibold text-[#B8922D]">{sr.premiumContent}</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#B8922D' }}>{sr.premiumContent}</span>
               </div>
-              <h2 className="text-2xl font-bold font-serif mb-6">{sr.premiumTitle}</h2>
-              <div className="grid md:grid-cols-2 gap-4 mb-8">
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', marginBottom: '1.5rem' }}>{sr.premiumTitle}</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
                 {sr.premiumItems.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-white/5">
-                    <div className="text-2xl">{item.icon}</div>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '1rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.05)' }}>
+                    <div style={{ fontSize: '1.5rem' }}>{item.icon}</div>
                     <div>
-                      <div className="font-bold text-white">{item.title}</div>
-                      <div className="text-sm text-white/60">{item.desc}</div>
+                      <div style={{ fontWeight: 700, color: '#FFFFFF' }}>{item.title}</div>
+                      <div style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)' }}>{item.desc}</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <button
                   onClick={() => router.push('/payment')}
-                  className="flex-1 py-4 rounded-xl font-bold text-[#2D3A35] hover:opacity-90 transition-all"
-                  style={{ backgroundColor: '#C5A059' }}
+                  style={{ flex: 1, padding: '1rem', borderRadius: '0.75rem', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
                 >
                   프리미엄 분석 시작하기 — $4.99
                 </button>
@@ -798,8 +805,8 @@ export default function ResultsPage() {
 
 
         {/* Actions */}
-        <section className="text-center pb-12">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+        <section style={{ textAlign: 'center', paddingBottom: '3rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'center', marginBottom: '1.5rem' }}>
             <button
               onClick={() => {
                 if (typeof window !== 'undefined' && navigator.share) {
@@ -810,30 +817,28 @@ export default function ResultsPage() {
                   })
                 }
               }}
-              className="px-6 py-3 rounded-xl font-semibold hover:border-[#B8922D] transition-all"
-              style={{ border: '2px solid #EBE5DF', color: '#6B5E52' }}
+              style={{ padding: '0.75rem 1.5rem', borderRadius: '0.75rem', fontWeight: 600, border: '2px solid #EBE5DF', color: '#6B5E52', background: 'none', cursor: 'pointer', fontSize: '1rem' }}
             >
               {sr.shareResult}
             </button>
             <Link href="/saju/input">
               <button
-                className="px-6 py-3 rounded-xl font-semibold hover:border-[#B8922D] transition-all"
-                style={{ border: '2px solid #EBE5DF', color: '#6B5E52' }}
+                style={{ padding: '0.75rem 1.5rem', borderRadius: '0.75rem', fontWeight: 600, border: '2px solid #EBE5DF', color: '#6B5E52', background: 'none', cursor: 'pointer', fontSize: '1rem' }}
               >
                 {sr.analyzeAnother}
               </button>
             </Link>
           </div>
-          <Link href="/" className="text-sm hover:text-[#B8922D] transition-colors" style={{ color: '#8B8580' }}>
+          <Link href="/" style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'none' }}>
             {sr.goHome}
           </Link>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="py-8" style={{ borderTop: '1px solid #EBE5DF', backgroundColor: '#FEFDFB' }}>
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <p className="text-xs" style={{ color: '#8B8580' }}>
+      <footer style={{ padding: '2rem 0', borderTop: '1px solid #EBE5DF', backgroundColor: '#FEFDFB' }}>
+        <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '0 1.5rem', textAlign: 'center' }}>
+          <p style={{ fontSize: '0.75rem', color: '#8B8580' }}>
             {sr.footerDisclaimer}
           </p>
         </div>

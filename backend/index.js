@@ -113,6 +113,10 @@ app.use('/saju', sajuRoutes);
 const paymentRoutes = require('./src/routes/payment.routes');
 app.use('/payment', paymentRoutes);
 
+// Promo code routes
+const promoRoutes = require('./src/routes/promo.routes');
+app.use('/promo', promoRoutes);
+
 // Admin routes (Settings & Statistics)
 const adminRoutes = require('./src/routes/admin.routes');
 app.use('/admin', adminRoutes);
@@ -130,7 +134,9 @@ app.get('/', (req, res) => {
             free: '/fortuneTell',
             auth: '/auth/*',
             premium: '/saju/calculate',
+            promo: '/saju/calculate-promo',
             payment: '/payment/*',
+            promoValidate: '/promo/validate',
             admin: '/admin/*',
             health: '/'
         }

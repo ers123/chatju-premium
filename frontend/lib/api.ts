@@ -15,6 +15,8 @@ import type {
   Payment,
   ApiResponse,
   ApiError,
+  PromoValidateResponse,
+  PromoCalculateRequest,
 } from '@/types';
 
 // ---------------------------------------------
@@ -29,7 +31,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds
+  timeout: 60000, // 60 seconds (AI generation can take 30-40s)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -211,6 +213,26 @@ export const apiClient = {
    */
   getUserPayments: async (): Promise<Payment[]> => {
     const response = await api.get<Payment[]>('/payment/history');
+    return response.data;
+  },
+
+  // ===========================================
+  // Promo Code
+  // ===========================================
+
+  /**
+   * Validate a promo code (no authentication required)
+   */
+  validatePromoCode: async (code: string): Promise<PromoValidateResponse> => {
+    const response = await api.post<PromoValidateResponse>('/promo/validate', { code });
+    return response.data;
+  },
+
+  /**
+   * Generate reading with promo code (no authentication required)
+   */
+  calculateWithPromo: async (data: PromoCalculateRequest): Promise<SajuReading> => {
+    const response = await api.post<SajuReading>('/saju/calculate-promo', data);
     return response.data;
   },
 

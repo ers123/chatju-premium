@@ -43,19 +43,34 @@ function useScrollReveal() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('visible')
+            const el = entry.target as HTMLElement
+            el.style.opacity = '1'
+            el.style.transform = 'translateY(0)'
             observer.unobserve(entry.target)
           }
         })
       },
       { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
     )
-    const elements = node.querySelectorAll('.reveal')
+    const elements = node.querySelectorAll('[data-reveal]')
     elements.forEach((el) => observer.observe(el))
     return () => observer.disconnect()
   }, [])
 
   return ref
+}
+
+const revealStyle: React.CSSProperties = {
+  opacity: 0,
+  transform: 'translateY(24px)',
+  transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+}
+
+function revealDelayStyle(delay: number): React.CSSProperties {
+  return {
+    ...revealStyle,
+    transitionDelay: `${delay * 0.1}s`,
+  }
 }
 
 export default function LandingPage() {
@@ -284,7 +299,7 @@ export default function LandingPage() {
           maxWidth: '1100px',
           margin: '0 auto'
         }}>
-          <div className="reveal" style={{ textAlign: 'center', marginBottom: '56px' }}>
+          <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '56px' }}>
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
@@ -295,13 +310,14 @@ export default function LandingPage() {
               {t.features.heading}
             </h2>
           </div>
-          <div className="grid-responsive-3" style={{
+          <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '24px'
           }}>
             {t.features.items.map((item, idx) => (
-              <div key={idx} className={`reveal reveal-delay-${idx + 1} card-interactive card-image-zoom`} style={{
+              <div key={idx} data-reveal style={{
+                ...revealDelayStyle(idx + 1),
                 background: '#FFFFFF',
                 borderRadius: '12px',
                 overflow: 'hidden',
@@ -357,7 +373,7 @@ export default function LandingPage() {
         padding: '120px 40px'
       }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <div className="reveal" style={{ textAlign: 'center', marginBottom: '64px' }}>
+          <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '64px' }}>
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
@@ -369,13 +385,14 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid-responsive-2" style={{
+          <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '20px'
           }}>
             {t.problems.items.map((item, idx) => (
-              <div key={idx} className={`reveal reveal-delay-${(idx % 2) + 1}`} style={{
+              <div key={idx} data-reveal style={{
+                ...revealDelayStyle((idx % 2) + 1),
                 background: '#FEFDFB',
                 borderRadius: '20px',
                 padding: '32px',
@@ -411,7 +428,7 @@ export default function LandingPage() {
         padding: '120px 40px'
       }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <div className="reveal" style={{ textAlign: 'center', marginBottom: '72px' }}>
+          <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '72px' }}>
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
@@ -423,13 +440,14 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid-responsive-3" style={{
+          <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '24px'
           }}>
             {t.howItWorks.items.map((item, idx) => (
-              <div key={idx} className={`reveal reveal-delay-${idx + 1} card-interactive`} style={{
+              <div key={idx} data-reveal style={{
+                ...revealDelayStyle(idx + 1),
                 background: '#FFFFFF',
                 borderRadius: '8px',
                 padding: '32px',
@@ -515,7 +533,7 @@ export default function LandingPage() {
         padding: '120px 40px'
       }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <div className="reveal" style={{ textAlign: 'center', marginBottom: '64px' }}>
+          <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '64px' }}>
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
@@ -527,13 +545,14 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid-responsive-3" style={{
+          <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '24px'
           }}>
             {t.testimonials.items.map((item, idx) => (
-              <div key={idx} className={`reveal reveal-delay-${idx + 1}`} style={{
+              <div key={idx} data-reveal style={{
+                ...revealDelayStyle(idx + 1),
                 background: '#FEFDFB',
                 borderRadius: '20px',
                 padding: '32px',
@@ -574,7 +593,8 @@ export default function LandingPage() {
       </section>
 
       {/* Kakao Share Section */}
-      <section className="reveal" style={{
+      <section data-reveal style={{
+        ...revealStyle,
         width: '100%',
         background: '#FFFFFF',
         padding: '80px 40px',
@@ -631,7 +651,8 @@ export default function LandingPage() {
       </section>
 
       {/* Trust Signals */}
-      <section className="reveal" style={{
+      <section data-reveal style={{
+        ...revealStyle,
         width: '100%',
         background: '#FEFDFB',
         padding: '60px 40px'
@@ -670,7 +691,7 @@ export default function LandingPage() {
         padding: '120px 40px'
       }}>
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-          <div className="reveal" style={{ textAlign: 'center', marginBottom: '64px' }}>
+          <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '64px' }}>
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
@@ -686,13 +707,14 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid-responsive-2" style={{
+          <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '20px'
           }}>
             {/* Free */}
-            <div className="reveal reveal-delay-1" style={{
+            <div data-reveal style={{
+              ...revealDelayStyle(1),
               background: 'rgba(255, 255, 255, 0.04)',
               borderRadius: '24px',
               padding: '40px 32px',
@@ -742,7 +764,8 @@ export default function LandingPage() {
             </div>
 
             {/* Premium */}
-            <div className="reveal reveal-delay-2" style={{
+            <div data-reveal style={{
+              ...revealDelayStyle(2),
               background: '#1A3D2E',
               borderRadius: '24px',
               padding: '40px 32px',
@@ -829,7 +852,7 @@ export default function LandingPage() {
         padding: '120px 40px'
       }}>
         <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-          <div className="reveal" style={{ textAlign: 'center', marginBottom: '64px' }}>
+          <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '64px' }}>
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
@@ -904,7 +927,8 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="reveal" style={{
+      <section data-reveal style={{
+        ...revealStyle,
         width: '100%',
         background: '#1A3D2E',
         padding: '100px 40px'

@@ -32,6 +32,8 @@
     "mansae-calculator": "github:ers123/manse-calculator",
     "manseryeok": "^1.0.1",
     "openai": "^5.1.0",
+    "pdfkit": "^0.18.0",
+    "resend": "^6.9.4",
     "serverless-http": "^3.2.0",
     "winston": "^3.17.0",
     "xss": "^1.0.15"

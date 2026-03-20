@@ -5,6 +5,7 @@ const express = require('express');
 const router = express.Router();
 const sajuService = require('../services/saju.service');
 const authMiddleware = require('../middleware/auth');
+const promoService = require('../services/promo.service');
 const { validateBirthInfo, validateUUIDParam, sanitizeStrings } = require('../middleware/validation');
 const { sajuPreviewLimiter, sajuPremiumLimiter, readLimiter } = require('../middleware/rateLimit');
 const { calculateMansae } = require('../utils/mansae-wrapper');
@@ -263,6 +264,160 @@ router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo,
     }
 
     // Generic error
+    res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
+  }
+});
+
+/**
+ * POST /saju/calculate-promo
+ * Generate premium Saju reading via promo code (NO AUTH required)
+ * Requires: valid promo code + email + birth data
+ */
+router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (req, res) => {
+  try {
+    const {
+      promoCode,
+      email,
+      birthDate,
+      birthTime,
+      gender,
+      timezone,
+      language,
+      subjectName,
+      birthPlace,
+      latitude,
+      longitude,
+      parentBirthDate,
+      parentBirthTime,
+      parentRole,
+      parentGender,
+      twinOrder,
+      twinSiblingName,
+    } = req.body;
+
+    // Validate required fields
+    if (!promoCode || !email || !birthDate || !gender) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['promoCode', 'email', 'birthDate', 'gender'],
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        error: 'Invalid email format',
+        code: 'INVALID_EMAIL',
+      });
+    }
+
+    // Validate birth date format
+    const normalizedBirthDate = birthDate.replace(/\./g, '-');
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(normalizedBirthDate)) {
+      return res.status(400).json({
+        error: 'Invalid birthDate format. Use YYYY-MM-DD',
+      });
+    }
+
+    // Validate birth time if provided
+    if (birthTime) {
+      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+      if (!timeRegex.test(birthTime)) {
+        return res.status(400).json({
+          error: 'Invalid birthTime format. Use HH:MM (24-hour)',
+        });
+      }
+    }
+
+    // Validate gender
+    if (!['male', 'female'].includes(gender)) {
+      return res.status(400).json({
+        error: 'Invalid gender. Must be "male" or "female"',
+      });
+    }
+
+    // Step 1: Validate promo code
+    const promoResult = await promoService.validatePromoCode(promoCode);
+    if (!promoResult.valid) {
+      return res.status(400).json({
+        error: promoResult.error,
+        code: 'INVALID_PROMO',
+      });
+    }
+
+    // Step 2: Check if email already used this promo
+    const alreadyUsed = await promoService.hasEmailUsedPromo(
+      promoResult.promoCode.id,
+      email
+    );
+    if (alreadyUsed) {
+      return res.status(409).json({
+        error: '이미 이 프로모 코드를 사용하셨습니다.',
+        code: 'PROMO_ALREADY_USED',
+      });
+    }
+
+    // Step 3: Calculate parent manseryeok if provided
+    let parentManseryeok = null;
+    if (parentBirthDate && parentRole) {
+      const normalizedParentDate = parentBirthDate.replace(/\./g, '-');
+      parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole);
+    }
+
+    // Step 4: Generate reading (no userId, no orderId — promo flow)
+    const reading = await sajuService.generateSajuReading({
+      userId: null,
+      orderId: null,
+      birthDate: normalizedBirthDate,
+      birthTime,
+      gender,
+      timezone: timezone || 'Asia/Seoul',
+      language: language || 'ko',
+      subjectName,
+      birthPlace,
+      latitude,
+      longitude,
+      parentManseryeok,
+      parentRole: parentRole || null,
+      twinInfo: twinOrder ? { order: twinOrder, siblingName: twinSiblingName || null } : null,
+      // Promo-specific fields
+      promoCodeId: promoResult.promoCode.id,
+      deliveryEmail: email,
+      skipPaymentCheck: true,
+    });
+
+    // Step 5: Record promo usage
+    await promoService.usePromoCode({
+      promoCodeId: promoResult.promoCode.id,
+      email,
+      childName: subjectName,
+      childBirthDate: normalizedBirthDate,
+      readingId: reading.readingId,
+    });
+
+    console.log('[Saju Route] Promo reading generated:', {
+      readingId: reading.readingId,
+      promoCode: promoResult.promoCode.code,
+      email,
+    });
+
+    res.status(200).json(reading);
+
+  } catch (error) {
+    console.error('[Saju Route] Promo calculate error:', error);
+
+    if (error.message.includes('Manseryeok calculation failed')) {
+      return res.status(500).json({
+        error: 'Failed to calculate Four Pillars. Please check birth data.',
+        code: 'CALCULATION_ERROR',
+      });
+    }
+
     res.status(500).json({
       error: 'Internal server error',
       code: 'INTERNAL_ERROR',

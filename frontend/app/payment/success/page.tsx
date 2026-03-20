@@ -4,6 +4,28 @@ import { useEffect, useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+// Shared styles
+const s = {
+  page: { minHeight: '100vh', background: '#FDFCFA' } as React.CSSProperties,
+  header: { position: 'sticky' as const, top: 0, zIndex: 10, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(235,229,223,0.6)' },
+  headerInner: { maxWidth: '36rem', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  logo: { textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  logoCircle: { width: '2rem', height: '2rem', borderRadius: '50%', background: '#2D3A35', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  logoText: { fontFamily: 'serif', fontSize: '0.75rem', color: '#C5A059', fontWeight: 700 },
+  logoName: { fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35' },
+  main: { maxWidth: '36rem', margin: '0 auto', padding: '2rem 1.5rem 4rem' },
+  card: { background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.25rem', padding: '1.5rem', marginBottom: '1rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' } as React.CSSProperties,
+  h1: { fontSize: '1.5rem', fontWeight: 700, color: '#2D3A35', marginBottom: '0.5rem' },
+  h2: { fontSize: '1rem', fontWeight: 600, color: '#2D3A35', marginBottom: '1rem' },
+  text: { fontSize: '0.875rem', color: '#6B5E52', lineHeight: 1.6 },
+  textMuted: { fontSize: '0.75rem', color: '#8B8580' },
+  center: { textAlign: 'center' as const },
+  spinner: { display: 'inline-block', width: '1rem', height: '1rem', border: '2px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' },
+  btnPrimary: { width: '100%', padding: '1rem', fontSize: '1rem', fontWeight: 700, border: 'none', borderRadius: '0.75rem', cursor: 'pointer', background: '#C5A059', color: '#2D3A35' },
+  error: { marginTop: '1rem', padding: '0.75rem', background: 'rgba(198,123,111,0.08)', border: '1px solid rgba(198,123,111,0.2)', borderRadius: '0.75rem', fontSize: '0.875rem', color: '#C67B6F' },
+  link: { fontSize: '0.875rem', color: '#8B8580', textDecoration: 'none' },
+}
+
 function PaymentSuccessContent() {
   const router = useRouter()
   const [status, setStatus] = useState<'checking' | 'success' | 'error'>('checking')
@@ -32,15 +54,15 @@ function PaymentSuccessContent() {
 
   if (status === 'checking') {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF8F6' }}>
-        <div className="text-center">
-          <div className="relative w-20 h-20 mx-auto mb-6">
-            <div className="absolute inset-0 border-4 border-[#EBE5DF]" style={{ borderRadius: '50%' }} />
-            <div className="absolute inset-0 border-4 border-[#C5A059] border-t-transparent animate-spin" style={{ borderRadius: '50%' }} />
-            <div className="absolute inset-0 flex items-center justify-center text-2xl">💳</div>
+      <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={s.center}>
+          <div style={{ position: 'relative', width: '5rem', height: '5rem', margin: '0 auto 1.5rem' }}>
+            <div style={{ position: 'absolute', inset: 0, border: '4px solid #EBE5DF', borderRadius: '50%' }} />
+            <div style={{ position: 'absolute', inset: 0, border: '4px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>💳</div>
           </div>
-          <h2 className="font-serif-ko text-xl text-[#2D3A35] mb-2">결제 확인 중</h2>
-          <p className="text-[#8B8580]">잠시만 기다려주세요...</p>
+          <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35', marginBottom: '0.5rem' }}>결제 확인 중</h2>
+          <p style={{ color: '#8B8580' }}>잠시만 기다려주세요...</p>
         </div>
       </div>
     )
@@ -48,24 +70,24 @@ function PaymentSuccessContent() {
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: '#FAF8F6' }}>
-        <div className="text-center max-w-md">
-          <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center" style={{ borderRadius: '50%', backgroundColor: 'rgba(198, 123, 111, 0.1)' }}>
-            <span className="text-4xl">😢</span>
+      <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1.5rem' }}>
+        <div style={{ ...s.center, maxWidth: '28rem' }}>
+          <div style={{ width: '5rem', height: '5rem', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(198, 123, 111, 0.1)' }}>
+            <span style={{ fontSize: '2.5rem' }}>😢</span>
           </div>
-          <h2 className="font-serif-ko text-xl text-[#2D3A35] mb-2">결제 확인 실패</h2>
-          <p className="text-[#8B8580] mb-6">{error}</p>
-          <p className="text-sm text-[#8B8580] mb-6">
+          <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35', marginBottom: '0.5rem' }}>결제 확인 실패</h2>
+          <p style={{ color: '#8B8580', marginBottom: '1.5rem' }}>{error}</p>
+          <p style={{ fontSize: '0.875rem', color: '#8B8580', marginBottom: '1.5rem' }}>
             문제가 지속되면 support@harmonyon.kr로 문의해주세요.
           </p>
-          <div className="flex flex-col gap-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <button
               onClick={() => router.push('/payment')}
-              className="btn-primary px-6 py-3"
+              style={s.btnPrimary}
             >
               다시 시도하기
             </button>
-            <Link href="/" className="text-sm text-[#8B8580] hover:text-[#C5A059]">
+            <Link href="/" style={{ ...s.link, textAlign: 'center' }}>
               홈으로 돌아가기
             </Link>
           </div>
@@ -76,98 +98,97 @@ function PaymentSuccessContent() {
 
   // Success state
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF8F6' }}>
+    <div style={s.page}>
       {/* Header */}
-      <header className="sticky top-0 z-10 glass-premium" style={{ borderBottom: '1px solid rgba(235, 229, 223, 0.6)' }}>
-        <div className="max-w-2xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="no-underline flex items-center gap-2">
-            <div className="w-8 h-8 flex items-center justify-center" style={{ borderRadius: '50%', backgroundColor: '#2D3A35' }}>
-              <span className="font-serif text-xs text-[#C5A059] font-bold">소</span>
+      <header style={s.header}>
+        <div style={s.headerInner}>
+          <Link href="/" style={s.logo}>
+            <div style={s.logoCircle}>
+              <span style={s.logoText}>소</span>
             </div>
-            <span className="font-serif-ko text-xl text-[#2D3A35]">소명</span>
+            <span style={s.logoName}>소명</span>
           </Link>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 py-12">
-        <div className="text-center mb-10">
-          <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center" style={{ borderRadius: '50%', backgroundColor: 'rgba(90, 125, 107, 0.1)' }}>
-            <svg className="w-12 h-12 text-[#5A7D6B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <main style={s.main}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{ width: '6rem', height: '6rem', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(90, 125, 107, 0.1)' }}>
+            <svg style={{ width: '3rem', height: '3rem', color: '#5A7D6B' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h1 className="font-serif-ko text-2xl text-[#2D3A35] mb-2">결제가 완료되었습니다!</h1>
-          <p className="text-[#8B8580]">
+          <h1 style={{ fontFamily: 'serif', fontSize: '1.5rem', color: '#2D3A35', marginBottom: '0.5rem' }}>결제가 완료되었습니다!</h1>
+          <p style={{ color: '#8B8580' }}>
             프리미엄 분석을 시작할 준비가 되었습니다.
           </p>
         </div>
 
         {/* Order Summary */}
-        <section className="card-paper p-6 mb-8">
-          <h2 className="font-serif-ko text-[#2D3A35] mb-4">주문 내역</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-[#6B5E52]">상품명</span>
-              <span className="font-medium text-[#2D3A35]">사주팔자 프리미엄 분석</span>
+        <div style={s.card}>
+          <h2 style={s.h2}>주문 내역</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#6B5E52' }}>상품명</span>
+              <span style={{ fontWeight: 500, color: '#2D3A35' }}>사주팔자 프리미엄 분석</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[#6B5E52]">결제 금액</span>
-              <span className="font-bold text-[#C5A059]">$4.99</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#6B5E52' }}>결제 금액</span>
+              <span style={{ fontWeight: 700, color: '#C5A059' }}>$4.99</span>
             </div>
             {orderIdState && (
-              <div className="flex justify-between items-center">
-                <span className="text-[#6B5E52]">주문 번호</span>
-                <span className="text-sm text-[#8B8580] font-mono">{orderIdState}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6B5E52' }}>주문 번호</span>
+                <span style={{ fontSize: '0.875rem', color: '#8B8580', fontFamily: 'monospace' }}>{orderIdState}</span>
               </div>
             )}
           </div>
-        </section>
+        </div>
 
         {/* Next Steps */}
-        <section className="p-6 text-white mb-8" style={{ background: 'linear-gradient(135deg, #2D3A35, #3D5A4E)', borderRadius: '16px' }}>
-          <h2 className="font-serif-ko mb-4">다음 단계</h2>
-          <p className="mb-4" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+        <div style={{ color: '#fff', padding: '1.5rem', marginBottom: '1rem', background: 'linear-gradient(135deg, #2D3A35, #3D5A4E)', borderRadius: '1rem' }}>
+          <h2 style={{ fontFamily: 'serif', marginBottom: '1rem' }}>다음 단계</h2>
+          <p style={{ marginBottom: '1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
             이제 부모님 정보와 아이 정보를 입력하시면 심층 분석 결과를 받아보실 수 있습니다.
           </p>
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {[
               '부모님 생년월일 입력',
               '아이 생년월일 입력',
               'AI가 심층 분석 수행',
               '맞춤 리포트 제공'
             ].map((step, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-6 h-6 flex items-center justify-center text-sm font-bold" style={{ borderRadius: '50%', backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '1.5rem', height: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem', fontWeight: 700, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.2)' }}>
                   {i + 1}
                 </div>
                 <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{step}</span>
               </div>
             ))}
           </div>
-        </section>
+        </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col gap-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <button
             onClick={() => {
               const sajuInput = sessionStorage.getItem('sajuInput')
               router.push(sajuInput ? '/saju/results' : '/saju/input')
             }}
-            className="w-full py-4 font-bold text-lg text-[#2D3A35] hover:opacity-90 transition-all"
-            style={{ borderRadius: '12px', backgroundColor: '#C5A059' }}
+            style={s.btnPrimary}
           >
             프리미엄 분석 시작하기
           </button>
-          <Link href="/" className="text-center text-sm text-[#8B8580] hover:text-[#C5A059]">
+          <Link href="/" style={{ ...s.link, textAlign: 'center' }}>
             나중에 하기
           </Link>
         </div>
 
         {/* Support */}
-        <div className="mt-10 text-center">
-          <p className="text-sm text-[#8B8580]">
+        <div style={{ marginTop: '2.5rem', textAlign: 'center' }}>
+          <p style={{ fontSize: '0.875rem', color: '#8B8580' }}>
             문의사항이 있으시면{' '}
-            <a href="mailto:support@harmonyon.kr" className="text-[#C5A059] hover:underline">
+            <a href="mailto:support@harmonyon.kr" style={{ color: '#C5A059', textDecoration: 'none' }}>
               support@harmonyon.kr
             </a>
             로 연락해주세요.
@@ -180,13 +201,13 @@ function PaymentSuccessContent() {
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF8F6' }}>
-      <div className="text-center">
-        <div className="relative w-20 h-20 mx-auto mb-6">
-          <div className="absolute inset-0 border-4 border-[#EBE5DF]" style={{ borderRadius: '50%' }} />
-          <div className="absolute inset-0 border-4 border-[#C5A059] border-t-transparent animate-spin" style={{ borderRadius: '50%' }} />
+    <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={s.center}>
+        <div style={{ position: 'relative', width: '5rem', height: '5rem', margin: '0 auto 1.5rem' }}>
+          <div style={{ position: 'absolute', inset: 0, border: '4px solid #EBE5DF', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', inset: 0, border: '4px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         </div>
-        <h2 className="font-serif-ko text-xl text-[#2D3A35] mb-2">로딩 중...</h2>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35', marginBottom: '0.5rem' }}>로딩 중...</h2>
       </div>
     </div>
   )

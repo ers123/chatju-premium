@@ -3,36 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Input, Separator } from '@/components/ui'
 import { apiClient } from '@/lib/api'
-
-// Ambient Glow Orb
-const AmbientOrb = ({ className = '', style = {} }: { className?: string; style?: React.CSSProperties }) => (
-  <div
-    className={`absolute rounded-full blur-[80px] opacity-40 mix-blend-multiply animate-pulse-glow pointer-events-none ${className}`}
-    style={style}
-  />
-)
-
-// Decorative floating cloud
-const FloatingCloud = ({ className = '', style = {} }: { className?: string; style?: React.CSSProperties }) => (
-  <div className={`absolute opacity-[0.08] pointer-events-none ${className}`} style={style}>
-    <svg viewBox="0 0 120 50" fill="currentColor" className="w-40 h-16 text-[#B69B7D]">
-      <ellipse cx="35" cy="30" rx="28" ry="14" />
-      <ellipse cx="65" cy="25" rx="24" ry="18" />
-      <ellipse cx="90" cy="30" rx="20" ry="12" />
-    </svg>
-  </div>
-)
-
-// Floating sparkle
-const Sparkle = ({ style = {} }: { style?: React.CSSProperties }) => (
-  <div className="absolute pointer-events-none animate-float" style={{ ...style }}>
-    <svg viewBox="0 0 24 24" fill="#B69B7D" className="w-3 h-3 opacity-30">
-      <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
-    </svg>
-  </div>
-)
 
 export default function SignInPage() {
   const router = useRouter()
@@ -98,76 +69,173 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF8F6] flex items-center justify-center p-4 texture-noise relative overflow-hidden">
-      {/* Decorative Background */}
-      <AmbientOrb className="bg-[#B69B7D] top-0 left-0 w-[500px] h-[500px] -translate-x-1/2 -translate-y-1/2 opacity-20" />
-      <AmbientOrb className="bg-[#5A7D6B] bottom-0 right-0 w-[500px] h-[500px] translate-x-1/2 translate-y-1/2 opacity-20 animate-breathe" />
-
-      <FloatingCloud className="top-20 left-[10%] animate-float" />
-      <FloatingCloud className="bottom-20 right-[10%] animate-float" style={{ animationDelay: '3s' }} />
-
-      <Sparkle style={{ top: '20%', left: '20%', animationDelay: '0s' }} />
-      <Sparkle style={{ top: '70%', right: '20%', animationDelay: '2s' }} />
-
+    <div style={{
+      minHeight: '100vh',
+      background: '#FDFCFA',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '1rem',
+      position: 'relative',
+      overflow: 'hidden',
+      fontFamily: '"Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
       {/* Brand Header (Centered) */}
-      <div className="absolute top-8 left-0 right-0 text-center z-10">
-        <Link href="/" className="no-underline">
-          <span className="font-serif-ko text-3xl text-[#2D3A35]">소명</span>
+      <div style={{
+        position: 'absolute',
+        top: '2rem',
+        left: 0,
+        right: 0,
+        textAlign: 'center',
+        zIndex: 10
+      }}>
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <span style={{ fontSize: '1.875rem', fontWeight: 700, color: '#2D3A35' }}>소명</span>
         </Link>
       </div>
 
-      <div className="max-w-[420px] w-full relative z-10 animate-fade-up">
+      <div style={{
+        maxWidth: '420px',
+        width: '100%',
+        position: 'relative',
+        zIndex: 10
+      }}>
         {success ? (
-          <div className="card-paper p-12 text-center border-none shadow-[0_20px_40px_-5px_rgba(45,58,53,0.1)]">
-            <div className="w-20 h-20 bg-gradient-warm rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner border border-[#FFFFFF]/50">
+          <div style={{
+            background: 'rgba(255,255,255,0.95)',
+            border: '1px solid rgba(235,229,223,0.6)',
+            borderRadius: '1.25rem',
+            padding: '3rem',
+            textAlign: 'center',
+            boxShadow: '0 20px 40px -5px rgba(45,58,53,0.1)'
+          }}>
+            <div style={{
+              width: '5rem',
+              height: '5rem',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.5rem',
+              fontSize: '2.25rem',
+              background: 'linear-gradient(135deg, #F5EDE4, #EBE5DF)',
+              border: '1px solid rgba(255,255,255,0.5)'
+            }}>
               ✉️
             </div>
-            <h2 className="font-serif-ko text-[1.75rem] text-[#2D3A35] mb-3">이메일을 확인하세요</h2>
-            <p className="font-sans-ko text-[#6B6560] mb-8 leading-relaxed">
-              <span className="text-[#2D3A35] font-medium">{email}</span>으로<br />
+            <h2 style={{
+              fontSize: '1.75rem',
+              fontWeight: 700,
+              color: '#2D3A35',
+              marginBottom: '0.75rem',
+              marginTop: 0
+            }}>이메일을 확인하세요</h2>
+            <p style={{
+              color: '#6B6560',
+              marginBottom: '2rem',
+              lineHeight: 1.6,
+              fontSize: '0.9375rem'
+            }}>
+              <span style={{ color: '#2D3A35', fontWeight: 500 }}>{email}</span>으로<br />
               로그인 링크를 전송했습니다.
             </p>
             {redirectPath === '/payment' && (
-              <p className="text-sm text-[#B69B7D] font-medium mb-4">
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#B69B7D',
+                fontWeight: 500,
+                marginBottom: '1rem'
+              }}>
                 로그인 후 결제 페이지로 자동 이동됩니다
               </p>
             )}
-            <p className="text-xs text-[#8B8580]">
+            <p style={{ fontSize: '0.75rem', color: '#8B8580' }}>
               이메일이 도착하지 않았다면 스팸함을 확인해주세요.
             </p>
           </div>
         ) : (
-          <div className="card-paper p-10 border-none shadow-[0_20px_40px_-5px_rgba(45,58,53,0.08)]">
-            <div className="text-center mb-10">
-              <h2 className="font-serif-ko text-[1.75rem] text-[#2D3A35] mb-2 tracking-tight">환영합니다</h2>
-              <p className="font-sans-ko text-[#6B6560] text-[0.9375rem]">
+          <div style={{
+            background: 'rgba(255,255,255,0.95)',
+            border: '1px solid rgba(235,229,223,0.6)',
+            borderRadius: '1.25rem',
+            padding: '2.5rem',
+            boxShadow: '0 20px 40px -5px rgba(45,58,53,0.08)'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+              <h2 style={{
+                fontSize: '1.75rem',
+                fontWeight: 700,
+                color: '#2D3A35',
+                marginBottom: '0.5rem',
+                marginTop: 0,
+                letterSpacing: '-0.02em'
+              }}>환영합니다</h2>
+              <p style={{
+                color: '#6B6560',
+                fontSize: '0.9375rem',
+                margin: 0
+              }}>
                 천년의 지혜와 만나는 시작점입니다
               </p>
               {redirectPath === '/payment' && (
-                <p className="mt-3 text-sm text-[#B69B7D] font-medium">
+                <p style={{
+                  marginTop: '0.75rem',
+                  fontSize: '0.875rem',
+                  color: '#B69B7D',
+                  fontWeight: 500
+                }}>
                   로그인 후 결제 페이지로 이동합니다
                 </p>
               )}
             </div>
 
             <form onSubmit={handleSubmit}>
-              <div className="mb-6 text-center">
-                <label className="block font-sans-ko text-sm text-[#433E3B] mb-3 font-medium">
+              <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  color: '#433E3B',
+                  marginBottom: '0.75rem',
+                  fontWeight: 500
+                }}>
                   이메일 주소
                 </label>
-                <Input
+                <input
                   type="email"
                   value={email}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   required
-                  className="w-full p-4 text-base text-center rounded-xl border-[#EBE5DF] bg-white/50 focus:bg-white transition-all shadow-inner placeholder:text-[#6B6560]/40"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    textAlign: 'center',
+                    border: '1px solid #EBE5DF',
+                    borderRadius: '0.75rem',
+                    outline: 'none',
+                    color: '#2D3A35',
+                    background: '#fff',
+                    boxSizing: 'border-box' as const
+                  }}
                 />
               </div>
 
               {error && (
-                <div className="p-4 rounded-xl bg-[#C67B6F]/10 border border-[#C67B6F]/20 text-[#C67B6F] text-sm mb-6 flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                <div style={{
+                  padding: '1rem',
+                  borderRadius: '0.75rem',
+                  background: 'rgba(198,123,111,0.1)',
+                  border: '1px solid rgba(198,123,111,0.2)',
+                  color: '#C67B6F',
+                  fontSize: '0.875rem',
+                  marginBottom: '1.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                   {error}
                 </div>
               )}
@@ -175,13 +243,25 @@ export default function SignInPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full btn-primary py-4 shadow-lg text-[0.9375rem] ${isLoading && 'opacity-70 cursor-not-allowed shadow-none'}`}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  fontSize: '0.9375rem',
+                  fontWeight: 700,
+                  border: 'none',
+                  borderRadius: '0.75rem',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  background: '#2D3A35',
+                  color: '#C5A059',
+                  opacity: isLoading ? 0.7 : 1,
+                  boxShadow: isLoading ? 'none' : '0 4px 12px rgba(45,58,53,0.15)'
+                }}
               >
                 {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-5 h-5 text-white/50" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <svg style={{ width: '1.25rem', height: '1.25rem', animation: 'spin 1s linear infinite', color: 'rgba(255,255,255,0.5)' }} viewBox="0 0 24 24">
+                      <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
                     전송 중...
                   </span>
@@ -191,17 +271,31 @@ export default function SignInPage() {
               </button>
             </form>
 
-            <div className="my-8 relative">
-              <Separator className="bg-[#EBE5DF]" />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#FEFDFB] px-4 text-xs text-[#6B6560] font-medium">
+            <div style={{ margin: '2rem 0', position: 'relative' }}>
+              <div style={{ height: '1px', background: '#EBE5DF' }} />
+              <span style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                background: '#FEFDFB',
+                padding: '0 1rem',
+                fontSize: '0.75rem',
+                color: '#6B6560',
+                fontWeight: 500
+              }}>
                 또는
               </span>
             </div>
 
-            <div className="text-center">
-              <p className="font-sans-ko text-[#6B6560] text-sm">
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ color: '#6B6560', fontSize: '0.875rem', margin: 0 }}>
                 처음이신가요?{' '}
-                <Link href="/auth/signup" className="text-[#B69B7D] font-medium hover:text-[#2D3A35] transition-colors no-underline">
+                <Link href="/auth/signup" style={{
+                  color: '#B69B7D',
+                  fontWeight: 500,
+                  textDecoration: 'none'
+                }}>
                   회원가입
                 </Link>
               </p>
@@ -209,23 +303,32 @@ export default function SignInPage() {
 
             {/* Dev-only login bypass */}
             {process.env.NODE_ENV === 'development' && (
-              <div className="mt-6 pt-4" style={{ borderTop: '1px dashed rgba(198, 123, 111, 0.3)' }}>
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px dashed rgba(198, 123, 111, 0.3)' }}>
                 <button
                   onClick={handleDevLogin}
                   disabled={isLoading}
-                  className="w-full py-3 rounded-xl text-sm font-medium transition-colors"
-                  style={{ backgroundColor: 'rgba(198, 123, 111, 0.08)', color: '#C67B6F', border: '1px solid rgba(198, 123, 111, 0.2)' }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '0.75rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    backgroundColor: 'rgba(198, 123, 111, 0.08)',
+                    color: '#C67B6F',
+                    border: '1px solid rgba(198, 123, 111, 0.2)',
+                    cursor: 'pointer'
+                  }}
                 >
                   Dev Login (skip magic link)
                 </button>
-                <p className="text-[10px] text-center mt-1" style={{ color: 'rgba(198, 123, 111, 0.6)' }}>Development only — not visible in production</p>
+                <p style={{ fontSize: '10px', textAlign: 'center', marginTop: '0.25rem', color: 'rgba(198, 123, 111, 0.6)' }}>Development only — not visible in production</p>
               </div>
             )}
           </div>
         )}
 
-        <div className="text-center mt-8">
-          <p className="text-xs text-[#6B6560]/50 font-sans-ko">
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <p style={{ fontSize: '0.75rem', color: 'rgba(107,101,96,0.5)' }}>
             © 2025 소명. All rights reserved.
           </p>
         </div>

@@ -56,6 +56,9 @@ provider:
     PADDLE_WEBHOOK_SECRET: ${env:PADDLE_WEBHOOK_SECRET, ''}
     PADDLE_ENVIRONMENT: ${env:PADDLE_ENVIRONMENT, 'sandbox'}
 
+    # Email Service (Resend)
+    RESEND_API_KEY: ${env:RESEND_API_KEY, ''}
+
     # CORS Configuration (production only allows production domain)
     CORS_ORIGIN: https://somyung.pages.dev
 
@@ -128,6 +131,7 @@ package:
     # Include
     - 'index.js'
     - 'src/**'
+    - 'assets/**'
     - 'node_modules/**'
     - 'package.json'
 

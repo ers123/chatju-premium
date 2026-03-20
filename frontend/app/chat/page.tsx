@@ -19,6 +19,11 @@ export default function ChatPage() {
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [hoveredSuggestion, setHoveredSuggestion] = useState<number | null>(null)
+  const [sendHovered, setSendHovered] = useState(false)
+  const [registryHovered, setRegistryHovered] = useState(false)
+  const [logoHovered, setLogoHovered] = useState(false)
+  const [inputFocused, setInputFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -80,61 +85,163 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#F4F1ED] font-sans-ko">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#FDFCFA', fontFamily: 'sans-serif' }}>
       {/* Header */}
-      <header className="bg-[#F4F1ED]/80 backdrop-blur-xl border-b border-[#E2DDD6]/50 px-6 py-5 flex-shrink-0 z-10 sticky top-0">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="no-underline flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-full bg-[#1A2F23] flex items-center justify-center">
-                <span className="font-serif-ko text-xs text-[#C5A059] font-bold">소</span>
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        background: 'rgba(255,255,255,0.95)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(235,229,223,0.6)',
+        padding: '1.25rem 1.5rem',
+        flexShrink: 0
+      }}>
+        <div style={{ maxWidth: '36rem', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <Link
+              href="/"
+              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              onMouseEnter={() => setLogoHovered(true)}
+              onMouseLeave={() => setLogoHovered(false)}
+            >
+              <div style={{
+                width: '2rem',
+                height: '2rem',
+                borderRadius: '50%',
+                background: '#1A3D2E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <span style={{ fontSize: '0.75rem', color: '#C5A059', fontWeight: 700, fontFamily: 'serif' }}>소</span>
               </div>
-              <span className="font-serif-ko text-2xl text-[#1A2F23] tracking-tighter group-hover:text-[#C5A059] transition-colors">소명</span>
+              <span style={{
+                fontFamily: 'serif',
+                fontSize: '1.5rem',
+                color: logoHovered ? '#C5A059' : '#1A3D2E',
+                letterSpacing: '-0.05em',
+                transition: 'color 0.2s'
+              }}>소명</span>
             </Link>
-            <div className="w-[1px] h-6 bg-[#E2DDD6]" />
-            <div className="hidden sm:block">
-              <h1 className="text-xs font-bold tracking-[0.2em] text-[#1A2F23] uppercase">Celestial Consultation</h1>
+            <div style={{ width: '1px', height: '1.5rem', background: '#EBE5DF' }} />
+            <div>
+              <h1 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.2em', color: '#1A3D2E', textTransform: 'uppercase', margin: 0 }}>Celestial Consultation</h1>
             </div>
           </div>
-          <Link href="/saju/results" className="text-[10px] font-bold tracking-widest text-[#5C554E] hover:text-[#C5A059] transition-colors uppercase border border-[#E2DDD6] px-4 py-2 rounded-full">
-            ← Registry
+          <Link
+            href="/saju/results"
+            style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              color: registryHovered ? '#C5A059' : '#6B5E52',
+              border: registryHovered ? '1px solid #C5A059' : '1px solid rgba(235,229,223,0.6)',
+              padding: '0.5rem 1rem',
+              borderRadius: '9999px',
+              textDecoration: 'none',
+              textTransform: 'uppercase',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={() => setRegistryHovered(true)}
+            onMouseLeave={() => setRegistryHovered(false)}
+          >
+            &#8592; Registry
           </Link>
         </div>
       </header>
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-10 scroll-smooth">
-        <div className="max-w-3xl mx-auto space-y-10">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '2.5rem 1.5rem', scrollBehavior: 'smooth' }}>
+        <div style={{ maxWidth: '36rem', margin: '0 auto' }}>
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'items-start gap-4'} animate-fade-in`}
+              style={{
+                display: 'flex',
+                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+                alignItems: message.role === 'ai' ? 'flex-start' : undefined,
+                gap: message.role === 'ai' ? '1rem' : undefined,
+                marginBottom: '2.5rem',
+                animation: 'fadeIn 0.3s ease-in'
+              }}
             >
               {message.role === 'ai' && (
-                <div className="w-10 h-10 rounded-full bg-[#1A2F23] border border-[#C5A059]/20 flex items-center justify-center flex-shrink-0 shadow-lg mt-1">
-                  <span className="text-[10px] text-[#C5A059] font-bold font-serif-ko">도사</span>
+                <div style={{
+                  width: '2.5rem',
+                  height: '2.5rem',
+                  borderRadius: '50%',
+                  background: '#1A3D2E',
+                  border: '1px solid rgba(197,160,89,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  marginTop: '0.25rem'
+                }}>
+                  <span style={{ fontSize: '10px', color: '#C5A059', fontWeight: 700, fontFamily: 'serif' }}>도사</span>
                 </div>
               )}
-              <div className={`max-w-[85%] sm:max-w-[75%] px-6 py-4 rounded-[1.5rem] relative ${message.role === 'user'
-                  ? 'bg-[#1A2F23] text-white rounded-tr-none'
-                  : 'bg-[#FFFFFF] border border-[#E2DDD6] text-[#2D2A26] rounded-tl-none font-serif-ko leading-[1.8]'
-                }`}>
+              <div style={{
+                maxWidth: '75%',
+                padding: '1rem 1.5rem',
+                borderRadius: '1.5rem',
+                position: 'relative',
+                ...(message.role === 'user'
+                  ? {
+                      background: '#1A3D2E',
+                      color: '#FFFFFF',
+                      borderTopRightRadius: 0
+                    }
+                  : {
+                      background: 'rgba(255,255,255,0.95)',
+                      border: '1px solid rgba(235,229,223,0.6)',
+                      color: '#2D3A35',
+                      borderTopLeftRadius: 0,
+                      fontFamily: 'serif',
+                      lineHeight: 1.8
+                    }
+                )
+              }}>
                 {message.role === 'ai' && (
-                  <div className="absolute -top-6 left-0 text-[10px] font-bold text-[#C5A059] tracking-widest uppercase">The Insight</div>
+                  <div style={{
+                    position: 'absolute',
+                    top: '-1.5rem',
+                    left: 0,
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    color: '#C5A059',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase'
+                  }}>The Insight</div>
                 )}
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{message.content}</p>
               </div>
             </div>
           ))}
 
           {/* Show suggestions only after first AI message */}
           {messages.length === 1 && (
-            <div className="flex flex-wrap gap-2 justify-center pt-4">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', paddingTop: '1rem' }}>
               {suggestions.map((suggestion, index) => (
                 <button
                   key={index}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="px-5 py-2.5 bg-[#FFFFFF] border border-[#E2DDD6] rounded-full text-xs font-bold text-[#5C554E] hover:border-[#C5A059] hover:text-[#C5A059] transition-all"
+                  onMouseEnter={() => setHoveredSuggestion(index)}
+                  onMouseLeave={() => setHoveredSuggestion(null)}
+                  style={{
+                    padding: '0.625rem 1.25rem',
+                    background: 'rgba(255,255,255,0.95)',
+                    border: hoveredSuggestion === index ? '1px solid #C5A059' : '1px solid rgba(235,229,223,0.6)',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: hoveredSuggestion === index ? '#C5A059' : '#6B5E52',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >
                   {suggestion}
                 </button>
@@ -144,15 +251,31 @@ export default function ChatPage() {
 
           {/* Loading indicator */}
           {isLoading && (
-            <div className="flex items-start gap-4 animate-pulse">
-              <div className="w-10 h-10 rounded-full bg-[#1A2F23] flex items-center justify-center flex-shrink-0 border border-[#C5A059]/20">
-                <span className="text-[10px] text-[#C5A059] font-bold font-serif-ko">도사</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '2.5rem' }}>
+              <div style={{
+                width: '2.5rem',
+                height: '2.5rem',
+                borderRadius: '50%',
+                background: '#1A3D2E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                border: '1px solid rgba(197,160,89,0.2)'
+              }}>
+                <span style={{ fontSize: '10px', color: '#C5A059', fontWeight: 700, fontFamily: 'serif' }}>도사</span>
               </div>
-              <div className="bg-[#FFFFFF]/50 border border-[#E2DDD6] px-6 py-4 rounded-[1.5rem] rounded-tl-none">
-                <div className="flex gap-1.5">
-                  <div className="w-1.5 h-1.5 bg-[#C5A059] rounded-full animate-bounce" />
-                  <div className="w-1.5 h-1.5 bg-[#C5A059] rounded-full animate-bounce delay-150" />
-                  <div className="w-1.5 h-1.5 bg-[#C5A059] rounded-full animate-bounce delay-300" />
+              <div style={{
+                background: 'rgba(255,255,255,0.5)',
+                border: '1px solid rgba(235,229,223,0.6)',
+                padding: '1rem 1.5rem',
+                borderRadius: '1.5rem',
+                borderTopLeftRadius: 0
+              }}>
+                <div style={{ display: 'flex', gap: '0.375rem' }}>
+                  <div style={{ width: '0.375rem', height: '0.375rem', background: '#C5A059', borderRadius: '50%', animation: 'bounce 1s infinite' }} />
+                  <div style={{ width: '0.375rem', height: '0.375rem', background: '#C5A059', borderRadius: '50%', animation: 'bounce 1s infinite 0.15s' }} />
+                  <div style={{ width: '0.375rem', height: '0.375rem', background: '#C5A059', borderRadius: '50%', animation: 'bounce 1s infinite 0.3s' }} />
                 </div>
               </div>
             </div>
@@ -163,33 +286,90 @@ export default function ChatPage() {
       </div>
 
       {/* Input Area */}
-      <div className="bg-[#FFFFFF] border-t border-[#E2DDD6]/50 px-6 py-8 flex-shrink-0">
-        <div className="max-w-3xl mx-auto">
-          <div className="relative group">
+      <div style={{
+        background: '#FFFFFF',
+        borderTop: '1px solid rgba(235,229,223,0.5)',
+        padding: '2rem 1.5rem',
+        flexShrink: 0
+      }}>
+        <div style={{ maxWidth: '36rem', margin: '0 auto' }}>
+          <div style={{ position: 'relative' }}>
             <textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
               placeholder="하늘의 뜻을 물으셔요..."
-              className="w-full px-6 py-5 bg-[#F4F1ED]/50 border border-[#E2DDD6] rounded-[2rem] resize-none max-h-48 focus:outline-none focus:border-[#C5A059] focus:ring-4 focus:ring-[#C5A059]/5 transition-all font-serif-ko text-lg pr-20"
+              style={{
+                width: '100%',
+                padding: '1.25rem 5rem 1.25rem 1.5rem',
+                background: 'rgba(253,252,250,0.5)',
+                border: inputFocused ? '1px solid #C5A059' : '1px solid rgba(235,229,223,0.6)',
+                borderRadius: '2rem',
+                resize: 'none',
+                maxHeight: '12rem',
+                outline: 'none',
+                boxShadow: inputFocused ? '0 0 0 4px rgba(197,160,89,0.05)' : 'none',
+                transition: 'all 0.2s',
+                fontFamily: 'serif',
+                fontSize: '1.125rem',
+                lineHeight: 1.5,
+                boxSizing: 'border-box',
+                color: '#2D3A35'
+              }}
               rows={1}
               disabled={isLoading}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="absolute right-3 bottom-3 w-12 h-12 bg-[#1A2F23] text-[#C5A059] rounded-full flex items-center justify-center hover:bg-[#C5A059] hover:text-[#1A2F23] disabled:bg-[#E2DDD6] disabled:text-white transition-all shadow-lg"
+              onMouseEnter={() => setSendHovered(true)}
+              onMouseLeave={() => setSendHovered(false)}
+              style={{
+                position: 'absolute',
+                right: '0.75rem',
+                bottom: '0.75rem',
+                width: '3rem',
+                height: '3rem',
+                background: (!input.trim() || isLoading)
+                  ? '#E2DDD6'
+                  : sendHovered ? '#C5A059' : '#1A3D2E',
+                color: (!input.trim() || isLoading)
+                  ? '#FFFFFF'
+                  : sendHovered ? '#1A3D2E' : '#C5A059',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: 'none',
+                cursor: (!input.trim() || isLoading) ? 'default' : 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
           </div>
-          <div className="mt-4 flex flex-col items-center gap-2">
-            <p className="text-[10px] font-bold text-[#1A2F23]/20 tracking-[0.3em] uppercase">Private & Eternal Channel</p>
-            <div className="h-[1px] w-12 bg-[#E2DDD6]" />
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(26,61,46,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>Private &amp; Eternal Channel</p>
+            <div style={{ height: '1px', width: '3rem', background: '#EBE5DF' }} />
           </div>
         </div>
       </div>
+
+      {/* Keyframe animations */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-6px); }
+        }
+      `}</style>
     </div>
   )
 }

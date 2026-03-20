@@ -143,8 +143,8 @@ async function generateSajuPreview(params) {
  */
 async function generateSajuReading(params) {
   const {
-    userId,
-    orderId,
+    userId = null,
+    orderId = null,
     birthDate,
     birthTime = null,
     gender,
@@ -159,6 +159,10 @@ async function generateSajuReading(params) {
     parentRole = null,
     // Twin info (optional)
     twinInfo = null, // { order: 1|2, siblingName?: string }
+    // Promo code support (optional)
+    promoCodeId = null,
+    deliveryEmail = null,
+    skipPaymentCheck = false,
   } = params;
 
   try {
@@ -169,23 +173,29 @@ async function generateSajuReading(params) {
       gender,
     });
 
-    // Step 1: Verify payment exists and is completed (Real DB query!)
-    const { data: payment, error: paymentError } = await supabaseAdmin
-      .from('payments')
-      .select('*')
-      .eq('order_id', orderId)
-      .eq('user_id', userId)
-      .single();
+    // Step 1: Verify payment (skip for promo code flow)
+    let payment = null;
+    if (!skipPaymentCheck) {
+      const { data: paymentData, error: paymentError } = await supabaseAdmin
+        .from('payments')
+        .select('*')
+        .eq('order_id', orderId)
+        .eq('user_id', userId)
+        .single();
 
-    if (paymentError) {
-      throw handleSupabaseError(paymentError) || new Error('Payment not found');
+      if (paymentError) {
+        throw handleSupabaseError(paymentError) || new Error('Payment not found');
+      }
+
+      if (paymentData.status !== 'completed') {
+        throw new Error(`Payment not completed. Current status: ${paymentData.status}`);
+      }
+
+      payment = paymentData;
+      console.log('[Saju Service] Payment verified:', payment.product_type);
+    } else {
+      console.log('[Saju Service] Skipping payment check (promo flow)');
     }
-
-    if (payment.status !== 'completed') {
-      throw new Error(`Payment not completed. Current status: ${payment.status}`);
-    }
-
-    console.log('[Saju Service] Payment verified:', payment.product_type);
 
     // Step 2: Calculate Manseryeok using wrapper
     // Convert gender format (male/female → 남/여)
@@ -236,7 +246,7 @@ async function generateSajuReading(params) {
       parentManseryeok,
       parentRole,
       language,
-      payment.product_type,
+      payment ? payment.product_type : 'premium_saju',
       birthTime === null, // indicate if time is unknown
       fortuneCycles,
       twinInfo
@@ -251,22 +261,26 @@ async function generateSajuReading(params) {
       fortuneCycles: fortuneCycles,
     };
 
+    const readingRow = {
+      birth_date: birthDate,
+      birth_time: birthTime,
+      gender: gender,
+      subject_name: subjectName,
+      saju_data: completeReadingData,
+      ai_interpretation: aiInterpretation,
+      language: language,
+      product_type: payment ? payment.product_type : 'premium_saju',
+    };
+
+    // Conditional fields
+    if (userId) readingRow.user_id = userId;
+    if (payment) readingRow.payment_id = payment.id;
+    if (promoCodeId) readingRow.promo_code_id = promoCodeId;
+    if (deliveryEmail) readingRow.delivery_email = deliveryEmail;
+
     const { data: reading, error: insertError } = await supabaseAdmin
       .from('readings')
-      .insert([
-        {
-          user_id: userId,
-          payment_id: payment.id,
-          birth_date: birthDate,
-          birth_time: birthTime,
-          gender: gender,
-          subject_name: subjectName,
-          saju_data: completeReadingData,
-          ai_interpretation: aiInterpretation,
-          language: language,
-          product_type: payment.product_type,
-        },
-      ])
+      .insert([readingRow])
       .select()
       .single();
 
@@ -277,7 +291,38 @@ async function generateSajuReading(params) {
 
     console.log('[Saju Service] Reading saved to database:', reading.id);
 
-    // Step 6: Return complete reading with database ID
+    // Step 6: Fire-and-forget email delivery (if deliveryEmail provided)
+    if (deliveryEmail) {
+      setImmediate(async () => {
+        try {
+          const emailService = require('./email.service');
+          await emailService.sendReportEmail({
+            email: deliveryEmail,
+            childName: subjectName,
+            readingId: reading.id,
+            manseryeok: manseryeokResult,
+            aiInterpretation,
+            birthDate,
+            gender,
+            language,
+          });
+          // Update email status
+          await supabaseAdmin
+            .from('readings')
+            .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
+            .eq('id', reading.id);
+          console.log('[Saju Service] Report email sent to:', deliveryEmail);
+        } catch (emailErr) {
+          console.error('[Saju Service] Email delivery failed:', emailErr.message);
+          await supabaseAdmin
+            .from('readings')
+            .update({ email_status: 'failed' })
+            .eq('id', reading.id);
+        }
+      });
+    }
+
+    // Step 7: Return complete reading with database ID
     return {
       readingId: reading.id, // Real UUID from database!
       manseryeok: manseryeokResult,
@@ -546,7 +591,14 @@ function getParentChildRelation(parentElement, childElement) {
  * @returns {Promise<Object>} AI interpretation with relationship focus
  */
 async function generateAIInterpretation(childManseryeok, parentManseryeok = null, parentRole = null, language = 'ko', productType = 'basic', childTimeUnknown = false, fortuneCycles = null, twinInfo = null) {
-  const { pillars: childPillars, elements: childElements } = childManseryeok;
+  const { pillars: childPillars, elements: rawElements } = childManseryeok;
+
+  // Normalize element keys to Korean (mansae-wrapper returns English keys)
+  const ELEMENT_KEY_MAP = { wood: '목', fire: '화', earth: '토', metal: '금', water: '수' };
+  const childElements = {};
+  for (const [key, value] of Object.entries(rawElements)) {
+    childElements[ELEMENT_KEY_MAP[key] || key] = value;
+  }
 
   // 일간(日干) natural imagery mapping
   const dayMasterImagery = {
@@ -654,8 +706,13 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
   let parentDominant = null;
 
   if (parentManseryeok) {
-    parentDominant = getStrongestElement(parentManseryeok.elements);
-    const parentWeak = getWeakestElement(parentManseryeok.elements);
+    // Normalize parent element keys to Korean
+    const parentElements = {};
+    for (const [key, value] of Object.entries(parentManseryeok.elements)) {
+      parentElements[ELEMENT_KEY_MAP[key] || key] = value;
+    }
+    parentDominant = getStrongestElement(parentElements);
+    const parentWeak = getWeakestElement(parentElements);
     const parentTraits = elementTraits[parentDominant];
     const parentLabel = parentRole === 'mother' ? '엄마' : '아빠';
     const parentDayStem = parentManseryeok.pillars.day.korean[0];
@@ -685,7 +742,7 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
 **${parentLabel} 스트레스 요인:** ${parentTraits.stress}
 
 **${parentLabel} 오행 분포:**
-${Object.entries(parentManseryeok.elements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' ▶ 강함' : v === 0 ? ' ▶ 없음!' : ''}`).join('\n')}
+${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' ▶ 강함' : v === 0 ? ' ▶ 없음!' : ''}`).join('\n')}
 
 **부모-자녀 오행 관계:**
 - ${parentLabel} 일간(${parentDayMasterElement}) × 아이 일간(${dayMasterElement}): ${parentChildRelation}

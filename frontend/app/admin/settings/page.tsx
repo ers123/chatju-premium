@@ -117,11 +117,18 @@ export default function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FEFDFB' }}>
-        <div className="text-center">
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FDFCFA' }}>
+        <div style={{ textAlign: 'center' }}>
           <div
-            className="animate-spin rounded-full h-12 w-12 mx-auto mb-4"
-            style={{ border: '4px solid #EBE5DF', borderTopColor: '#1A3D2E' }}
+            style={{
+              width: '3rem',
+              height: '3rem',
+              margin: '0 auto 1rem auto',
+              borderRadius: '9999px',
+              border: '4px solid #EBE5DF',
+              borderTopColor: '#2D3A35',
+              animation: 'spin 1s linear infinite',
+            }}
           ></div>
           <p style={{ color: '#6B5E52' }}>Loading settings...</p>
         </div>
@@ -130,28 +137,34 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#FEFDFB' }}>
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
+    <div style={{ minHeight: '100vh', background: '#FDFCFA' }}>
+      {/* Header */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(235,229,223,0.6)' }}>
+        <div style={{ maxWidth: '36rem', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <button
             onClick={() => router.back()}
-            className="mb-4 flex items-center"
-            style={{ color: '#1A3D2E' }}
+            style={{ color: '#2D3A35', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#0F2A1E')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#1A3D2E')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#2D3A35')}
           >
             ← Back
           </button>
-          <h1 className="text-3xl font-bold" style={{ color: '#2D3A35' }}>Admin Settings</h1>
-          <p className="mt-2" style={{ color: '#6B5E52' }}>Manage AI provider and system configuration</p>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#2D3A35', margin: 0 }}>Admin Settings</h1>
+          <div style={{ width: '3rem' }}></div>
         </div>
+      </div>
+
+      {/* Main */}
+      <div style={{ maxWidth: '36rem', margin: '0 auto', padding: '2rem 1.5rem' }}>
+        <p style={{ color: '#6B5E52', marginBottom: '1.5rem' }}>Manage AI provider and system configuration</p>
 
         {/* Success Message */}
         {successMessage && (
           <div
-            className="mb-6 px-4 py-3 rounded-lg"
             style={{
+              marginBottom: '1.5rem',
+              padding: '0.75rem 1rem',
+              borderRadius: '0.75rem',
               backgroundColor: 'rgba(90, 125, 107, 0.1)',
               border: '1px solid rgba(90, 125, 107, 0.3)',
               color: '#5A7D6B',
@@ -164,8 +177,10 @@ export default function AdminSettingsPage() {
         {/* Error Message */}
         {error && (
           <div
-            className="mb-6 px-4 py-3 rounded-lg"
             style={{
+              marginBottom: '1.5rem',
+              padding: '0.75rem 1rem',
+              borderRadius: '0.75rem',
               backgroundColor: 'rgba(198, 123, 111, 0.1)',
               border: '1px solid rgba(198, 123, 111, 0.3)',
               color: '#C67B6F',
@@ -176,51 +191,53 @@ export default function AdminSettingsPage() {
         )}
 
         {/* AI Provider Section */}
-        <div className="card-paper overflow-hidden mb-6">
+        <div style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.25rem', marginBottom: '1rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', overflow: 'hidden' }}>
           <div
-            className="px-6 py-4 border-b"
             style={{
+              padding: '1rem 1.5rem',
+              borderBottom: '1px solid #EBE5DF',
               backgroundColor: 'rgba(26, 61, 46, 0.05)',
-              borderColor: '#EBE5DF',
             }}
           >
-            <h2 className="text-xl font-semibold" style={{ color: '#2D3A35' }}>AI Provider Configuration</h2>
-            <p className="text-sm mt-1" style={{ color: '#6B5E52' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#2D3A35', margin: 0 }}>AI Provider Configuration</h2>
+            <p style={{ fontSize: '0.875rem', marginTop: '0.25rem', color: '#6B5E52' }}>
               Choose which AI model to use for fortune-telling interpretations
             </p>
           </div>
 
-          <div className="p-6">
+          <div style={{ padding: '1.5rem' }}>
             {providerInfo && (
               <>
                 {/* Current Provider */}
                 <div
-                  className="mb-6 p-4 rounded-lg"
                   style={{
+                    marginBottom: '1.5rem',
+                    padding: '1rem',
+                    borderRadius: '0.75rem',
                     backgroundColor: 'rgba(85, 107, 126, 0.08)',
                     border: '1px solid rgba(85, 107, 126, 0.2)',
                   }}
                 >
-                  <div className="flex items-center justify-between">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <p className="text-sm mb-1" style={{ color: '#6B5E52' }}>Current Provider</p>
-                      <p className="text-2xl font-bold" style={{ color: '#2D3A35' }}>
+                      <p style={{ fontSize: '0.875rem', marginBottom: '0.25rem', color: '#6B5E52' }}>Current Provider</p>
+                      <p style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2D3A35', margin: 0 }}>
                         {providerInfo.details[providerInfo.current].name}
                       </p>
-                      <p className="text-sm mt-1" style={{ color: '#6B5E52' }}>
+                      <p style={{ fontSize: '0.875rem', marginTop: '0.25rem', color: '#6B5E52' }}>
                         Model: {providerInfo.details[providerInfo.current].model}
                       </p>
-                      <p className="text-sm" style={{ color: '#6B5E52' }}>
+                      <p style={{ fontSize: '0.875rem', color: '#6B5E52' }}>
                         Cost: {providerInfo.details[providerInfo.current].costPer1MTokens}
                       </p>
                     </div>
-                    <div className="text-4xl">🤖</div>
+                    <div style={{ fontSize: '2.5rem' }}>🤖</div>
                   </div>
                 </div>
 
                 {/* Provider Options */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold mb-3" style={{ color: '#2D3A35' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.75rem', color: '#2D3A35' }}>
                     Available Providers
                   </h3>
 
@@ -231,28 +248,30 @@ export default function AdminSettingsPage() {
                     return (
                       <div
                         key={providerId}
-                        className="p-4 border rounded-lg transition-all"
-                        style={
-                          isCurrent
-                            ? { borderColor: '#1A3D2E', backgroundColor: 'rgba(26, 61, 46, 0.05)' }
-                            : { borderColor: '#EBE5DF' }
-                        }
+                        style={{
+                          padding: '1rem',
+                          borderRadius: '0.75rem',
+                          marginBottom: '1rem',
+                          transition: 'all 0.2s',
+                          ...(isCurrent
+                            ? { border: '1px solid #2D3A35', backgroundColor: 'rgba(26, 61, 46, 0.05)' }
+                            : { border: '1px solid #EBE5DF' }),
+                        }}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h4 className="text-lg font-semibold flex items-center" style={{ color: '#2D3A35' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#2D3A35', display: 'flex', alignItems: 'center', margin: 0 }}>
                               {provider.name}
                               {isCurrent && (
                                 <span
-                                  className="ml-2 px-2 py-1 text-xs rounded"
-                                  style={{ backgroundColor: '#1A3D2E', color: 'white' }}
+                                  style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '0.25rem', backgroundColor: '#2D3A35', color: 'white' }}
                                 >
                                   Active
                                 </span>
                               )}
                             </h4>
-                            <p className="text-sm mt-1" style={{ color: '#6B5E52' }}>Model: {provider.model}</p>
-                            <p className="text-sm" style={{ color: '#6B5E52' }}>
+                            <p style={{ fontSize: '0.875rem', marginTop: '0.25rem', color: '#6B5E52' }}>Model: {provider.model}</p>
+                            <p style={{ fontSize: '0.875rem', color: '#6B5E52' }}>
                               Cost: {provider.costPer1MTokens}
                             </p>
                           </div>
@@ -260,12 +279,18 @@ export default function AdminSettingsPage() {
                           <button
                             onClick={() => handleSwitchProvider(providerId)}
                             disabled={isCurrent || switching}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors${switching ? ' opacity-50 cursor-wait' : ''}`}
-                            style={
-                              isCurrent
-                                ? { backgroundColor: '#EBE5DF', color: '#8B8580', cursor: 'not-allowed' }
-                                : { backgroundColor: '#1A3D2E', color: 'white' }
-                            }
+                            style={{
+                              padding: '0.5rem 1rem',
+                              borderRadius: '0.75rem',
+                              fontWeight: 500,
+                              border: 'none',
+                              cursor: isCurrent ? 'not-allowed' : switching ? 'wait' : 'pointer',
+                              transition: 'all 0.2s',
+                              opacity: switching && !isCurrent ? 0.5 : 1,
+                              ...(isCurrent
+                                ? { backgroundColor: '#EBE5DF', color: '#8B8580' }
+                                : { backgroundColor: '#2D3A35', color: 'white' }),
+                            }}
                           >
                             {isCurrent ? 'Current' : switching ? 'Switching...' : 'Switch'}
                           </button>
@@ -282,25 +307,23 @@ export default function AdminSettingsPage() {
                       return (
                         <div
                           key={providerId}
-                          className="p-4 border rounded-lg opacity-60"
-                          style={{ borderColor: '#EBE5DF', backgroundColor: '#FEFDFB' }}
+                          style={{ padding: '1rem', border: '1px solid #EBE5DF', borderRadius: '0.75rem', opacity: 0.6, backgroundColor: '#FDFCFA', marginBottom: '1rem' }}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <h4 className="text-lg font-semibold flex items-center" style={{ color: '#6B5E52' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#6B5E52', display: 'flex', alignItems: 'center', margin: 0 }}>
                                 {provider.name}
                                 <span
-                                  className="ml-2 px-2 py-1 text-xs rounded"
-                                  style={{ backgroundColor: 'rgba(198, 123, 111, 0.15)', color: '#C67B6F' }}
+                                  style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '0.25rem', backgroundColor: 'rgba(198, 123, 111, 0.15)', color: '#C67B6F' }}
                                 >
                                   Not Configured
                                 </span>
                               </h4>
-                              <p className="text-sm mt-1" style={{ color: '#8B8580' }}>Model: {provider.model}</p>
-                              <p className="text-sm" style={{ color: '#8B8580' }}>
+                              <p style={{ fontSize: '0.875rem', marginTop: '0.25rem', color: '#8B8580' }}>Model: {provider.model}</p>
+                              <p style={{ fontSize: '0.875rem', color: '#8B8580' }}>
                                 Cost: {provider.costPer1MTokens}
                               </p>
-                              <p className="text-xs mt-2" style={{ color: '#8B8580' }}>
+                              <p style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: '#8B8580' }}>
                                 Add API key to environment variables to enable
                               </p>
                             </div>
@@ -315,22 +338,21 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* Future Features Section */}
-        <div className="card-paper overflow-hidden">
+        <div style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.25rem', marginBottom: '1rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', overflow: 'hidden' }}>
           <div
-            className="px-6 py-4 border-b"
-            style={{ backgroundColor: '#FEFDFB', borderColor: '#EBE5DF' }}
+            style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #EBE5DF', backgroundColor: '#FDFCFA' }}
           >
-            <h2 className="text-xl font-semibold" style={{ color: '#2D3A35' }}>Statistics (Coming Soon)</h2>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#2D3A35', margin: 0 }}>Statistics (Coming Soon)</h2>
           </div>
 
-          <div className="p-6">
-            <p className="mb-4" style={{ color: '#6B5E52' }}>
+          <div style={{ padding: '1.5rem' }}>
+            <p style={{ marginBottom: '1rem', color: '#6B5E52' }}>
               Future features will include:
             </p>
-            <ul className="list-disc list-inside space-y-2" style={{ color: '#6B5E52' }}>
-              <li>Total users and active users</li>
-              <li>Payment statistics and revenue tracking</li>
-              <li>AI usage analytics (calls, tokens, costs)</li>
+            <ul style={{ color: '#6B5E52', paddingLeft: '1.25rem', listStyleType: 'disc' }}>
+              <li style={{ marginBottom: '0.5rem' }}>Total users and active users</li>
+              <li style={{ marginBottom: '0.5rem' }}>Payment statistics and revenue tracking</li>
+              <li style={{ marginBottom: '0.5rem' }}>AI usage analytics (calls, tokens, costs)</li>
               <li>System health monitoring</li>
             </ul>
           </div>

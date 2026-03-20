@@ -213,6 +213,28 @@ export interface PayPalPaymentResponse {
 }
 
 // ---------------------------------------------
+// Promo Code Types
+// ---------------------------------------------
+
+export interface PromoValidateResponse {
+  valid: boolean;
+  error?: string;
+  promoCode?: {
+    id: string;
+    code: string;
+    partnerName: string;
+    discountType: 'free' | 'percent' | 'fixed';
+    discountValue: number;
+  };
+}
+
+export interface PromoCalculateRequest extends BirthInfo {
+  promoCode: string;
+  email: string;
+  subjectName?: string;
+}
+
+// ---------------------------------------------
 // API Response Types
 // ---------------------------------------------
 

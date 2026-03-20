@@ -29,10 +29,11 @@ function isValidUUID(uuid) {
  * Validate date format (YYYY-MM-DD)
  */
 function isValidDate(dateString) {
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  const dateRegex = /^\d{4}[-./]\d{2}[-./]\d{2}$/;
   if (!dateRegex.test(dateString)) return false;
 
-  const date = new Date(dateString);
+  const normalized = dateString.replace(/[./]/g, '-');
+  const date = new Date(normalized);
   return date instanceof Date && !isNaN(date);
 }
 
