@@ -176,13 +176,29 @@ async function generateReportPDF(params) {
         y = doc.y + 16;
       }
 
-      // ===== FOOTER on every page =====
-      const pageCount = doc.bufferedPageRange().count;
-      for (let i = 0; i < pageCount; i++) {
+      // ===== FOOTER on every page (skip blank trailing pages) =====
+      const range = doc.bufferedPageRange();
+      const totalPages = range.count;
+
+      // Detect last page with actual content (y > 80 means content exists beyond header area)
+      let lastContentPage = totalPages - 1;
+      for (let i = totalPages - 1; i >= 0; i--) {
+        doc.switchToPage(i);
+        // If this is the last page and y is near the top, it's likely blank
+        if (i === lastContentPage && y < 100 && i > 0) {
+          lastContentPage = i - 1;
+        } else {
+          break;
+        }
+      }
+
+      // Add footer to content pages only
+      const footerPageCount = lastContentPage + 1;
+      for (let i = 0; i <= lastContentPage; i++) {
         doc.switchToPage(i);
         doc.font(fontName).fontSize(7).fillColor('#B0A9A2')
           .text(
-            `소명 (SoMyung) | somyung.pages.dev | ${new Date().toISOString().split('T')[0]} | ${i + 1}/${pageCount}`,
+            `소명 (SoMyung) | somyung.cc | ${new Date().toISOString().split('T')[0]} | ${i + 1}/${footerPageCount}`,
             50, doc.page.height - 45,
             { width: contentW, align: 'center' }
           );
