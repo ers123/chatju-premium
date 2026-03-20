@@ -17,10 +17,8 @@ function getResendClient() {
   return resendClient;
 }
 
-// Use Resend test domain for now. Switch to verified domain later:
-// const FROM_EMAIL = 'SoMyung <noreply@somyung.pages.dev>';
-const FROM_EMAIL = 'SoMyung <onboarding@resend.dev>';
-const REPLY_TO = 'support@somyung.pages.dev';
+const FROM_EMAIL = 'SoMyung <noreply@somyung.cc>';
+const REPLY_TO = 'support@somyung.cc';
 
 /**
  * Send a premium report email
