@@ -33,7 +33,9 @@ async function main() {
 - 구체적 대화/행동 예시 포함
 - 점술 용어 대신 일상 언어
 - 반드시 ## 1. ~ ## 8. 형식의 8개 섹션
-- 전체 최소 2500자 이상`;
+- **전체 최소 5000자 이상 (8개 섹션 합계)**
+- 각 섹션이 "이것만으로도 돈 값한다"는 느낌
+- 절대 "다음에 더 자세히" 같은 추가 서비스 유도 멘트 금지 — 이 리포트가 완결된 작품이어야 합니다`;
 
   const currentDaeun = cycles.currentDaeun;
   const currentSeun = cycles.currentSeun;
@@ -97,19 +99,34 @@ async function main() {
 ## 6. 월별 운세 리포트 (~400자)
 2026년 3~6월 각 달 학업/교우/가정 에너지.
 
-## 7. 오행 밸런스 & 개운법 (~300자)
-금(金) 부재 보완: 색상, 음식, 활동, 방향.
+## 7. 오행 밸런스 & 생활 속 개운법 (최소 600자)
+금(金) 부재 보완법:
+- 색상: 흰색, 은색, 회색 — 옷, 학용품, 방 인테리어
+- 음식: 배, 무, 양파, 도라지, 흰쌀밥
+- 활동: 퍼즐, 레고, 악기 연습, 글쓰기, 정리정돈
+- 방향: 서쪽 — 책상 배치 팁
+- 건강 주의: 폐, 대장, 호흡기, 피부
+토(土) 과다 시 조절법, 계절별 에너지 관리도 포함.
 
-## 8. 이번 주 실천 과제 (~200자)
-오늘부터 바로 실행할 5가지 미션.`;
+## 8. 오늘부터 실천 가이드 (최소 400자)
+7가지 실천 미션 — 각각 왜 이 기질에 효과적인지 한 줄 설명 포함.
+마무리 메시지: 리포트 핵심 한 줄 요약 + "완벽한 부모는 없습니다" 톤.
+절대 "다음에는 더 자세히 분석해드리겠습니다" 같은 추가 서비스 유도 멘트 금지.
 
-  console.error('Generating premium 8-section report...');
+**추가 참고 데이터 (리포트에 자연스럽게 녹여주세요):**
+- 임수(壬水): 바다/큰 강 이미지. 포용력, 통찰력, 전략적 사고. 우유부단/방향상실이 성장점.
+- 토(土) 강함: 안정감/신뢰의 근거이자 변화거부/고집의 원인.
+- 금(金) 부재: 정리/기준/끝맺음 능력 발달 중. 보완 색상: 흰색/은색.
+- 동일 임수 부녀: 서로의 마음을 빨리 읽지만 같은 약점 공유. 투사 주의.
+- 건강: 신장, 방광, 비뇨기 주의.`;
+
+  console.error('Generating enhanced premium report (7000 tokens)...');
   const start = Date.now();
 
   const result = await ai.generateFortune([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ], { maxTokens: 4000, temperature: 0.7 });
+  ], { maxTokens: 7000, temperature: 0.7 });
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   console.error(`Done: ${elapsed}s, ${result.content.length} chars, ${result.tokensUsed} tokens, ${result.model}`);
@@ -156,7 +173,7 @@ ${result.content}
 ---
 
 *이 리포트는 소명(SoMyung) AI 사주 분석 서비스에서 생성되었습니다.*
-*현대 명리학의 철학을 바탕으로, 공포가 아닌 성장의 관점에서 해석합니다.*
+*사주 명리학의 철학을 바탕으로, 공포가 아닌 성장의 관점에서 해석합니다.*
 `;
 
   // Write to file and stdout

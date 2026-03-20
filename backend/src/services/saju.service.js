@@ -569,6 +569,30 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
     '수': { name: '물(水)', traits: '지혜, 적응력, 감성, 관찰형', stress: '정서 불안/소외감/고립', needs: '공감, 정서적 안정, 경청, 함께하는 시간', parentTip: '물은 그릇의 모양을 따릅니다. 환경의 영향을 가장 많이 받는 기질이므로, 안정적인 정서 환경이 핵심입니다.' },
   };
 
+  // Deep 일간(Day Master) reference knowledge — sourced from 명리학 교재
+  // Used to feed rich, grounded context into the AI prompt
+  const dayMasterDeepProfile = {
+    '갑': { nature: '양목(陽木)', image: '큰 나무, 거목, 소나무', season: '봄', direction: '동쪽', color: '청색/녹색', strengths: '추진력, 정의감, 리더십, 진취성', weaknesses: '고집, 독선, 융통성 부족', health: '간, 담, 근육, 신경계', career: '경영, 정치, 법조, 교육, 건축', childTrait: '자기 주장이 강하고 리더 역할을 하려 함. 규칙보다 자기 방식을 선호. 꺾으려 하면 더 강해짐.', parentAdvice: '방향만 제시하고 스스로 결정하게 하라. "하지 마"보다 "어떻게 하고 싶어?"가 효과적.' },
+    '을': { nature: '음목(陰木)', image: '넝쿨, 잔디, 꽃, 덩굴', season: '봄', direction: '동쪽', color: '연두색/초록색', strengths: '적응력, 사교성, 인내력, 협상력', weaknesses: '의존성, 우유부단, 눈치 과다', health: '간, 담, 알레르기, 피부', career: '예술, 디자인, 외교, 상담, 서비스', childTrait: '눈치가 빠르고 분위기에 민감. 겉으로는 순응하지만 속으로 불만을 쌓을 수 있음.', parentAdvice: '감정을 표현할 안전한 공간을 만들어라. 칭찬에 민감하므로 작은 것도 인정해줄 것.' },
+    '병': { nature: '양화(陽火)', image: '태양, 용광로, 큰 불', season: '여름', direction: '남쪽', color: '빨간색/주황색', strengths: '밝음, 열정, 솔직함, 카리스마', weaknesses: '급한 성격, 지속력 부족, 과시욕', health: '심장, 소장, 혈압, 눈', career: '방송, 마케팅, 영업, 교육, 예체능', childTrait: '에너지가 넘치고 주목받고 싶어 함. 감정 표현이 즉각적이고 과장됨.', parentAdvice: '에너지를 발산할 채널을 만들어라. 억누르면 폭발. 짧게 집중하고 자주 쉬게 할 것.' },
+    '정': { nature: '음화(陰火)', image: '촛불, 별빛, 등불', season: '여름', direction: '남쪽', color: '분홍색/보라색', strengths: '섬세함, 감성, 예술적 감각, 따뜻함', weaknesses: '감정 기복, 예민함, 질투심', health: '심장, 혈액순환, 시력', career: '문학, 음악, 미술, 심리상담, 요리', childTrait: '감정이 풍부하고 눈물이 많을 수 있음. 분위기와 말투에 매우 민감.', parentAdvice: '감정을 부정하지 말라. "울지 마" 대신 "많이 속상했구나". 예술/음악 활동이 정서 안정에 도움.' },
+    '무': { nature: '양토(陽土)', image: '큰 산, 바위산, 대지', season: '환절기', direction: '중앙', color: '갈색/황토색', strengths: '신뢰감, 포용력, 안정감, 책임감', weaknesses: '고집, 변화 거부, 게으름', health: '위장, 비장, 소화기', career: '부동산, 농업, 건설, 공무원, 관리직', childTrait: '느리지만 한번 시작하면 꾸준함. 변화를 싫어하고 예측 가능한 환경을 선호.', parentAdvice: '충분한 시간을 주고 재촉하지 말라. 루틴과 일관성이 이 아이의 안전지대.' },
+    '기': { nature: '음토(陰土)', image: '논밭, 정원, 화분의 흙', season: '환절기', direction: '중앙', color: '노란색/베이지', strengths: '실용적, 양육적, 섬세한 배려, 현실감', weaknesses: '소유욕, 집착, 걱정 과다', health: '위장, 비장, 당뇨', career: '교육, 의료, 복지, 요식업, 유통', childTrait: '돌봄 본능이 있고 동생이나 동물을 잘 챙김. 자기 물건/영역에 대한 소유욕 강함.', parentAdvice: '"네 거야"라는 안정감을 주면서 나눔의 경험을 자연스럽게. 음식과 요리가 좋은 유대 활동.' },
+    '경': { nature: '양금(陽金)', image: '바위, 원석, 칼, 도끼', season: '가을', direction: '서쪽', color: '흰색/은색', strengths: '결단력, 의리, 정의감, 실행력', weaknesses: '날카로움, 융통성 부족, 외로움', health: '폐, 대장, 호흡기, 피부', career: '법조, 군인, 의사, 엔지니어, IT', childTrait: '옳고 그름이 명확하고 불공정에 강하게 반응. 감정 표현은 서툴지만 속정은 깊음.', parentAdvice: '규칙은 명확하되 공정하게. 불공정하다고 느끼면 절대 따르지 않음. 논리적 설명이 효과적.' },
+    '신': { nature: '음금(陰金)', image: '보석, 귀금속, 바늘, 가위', season: '가을', direction: '서쪽', color: '흰색/크림색', strengths: '정밀함, 미적 감각, 자존심, 분석력', weaknesses: '완벽주의, 비판적, 자존심 상처에 약함', health: '폐, 대장, 피부, 치아', career: '보석, 패션, 금융, 분석, 프로그래밍', childTrait: '자존심이 높고 실수를 인정하기 어려워함. 외모와 소유물에 관심이 많을 수 있음.', parentAdvice: '공개적 망신 절대 금지. 조용히 1:1로 피드백. 노력 과정을 칭찬하면 완벽주의가 건강한 방향으로.' },
+    '임': { nature: '양수(陽水)', image: '바다, 큰 강, 호수, 지하수', season: '겨울', direction: '북쪽', color: '검은색/남색', strengths: '포용력, 통찰력, 전략적 사고, 유연성, 갈등 조정력', weaknesses: '우유부단, 방향 상실, 에너지 분산, 수동성', health: '신장, 방광, 비뇨기, 생식기, 만성 피로', career: '교육, 연구, 외교, 상담, 미디어, 기획', childTrait: '겉으로는 조용하고 차분해 보이지만 속으로는 생각과 감정의 흐름이 바다처럼 깊고 넓음. 한번 납득하면 오래 가지만, 납득 안 되면 겉으로는 조용히 속으로 강하게 저항. 다양한 것에 관심이 분산되기 쉬움.', parentAdvice: '방향을 정해주되 물길을 막지는 말 것. "이렇게 해"보다 "어디로 가고 싶어?"가 효과적. 충분한 생각 정리 시간을 주고 바로 답을 요구하지 말 것.' },
+    '계': { nature: '음수(陰水)', image: '빗물, 이슬, 안개, 시냇물', season: '겨울', direction: '북쪽', color: '검은색/회색', strengths: '직관력, 감수성, 치유 능력, 스며드는 영향력', weaknesses: '불안, 걱정 과다, 의심, 감정에 휩쓸림', health: '신장, 방광, 냉증, 불면', career: '심리, 종교, 예술, 의료, 연구', childTrait: '눈에 보이지 않는 것을 잘 느낌. 직관적이고 상대방 감정을 흡수하기 쉬움. 혼자만의 시간이 반드시 필요.', parentAdvice: '감정의 스펀지 같은 아이. 부모의 감정 상태가 바로 전달되므로 부모 자신의 정서 관리가 먼저. 자연(특히 물가)에서의 시간이 치유.' },
+  };
+
+  // 오행 색상/음식/방향/활동 — 색채 명리학 및 교재 기반
+  const elementRemedies = {
+    '목': { colors: '파란색, 초록색, 연두색', foods: '시금치, 브로콜리 등 녹색 채소, 신맛 과일(귤, 레몬), 콩나물', activities: '등산, 산책, 원예, 그림 그리기, 목공', direction: '동쪽', season: '봄', body: '간, 담, 근육, 눈', avoidExcess: '과도한 성장 압박, 지나친 경쟁 환경' },
+    '화': { colors: '빨간색, 주황색, 보라색', foods: '토마토, 당근, 붉은 과일, 쓴맛 식품(녹차, 쑥)', activities: '달리기, 무용, 연극, 발표, 체육 활동', direction: '남쪽', season: '여름', body: '심장, 소장, 혈액', avoidExcess: '과도한 자극, 수면 부족, 미디어 과다 노출' },
+    '토': { colors: '노란색, 갈색, 베이지, 황토색', foods: '고구마, 감자, 호박, 단맛 식품, 현미', activities: '요리, 도예, 정리정돈, 텃밭 가꾸기, 보드게임', direction: '중앙', season: '환절기', body: '위장, 비장, 소화기', avoidExcess: '급격한 환경 변화, 일관성 없는 규칙' },
+    '금': { colors: '흰색, 은색, 회색, 크림색', foods: '배, 무, 양파, 흰쌀밥, 매운맛 식품(도라지, 생강)', activities: '퍼즐, 레고, 악기 연습, 글쓰기, 프로그래밍', direction: '서쪽', season: '가을', body: '폐, 대장, 호흡기, 피부', avoidExcess: '모호한 기준, 불공정한 대우, 공개적 비판' },
+    '수': { colors: '검은색, 남색, 진한 파란색', foods: '미역, 해조류, 검은콩, 짠맛 식품, 두부', activities: '수영, 독서, 명상, 일기 쓰기, 자연 탐험', direction: '북쪽', season: '겨울', body: '신장, 방광, 비뇨기', avoidExcess: '정서적 고립, 과도한 걱정/불안 환경' },
+  };
+
   // Get dominant and weak elements
   const getStrongestElement = (elements) => Object.entries(elements).reduce((a, b) => a[1] > b[1] ? a : b)[0];
   const getWeakestElement = (elements) => Object.entries(elements).reduce((a, b) => a[1] < b[1] ? a : b)[0];
@@ -603,6 +627,9 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
     ? '월령에서 힘을 얻어 에너지가 강합니다. 자기 주장이 뚜렷하고 추진력이 있지만, 고집과 독선에 주의.'
     : '월령의 지원이 약해 외부 도움을 필요로 합니다. 섬세하고 적응력이 좋지만, 자신감과 독립성을 키워줘야 합니다.';
   const dayMasterDesc = dayMasterImagery[dayStem] || `${dayStem}일간`;
+  const deepProfile = dayMasterDeepProfile[dayStem] || {};
+  const weakElementRemedies = elementRemedies[childWeak] || {};
+  const dominantElementRemedies = elementRemedies[childDominant] || {};
 
   const timeDisclaimer = childTimeUnknown
     ? '\n**참고: 출생 시간 미상으로 시주는 정오(12시) 기준이며, 실제와 다를 수 있습니다. 시주가 달라지면 일부 해석이 변할 수 있습니다.**\n'
@@ -781,6 +808,11 @@ ${languageInstruction}
 | 시주 | ${childPillars.hour.korean[0]} | ${childPillars.hour.korean[1]} | ${childPillars.hour.element} |
 
 **일간(日干):** ${dayMasterDesc}
+**일간 상세 프로필:** ${dayStem} = ${deepProfile.nature}, 이미지: ${deepProfile.image}, 계절: ${deepProfile.season}
+  강점: ${deepProfile.strengths} / 성장 포인트: ${deepProfile.weaknesses}
+  아이 특성: ${deepProfile.childTrait}
+  양육 팁: ${deepProfile.parentAdvice}
+  건강 주의: ${deepProfile.health} / 진로 방향: ${deepProfile.career}
 **일주 강약:** ${strengthLabel} — ${strengthDesc}
 **현재 나이:** ${childAge}세 (한국 나이) — ${ageGroup}
 
@@ -805,31 +837,56 @@ ${fortuneCyclesSection}
 **반드시 아래 순서로, 각 헤더를 정확히 "## N. 제목" 형식으로 작성하세요.**
 **부정적 특성은 모두 "성장 포인트"로 긍정적으로 재프레이밍하세요.**
 
-## 1. 사주 핵심 프로필 (~500자)
+## 1. 사주 핵심 프로필 (최소 800자)
 
-이 아이의 일간 ${dayMasterDesc}을 중심으로:
-- 타고난 핵심 기질 3가지 키워드 (각각 구체적 일상 예시 포함 — "${ageGroup}" 나이에 맞는 상황으로)
-- ${strengthLabel} 특성이 성격에 미치는 영향: ${strengthDesc}
-- 에너지 방향 (내향/외향, 주도/반응) — 구체적 상황 예시
-- 감정 표현 방식과 또래 관계 특징 (${ageGroup} 시기에 맞게)
-- 주 기질(${childDominant}) 양육 팁: ${childTraits.parentTip}
-- 성장 포인트: 부족한 ${childWeak}(${elementTraits[childWeak].name})을 "아직 개발 중인 강점"으로 기술
+이 아이의 일간 ${dayMasterDesc}을 중심으로 깊이 있게 분석:
+
+**기질 핵심 (5가지 키워드):**
+- 각 키워드마다 "${ageGroup}" 나이에서 나타나는 구체적 일상 장면 포함
+- ${deepProfile.nature || ''} 기질의 자연적 이미지(${deepProfile.image || ''})를 활용해 아이의 성향을 직관적으로 설명
+- 강점: ${deepProfile.strengths || ''}
+- 성장 포인트: ${deepProfile.weaknesses || ''} → 반드시 "아직 개발 중인 강점"으로 재프레이밍
+
+**${strengthLabel}의 영향:**
+- ${strengthDesc}
+- 신강/신약이 일상 행동에서 어떻게 드러나는지 구체적 예시 2개
+
+**에너지 방향과 감정 표현:**
+- 내향/외향, 주도/반응 — 학교/가정 각각에서의 모습
+- 감정 표현 방식 (바로 표출형 vs 축적 후 폭발형 vs 회피형)
+- 또래 관계에서의 위치와 특징 (${ageGroup} 시기)
+
+**부모가 꼭 알아야 할 것:**
+- ${childTraits.parentTip}
+- 이 기질의 아이에게 절대 하면 안 되는 말 1가지와 그 이유
 ${twinInfo ? `- 쌍둥이 맥락: 이 아이가 ${twinInfo.order === 1 ? '첫째' : '둘째'}로서 갖는 기질적 특징 반영` : ''}
 
-## 2. 부모-자녀 관계 분석 (~500자)
+## 2. 부모-자녀 관계 심층 분석 (최소 800자)
 
-**중요:** 궁합은 "맞다/안 맞다"를 판정하는 것이 아닙니다. 목표는 이 관계를 가장 효율적으로 유지하고 성장시키는 방법을 찾는 것입니다.
+**핵심 원칙:** 궁합은 "맞다/안 맞다"의 판정이 아닙니다. 이 관계를 가장 효율적으로 유지하고 성장시키는 전략을 찾는 것이 목표입니다.
 
-${parentManseryeok && parentDominant ? `${parentRole === 'mother' ? '엄마' : '아빠'}(${parentDominant} 기질) × 아이(${childDominant} 기질) 관계 역학:
-- 오행 상생/상극이 이 관계에서 어떤 역동으로 나타나는지
-- 이 조합에서 자연스럽게 반복되는 갈등 패턴 (구체적 일상 상황)
-- 부모가 무심코 하는 말 중 아이에게 상처가 되는 것 (예시 포함)
-- 이 조합만의 특별한 강점과 시너지 포인트
-- 관계를 가장 효율적으로 유지하는 구체적 소통 전략 2가지` : `아이(${childDominant} 기질)의 부모-자녀 관계 패턴:
-- 이 기질의 아이가 부모와 가장 자주 겪는 갈등 유형
-- 부모가 오해하기 쉬운 행동과 그 진짜 속마음
-- 이 아이에게 가장 잘 맞는 부모의 소통 스타일
-- 관계를 가장 효율적으로 유지하는 구체적 일상 활동 2가지`}
+${parentManseryeok && parentDominant ? `**${parentRole === 'mother' ? '엄마' : '아빠'}(${parentDominant} 기질) × 아이(${childDominant} 기질) 관계 역학:**
+
+A. 오행 역학 분석:
+- 이 조합의 상생/상극 관계가 일상에서 어떤 역동으로 나타나는지 구체적으로
+- 이 조합이 자연스럽게 빠지는 갈등 패턴 3가지 (각각 구체적 일상 상황 묘사)
+
+B. 상처가 되는 말 vs 힘이 되는 말:
+- 부모가 무심코 하지만 이 기질의 아이에게 특히 상처가 되는 말 3가지 (구체적 예시)
+- 같은 의도를 전달하되 아이가 열리는 대안 표현 3가지
+
+C. 이 조합만의 특별한 강점:
+- 다른 부모-자녀 조합에는 없는 이 조합만의 시너지
+- 이 강점을 살리는 일상 활동 2가지 (구체적 방법)
+
+D. 갈등 상황 대화 스크립트:
+- 실제 갈등 상황 1개를 설정하고, 단계별 대화 예시를 작성 (부모 말 → 아이 반응 → 효과적 전환)` : `**아이(${childDominant} 기질)의 부모-자녀 관계 패턴:**
+- 이 기질의 아이가 부모와 가장 자주 겪는 갈등 유형 3가지
+- 각 갈등에서 아이의 겉 행동 vs 진짜 속마음
+- 부모가 무심코 하지만 이 아이에게 특히 상처가 되는 말 3가지
+- 같은 의도를 전달하는 대안 표현 3가지
+- 이 아이에게 가장 잘 맞는 소통 스타일 (대화 예시 포함)
+- 관계를 강화하는 일상 활동 2가지`}
 
 ## 3. 연령별 발달 가이드 (~500자)
 
@@ -866,13 +923,19 @@ childAge <= 13 ? `- 이 나이의 ${childDominant} 기질 아이에게 나타나
   | 이성교제/외모 관심 | | |
 - 대학/취업 준비기에 예상되는 변화`}
 
-## 4. 진로/적성 심층 분석 (~400자)
+## 4. 진로/적성 심층 분석 (최소 600자)
 
-- 타고난 강점 영역 (구체적 활동/직업군)
-- 지금 바로 시작할 수 있는 강점 계발 활동 3가지
-- 학습 스타일: 이 기질에 최적화된 공부 방식
-- 집중이 잘 되는 환경과 시간대
-- 미래 진로 방향성 (강점을 살린 분야)
+**일간 기반 적성 방향:** ${deepProfile.career || ''}
+
+- 타고난 강점 영역: 이 일간의 자연적 이미지(${deepProfile.image || ''})에서 유추되는 적성
+- ${ageGroup}에서 지금 바로 시작할 수 있는 강점 계발 활동 3가지 (각각 왜 이 기질에 맞는지 설명)
+- 학습 스타일 상세:
+  · 이 기질에 최적화된 공부 방식 (시각/청각/체험 중 어떤 타입?)
+  · 집중이 잘 되는 환경 (소음/조용/혼자/함께)
+  · 최적 학습 시간대와 집중 지속 시간
+  · 효과적인 동기부여 방식 (보상형/목표형/관계형)
+- 주의해야 할 학습 함정: 이 기질의 아이가 빠지기 쉬운 비효율적 공부 패턴
+- 미래 진로 방향성: 강점 오행을 살린 구체적 분야 5가지 이상
 
 ## 5. 대운/세운 운세 흐름 (~500자)
 
@@ -897,23 +960,42 @@ ${monthlyFortuneData}
 - **부모 양육 포인트:** 이 달에 부모가 특별히 신경 쓸 한 가지
 - 각 달의 에너지를 표 형태로 요약
 
-## 7. 오행 밸런스 & 개운법 (~300자)
+## 7. 오행 밸런스 & 생활 속 개운법 (최소 600자)
 
-- 부족한 ${childWeak}(${elementTraits[childWeak].name}) 에너지를 보완하는 방법:
-  · 색상: 이 오행을 북돋는 색
-  · 음식: 도움이 되는 식품
-  · 활동: 균형을 맞추는 운동/취미
-  · 방향: 에너지가 강한 공간 배치
-- 강한 오행(${childDominant})이 과할 때 조절하는 법
+**부족한 ${childWeak}(${elementTraits[childWeak].name}) 에너지 보완법:**
+(원리: 사람은 무의식적으로 자기에게 필요한 오행의 기운을 찾게 되어 있습니다. 아이가 특정 색상/활동에 끌린다면 그것이 이유입니다.)
 
-## 8. 이번 주 실천 과제 (~200자)
+· **색상:** ${weakElementRemedies.colors || ''} — 옷, 학용품, 방 인테리어 포인트 컬러로 활용
+· **음식:** ${weakElementRemedies.foods || ''} — 식탁에서 자연스럽게 보완하는 법
+· **활동:** ${weakElementRemedies.activities || ''} — 주 2~3회 추천 활동과 구체적 방법
+· **방향/공간:** ${weakElementRemedies.direction || ''}쪽 — 책상 배치, 잠자리 방향 팁
+· **건강 주의:** ${weakElementRemedies.body || ''} 관련 — 이 기질의 아이가 아프기 쉬운 부위와 예방법
 
-오늘부터 바로 실행할 수 있는 미션 5가지:
-1. **[말 바꾸기]** "..." 대신 "..."라고 말해보기
-2. **[5분 연결]** 매일 이 아이와 하는 구체적 활동
-3. **[관찰 미션]** 이번 주 아이에게서 새로 발견할 것
-4. **[환경 조성]** 아이의 기질에 맞게 바꿀 한 가지
-5. **[나 돌보기]** 부모 자신을 위한 한 가지
+**강한 오행(${childDominant}, ${dominantElementRemedies.colors || ''}) 에너지 조절법:**
+- ${childDominant} 기운이 과할 때 나타나는 증상 (행동/감정/신체)
+- 균형을 잡아주는 반대 오행 활용법
+- ${dominantElementRemedies.avoidExcess || ''} — 주의해야 할 환경
+
+**계절별 에너지 관리:**
+- 이 아이가 가장 컨디션이 좋은 계절과 그 이유
+- 힘들어하는 계절의 대처법
+
+## 8. 오늘부터 실천 가이드 (최소 400자)
+
+**이번 주 실천 미션 7가지** — 각각 왜 이 기질에 효과적인지 한 줄 설명 포함:
+
+1. **[말 바꾸기]** 이 아이에게 상처가 되는 말 → 열리는 말로 (구체적 before/after 예시)
+2. **[5분 연결]** 매일 이 아이와 하는 구체적 활동 1가지 (왜 이 활동인지 설명)
+3. **[관찰 미션]** 이번 주 아이에게서 새로 발견할 포인트
+4. **[환경 조성]** 아이의 기질에 맞게 바꿀 한 가지 (방, 책상, 일과 등)
+5. **[오행 보완]** 부족한 ${childWeak} 기운을 채우는 구체적 행동 1가지
+6. **[감정 코칭]** 아이의 감정 표현을 도와주는 질문 1가지
+7. **[부모 돌봄]** 부모 자신의 에너지를 충전하는 방법 1가지
+
+**마무리 메시지:**
+이 리포트에서 가장 중요한 한 가지만 요약해서 부모에게 전달.
+"완벽한 부모는 없습니다. 아이를 이해하려는 마음이 이미 가장 큰 선물입니다." 톤으로.
+절대 "다음에는 더 자세한 분석을 해드리겠습니다" 같은 추가 서비스 유도 멘트를 넣지 마세요. 이 리포트가 완결된 하나의 작품이어야 합니다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -927,11 +1009,14 @@ ${monthlyFortuneData}
 - 대운을 말할 때: "대박 운"이 아닌 "삶의 무대 배경 전환"으로
 - 궁합을 말할 때: "잘 맞다/안 맞다"가 아닌 "관계를 효율적으로 유지하는 법"으로
 - 판단하지 않고 공감하는 따뜻한 톤
-- 전체 분량 최소 2500자 이상
-- 돈을 낸 부모가 "이 가격 이상의 가치"를 느낄 수 있는 퀄리티`;
+- **전체 분량 최소 5000자 이상 (8개 섹션 합계)**
+- 각 섹션이 "이것만으로도 돈 값한다"는 느낌이 들어야 함
+- 절대 "다음에 더 자세히", "추가 분석이 필요하면" 같은 추가 서비스 유도 멘트 금지 — 이 리포트가 완결된 작품이어야 합니다
+- 돈을 낸 부모가 "커피 한 잔 가격에 이 정도면 대단하다"고 느낄 수 있는 퀄리티`;
 
-  // Premium reports: increased token budgets
-  const maxTokens = productType === 'deluxe' ? 5000 : 4000;
+  // Premium reports: generous token budgets for comprehensive reports
+  // gpt-5.4-mini: ~$0.01-0.02 per report at these token levels
+  const maxTokens = productType === 'deluxe' ? 10000 : 7000;
 
   try {
     console.log('[Saju Service] Generating premium 8-section report...');
