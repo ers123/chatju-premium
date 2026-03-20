@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api'
 import { useLanguage } from '@/app/lib/i18n/context'
+import ReactMarkdown from 'react-markdown'
 
 // Types
 interface FourPillar {
@@ -197,10 +198,15 @@ export default function ResultsPage() {
           parentGender: input.parentGender,
         })
 
-        if (reading.premiumSections) {
-          setPremiumReport(reading.premiumSections as Record<string, string>)
-        } else if (reading.interpretation) {
-          setPremiumReport({ fullText: reading.interpretation as string })
+        // Backend returns aiInterpretation: { fullText, sections, metadata }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const r = reading as any
+        if (r.aiInterpretation?.fullText) {
+          setPremiumReport({ fullText: r.aiInterpretation.fullText, ...(r.aiInterpretation.sections || {}) })
+        } else if (r.premiumSections) {
+          setPremiumReport(r.premiumSections)
+        } else if (r.interpretation) {
+          setPremiumReport({ fullText: r.interpretation })
         }
       } catch (err: unknown) {
         console.error('Premium report error:', err)
@@ -692,43 +698,57 @@ export default function ResultsPage() {
               </div>
             </section>
 
-            {/* Premium Sections */}
-            {premiumReport.fullText ? (
-              <section className="card-paper rounded-3xl p-6 md:p-10 mb-8">
-                <div className="leading-relaxed whitespace-pre-line" style={{ color: '#6B5E52' }}>
-                  {premiumReport.fullText}
-                </div>
-              </section>
-            ) : (
-              <>
-                {[
-                  { key: 'coreProfile', icon: '🎯', title: '사주 핵심 프로필' },
-                  { key: 'parentChildAnalysis', icon: '👨‍👩‍👧', title: '부모-자녀 궁합 분석' },
-                  { key: 'developmentGuide', icon: '📈', title: '연령별 발달 가이드' },
-                  { key: 'careerAptitude', icon: '💼', title: '진로/적성 심층 분석' },
-                  { key: 'fortuneCycles', icon: '🔮', title: '대운/세운 운세 흐름' },
-                  { key: 'monthlyFortune', icon: '📅', title: '월별 운세 리포트' },
-                  { key: 'elementBalance', icon: '⚖️', title: '오행 밸런스 & 개운법' },
-                  { key: 'weeklyActions', icon: '✅', title: '이번 주 실천 과제' },
-                ].map(({ key, icon, title }) => {
-                  const content = premiumReport[key]
-                  if (!content) return null
-                  return (
-                    <section key={key} className="card-paper rounded-3xl p-6 md:p-10 mb-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: 'rgba(184, 146, 45, 0.1)' }}>
-                          {icon}
-                        </div>
-                        <h3 className="text-lg font-bold font-serif text-[#1A3D2E]">{title}</h3>
+            {/* Premium Report — rendered as markdown */}
+            <section className="card-paper rounded-3xl p-6 md:p-10 mb-8">
+              <div className="premium-report-content prose prose-sm max-w-none" style={{ color: '#4B4035' }}>
+                <ReactMarkdown
+                  components={{
+                    h2: ({ children }) => (
+                      <h2 className="text-xl font-bold font-serif text-[#1A3D2E] mt-10 mb-4 pb-2" style={{ borderBottom: '1px solid #EBE5DF' }}>
+                        {children}
+                      </h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="text-lg font-semibold text-[#1A3D2E] mt-6 mb-3">{children}</h3>
+                    ),
+                    p: ({ children }) => (
+                      <p className="mb-4 leading-relaxed" style={{ color: '#4B4035' }}>{children}</p>
+                    ),
+                    strong: ({ children }) => (
+                      <strong className="font-semibold" style={{ color: '#1A3D2E' }}>{children}</strong>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="mb-4 ml-1 space-y-2">{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol className="mb-4 ml-1 space-y-2 list-decimal list-inside">{children}</ol>
+                    ),
+                    li: ({ children }) => (
+                      <li className="leading-relaxed" style={{ color: '#4B4035' }}>{children}</li>
+                    ),
+                    hr: () => (
+                      <hr className="my-8" style={{ borderColor: '#EBE5DF' }} />
+                    ),
+                    table: ({ children }) => (
+                      <div className="overflow-x-auto mb-4">
+                        <table className="w-full text-sm border-collapse" style={{ borderColor: '#EBE5DF' }}>{children}</table>
                       </div>
-                      <div className="leading-relaxed whitespace-pre-line" style={{ color: '#6B5E52' }}>
-                        {content}
-                      </div>
-                    </section>
-                  )
-                })}
-              </>
-            )}
+                    ),
+                    th: ({ children }) => (
+                      <th className="px-3 py-2 text-left font-semibold text-[#1A3D2E]" style={{ borderBottom: '2px solid #EBE5DF', backgroundColor: '#FAF8F5' }}>{children}</th>
+                    ),
+                    td: ({ children }) => (
+                      <td className="px-3 py-2" style={{ borderBottom: '1px solid #F3F0ED' }}>{children}</td>
+                    ),
+                  }}
+                >
+                  {premiumReport.fullText || Object.entries(premiumReport)
+                    .filter(([key]) => key !== 'metadata')
+                    .map(([, value]) => value)
+                    .join('\n\n')}
+                </ReactMarkdown>
+              </div>
+            </section>
           </>
         ) : premiumLoading ? (
           <section className="card-paper rounded-3xl p-6 md:p-10 mb-8 text-center">
