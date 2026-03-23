@@ -82,7 +82,7 @@ export const translations = {
     share: {
       heading: '고민하는 친구에게 알려주세요',
       desc: '좋은 정보는 나누면 더 좋아요!\n주변 분들과 함께 아이 이해의 첫 걸음을 시작하세요.',
-      button: '카카오톡으로 공유하기',
+      button: '공유하기',
       platform: 'kakao' ,
     },
     trust: ['개인정보 암호화', '정통 만세력 기반', 'AI 전문 해석', '환불 보장'],
@@ -122,7 +122,7 @@ export const translations = {
       title2: '지금 시작하세요',
       subtitle: '3분이면 아이의 타고난 기질을 확인할 수 있습니다',
       button: '우리 아이 기질 확인하기 →',
-      shareButton: '카카오톡으로 공유하기',
+      shareButton: '공유하기',
     },
     footer: {
       rights: '© 2025 SoMyung. All rights reserved.',
@@ -546,7 +546,7 @@ export const translations = {
     share: {
       heading: 'Share with a friend who needs this',
       desc: 'Good information is better shared!\nHelp others take the first step in understanding their child.',
-      button: 'Share via WhatsApp',
+      button: 'Share',
       platform: 'whatsapp' ,
     },
     trust: ['Data Encrypted', 'Traditional Manseryeok', 'AI Interpretation', 'Refund Guaranteed'],
@@ -586,7 +586,7 @@ export const translations = {
       title2: 'your child starts now',
       subtitle: 'Discover your child\'s innate temperament in just 3 minutes',
       button: 'Discover Your Child\'s Temperament →',
-      shareButton: 'Share via WhatsApp',
+      shareButton: 'Share',
     },
     footer: {
       rights: '© 2025 Somyung. All rights reserved.',
@@ -1008,7 +1008,7 @@ export const translations = {
     share: {
       heading: '悩んでいるお友達に教えてあげてください',
       desc: '良い情報は分かち合うともっと良くなります！\n一緒にお子様理解の第一歩を踏み出しましょう。',
-      button: 'LINEで共有する',
+      button: '共有する',
       platform: 'line' ,
     },
     trust: ['個人情報暗号化', '伝統万歳暦基準', 'AI専門解釈', '返金保証'],
@@ -1048,7 +1048,7 @@ export const translations = {
       title2: '今すぐ始めましょう',
       subtitle: '3分の入力でお子様の生まれ持った気質がわかります',
       button: '無料分析を始める →',
-      shareButton: 'LINEで共有する',
+      shareButton: '共有する',
     },
     footer: {
       rights: '© 2025 昭命（ソミョン）. All rights reserved.',
@@ -1461,7 +1461,7 @@ export const translations = {
     share: {
       heading: '告诉正在烦恼的朋友',
       desc: '好的信息分享后更有价值！\n和朋友一起迈出理解孩子的第一步。',
-      button: '复制链接分享',
+      button: '分享',
       platform: 'copy' ,
     },
     trust: ['个人信息加密', '传统万年历基础', 'AI专业解读', '退款保障'],
@@ -1501,7 +1501,7 @@ export const translations = {
       title2: '现在就开始',
       subtitle: '3分钟输入即可了解孩子的天生气质',
       button: '开始免费分析 →',
-      shareButton: '复制链接分享给朋友',
+      shareButton: '分享',
     },
     footer: {
       rights: '© 2025 昭命. All rights reserved.',
@@ -1917,7 +1917,7 @@ export const translations = {
   share: {
     heading: 'Chia sẻ với bạn bè cần biết điều này',
     desc: 'Thông tin hay nên được chia sẻ!\nHãy giúp người khác bắt đầu hành trình hiểu con mình.',
-    button: 'Chia sẻ qua WhatsApp',
+    button: 'Chia sẻ',
     platform: 'whatsapp',
   },
   trust: ['Mã hóa dữ liệu', 'Vạn Niên Lịch truyền thống', 'Diễn giải bằng AI', 'Đảm bảo hoàn tiền'],
@@ -1957,7 +1957,7 @@ export const translations = {
     title2: 'con bạn bắt đầu ngay bây giờ',
     subtitle: 'Khám phá tính cách bẩm sinh của con chỉ trong 3 phút',
     button: 'Khám phá tính cách con bạn →',
-    shareButton: 'Chia sẻ qua WhatsApp',
+    shareButton: 'Chia sẻ',
   },
   footer: {
     rights: '© 2025 Somyung. Bảo lưu mọi quyền.',
@@ -2383,7 +2383,7 @@ export const translations = {
   share: {
     heading: 'Bagikan ke teman yang membutuhkan',
     desc: 'Informasi yang baik lebih bermanfaat jika dibagikan!\nBantu orang lain memahami anak mereka lebih baik.',
-    button: 'Bagikan via WhatsApp',
+    button: 'Bagikan',
     platform: 'whatsapp',
   },
   trust: ['Data Terenkripsi', 'Manseryeok Tradisional', 'Interpretasi AI', 'Jaminan Pengembalian Dana'],
@@ -2423,7 +2423,7 @@ export const translations = {
     title2: 'anak Anda dimulai sekarang',
     subtitle: 'Temukan temperamen bawaan anak Anda hanya dalam 3 menit',
     button: 'Temukan Temperamen Anak Anda →',
-    shareButton: 'Bagikan via WhatsApp',
+    shareButton: 'Bagikan',
   },
   footer: {
     rights: '© 2025 Somyung. Hak cipta dilindungi.',
@@ -2849,7 +2849,7 @@ export const translations = {
   share: {
     heading: 'Comparte con alguien que lo necesite',
     desc: '¡La buena información es mejor compartida!\nAyuda a otros a dar el primer paso para comprender a sus hijos.',
-    button: 'Compartir por WhatsApp',
+    button: 'Compartir',
     platform: 'whatsapp',
   },
   trust: ['Datos Encriptados', 'Manseryeok Tradicional', 'Interpretación con IA', 'Reembolso Garantizado'],
@@ -2889,7 +2889,7 @@ export const translations = {
     title2: 'a tu hijo/a empieza ahora',
     subtitle: 'Descubre el temperamento innato de tu hijo/a en solo 3 minutos',
     button: 'Descubre el Temperamento de tu Hijo/a →',
-    shareButton: 'Compartir por WhatsApp',
+    shareButton: 'Compartir',
   },
   footer: {
     rights: '© 2025 Somyung. Todos los derechos reservados.',
@@ -3315,7 +3315,7 @@ export const translations = {
   share: {
     heading: 'Compartilhe com alguém que precisa disso',
     desc: 'Informação boa é para compartilhar!\nAjude outros a dar o primeiro passo para entender seus filhos.',
-    button: 'Compartilhar via WhatsApp',
+    button: 'Compartilhar',
     platform: 'whatsapp',
   },
   trust: ['Dados Criptografados', 'Manseryeok Tradicional', 'Interpretação por IA', 'Reembolso Garantido'],
@@ -3355,7 +3355,7 @@ export const translations = {
     title2: 'seu filho começa agora',
     subtitle: 'Descubra o temperamento inato do seu filho em apenas 3 minutos',
     button: 'Descubra o Temperamento do Seu Filho →',
-    shareButton: 'Compartilhar via WhatsApp',
+    shareButton: 'Compartilhar',
   },
   footer: {
     rights: '© 2025 Somyung. Todos os direitos reservados.',
@@ -3781,7 +3781,7 @@ export const translations = {
   share: {
     heading: 'Partagez avec un ami qui en a besoin',
     desc: 'Les bonnes informations se partagent !\nAidez d\'autres parents a mieux comprendre leur enfant.',
-    button: 'Partager via WhatsApp',
+    button: 'Partager',
     platform: 'whatsapp',
   },
   trust: ['Données chiffrées', 'Manseryeok traditionnel', 'Interprétation IA', 'Remboursement garanti'],
@@ -3821,7 +3821,7 @@ export const translations = {
     title2: 'votre enfant commence maintenant',
     subtitle: 'Découvrez le tempérament inné de votre enfant en seulement 3 minutes',
     button: 'Découvrir le tempérament de mon enfant →',
-    shareButton: 'Partager via WhatsApp',
+    shareButton: 'Partager',
   },
   footer: {
     rights: '© 2025 Somyung. Tous droits réservés.',
@@ -4247,7 +4247,7 @@ export const translations = {
   share: {
     heading: 'แชร์ให้เพื่อนที่ต้องการสิ่งนี้',
     desc: 'ข้อมูลดี ๆ ยิ่งแชร์ยิ่งดี!\nช่วยให้คนอื่นเริ่มต้นเข้าใจลูกของพวกเขา',
-    button: 'แชร์ผ่าน WhatsApp',
+    button: 'แชร์',
     platform: 'whatsapp',
   },
   trust: ['ข้อมูลเข้ารหัส', 'มันเซรยอกแบบดั้งเดิม', 'ตีความด้วย AI', 'รับประกันคืนเงิน'],
@@ -4287,7 +4287,7 @@ export const translations = {
     title2: 'ลูกของคุณเริ่มตรงนี้',
     subtitle: 'ค้นพบนิสัยที่ติดตัวลูกมาในเวลาแค่ 3 นาที',
     button: 'ค้นพบนิสัยลูกของคุณ →',
-    shareButton: 'แชร์ผ่าน WhatsApp',
+    shareButton: 'แชร์',
   },
   footer: {
     rights: '© 2025 Somyung. All rights reserved.',

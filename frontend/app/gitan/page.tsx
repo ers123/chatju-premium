@@ -33,48 +33,14 @@ declare global {
 export default function GitanLandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
-  // 카카오 SDK 초기화
-  useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.5.0/kakao.min.js'
-    script.async = true
-    script.onload = () => {
-      if (window.Kakao && !window.Kakao.isInitialized()) {
-        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '')
-      }
-    }
-    document.head.appendChild(script)
-    return () => {
-      document.head.removeChild(script)
-    }
-  }, [])
-
-  const handleKakaoShare = () => {
-    if (window.Kakao?.Share) {
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: '기탄교육 X SoMyung | 우리 아이 맞춤 학습법 분석',
-          description: '아이의 타고난 기질로 최적의 학습 방법을 찾아보세요. 기탄교육 회원 특별 혜택!',
-          imageUrl: 'https://somyung.kr/assets/images/key_talent_gemstone_1769231816379.png',
-          link: {
-            mobileWebUrl: 'https://somyung.kr/gitan',
-            webUrl: 'https://somyung.kr/gitan',
-          },
-        },
-        buttons: [
-          {
-            title: '무료 분석 받기',
-            link: {
-              mobileWebUrl: 'https://somyung.kr/saju/input?ref=gitan',
-              webUrl: 'https://somyung.kr/saju/input?ref=gitan',
-            },
-          },
-        ],
-      })
+  const handleKakaoShare = async () => {
+    const url = 'https://somyung.cc/gitan'
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: '기탄교육 X SoMyung', text: '아이의 타고난 기질로 최적의 학습 방법을 찾아보세요.', url })
+      } catch { /* cancelled */ }
     } else {
-      const url = 'https://somyung.kr/gitan'
-      navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(url)
       alert('링크가 복사되었습니다!')
     }
   }
