@@ -733,22 +733,20 @@ export default function GitanLandingPage() {
               padding: '0 32px',
               fontSize: '15px',
               fontWeight: 600,
-              color: '#3C1E1E',
-              background: '#FEE500',
+              color: '#FFFFFF',
+              background: '#2D3A35',
               border: 'none',
               borderRadius: '27px',
               cursor: 'pointer',
-              boxShadow: '0 2px 12px rgba(254, 229, 0, 0.3)',
+              boxShadow: '0 2px 12px rgba(45, 58, 53, 0.2)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '10px',
               transition: 'all 0.2s ease'
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#3C1E1E">
-              <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.675 1.733 5.029 4.348 6.373-.168.63-.609 2.281-.697 2.635-.11.44.161.434.339.316.14-.093 2.23-1.52 3.124-2.131.618.091 1.255.139 1.886.139 5.523 0 10-3.463 10-7.332C21 6.463 17.523 3 12 3z" />
-            </svg>
-            카카오톡으로 공유하기
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            공유하기
           </button>
         </div>
       </section>
@@ -923,7 +921,7 @@ export default function GitanLandingPage() {
               { q: '기탄교육 회원 아닌데 이용할 수 있나요?', a: '네, 누구나 무료 분석은 이용 가능합니다. 다만 기탄교육 회원이시면 프리미엄 분석 50% 할인 혜택이 있어요.' },
               { q: '사주, 명리학이 정말 도움이 되나요?', a: '명리학은 수천 년간 축적된 동양의 기질 분류 체계입니다. 저희는 이를 현대적으로 해석해 "아이 이해의 참고 도구"로 활용합니다. 많은 부모님들이 "아이를 이해하는 데 도움이 됐다"고 말씀해 주셨어요.' },
               { q: '아이 생년월일만 알면 되나요?', a: '네, 시간을 모르셔도 70% 정도의 분석이 가능합니다. 부모님 정보도 함께 입력하시면 궁합 분석까지 받으실 수 있어요.' },
-              { q: '결과는 어떻게 확인하나요?', a: '입력 즉시 웹에서 확인 가능합니다. 프리미엄 분석은 PDF 다운로드와 카카오톡 공유 기능도 지원합니다.' },
+              { q: '결과는 어떻게 확인하나요?', a: '입력 즉시 웹에서 확인 가능합니다. 프리미엄 분석은 PDF 다운로드와 이메일 발송을 지원합니다.' },
               { q: '환불이 가능한가요?', a: '프리미엄 분석 결제 후 7일 이내, 리포트 확인 전이라면 전액 환불 가능합니다.' },
             ].map((item, idx) => (
               <div key={idx} style={{
@@ -1021,8 +1019,8 @@ export default function GitanLandingPage() {
                 padding: '0 24px',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#3C1E1E',
-                background: '#FEE500',
+                color: '#FFFFFF',
+                background: '#2D3A35',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
@@ -1032,10 +1030,8 @@ export default function GitanLandingPage() {
                 transition: 'all 200ms ease-in-out'
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E">
-                <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.675 1.733 5.029 4.348 6.373-.168.63-.609 2.281-.697 2.635-.11.44.161.434.339.316.14-.093 2.23-1.52 3.124-2.131.618.091 1.255.139 1.886.139 5.523 0 10-3.463 10-7.332C21 6.463 17.523 3 12 3z" />
-              </svg>
-              카카오톡으로 공유
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              공유하기
             </button>
           </div>
         </div>
