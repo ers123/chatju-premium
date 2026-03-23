@@ -45,7 +45,7 @@ export interface BirthInfo {
   gender: 'male' | 'female';
   isLunar?: boolean; // true for lunar calendar
   timezone?: string; // e.g., 'Asia/Seoul'
-  language?: 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id';
+  language?: 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id' | 'es' | 'pt';
   // Location for True Solar Time (진태양시) correction
   birthPlace?: string; // City name (e.g., '서울', 'sydney')
   latitude?: number; // Direct latitude (-90 to 90)
@@ -336,7 +336,7 @@ export interface BirthInfoFormData {
   timeUnknown: boolean;
   gender: 'male' | 'female';
   timezone: string;
-  language: 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id';
+  language: 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id' | 'es' | 'pt';
   birthPlace?: string;
   isTwin?: boolean;
   twinOrder?: 1 | 2;
