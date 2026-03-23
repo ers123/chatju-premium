@@ -7,30 +7,6 @@ import Footer from '@/components/Footer'
 import { useLanguage } from './lib/i18n/context'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 
-// 카카오 SDK 타입 정의
-declare global {
-  interface Window {
-    Kakao?: {
-      init: (key: string) => void;
-      isInitialized: () => boolean;
-      Share: {
-        sendDefault: (options: {
-          objectType: string;
-          content: {
-            title: string;
-            description: string;
-            imageUrl: string;
-            link: { mobileWebUrl: string; webUrl: string };
-          };
-          buttons: Array<{
-            title: string;
-            link: { mobileWebUrl: string; webUrl: string };
-          }>;
-        }) => void;
-      };
-    };
-  }
-}
 
 // Scroll reveal hook
 function useScrollReveal() {

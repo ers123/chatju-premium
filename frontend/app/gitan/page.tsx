@@ -5,30 +5,6 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Footer from '@/components/Footer'
 
-// 카카오 SDK 타입 정의
-declare global {
-  interface Window {
-    Kakao?: {
-      init: (key: string) => void;
-      isInitialized: () => boolean;
-      Share: {
-        sendDefault: (options: {
-          objectType: string;
-          content: {
-            title: string;
-            description: string;
-            imageUrl: string;
-            link: { mobileWebUrl: string; webUrl: string };
-          };
-          buttons: Array<{
-            title: string;
-            link: { mobileWebUrl: string; webUrl: string };
-          }>;
-        }) => void;
-      };
-    };
-  }
-}
 
 export default function GitanLandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)

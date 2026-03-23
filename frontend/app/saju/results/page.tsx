@@ -219,7 +219,7 @@ export default function ResultsPage() {
         }
       } catch (err: unknown) {
         console.error('Premium report error:', err)
-        setPremiumError('프리미엄 보고서를 불러오는 데 실패했습니다.')
+        setPremiumError(sr.errorFetch)
       } finally {
         setPremiumLoading(false)
       }
