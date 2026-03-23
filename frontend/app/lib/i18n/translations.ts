@@ -85,7 +85,7 @@ export const translations = {
       button: '공유하기',
       platform: 'kakao' ,
     },
-    trust: ['개인정보 암호화', '정통 만세력 기반', 'AI 전문 해석', '환불 보장'],
+    trust: ['안전한 데이터 보호', '정통 만세력 기반', 'AI 전문 해석', '안심 결제'],
     pricing: {
       heading: '이용 요금',
       subtitle: '미리보기는 무료, 상세 리포트는 커피 한 잔 가격',
@@ -549,7 +549,7 @@ export const translations = {
       button: 'Share',
       platform: 'whatsapp' ,
     },
-    trust: ['Data Encrypted', 'Traditional Manseryeok', 'AI Interpretation', 'Refund Guaranteed'],
+    trust: ['Your Data Stays Safe', 'Traditional Manseryeok', 'AI-Powered Analysis', 'Secure Checkout'],
     pricing: {
       heading: 'Pricing',
       subtitle: 'Free preview, full report for the price of a coffee',
@@ -1011,7 +1011,7 @@ export const translations = {
       button: '共有する',
       platform: 'line' ,
     },
-    trust: ['個人情報暗号化', '伝統万歳暦基準', 'AI専門解釈', '返金保証'],
+    trust: ['安全なデータ保護', '伝統万歳暦基準', 'AI専門分析', '安心決済'],
     pricing: {
       heading: '料金プラン',
       subtitle: 'プレビューは無料、詳細レポートはコーヒー1杯分',
@@ -1464,7 +1464,7 @@ export const translations = {
       button: '分享',
       platform: 'copy' ,
     },
-    trust: ['个人信息加密', '传统万年历基础', 'AI专业解读', '退款保障'],
+    trust: ['数据安全保护', '传统万年历基础', 'AI专业分析', '安心支付'],
     pricing: {
       heading: '价格方案',
       subtitle: '预览免费，详细报告只需一杯咖啡的价格',
@@ -1920,7 +1920,7 @@ export const translations = {
     button: 'Chia sẻ',
     platform: 'whatsapp',
   },
-  trust: ['Mã hóa dữ liệu', 'Vạn Niên Lịch truyền thống', 'Diễn giải bằng AI', 'Đảm bảo hoàn tiền'],
+  trust: ['Dữ liệu an toàn', 'Vạn Niên Lịch truyền thống', 'Phân tích bằng AI', 'Thanh toán an toàn'],
   pricing: {
     heading: 'Bảng giá',
     subtitle: 'Xem trước miễn phí, báo cáo đầy đủ chỉ bằng một ly cà phê',
@@ -2386,7 +2386,7 @@ export const translations = {
     button: 'Bagikan',
     platform: 'whatsapp',
   },
-  trust: ['Data Terenkripsi', 'Manseryeok Tradisional', 'Interpretasi AI', 'Jaminan Pengembalian Dana'],
+  trust: ['Data Anda Aman', 'Manseryeok Tradisional', 'Analisis Berbasis AI', 'Pembayaran Aman'],
   pricing: {
     heading: 'Harga',
     subtitle: 'Pratinjau gratis, laporan lengkap seharga secangkir kopi',
@@ -2852,7 +2852,7 @@ export const translations = {
     button: 'Compartir',
     platform: 'whatsapp',
   },
-  trust: ['Datos Encriptados', 'Manseryeok Tradicional', 'Interpretación con IA', 'Reembolso Garantizado'],
+  trust: ['Tus Datos Seguros', 'Manseryeok Tradicional', 'Análisis con IA', 'Pago Seguro'],
   pricing: {
     heading: 'Precios',
     subtitle: 'Vista previa gratuita, informe completo por el precio de un café',
@@ -3318,7 +3318,7 @@ export const translations = {
     button: 'Compartilhar',
     platform: 'whatsapp',
   },
-  trust: ['Dados Criptografados', 'Manseryeok Tradicional', 'Interpretação por IA', 'Reembolso Garantido'],
+  trust: ['Seus Dados Seguros', 'Manseryeok Tradicional', 'Análise com IA', 'Pagamento Seguro'],
   pricing: {
     heading: 'Preços',
     subtitle: 'Prévia gratuita, relatório completo pelo preço de um café',
@@ -3784,7 +3784,7 @@ export const translations = {
     button: 'Partager',
     platform: 'whatsapp',
   },
-  trust: ['Données chiffrées', 'Manseryeok traditionnel', 'Interprétation IA', 'Remboursement garanti'],
+  trust: ['Vos données protégées', 'Manseryeok traditionnel', 'Analyse par IA', 'Paiement sécurisé'],
   pricing: {
     heading: 'Tarifs',
     subtitle: 'Aperçu gratuit, rapport complet au prix d\'un café',
@@ -4250,7 +4250,7 @@ export const translations = {
     button: 'แชร์',
     platform: 'whatsapp',
   },
-  trust: ['ข้อมูลเข้ารหัส', 'มันเซรยอกแบบดั้งเดิม', 'ตีความด้วย AI', 'รับประกันคืนเงิน'],
+  trust: ['ข้อมูลปลอดภัย', 'มันเซรยอกแบบดั้งเดิม', 'วิเคราะห์ด้วย AI', 'ชำระเงินปลอดภัย'],
   pricing: {
     heading: 'ราคา',
     subtitle: 'ดูตัวอย่างฟรี รายงานเต็มในราคาแก้วกาแฟ',
