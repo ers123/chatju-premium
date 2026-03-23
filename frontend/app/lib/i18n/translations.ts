@@ -2,7 +2,7 @@ export const translations = {
   ko: {
     nav: { start: '기질 분석하기' },
     footerDetail: {
-      brand: '소명',
+      brand: 'SoMyung',
       brandDesc: '사주 명리학 기반\n부모-자녀 관계 이해 서비스',
       service: '서비스',
       freeAnalysis: '기질 미리보기',
@@ -125,7 +125,7 @@ export const translations = {
       shareButton: '카카오톡으로 공유하기',
     },
     footer: {
-      rights: '© 2025 소명. All rights reserved.',
+      rights: '© 2025 SoMyung. All rights reserved.',
       terms: '이용약관',
       privacy: '개인정보처리방침',
       refund: '환불정책',
@@ -459,7 +459,7 @@ export const translations = {
       termsAgreePost: '에 동의하게 됩니다.',
       alreadyHaveAccount: '이미 계정이 있으신가요?',
       login: '로그인',
-      copyright: '© 2025 소명. All rights reserved.',
+      copyright: '© 2025 SoMyung. All rights reserved.',
     },
   },
 
@@ -483,7 +483,7 @@ export const translations = {
     },
     legalNotice: {
       backHome: '← Home',
-      noticeBar: 'This document is legally binding in Korean only. The content below is provided in Korean as required by Korean law.',
+      noticeBar: 'The content below is provided in Korean. Translation may be available in the future.',
     },
     banner: '5,200+ parents have analyzed their child\'s temperament',
     hero: {
@@ -928,7 +928,7 @@ export const translations = {
   ja: {
     nav: { start: '無料で始める' },
     footerDetail: {
-      brand: '昭命',
+      brand: 'SoMyung',
       brandDesc: '四柱推命に基づく\n親子関係理解サービス',
       service: 'サービス',
       freeAnalysis: '無料気質分析',
@@ -945,7 +945,7 @@ export const translations = {
     },
     legalNotice: {
       backHome: '← ホーム',
-      noticeBar: 'この文書は韓国語版のみが法的効力を持ちます。以下の内容は韓国法に基づき韓国語で提供されています。',
+      noticeBar: '以下の内容は韓国語で提供されています。',
     },
     banner: '無料ベータ期間中 — すべての機能を無料でお試しください！',
     hero: {
@@ -1381,7 +1381,7 @@ export const translations = {
   zh: {
     nav: { start: '免费开始' },
     footerDetail: {
-      brand: '昭命',
+      brand: 'SoMyung',
       brandDesc: '基于四柱命理的\n亲子关系理解服务',
       service: '服务',
       freeAnalysis: '免费气质分析',
@@ -1398,7 +1398,7 @@ export const translations = {
     },
     legalNotice: {
       backHome: '← 首页',
-      noticeBar: '本文件仅韩文版本具有法律效力。以下内容根据韩国法律以韩文提供。',
+      noticeBar: '以下内容以韩文提供。',
     },
     banner: '免费测试期间 — 免费体验所有功能！',
     hero: {
@@ -1854,7 +1854,7 @@ export const translations = {
   },
   legalNotice: {
     backHome: '← Trang chủ',
-    noticeBar: 'Tài liệu này chỉ có giá trị pháp lý bằng tiếng Hàn. Nội dung bên dưới được cung cấp bằng tiếng Hàn theo quy định pháp luật Hàn Quốc.',
+    noticeBar: 'Nội dung bên dưới được cung cấp bằng tiếng Hàn.',
   },
   banner: 'Hơn 5.200 phụ huynh đã phân tích tính cách con mình',
   hero: {
@@ -2320,7 +2320,7 @@ export const translations = {
   },
   legalNotice: {
     backHome: '← Beranda',
-    noticeBar: 'Dokumen ini hanya mengikat secara hukum dalam bahasa Korea. Konten di bawah ini disediakan dalam bahasa Korea sesuai ketentuan hukum Korea.',
+    noticeBar: 'Konten di bawah ini disediakan dalam bahasa Korea.',
   },
   banner: '5.200+ orang tua telah menganalisis temperamen anak mereka',
   hero: {
@@ -2786,7 +2786,7 @@ export const translations = {
   },
   legalNotice: {
     backHome: '← Inicio',
-    noticeBar: 'Este documento tiene validez legal únicamente en coreano. El contenido a continuación se presenta en coreano según lo exige la legislación surcoreana.',
+    noticeBar: 'El contenido a continuación se presenta en coreano.',
   },
   banner: 'Más de 5.200 padres han analizado el temperamento de sus hijos',
   hero: {
@@ -3252,7 +3252,7 @@ export const translations = {
   },
   legalNotice: {
     backHome: '← Início',
-    noticeBar: 'Este documento tem validade legal apenas em coreano. O conteúdo abaixo é fornecido em coreano conforme exigido pela legislação coreana.',
+    noticeBar: 'O conteúdo abaixo é fornecido em coreano.',
   },
   banner: 'Mais de 5.200 pais já analisaram o temperamento de seus filhos',
   hero: {
@@ -3718,7 +3718,7 @@ export const translations = {
   },
   legalNotice: {
     backHome: '← Accueil',
-    noticeBar: 'Ce document n\'a de valeur juridique qu\'en coreen. Le contenu ci-dessous est fourni en coreen conformement a la legislation coreenne.',
+    noticeBar: 'Le contenu ci-dessous est fourni en coréen.',
   },
   banner: 'Plus de 5 200 parents ont analyse le temperament de leur enfant',
   hero: {
@@ -4184,7 +4184,7 @@ export const translations = {
   },
   legalNotice: {
     backHome: '← หน้าแรก',
-    noticeBar: 'เอกสารนี้มีผลผูกพันทางกฎหมายเฉพาะภาษาเกาหลีเท่านั้น เนื้อหาด้านล่างแสดงเป็นภาษาเกาหลีตามที่กฎหมายเกาหลีกำหนด',
+    noticeBar: 'เนื้อหาด้านล่างแสดงเป็นภาษาเกาหลี',
   },
   banner: 'ผู้ปกครองกว่า 5,200 คนวิเคราะห์นิสัยลูกแล้ว',
   hero: {
