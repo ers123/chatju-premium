@@ -12,6 +12,8 @@ const LANGUAGES: { code: Language; label: string; flag: string }[] = [
   { code: 'id', label: 'Indonesia', flag: 'ID' },
   { code: 'es', label: 'Español', flag: 'ES' },
   { code: 'pt', label: 'Português', flag: 'PT' },
+  { code: 'fr', label: 'Français', flag: 'FR' },
+  { code: 'th', label: 'ไทย', flag: 'TH' },
 ]
 
 interface LanguageSwitcherProps {

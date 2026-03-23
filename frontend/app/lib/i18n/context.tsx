@@ -22,7 +22,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setLangState(saved)
     } else {
       const browserLang = navigator.language.slice(0, 2)
-      const langMap: Record<string, Language> = { ko: 'ko', en: 'en', ja: 'ja', zh: 'zh', vi: 'vi', id: 'id', es: 'es', pt: 'pt' }
+      const langMap: Record<string, Language> = { ko: 'ko', en: 'en', ja: 'ja', zh: 'zh', vi: 'vi', id: 'id', es: 'es', pt: 'pt', fr: 'fr', th: 'th' }
       if (langMap[browserLang]) {
         setLangState(langMap[browserLang])
       }
