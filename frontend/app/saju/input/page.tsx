@@ -212,9 +212,9 @@ export default function InputFormPage() {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <span style={{ fontFamily: 'serif', fontSize: '0.75rem', color: '#B8922D', fontWeight: 700 }}>소</span>
+              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☯</span>
             </div>
-            <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>소명</span>
+            <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
           </Link>
           <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
             {step} / {totalSteps} {s.stepOf}

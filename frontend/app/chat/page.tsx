@@ -113,7 +113,7 @@ export default function ChatPage() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <span style={{ fontSize: '0.75rem', color: '#C5A059', fontWeight: 700, fontFamily: 'serif' }}>소</span>
+                <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☯</span>
               </div>
               <span style={{
                 fontFamily: 'serif',
@@ -121,7 +121,7 @@ export default function ChatPage() {
                 color: logoHovered ? '#C5A059' : '#1A3D2E',
                 letterSpacing: '-0.05em',
                 transition: 'color 0.2s'
-              }}>소명</span>
+              }}>SoMyung</span>
             </Link>
             <div style={{ width: '1px', height: '1.5rem', background: '#EBE5DF' }} />
             <div>

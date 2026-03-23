@@ -54,7 +54,7 @@ export default function GitanLandingPage() {
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: '기탄교육 X 소명 | 우리 아이 맞춤 학습법 분석',
+          title: '기탄교육 X SoMyung | 우리 아이 맞춤 학습법 분석',
           description: '아이의 타고난 기질로 최적의 학습 방법을 찾아보세요. 기탄교육 회원 특별 혜택!',
           imageUrl: 'https://somyung.kr/assets/images/key_talent_gemstone_1769231816379.png',
           link: {
@@ -123,7 +123,7 @@ export default function GitanLandingPage() {
                 color: colors.dark,
                 letterSpacing: '-0.04em'
               }}>
-                소명
+                ☯ SoMyung
               </span>
             </Link>
             <span style={{
@@ -198,7 +198,7 @@ export default function GitanLandingPage() {
                 fontSize: '15px',
                 fontWeight: 700,
                 color: colors.primary
-              }}>소명</span>
+              }}>☯ SoMyung</span>
             </div>
             <span style={{
               width: '1px',

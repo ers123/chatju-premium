@@ -23,7 +23,7 @@ export default function TermsPage() {
       }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#2C2420' }}>소명</span>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: '#2C2420' }}>☯ SoMyung</span>
           </Link>
           <Link href="/" style={{ fontSize: '14px', color: '#666666', textDecoration: 'none' }}>
             {ln.backHome}

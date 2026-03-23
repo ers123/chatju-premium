@@ -23,8 +23,8 @@ async function generateReportPDF(params) {
         size: 'A4',
         margins: { top: 60, bottom: 70, left: 50, right: 50 },
         info: {
-          Title: `${childName || '아이'}의 사주팔자 리포트 - 소명`,
-          Author: 'SoMyung (소명)',
+          Title: `${childName || 'Child'}'s Saju Report - SoMyung`,
+          Author: 'SoMyung',
           Subject: 'Premium Saju Report',
         },
       });
@@ -59,32 +59,32 @@ async function generateReportPDF(params) {
       // ===== PAGE 1: HEADER =====
       doc.rect(0, 0, pageW, 120).fill('#2D3A35');
       doc.font(fontBold).fontSize(24).fillColor('#C5A059')
-        .text('소명 (SoMyung)', 50, 35, { align: 'center' });
+        .text('☯ SoMyung', 50, 35, { align: 'center' });
       doc.font(fontName).fontSize(12).fillColor('#A09990')
-        .text('사주팔자 프리미엄 리포트', 50, 65, { align: 'center' });
+        .text('Premium Saju Report', 50, 65, { align: 'center' });
       doc.font(fontBold).fontSize(16).fillColor('#FFFFFF')
-        .text(`${childName || '아이'}의 사주 분석`, 50, 88, { align: 'center' });
+        .text(`${childName || 'Child'}'s Saju Analysis`, 50, 88, { align: 'center' });
 
       let y = 145;
 
       // ===== BIRTH INFO =====
-      doc.font(fontBold).fontSize(14).fillColor('#2D3A35').text('기본 정보', 50, y);
+      doc.font(fontBold).fontSize(14).fillColor('#2D3A35').text('Basic Info', 50, y);
       y += 25;
 
-      const genderLabel = gender === 'male' ? '남아' : '여아';
+      const genderLabel = gender === 'male' ? 'Male' : 'Female';
       doc.font(fontName).fontSize(11).fillColor('#6B5E52');
-      doc.text(`생년월일: ${birthDate}`, 50, y);
+      doc.text(`Birth Date: ${birthDate}`, 50, y);
       y += 18;
-      doc.text(`성별: ${genderLabel}`, 50, y);
+      doc.text(`Gender: ${genderLabel}`, 50, y);
       y += 30;
 
       // ===== FOUR PILLARS =====
       const pillars = manseryeok?.pillars;
       if (pillars) {
-        doc.font(fontBold).fontSize(14).fillColor('#2D3A35').text('사주팔자 (四柱八字)', 50, y);
+        doc.font(fontBold).fontSize(14).fillColor('#2D3A35').text('Four Pillars (四柱八字)', 50, y);
         y += 25;
 
-        const pillarLabels = ['년주', '월주', '일주', '시주'];
+        const pillarLabels = ['Year', 'Month', 'Day', 'Hour'];
         const pillarKeys = ['year', 'month', 'day', 'hour'];
         const pillarWidth = 110;
         const startX = (pageW - pillarWidth * 4 - 30) / 2;
@@ -104,10 +104,10 @@ async function generateReportPDF(params) {
       // ===== FIVE ELEMENTS =====
       const elements = manseryeok?.elements;
       if (elements) {
-        doc.font(fontBold).fontSize(14).fillColor('#2D3A35').text('오행 분석', 50, y);
+        doc.font(fontBold).fontSize(14).fillColor('#2D3A35').text('Five Elements Analysis', 50, y);
         y += 25;
 
-        const elementNames = ['목(木)', '화(火)', '토(土)', '금(金)', '수(水)'];
+        const elementNames = ['Wood (木)', 'Fire (火)', 'Earth (土)', 'Metal (金)', 'Water (水)'];
         const elementKeys = ['wood', 'fire', 'earth', 'metal', 'water'];
         const elementColors = ['#5A7A66', '#A85544', '#B8922D', '#6B7578', '#556B7E'];
         const total = elementKeys.reduce((sum, k) => sum + (elements[k] || 0), 0) || 1;
@@ -131,14 +131,14 @@ async function generateReportPDF(params) {
       // ===== AI INTERPRETATION SECTIONS =====
       const sections = aiInterpretation?.sections || {};
       const sectionOrder = [
-        { key: 'coreProfile', title: '사주 핵심 프로필' },
-        { key: 'parentChildAnalysis', title: '부모-자녀 관계 분석' },
-        { key: 'developmentGuide', title: '연령별 발달 가이드' },
-        { key: 'careerAptitude', title: '진로/적성 심층 분석' },
-        { key: 'fortuneCycles', title: '대운/세운 운세 흐름' },
-        { key: 'monthlyFortune', title: '월별 운세 리포트' },
-        { key: 'elementBalance', title: '오행 밸런스 & 개운법' },
-        { key: 'weeklyActions', title: '이번 주 실천 과제' },
+        { key: 'coreProfile', title: 'Core Profile' },
+        { key: 'parentChildAnalysis', title: 'Parent-Child Analysis' },
+        { key: 'developmentGuide', title: 'Development Guide' },
+        { key: 'careerAptitude', title: 'Career Aptitude' },
+        { key: 'fortuneCycles', title: 'Fortune Cycles' },
+        { key: 'monthlyFortune', title: 'Monthly Fortune' },
+        { key: 'elementBalance', title: 'Element Balance' },
+        { key: 'weeklyActions', title: 'Weekly Actions' },
       ];
 
       for (const section of sectionOrder) {
@@ -179,7 +179,7 @@ async function generateReportPDF(params) {
       doc.moveDown(2);
       doc.font(fontName).fontSize(7).fillColor('#B0A9A2')
         .text(
-          `소명 (SoMyung) | somyung.cc | ${new Date().toISOString().split('T')[0]}`,
+          `☯ SoMyung | somyung.cc | ${new Date().toISOString().split('T')[0]}`,
           50, doc.y,
           { width: contentW, align: 'center' }
         );

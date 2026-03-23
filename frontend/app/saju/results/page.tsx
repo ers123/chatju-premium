@@ -254,7 +254,7 @@ export default function ResultsPage() {
       // Header
       pdf.setFontSize(12)
       pdf.setTextColor(45, 58, 53)
-      pdf.text(`소명 - ${inputData?.name || ''}`, 10, 8)
+      pdf.text(`SoMyung - ${inputData?.name || ''}`, 10, 8)
       pdf.setFontSize(8)
       pdf.setTextColor(139, 133, 128)
       pdf.text(new Date().toLocaleDateString('ko-KR'), pdfWidth - 30, 8)
@@ -270,7 +270,7 @@ export default function ResultsPage() {
         heightLeft -= (pdfHeight - position)
       }
 
-      pdf.save(`소명_${inputData?.name || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`)
+      pdf.save(`SoMyung_${inputData?.name || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`)
     } catch (err) {
       console.error('PDF export error:', err)
       alert('PDF 저장에 실패했습니다. 다시 시도해주세요.')
@@ -519,9 +519,9 @@ export default function ResultsPage() {
         <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: '#1A3D2E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontFamily: 'serif', fontSize: '0.75rem', color: '#B8922D', fontWeight: 700 }}>소</span>
+              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☯</span>
             </div>
-            <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>소명</span>
+            <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button

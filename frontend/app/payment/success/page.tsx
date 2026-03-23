@@ -106,9 +106,9 @@ function PaymentSuccessContent() {
         <div style={s.headerInner}>
           <Link href="/" style={s.logo}>
             <div style={s.logoCircle}>
-              <span style={s.logoText}>소</span>
+              <span style={{...s.logoText, fontSize: '1.1rem', fontFamily: 'initial'}}>☯</span>
             </div>
-            <span style={s.logoName}>소명</span>
+            <span style={s.logoName}>SoMyung</span>
           </Link>
         </div>
       </header>

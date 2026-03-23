@@ -52,7 +52,7 @@ async function sendReportEmail(params) {
   const isKorean = language === 'ko';
 
   const subject = isKorean
-    ? `${displayName}의 사주팔자 프리미엄 리포트 - 소명`
+    ? `${displayName}의 사주팔자 프리미엄 리포트 - SoMyung`
     : `${displayName}'s Premium Saju Report - SoMyung`;
 
   const htmlContent = buildReportEmailHtml({
@@ -77,7 +77,7 @@ async function sendReportEmail(params) {
   if (pdfBuffer) {
     emailPayload.attachments = [
       {
-        filename: `소명_${displayName}_${birthDate}.pdf`,
+        filename: `SoMyung_${displayName}_${birthDate}.pdf`,
         content: pdfBuffer,
         content_type: 'application/pdf',
       },
@@ -96,7 +96,7 @@ async function sendReportEmail(params) {
       if (generatedPdf) {
         emailPayload.attachments = [
           {
-            filename: `소명_${displayName}_${birthDate}.pdf`,
+            filename: `SoMyung_${displayName}_${birthDate}.pdf`,
             content: generatedPdf,
             content_type: 'application/pdf',
           },
@@ -162,14 +162,14 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
         <!-- Header -->
         <tr><td align="center" style="padding: 32px 0 8px;">
           <table cellpadding="0" cellspacing="0" border="0" width="52" height="52" style="border-radius: 50%; background: #3D3028;">
-            <tr><td align="center" valign="middle" style="color: #C5A059; font-size: 20px; font-weight: bold; font-family: serif;">소</td></tr>
+            <tr><td align="center" valign="middle" style="color: #C5A059; font-size: 22px;">☯</td></tr>
           </table>
         </td></tr>
         <tr><td align="center" style="font-size: 22px; font-weight: bold; color: #3D3028; padding: 12px 0 4px;">
           ${displayName}${isKorean ? '의 사주팔자 리포트' : "'s Saju Report"}
         </td></tr>
         <tr><td align="center" style="font-size: 13px; color: #8B8580; padding: 0 0 28px;">
-          ${isKorean ? '소명 프리미엄 분석 결과' : 'SoMyung Premium Analysis'}
+          ${isKorean ? 'SoMyung 프리미엄 분석 결과' : 'SoMyung Premium Analysis'}
         </td></tr>
 
         <!-- Birth Info Card -->
@@ -216,7 +216,7 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
 
         <!-- Footer -->
         <tr><td align="center" style="padding: 28px 0 8px; font-size: 12px; color: #8B8580; line-height: 1.6;">
-          ${isKorean ? '이 이메일은 소명(SoMyung) 프리미엄 리포트 발송용입니다.' : 'This email was sent by SoMyung Premium Report.'}
+          ${isKorean ? '이 이메일은 SoMyung 프리미엄 리포트 발송용입니다.' : 'This email was sent by SoMyung Premium Report.'}
           <br/>somyung.pages.dev
         </td></tr>
 

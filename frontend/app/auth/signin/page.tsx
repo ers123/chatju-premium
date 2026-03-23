@@ -92,7 +92,7 @@ export default function SignInPage() {
         zIndex: 10
       }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontSize: '1.875rem', fontWeight: 700, color: '#2D3A35' }}>소명</span>
+          <span style={{ fontSize: '1.875rem', fontWeight: 700, color: '#2D3A35' }}>☯ SoMyung</span>
         </Link>
       </div>
 

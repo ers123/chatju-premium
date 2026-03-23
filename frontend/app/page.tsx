@@ -107,7 +107,7 @@ export default function LandingPage() {
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: '소명 - 우리 아이 기질 분석',
+          title: 'SoMyung - 우리 아이 기질 분석',
           description: '사주 명리학 기반으로 아이의 타고난 기질과 맞춤 학습법을 알아보세요. 3분이면 충분해요!',
           imageUrl: 'https://somyung.kr/assets/images/key_nature_sprout_1769231800309.png',
           link: { mobileWebUrl: url, webUrl: url },
@@ -172,7 +172,7 @@ export default function LandingPage() {
               color: '#2C2420',
               letterSpacing: '-0.04em'
             }}>
-              소명
+              ☯ SoMyung
             </span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
