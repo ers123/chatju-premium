@@ -176,7 +176,7 @@ export default function GitanLandingPage() {
             margin: '0 auto 48px'
           }}>
             아이의 타고난 기질을 분석해서<br />
-            <strong style={{ color: colors.dark }}>기탄 학습지 중 최적의 조합</strong>을 찾아드립니다
+            <strong style={{ color: colors.dark }}>우리 아이에게 맞는 학습법</strong>을 알려드립니다
           </p>
 
           <div style={{
@@ -297,7 +297,7 @@ export default function GitanLandingPage() {
               {
                 title: '화(火) 기질',
                 subtitle: '에너지 넘치는 아이',
-                desc: '짧고 강렬한 학습이 효과적. 게임 요소가 있는 기탄수학 추천',
+                desc: '짧고 강렬한 학습이 효과적. 게임 요소를 활용한 학습지가 잘 맞아요',
                 color: '#EF4444'
               },
               {
@@ -429,7 +429,7 @@ export default function GitanLandingPage() {
               {
                 step: '3',
                 title: '맞춤 가이드',
-                desc: '아이에게 맞는 기탄 학습지와 공부법을 추천받으세요.',
+                desc: '아이의 기질에 맞는 학습 환경과 동기부여 방법을 알려드립니다.',
                 time: '즉시'
               },
             ].map((item, idx) => (
@@ -528,7 +528,7 @@ export default function GitanLandingPage() {
               {
                 image: '/assets/images/key_talent_gemstone_1769231816379.png',
                 title: '맞춤 학습법 가이드',
-                desc: '기탄수학, 기탄국어 중 아이에게 가장 효과적인 학습지와 공부 방법을 추천드려요.'
+                desc: '아이의 기질에 맞는 학습 시간대, 환경, 동기부여 방법을 구체적으로 안내해드려요.'
               },
               {
                 image: '/assets/images/key_future_path_1769231832370.png',
@@ -624,7 +624,7 @@ export default function GitanLandingPage() {
           }}>
             {[
               {
-                quote: '기탄수학 A단계부터 시작했는데, 아이가 화 기질이라 짧게 끊어서 하는 게 좋다고 해서 방법을 바꿨더니 집중력이 확 올라갔어요.',
+                quote: '아이가 화 기질이라 짧게 끊어서 집중하는 게 효과적이라고 해서 학습 방법을 바꿨더니 집중력이 확 올라갔어요.',
                 author: '7세 아들 맘 · 김○○',
                 tag: '학습법 개선'
               },
@@ -723,7 +723,7 @@ export default function GitanLandingPage() {
             marginBottom: '32px',
             lineHeight: 1.6
           }}>
-            기탄 학습지로 고민하는 친구에게 알려주세요!<br />
+            아이 학습법으로 고민하는 친구에게 알려주세요!<br />
             공유받은 분도 기탄 회원 혜택이 적용됩니다.
           </p>
           <button
@@ -781,7 +781,7 @@ export default function GitanLandingPage() {
               지금 무료로 시작하세요
             </h2>
             <p style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.6)' }}>
-              기탄교육 회원이라면 프리미엄 분석까지 특별 할인
+              기탄교육 회원이라면 프리미엄 분석이 무료
             </p>
           </div>
 
@@ -801,7 +801,7 @@ export default function GitanLandingPage() {
               <p style={{ fontSize: '36px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px' }}>무료</p>
               <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.5)', marginBottom: '32px' }}>영구 무료</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px' }}>
-                {['오행 기질 분석', '기본 학습 스타일 파악', '간단한 기탄 추천'].map((item, i) => (
+                {['오행 기질 분석', '기본 학습 스타일 파악', '간단한 학습 팁'].map((item, i) => (
                   <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '16px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '16px' }}>
                     <svg width="16" height="16" fill={colors.secondary} viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -847,16 +847,16 @@ export default function GitanLandingPage() {
                 padding: '4px 12px',
                 borderRadius: '4px'
               }}>
-                기탄 회원 50% 할인
+                기탄 회원 특별 무료
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '8px' }}>프리미엄 분석</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '8px' }}>프리미엄 리포트</h3>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
-                <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)', textDecoration: 'line-through' }}>38,000원</p>
-                <p style={{ fontSize: '36px', fontWeight: 700, color: '#FFFFFF' }}>19,000<span style={{ fontSize: '14px', fontWeight: 400 }}>원</span></p>
+                <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)', textDecoration: 'line-through' }}>$4.99</p>
+                <p style={{ fontSize: '36px', fontWeight: 700, color: '#FFFFFF' }}>무료</p>
               </div>
-              <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '32px' }}>1회 결제 · 평생 이용</p>
+              <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '32px' }}>기탄교육 회원 한정 혜택</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px' }}>
-                {['심층 기질 분석 리포트', '맞춤 기탄 학습지 추천', '부모-자녀 궁합 분석', 'AI 상담 무제한', 'PDF 리포트 다운로드'].map((item, i) => (
+                {['8섹션 심층 기질 분석', '맞춤 학습 환경 가이드', '부모-자녀 궁합 분석', '월별 운세 + 실천 과제', 'PDF 리포트 + 이메일 발송'].map((item, i) => (
                   <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '16px', color: '#FFFFFF', marginBottom: '16px' }}>
                     <svg width="16" height="16" fill={colors.accent} viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -992,7 +992,7 @@ export default function GitanLandingPage() {
             우리 아이에게 맞는 학습법,<br />지금 바로 찾아보세요
           </h2>
           <p style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '32px', lineHeight: 1.5 }}>
-            3분 입력으로 아이의 기질과 최적의 기탄 학습지를 알아보세요
+            3분 입력으로 아이의 타고난 기질과 맞춤 학습법을 알아보세요
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
             <Link href="/saju/input?ref=gitan">
