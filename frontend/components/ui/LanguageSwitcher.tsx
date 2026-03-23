@@ -8,6 +8,8 @@ const LANGUAGES: { code: Language; label: string; flag: string }[] = [
   { code: 'en', label: 'English', flag: 'EN' },
   { code: 'ja', label: '日本語', flag: 'JA' },
   { code: 'zh', label: '中文', flag: 'ZH' },
+  { code: 'vi', label: 'Tiếng Việt', flag: 'VI' },
+  { code: 'id', label: 'Indonesia', flag: 'ID' },
 ]
 
 interface LanguageSwitcherProps {
