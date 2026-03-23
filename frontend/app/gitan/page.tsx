@@ -297,7 +297,7 @@ export default function GitanLandingPage() {
               {
                 title: '화(火) 기질',
                 subtitle: '에너지 넘치는 아이',
-                desc: '짧고 강렬한 학습이 효과적. 게임 요소를 활용한 학습지가 잘 맞아요',
+                desc: '짧고 강렬한 학습이 효과적. 집중 시간을 짧게 끊어주는 게 핵심이에요',
                 color: '#EF4444'
               },
               {
