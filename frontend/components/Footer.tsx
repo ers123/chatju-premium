@@ -48,6 +48,11 @@ export default function Footer() {
                   {f.pricingGuide}
                 </Link>
               </li>
+              <li style={{ marginBottom: '10px' }}>
+                <Link href="/about" style={{ fontSize: '14px', color: '#888888', textDecoration: 'none' }}>
+                  {f.aboutCreator}
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import Footer from '@/components/Footer'
-import { useLanguage } from './lib/i18n/context'
+import { useLanguage } from '@/app/lib/i18n/context'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 
 
@@ -158,7 +158,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section style={{
         width: '100%',
-        padding: '200px 40px 100px',
+        padding: 'clamp(160px, 25vw, 220px) clamp(20px, 5vw, 40px) clamp(60px, 10vw, 100px)',
         textAlign: 'center'
       }}>
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
@@ -177,10 +177,10 @@ export default function LandingPage() {
           </h1>
 
           <p style={{
-            fontSize: '19px',
+            fontSize: 'clamp(16px, 4vw, 19px)',
             color: '#666666',
             lineHeight: 1.7,
-            marginBottom: '48px',
+            marginBottom: 'clamp(32px, 6vw, 48px)',
             fontWeight: 400
           }}>
             {t.hero.subtitle}<br />
@@ -196,9 +196,9 @@ export default function LandingPage() {
           }}>
             <Link href="/saju/input">
               <button style={{
-                height: '60px',
-                padding: '0 44px',
-                fontSize: '17px',
+                height: 'clamp(52px, 8vw, 60px)',
+                padding: '0 clamp(28px, 6vw, 44px)',
+                fontSize: 'clamp(15px, 3.5vw, 17px)',
                 fontWeight: 600,
                 color: '#FFFFFF',
                 background: '#1A3D2E',
@@ -214,12 +214,13 @@ export default function LandingPage() {
           </div>
 
           <p style={{
-            fontSize: '14px',
+            fontSize: 'clamp(12px, 3vw, 14px)',
             color: '#999999',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '20px'
+            flexWrap: 'wrap' as const,
+            gap: 'clamp(10px, 3vw, 20px)'
           }}>
             <span>✓ {t.hero.check1}</span>
             <span>✓ {t.hero.check2}</span>
@@ -231,7 +232,7 @@ export default function LandingPage() {
       {/* Feature Cards */}
       <section style={{
         width: '100%',
-        padding: '60px 40px 120px'
+        padding: 'clamp(40px, 8vw, 60px) clamp(20px, 5vw, 40px) clamp(60px, 12vw, 120px)'
       }}>
         <div style={{
           maxWidth: '1100px',
@@ -250,8 +251,8 @@ export default function LandingPage() {
           </div>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '24px'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 'clamp(16px, 3vw, 24px)'
           }}>
             {t.features.items.map((item, idx) => (
               <div key={idx} data-reveal style={{
@@ -262,18 +263,19 @@ export default function LandingPage() {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
               }}>
                 <div style={{
-                  position: 'relative',
                   width: '100%',
-                  height: '280px',
-                  background: '#F5F0EB'
+                  background: '#F5F0EB',
+                  overflow: 'hidden',
                 }}>
                   <Image
                     src={images[idx]}
                     alt={item.title}
-                    fill
+                    width={600}
+                    height={400}
                     style={{
-                      objectFit: 'cover',
-                      objectPosition: 'center top'
+                      width: '100%',
+                      height: 'auto',
+                      display: 'block',
                     }}
                   />
                 </div>
@@ -304,11 +306,40 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Saju Definition — AI-citability anchor */}
+      <section id="saju-definition" style={{
+        width: '100%',
+        background: '#FAF8F5',
+        padding: 'clamp(40px, 8vw, 64px) clamp(20px, 5vw, 40px)',
+        borderTop: '1px solid rgba(0,0,0,0.05)',
+        borderBottom: '1px solid rgba(0,0,0,0.05)',
+      }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+          <h2 style={{
+            fontSize: '13px',
+            fontWeight: 600,
+            color: '#9B8B7A',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            marginBottom: '16px',
+          }}>
+            {t.sajuDef.heading}
+          </h2>
+          <p style={{
+            fontSize: '17px',
+            lineHeight: 1.8,
+            color: '#3D3028',
+          }}>
+            {t.sajuDef.body}
+          </p>
+        </div>
+      </section>
+
       {/* Problem Section */}
       <section style={{
         width: '100%',
         background: '#FFFFFF',
-        padding: '120px 40px'
+        padding: 'clamp(60px, 12vw, 120px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '64px' }}>
@@ -325,7 +356,7 @@ export default function LandingPage() {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '20px'
           }}>
             {t.problems.items.map((item, idx) => (
@@ -359,11 +390,115 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Founder Story */}
+      <section style={{
+        width: '100%',
+        background: '#FEFDFB',
+        padding: 'clamp(48px, 10vw, 100px) clamp(20px, 5vw, 40px)'
+      }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+          <div data-reveal style={{
+            ...revealStyle,
+            background: '#FFFFFF',
+            borderRadius: '24px',
+            padding: '56px 48px',
+            border: '1px solid rgba(184, 146, 45, 0.15)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.05)'
+          }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '100px',
+              background: 'rgba(184, 146, 45, 0.08)',
+              border: '1px solid rgba(184, 146, 45, 0.2)',
+              marginBottom: '32px'
+            }}>
+              <span style={{ fontSize: '16px' }}>☯</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#7A6420' }}>
+                {t.founder.role}
+              </span>
+            </div>
+
+            <h2 style={{
+              fontSize: 'clamp(24px, 3.5vw, 32px)',
+              fontWeight: 700,
+              color: '#2C2420',
+              letterSpacing: '-0.03em',
+              marginBottom: '24px',
+              fontFamily: '"Nanum Myeongjo", serif',
+              lineHeight: 1.3
+            }}>
+              {t.founder.heading}
+            </h2>
+
+            <p style={{
+              fontSize: '17px',
+              color: '#4A3F36',
+              lineHeight: 1.8,
+              marginBottom: '20px'
+            }}>
+              {t.founder.story}
+            </p>
+
+            <p style={{
+              fontSize: '17px',
+              color: '#4A3F36',
+              lineHeight: 1.8,
+              marginBottom: '40px'
+            }}>
+              {t.founder.detail}
+            </p>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '20px',
+              paddingTop: '32px',
+              borderTop: '1px solid rgba(0,0,0,0.06)'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #1A3D2E, #2C5238)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                flexShrink: 0
+              }}>
+                ☯
+              </div>
+              <div>
+                <p style={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: '#2C2420',
+                  margin: '0 0 4px'
+                }}>
+                  {t.founder.name}
+                </p>
+                <p style={{
+                  fontSize: '13px',
+                  color: '#7A6420',
+                  margin: 0,
+                  lineHeight: 1.5
+                }}>
+                  {t.founder.credentials}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works */}
       <section style={{
         width: '100%',
         background: '#F5EFED',
-        padding: '120px 40px'
+        padding: 'clamp(60px, 12vw, 120px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '72px' }}>
@@ -380,7 +515,7 @@ export default function LandingPage() {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
             gap: '24px'
           }}>
             {t.howItWorks.items.map((item, idx) => (
@@ -468,7 +603,7 @@ export default function LandingPage() {
       <section style={{
         width: '100%',
         background: '#FFFFFF',
-        padding: '120px 40px'
+        padding: 'clamp(60px, 12vw, 120px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '64px' }}>
@@ -485,7 +620,7 @@ export default function LandingPage() {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
             gap: '24px'
           }}>
             {t.testimonials.items.map((item, idx) => (
@@ -535,7 +670,7 @@ export default function LandingPage() {
         ...revealStyle,
         width: '100%',
         background: '#FFFFFF',
-        padding: '80px 40px',
+        padding: 'clamp(48px, 10vw, 80px) clamp(20px, 5vw, 40px)',
         borderTop: '1px solid #F0F0F0',
         borderBottom: '1px solid #F0F0F0'
       }}>
@@ -593,7 +728,7 @@ export default function LandingPage() {
         ...revealStyle,
         width: '100%',
         background: '#FEFDFB',
-        padding: '60px 40px'
+        padding: 'clamp(40px, 8vw, 60px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{
@@ -626,7 +761,7 @@ export default function LandingPage() {
       <section id="pricing" style={{
         width: '100%',
         background: '#2A2420',
-        padding: '120px 40px'
+        padding: 'clamp(60px, 12vw, 120px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
           <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '64px' }}>
@@ -647,7 +782,7 @@ export default function LandingPage() {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '20px'
           }}>
             {/* Free */}
@@ -780,6 +915,11 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
+          {t.pricing.currencyNote && (
+            <p data-reveal style={{ ...revealStyle, textAlign: 'center', fontSize: '12px', color: '#9B8B7A', marginTop: '16px' }}>
+              {t.pricing.currencyNote}
+            </p>
+          )}
         </div>
       </section>
 
@@ -787,7 +927,7 @@ export default function LandingPage() {
       <section style={{
         width: '100%',
         background: '#FEFDFB',
-        padding: '120px 40px'
+        padding: 'clamp(60px, 12vw, 120px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '640px', margin: '0 auto' }}>
           <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '64px' }}>
@@ -869,7 +1009,7 @@ export default function LandingPage() {
         ...revealStyle,
         width: '100%',
         background: '#1A3D2E',
-        padding: '100px 40px'
+        padding: 'clamp(48px, 10vw, 100px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{

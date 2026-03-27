@@ -530,16 +530,12 @@ h4 {
     font-size: 15px;
   }
 
-  /* Override inline grid styles via class */
-  .grid-responsive-3 {
+  /* All grids → 1 column on mobile */
+  [style*="grid-template-columns"] {
     grid-template-columns: 1fr !important;
   }
 
-  .grid-responsive-2 {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Reduce section padding on mobile */
+  /* Reduce section padding on mobile — but NOT top/bottom (let inline clamp handle it) */
   section {
     padding-left: 20px !important;
     padding-right: 20px !important;
@@ -547,22 +543,37 @@ h4 {
 
   /* Navigation mobile */
   nav > div {
-    padding: 0 20px !important;
-    height: 60px !important;
+    padding: 0 16px !important;
+    height: 56px !important;
   }
 
-  /* Hero adjustments */
+  /* Typography scale down */
   h1 {
-    font-size: clamp(28px, 7vw, 36px) !important;
+    font-size: clamp(26px, 7vw, 36px) !important;
   }
 
   h2 {
-    font-size: clamp(24px, 5vw, 32px) !important;
+    font-size: clamp(22px, 5.5vw, 30px) !important;
   }
 
-  /* Cards: less padding on mobile */
+  h3 {
+    font-size: clamp(16px, 4vw, 20px) !important;
+  }
+
+  /* Hero section - enough room for fixed nav + banner */
+  section:first-of-type {
+    padding-top: 150px !important;
+  }
+
+  /* Cards: tighter padding */
   .card-interactive {
-    padding: 24px !important;
+    padding: 20px !important;
+  }
+
+  /* Feature images smaller on mobile */
+  img[style*="height: 280px"],
+  img[style*="height:280px"] {
+    height: 180px !important;
   }
 
   /* Pricing grid */
@@ -572,12 +583,47 @@ h4 {
 
   /* Footer grid */
   footer > div > div:first-child {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 24px !important;
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
   }
 
-  /* Trust badges wrap better */
+  /* Footer padding */
+  footer {
+    padding: 32px 20px 24px !important;
+  }
+
+  /* Trust badges */
   .trust-badges {
+    gap: 6px !important;
+    font-size: 12px !important;
+  }
+
+  /* Reduce gaps on mobile */
+  [style*="gap: 24px"] {
+    gap: 16px !important;
+  }
+  [style*="gap: 32px"] {
+    gap: 20px !important;
+  }
+
+  /* FAQ items tighter */
+  [style*="gap: 12px"] {
     gap: 8px !important;
+  }
+}
+
+/* Small phones (iPhone SE, etc.) */
+@media (max-width: 390px) {
+  section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  h1 {
+    font-size: 24px !important;
+  }
+
+  h2 {
+    font-size: 20px !important;
   }
 }

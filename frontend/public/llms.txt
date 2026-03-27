@@ -1,0 +1,29 @@
+# SoMyung — AI Crawler Permissions
+# Saju-based child temperament analysis service
+# Designed by SungHa, Certified Myeongri Psychology Counselor (Level 1)
+# MS Decision Making & Applied Analytics
+
+## About
+SoMyung provides AI-powered Korean Saju (Four Pillars of Destiny / 사주팔자)
+analysis for understanding children's innate temperament and learning styles.
+Created by a certified professional and parent of three.
+
+Supported languages: ko, en, ja, zh, vi, id, es, pt, fr, th
+Language-specific pages: /en, /ja, /zh, /vi, /id, /es, /pt, /fr, /th
+About page: /about (also /en/about, /ja/about, etc.)
+Price: Free preview + Premium report $4.99
+
+## Permissions
+Indexing: allowed
+Citation: allowed
+Training: allowed
+
+## Disallow
+/admin
+/auth
+/payment/success
+/payment/fail
+
+## Contact
+support@somyung.cc
+https://somyung.cc

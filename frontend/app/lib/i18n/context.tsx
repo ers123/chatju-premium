@@ -13,10 +13,15 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | null>(null)
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Language>('ko')
+export function LanguageProvider({ children, initialLang }: { children: ReactNode; initialLang?: Language }) {
+  const [lang, setLangState] = useState<Language>(initialLang ?? 'ko')
 
   useEffect(() => {
+    if (initialLang) {
+      localStorage.setItem('somyung-lang', initialLang)
+      document.documentElement.lang = initialLang
+      return
+    }
     const saved = localStorage.getItem('somyung-lang') as Language | null
     if (saved && translations[saved]) {
       setLangState(saved)
@@ -27,7 +32,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         setLangState(langMap[browserLang])
       }
     }
-  }, [])
+  }, [initialLang])
 
   const setLang = (newLang: Language) => {
     setLangState(newLang)

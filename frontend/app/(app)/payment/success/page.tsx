@@ -185,8 +185,8 @@ function PaymentSuccessContent() {
         <div style={{ marginTop: '2.5rem', textAlign: 'center' }}>
           <p style={{ fontSize: '0.875rem', color: '#8B8580' }}>
             {t.payment.successSupportText}{' '}
-            <a href="mailto:support@harmonyon.kr" style={{ color: '#C5A059', textDecoration: 'none' }}>
-              support@harmonyon.kr
+            <a href="mailto:support@somyung.cc" style={{ color: '#C5A059', textDecoration: 'none' }}>
+              support@somyung.cc
             </a>
             {t.payment.successSupportSuffix}
           </p>

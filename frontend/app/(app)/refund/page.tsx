@@ -152,7 +152,7 @@ export default function RefundPolicyPage() {
             <ol style={{ paddingLeft: '20px' }}>
               <li style={{ marginBottom: '16px' }}>
                 <strong>환불 요청</strong><br />
-                이메일(support@harmonyon.kr)로 다음 정보와 함께 요청:
+                이메일(support@somyung.cc)로 다음 정보와 함께 요청:
                 <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
                   <li>주문번호 또는 결제일시</li>
                   <li>결제 수단</li>
@@ -236,7 +236,7 @@ export default function RefundPolicyPage() {
               6. 문의처
             </h2>
             <div style={{ background: '#F5F5F3', padding: '20px', borderRadius: '8px' }}>
-              <p style={{ marginBottom: '8px' }}><strong>이메일</strong>: support@harmonyon.kr</p>
+              <p style={{ marginBottom: '8px' }}><strong>이메일</strong>: support@somyung.cc</p>
               <p style={{ marginBottom: '8px' }}><strong>운영시간</strong>: 평일 10:00 - 18:00 (주말/공휴일 휴무)</p>
               <p><strong>응답 시간</strong>: 영업일 기준 24시간 이내</p>
             </div>

@@ -190,8 +190,8 @@ function PaymentFailContent() {
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(235, 229, 223, 0.6)' }}>
               <p style={{ fontSize: '0.875rem', color: '#8B8580' }}>
                 {t.payment.failContactPrefix}{' '}
-                <a href="mailto:support@harmonyon.kr" style={{ color: '#C5A059', textDecoration: 'none' }}>
-                  support@harmonyon.kr
+                <a href="mailto:support@somyung.cc" style={{ color: '#C5A059', textDecoration: 'none' }}>
+                  support@somyung.cc
                 </a>
                 {t.payment.failContactSuffix}
               </p>

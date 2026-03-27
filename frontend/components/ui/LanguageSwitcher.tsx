@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Language } from '@/app/lib/i18n/translations'
 
 const LANGUAGES: { code: Language; label: string; flag: string }[] = [
@@ -19,11 +20,14 @@ const LANGUAGES: { code: Language; label: string; flag: string }[] = [
 interface LanguageSwitcherProps {
   currentLang: Language
   onSelect: (lang: Language) => void
+  mode?: 'state' | 'navigate'
+  basePath?: string
 }
 
-export function LanguageSwitcher({ currentLang, onSelect }: LanguageSwitcherProps) {
+export function LanguageSwitcher({ currentLang, onSelect, mode = 'state', basePath = '/' }: LanguageSwitcherProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -82,7 +86,15 @@ export function LanguageSwitcher({ currentLang, onSelect }: LanguageSwitcherProp
           {LANGUAGES.map((lang) => (
             <button
               key={lang.code}
-              onClick={() => { onSelect(lang.code); setOpen(false) }}
+              onClick={() => {
+                if (mode === 'navigate') {
+                  const path = lang.code === 'ko' ? basePath : `/${lang.code}${basePath === '/' ? '' : basePath}`
+                  router.push(path)
+                } else {
+                  onSelect(lang.code)
+                }
+                setOpen(false)
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',

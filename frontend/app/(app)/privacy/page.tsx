@@ -113,7 +113,7 @@ export default function PrivacyPolicyPage() {
                 <strong>회원 탈퇴 요청 시</strong>: 요청일로부터 30일 이내 모든 정보 파기
               </li>
               <li style={{ marginBottom: '8px' }}>
-                <strong>데이터 삭제 요청</strong>: support@harmonyon.kr로 요청 시 24시간 이내 처리
+                <strong>데이터 삭제 요청</strong>: support@somyung.cc로 요청 시 24시간 이내 처리
               </li>
             </ul>
           </section>
@@ -168,7 +168,7 @@ export default function PrivacyPolicyPage() {
                 <strong>파기 방법</strong>: 전자적 파일은 복구 불가능한 방법으로 영구 삭제
               </li>
               <li style={{ marginBottom: '8px' }}>
-                <strong>즉시 삭제 요청</strong>: support@harmonyon.kr로 요청 시 24시간 이내 처리
+                <strong>즉시 삭제 요청</strong>: support@somyung.cc로 요청 시 24시간 이내 처리
               </li>
             </ul>
           </section>
@@ -185,7 +185,7 @@ export default function PrivacyPolicyPage() {
               <li style={{ marginBottom: '8px' }}>동의 철회권</li>
             </ul>
             <p style={{ marginTop: '16px', fontSize: '14px', color: '#666666' }}>
-              권리 행사는 이메일(support@harmonyon.kr)로 요청하실 수 있으며,
+              권리 행사는 이메일(support@somyung.cc)로 요청하실 수 있으며,
               요청 접수 후 10일 이내에 처리 결과를 안내드립니다.
             </p>
           </section>
