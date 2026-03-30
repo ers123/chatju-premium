@@ -49,10 +49,46 @@ function revealDelayStyle(delay: number): React.CSSProperties {
   }
 }
 
+// Animated counter hook — counts from 0 to target on scroll
+function useAnimatedCounter(target: number, duration: number = 2000) {
+  const [count, setCount] = useState(0)
+  const [triggered, setTriggered] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const node = ref.current
+    if (!node) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !triggered) {
+          setTriggered(true)
+          const startTime = performance.now()
+          const step = (now: number) => {
+            const elapsed = now - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            // Ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3)
+            setCount(Math.floor(eased * target))
+            if (progress < 1) requestAnimationFrame(step)
+          }
+          requestAnimationFrame(step)
+        }
+      },
+      { threshold: 0.3 }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [target, duration, triggered])
+
+  return { count, ref }
+}
+
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const pageRef = useScrollReveal()
   const { lang, setLang, t } = useLanguage()
+  const sajuCounter = useAnimatedCounter(518400, 2400)
+  const multiplierCounter = useAnimatedCounter(32400, 2000)
 
   const handleShare = useCallback(async () => {
     const url = 'https://somyung.cc'
@@ -180,11 +216,23 @@ export default function LandingPage() {
             fontSize: 'clamp(16px, 4vw, 19px)',
             color: '#666666',
             lineHeight: 1.7,
-            marginBottom: 'clamp(32px, 6vw, 48px)',
+            marginBottom: '20px',
             fontWeight: 400
           }}>
             {t.hero.subtitle}<br />
             {t.hero.subtitle2}
+          </p>
+
+          <p style={{
+            fontSize: 'clamp(14px, 3.5vw, 16px)',
+            color: '#9B8B7A',
+            lineHeight: 1.8,
+            fontStyle: 'italic',
+            marginBottom: 'clamp(32px, 6vw, 48px)',
+            fontFamily: '"Nanum Myeongjo", serif',
+            whiteSpace: 'pre-line',
+          }}>
+            &ldquo;{t.coreInsight}&rdquo;
           </p>
 
           <div style={{
@@ -332,6 +380,183 @@ export default function LandingPage() {
           }}>
             {t.sajuDef.body}
           </p>
+        </div>
+      </section>
+
+      {/* Precision Section — 518,400 vs 16 */}
+      <section style={{
+        width: '100%',
+        background: '#2A2420',
+        padding: 'clamp(64px, 12vw, 120px) clamp(20px, 5vw, 40px)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Subtle radial glow */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '600px',
+          height: '600px',
+          background: 'radial-gradient(circle, rgba(184, 146, 45, 0.06) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          {/* Section heading */}
+          <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: 'clamp(48px, 8vw, 72px)' }}>
+            <p style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#B8922D',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              marginBottom: '16px',
+            }}>
+              ☯
+            </p>
+            <h2 style={{
+              fontSize: 'clamp(28px, 5vw, 40px)',
+              fontWeight: 700,
+              color: '#F5F0EB',
+              letterSpacing: '-0.03em',
+              fontFamily: '"Nanum Myeongjo", serif',
+              lineHeight: 1.3,
+            }}>
+              {t.precision.heading}
+            </h2>
+          </div>
+
+          {/* Two-column comparison */}
+          <div data-reveal style={{
+            ...revealDelayStyle(1),
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 'clamp(16px, 3vw, 32px)',
+            marginBottom: 'clamp(48px, 8vw, 64px)',
+          }}>
+            {/* MBTI Card — muted */}
+            <div style={{
+              background: 'rgba(255,255,255,0.04)',
+              borderRadius: '20px',
+              padding: 'clamp(28px, 5vw, 40px)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              textAlign: 'center',
+            }}>
+              <p style={{
+                fontSize: 'clamp(56px, 12vw, 80px)',
+                fontWeight: 800,
+                color: 'rgba(245, 240, 235, 0.25)',
+                fontFamily: '"Nanum Myeongjo", serif',
+                lineHeight: 1,
+                marginBottom: '12px',
+                letterSpacing: '-0.04em',
+              }}>
+                {t.precision.mbtiCount}
+              </p>
+              <p style={{
+                fontSize: '16px',
+                fontWeight: 600,
+                color: 'rgba(245, 240, 235, 0.5)',
+                marginBottom: '12px',
+              }}>
+                {t.precision.mbtiLabel}
+              </p>
+              <p style={{
+                fontSize: '14px',
+                color: 'rgba(245, 240, 235, 0.3)',
+                lineHeight: 1.6,
+              }}>
+                {t.precision.mbtiDesc}
+              </p>
+            </div>
+
+            {/* Saju Card — gold/highlighted */}
+            <div ref={sajuCounter.ref} style={{
+              background: 'linear-gradient(135deg, rgba(184, 146, 45, 0.12) 0%, rgba(184, 146, 45, 0.04) 100%)',
+              borderRadius: '20px',
+              padding: 'clamp(28px, 5vw, 40px)',
+              border: '1px solid rgba(184, 146, 45, 0.25)',
+              textAlign: 'center',
+              boxShadow: '0 0 60px rgba(184, 146, 45, 0.08)',
+            }}>
+              <p style={{
+                fontSize: 'clamp(44px, 10vw, 72px)',
+                fontWeight: 800,
+                color: '#B8922D',
+                fontFamily: '"Nanum Myeongjo", serif',
+                lineHeight: 1,
+                marginBottom: '12px',
+                letterSpacing: '-0.04em',
+              }}>
+                {sajuCounter.count.toLocaleString()}
+              </p>
+              <p style={{
+                fontSize: '16px',
+                fontWeight: 600,
+                color: '#F5F0EB',
+                marginBottom: '12px',
+              }}>
+                {t.precision.sajuLabel}
+              </p>
+              <p style={{
+                fontSize: '14px',
+                color: 'rgba(245, 240, 235, 0.6)',
+                lineHeight: 1.6,
+              }}>
+                {t.precision.sajuDesc}
+              </p>
+            </div>
+          </div>
+
+          {/* Multiplier stat */}
+          <div data-reveal style={{
+            ...revealDelayStyle(2),
+            textAlign: 'center',
+            marginBottom: '32px',
+          }}>
+            <div ref={multiplierCounter.ref} style={{
+              display: 'inline-flex',
+              alignItems: 'baseline',
+              gap: '4px',
+            }}>
+              <span style={{
+                fontSize: 'clamp(48px, 10vw, 72px)',
+                fontWeight: 800,
+                color: '#B8922D',
+                fontFamily: '"Nanum Myeongjo", serif',
+                letterSpacing: '-0.04em',
+                lineHeight: 1,
+              }}>
+                {multiplierCounter.count.toLocaleString()}{t.precision.multiplierSuffix}
+              </span>
+            </div>
+            <p style={{
+              fontSize: 'clamp(15px, 3.5vw, 18px)',
+              color: 'rgba(245, 240, 235, 0.6)',
+              marginTop: '12px',
+            }}>
+              {t.precision.multiplierLabel}
+            </p>
+          </div>
+
+          {/* Tagline */}
+          <div data-reveal style={{
+            ...revealDelayStyle(3),
+            textAlign: 'center',
+          }}>
+            <p style={{
+              fontSize: 'clamp(18px, 4vw, 24px)',
+              fontWeight: 600,
+              color: '#F5F0EB',
+              fontFamily: '"Nanum Myeongjo", serif',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.5,
+            }}>
+              {t.precision.tagline}
+            </p>
+          </div>
         </div>
       </section>
 
