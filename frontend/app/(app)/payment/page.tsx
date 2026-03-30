@@ -41,6 +41,8 @@ const s = {
   spinner: { display: 'inline-block', width: '1rem', height: '1rem', border: '2px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' },
 }
 
+declare const google: { payments: { api: { PaymentsClient: new (config: any) => any } } }
+
 declare global {
   interface Window {
     paypal?: {
@@ -50,6 +52,10 @@ declare global {
         onError: (err: any) => void
         onCancel?: () => void
       }) => { render: (selector: string) => Promise<void> }
+      Googlepay: () => {
+        config: () => Promise<any>
+        confirmOrder: (opts: any) => Promise<any>
+      }
     }
   }
 }
@@ -133,6 +139,63 @@ function PaymentContent() {
     } catch { setError(t.payment.errorPaymentInit) }
   }, [sdkReady, isLoading, router, promoResult, t])
 
+  // Google Pay button
+  useEffect(() => {
+    if (!sdkReady || isLoading || !window.paypal?.Googlepay || promoResult?.valid) return
+    const gpContainer = document.getElementById('googlepay-container')
+    if (!gpContainer || gpContainer.children.length > 0) return
+
+    const initGooglePay = async () => {
+      try {
+        const googlepay = window.paypal!.Googlepay()
+        const gpConfig = await googlepay.config()
+        const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'PRODUCTION' })
+        const { result } = await paymentsClient.isReadyToPay({
+          apiVersion: 2, apiVersionMinor: 0,
+          allowedPaymentMethods: gpConfig.allowedPaymentMethods,
+        })
+        if (!result) return
+
+        const btn = paymentsClient.createButton({
+          onClick: async () => {
+            try {
+              const res = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading' })
+              if (!res.success || !res.paypalOrderId) throw new Error('Order creation failed')
+              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, amount: PRODUCT_AMOUNT }))
+
+              const paymentDataRequest = {
+                apiVersion: 2, apiVersionMinor: 0,
+                allowedPaymentMethods: gpConfig.allowedPaymentMethods,
+                transactionInfo: { totalPriceStatus: 'FINAL', totalPrice: String(PRODUCT_AMOUNT), currencyCode: 'USD', countryCode: 'US' },
+                merchantInfo: gpConfig.merchantInfo,
+              }
+              const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest)
+              setIsProcessing(true); setError('')
+              await googlepay.confirmOrder({
+                orderId: res.paypalOrderId,
+                paymentMethodData: paymentData.paymentMethodData,
+              })
+              const captureResult = await apiClient.capturePayPalPayment(res.paypalOrderId)
+              if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
+                const payment = (captureResult as any).payment
+                sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString() }))
+                sessionStorage.removeItem('pending_order')
+                router.push('/payment/success')
+              } else { setError(t.payment.errorCapturePayment) }
+            } catch (err: any) {
+              if (err.statusCode !== 'CANCELED') setError(err.error || t.payment.errorPaymentGeneral)
+            } finally { setIsProcessing(false) }
+          },
+          buttonColor: 'black', buttonType: 'pay', buttonSizeMode: 'fill',
+        })
+        gpContainer.appendChild(btn)
+      } catch {
+        // Google Pay not available — silently skip
+      }
+    }
+    initGooglePay()
+  }, [sdkReady, isLoading, router, promoResult, t])
+
   const handlePromoValidate = async () => {
     if (!promoCode.trim()) return
     setPromoValidating(true); setError('')
@@ -191,11 +254,17 @@ function PaymentContent() {
   return (
     <>
       {!isPromoFlow && (
-        <Script
-          src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD`}
-          strategy="afterInteractive"
-          onLoad={() => setSdkReady(true)}
-        />
+        <>
+          <Script
+            src="https://pay.google.com/gp/p/js/pay.js"
+            strategy="afterInteractive"
+          />
+          <Script
+            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay&enable-funding=venmo`}
+            strategy="afterInteractive"
+            onLoad={() => setSdkReady(true)}
+          />
+        </>
       )}
 
       <div style={s.page}>
@@ -330,6 +399,7 @@ function PaymentContent() {
                 </div>
               )}
               <div id="paypal-button-container" style={{ display: isProcessing ? 'none' : 'block' }} />
+              <div id="googlepay-container" style={{ display: isProcessing ? 'none' : 'block', marginTop: '0.5rem' }} />
               {!sdkReady && !isProcessing && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 0' }}>
                   <div style={{ ...s.spinner, width: '1.5rem', height: '1.5rem', borderWidth: '2px', marginRight: '0.75rem' }} />
