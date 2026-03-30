@@ -337,6 +337,9 @@ export const translations = {
       shareTitle: '님의 사주 분석 결과',
       shareText: '소명에서 아이의 기질을 분석해보세요!',
       analyzeAnother: '다른 아이 분석하기',
+      siblingHeading: '형제자매는 왜 이렇게 다를까요?',
+      siblingDesc: '형제자매를 분석해서 기질을 비교해보세요. 같은 부모인데 왜 다른지 이해할 수 있어요.',
+      siblingCta: '형제자매 분석하기',
       goHome: '홈으로 돌아가기',
       footerDisclaimer: '본 분석은 동양 철학에 기반한 기질 분석 도구로, 참고 자료로 활용해주세요.',
       elements: {
@@ -849,6 +852,9 @@ export const translations = {
       shareTitle: '\'s Saju Analysis Results',
       shareText: 'Analyze your child\'s temperament with Somyung!',
       analyzeAnother: 'Analyze Another Child',
+      siblingHeading: 'Want to understand why they\'re so different?',
+      siblingDesc: 'Analyze a sibling to compare temperaments. Same parents, different wiring.',
+      siblingCta: 'Analyze Sibling',
       goHome: 'Back to Home',
       footerDisclaimer: 'This analysis is a temperament analysis tool based on Eastern philosophy. Please use as reference material.',
       elements: {
@@ -1352,6 +1358,9 @@ export const translations = {
       shareTitle: 'さんの四柱分析結果',
       shareText: '昭命でお子様の気質を分析してみてください！',
       analyzeAnother: '他のお子様を分析する',
+      siblingHeading: 'なぜこんなに違うのでしょう？',
+      siblingDesc: 'きょうだいを分析して気質を比べてみましょう。同じ親なのに、なぜ違うのか分かります。',
+      siblingCta: 'きょうだいを分析する',
       goHome: 'ホームに戻る',
       footerDisclaimer: '本分析は東洋哲学に基づいた気質分析ツールです。参考資料としてご活用ください。',
       elements: {
@@ -1857,6 +1866,9 @@ export const translations = {
       shareTitle: '的四柱分析结果',
       shareText: '在昭命分析孩子的气质吧！',
       analyzeAnother: '分析其他孩子',
+      siblingHeading: '为什么兄弟姐妹差别这么大？',
+      siblingDesc: '分析兄弟姐妹来比较气质。同样的父母，不同的天性。',
+      siblingCta: '分析兄弟姐妹',
       goHome: '返回首页',
       footerDisclaimer: '本分析是基于东方哲学的气质分析工具，请作为参考资料使用。',
       elements: {
@@ -2372,6 +2384,9 @@ export const translations = {
     shareTitle: ' — Kết quả phân tích Tứ Trụ',
     shareText: 'Phân tích tính cách con bạn với Somyung!',
     analyzeAnother: 'Phân tích trẻ khác',
+    siblingHeading: 'Tại sao anh chị em lại khác nhau đến vậy?',
+    siblingDesc: 'Phân tích anh chị em để so sánh khí chất. Cùng cha mẹ, khác bản chất.',
+    siblingCta: 'Phân tích anh chị em',
     goHome: 'Về trang chủ',
     footerDisclaimer: 'Đây là công cụ phân tích tính cách dựa trên triết học phương Đông. Vui lòng sử dụng làm tài liệu tham khảo.',
     elements: {
@@ -2888,6 +2903,9 @@ export const translations = {
     shareTitle: ' — Hasil Analisis Saju',
     shareText: 'Analisis temperamen anak Anda dengan Somyung!',
     analyzeAnother: 'Analisis Anak Lain',
+    siblingHeading: 'Mengapa mereka begitu berbeda?',
+    siblingDesc: 'Analisis saudara kandung untuk membandingkan temperamen. Orang tua sama, karakter berbeda.',
+    siblingCta: 'Analisis Saudara Kandung',
     goHome: 'Kembali ke Beranda',
     footerDisclaimer: 'Analisis ini adalah alat analisis temperamen berdasarkan filosofi Timur. Harap gunakan sebagai bahan referensi.',
     elements: {
@@ -3404,6 +3422,9 @@ export const translations = {
     shareTitle: ' — Resultados del Análisis Saju',
     shareText: '¡Analiza el temperamento de tu hijo/a con Somyung!',
     analyzeAnother: 'Analizar Otro Niño/a',
+    siblingHeading: '¿Por qué son tan diferentes?',
+    siblingDesc: 'Analiza a un hermano para comparar temperamentos. Mismos padres, diferente naturaleza.',
+    siblingCta: 'Analizar Hermano/a',
     goHome: 'Volver al Inicio',
     footerDisclaimer: 'Este análisis es una herramienta de análisis de temperamento basada en la filosofía oriental. Úsalo como material de referencia.',
     elements: {
@@ -3920,6 +3941,9 @@ export const translations = {
     shareTitle: ' — Resultados da Análise Saju',
     shareText: 'Analise o temperamento do seu filho com Somyung!',
     analyzeAnother: 'Analisar Outra Criança',
+    siblingHeading: 'Por que eles sao tao diferentes?',
+    siblingDesc: 'Analise um irmao para comparar temperamentos. Mesmos pais, naturezas diferentes.',
+    siblingCta: 'Analisar Irmao/Irma',
     goHome: 'Voltar ao Início',
     footerDisclaimer: 'Esta análise é uma ferramenta de análise de temperamento baseada na filosofia oriental. Use apenas como material de referência.',
     elements: {
@@ -4436,6 +4460,9 @@ export const translations = {
     shareTitle: ' — Résultats de l\'analyse Saju',
     shareText: 'Analysez le tempérament de votre enfant avec Somyung !',
     analyzeAnother: 'Analyser un autre enfant',
+    siblingHeading: 'Pourquoi sont-ils si differents ?',
+    siblingDesc: 'Analysez un frere ou une soeur pour comparer les temperaments. Memes parents, natures differentes.',
+    siblingCta: 'Analyser un frere/une soeur',
     goHome: 'Retour à l\'accueil',
     footerDisclaimer: 'Cette analyse est un outil d\'analyse du tempérament basé sur la philosophie orientale. À utiliser à titre indicatif.',
     elements: {
@@ -4952,6 +4979,9 @@ export const translations = {
     shareTitle: ' — ผลวิเคราะห์ซาจู',
     shareText: 'วิเคราะห์นิสัยลูกของคุณกับ Somyung!',
     analyzeAnother: 'วิเคราะห์เด็กคนอื่น',
+    siblingHeading: 'ทำไมพี่น้องถึงต่างกันขนาดนี้?',
+    siblingDesc: 'วิเคราะห์พี่น้องเพื่อเปรียบเทียบนิสัย พ่อแม่เดียวกัน แต่ธรรมชาติต่างกัน',
+    siblingCta: 'วิเคราะห์พี่น้อง',
     goHome: 'กลับหน้าแรก',
     footerDisclaimer: 'การวิเคราะห์นี้เป็นเครื่องมือวิเคราะห์นิสัยตามปรัชญาตะวันออก กรุณาใช้เป็นข้อมูลอ้างอิง',
     elements: {

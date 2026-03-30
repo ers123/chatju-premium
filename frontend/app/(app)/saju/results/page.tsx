@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { apiClient } from '@/lib/api'
 import { useLanguage } from '@/app/lib/i18n/context'
 import ReactMarkdown from 'react-markdown'
+import ShareableResultCard from '@/components/saju/ShareableResultCard'
 
 // Types
 interface FourPillar {
@@ -804,34 +805,71 @@ export default function ResultsPage() {
         )}
 
 
-        {/* Actions */}
-        <section style={{ textAlign: 'center', paddingBottom: '3rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'center', marginBottom: '1.5rem' }}>
-            <button
-              onClick={() => {
-                if (typeof window !== 'undefined' && navigator.share) {
-                  navigator.share({
-                    title: `${inputData?.name}${sr.shareTitle}`,
-                    text: sr.shareText,
-                    url: window.location.href
-                  })
-                }
-              }}
-              style={{ padding: '0.75rem 1.5rem', borderRadius: '0.75rem', fontWeight: 600, border: '2px solid #EBE5DF', color: '#6B5E52', background: 'none', cursor: 'pointer', fontSize: '1rem' }}
-            >
-              {sr.shareResult}
-            </button>
-            <Link href="/saju/input">
-              <button
-                style={{ padding: '0.75rem 1.5rem', borderRadius: '0.75rem', fontWeight: 600, border: '2px solid #EBE5DF', color: '#6B5E52', background: 'none', cursor: 'pointer', fontSize: '1rem' }}
-              >
-                {sr.analyzeAnother}
-              </button>
+        {/* Share Card + Sibling Prompt */}
+        <section style={{ paddingBottom: '3rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+            {/* Visual share card */}
+            {result && inputData && (() => {
+              const dominant = getDominantElement(result.ohaengBalance)
+              const visual = elementVisuals[dominant]
+              const elInfo = sr.elements?.[dominant as keyof typeof sr.elements]
+              const dominantName = elInfo?.name || dominant
+              const traitList = elInfo?.traits || []
+              return (
+                <ShareableResultCard
+                  childName={inputData.name}
+                  dominantElement={dominant}
+                  elementEmoji={visual.emoji}
+                  elementColor={visual.color}
+                  elementBgColor={visual.bgColor}
+                  traits={traitList}
+                  ohaengBalance={result.ohaengBalance}
+                  elementLabel={dominantName}
+                  shareText={sr.shareText}
+                  shareTitle={`${inputData.name}${sr.shareTitle}`}
+                  buttonLabel={sr.shareResult}
+                  downloadLabel={sr.shareResult}
+                />
+              )
+            })()}
+
+            {/* Sibling comparison prompt */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(184, 146, 45, 0.06) 0%, rgba(90, 122, 102, 0.06) 100%)',
+              borderRadius: '1rem',
+              padding: '1.5rem',
+              border: '1px solid rgba(184, 146, 45, 0.15)',
+              textAlign: 'center',
+            }}>
+              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#2C2420', marginBottom: '0.5rem', fontFamily: 'serif' }}>
+                {sr.siblingHeading || 'Want to understand why they\'re so different?'}
+              </p>
+              <p style={{ fontSize: '0.875rem', color: '#6B5E52', marginBottom: '1rem', lineHeight: 1.6 }}>
+                {sr.siblingDesc || 'Analyze a sibling to compare temperaments'}
+              </p>
+              <Link href={`/saju/input?from=sibling&siblingName=${encodeURIComponent(inputData?.name || '')}&siblingElement=${getDominantElement(result?.ohaengBalance || {})}`}>
+                <button style={{
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.75rem',
+                  fontWeight: 600,
+                  color: '#FFFFFF',
+                  background: '#1A3D2E',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  width: '100%',
+                }}>
+                  {sr.siblingCta || 'Analyze Sibling'}
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <Link href="/" style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'none' }}>
+              {sr.goHome}
             </Link>
           </div>
-          <Link href="/" style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'none' }}>
-            {sr.goHome}
-          </Link>
         </section>
       </main>
 
