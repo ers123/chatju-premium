@@ -6,7 +6,7 @@ import { Language } from '../../lib/i18n/translations'
 import { getMetadataForLang } from '../../lib/i18n/metadata'
 import { getJsonLdForLang, getSpeakableJsonLd } from '../../lib/i18n/jsonld'
 
-const SUPPORTED: Language[] = ['en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th']
+const SUPPORTED: Language[] = ['ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th']
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
 export function generateStaticParams() {

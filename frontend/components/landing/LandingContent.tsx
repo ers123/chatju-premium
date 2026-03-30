@@ -114,7 +114,7 @@ export default function LandingPage() {
             </span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <LanguageSwitcher currentLang={lang} onSelect={setLang} />
+            <LanguageSwitcher currentLang={lang} onSelect={setLang} mode="navigate" />
             <Link href="/saju/input">
               <button style={{
                 height: '44px',

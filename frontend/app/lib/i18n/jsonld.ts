@@ -3,7 +3,6 @@ import { Language, translations } from './translations'
 const BASE_URL = 'https://somyung.cc'
 
 function langUrl(lang: Language, path: string = '/'): string {
-  if (lang === 'ko') return `${BASE_URL}${path}`
   return `${BASE_URL}/${lang}${path === '/' ? '/' : path}`
 }
 

@@ -6,7 +6,6 @@ const BASE_URL = 'https://somyung.cc'
 const LANGUAGES: Language[] = ['ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th']
 
 function langUrl(lang: Language, path: string = '/'): string {
-  if (lang === 'ko') return `${BASE_URL}${path}`
   return `${BASE_URL}/${lang}${path === '/' ? '/' : path}`
 }
 
@@ -15,7 +14,7 @@ function buildHreflang(path: string = '/'): Record<string, string> {
   for (const lang of LANGUAGES) {
     hreflang[lang] = langUrl(lang, path)
   }
-  hreflang['x-default'] = `${BASE_URL}${path}`
+  hreflang['x-default'] = langUrl('en', path)
   return hreflang
 }
 

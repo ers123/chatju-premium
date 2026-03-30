@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   // Static export for Cloudflare Pages
   output: 'export',
 
+  // Generate /en/index.html instead of /en.html — required for CF Pages
+  // to resolve routes when both en.html and en/ directory exist
+  trailingSlash: true,
+
   // Disable image optimization for static export
   images: {
     unoptimized: true,

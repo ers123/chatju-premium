@@ -1,10 +1,14 @@
 # Legacy query-string language URLs → new static routes
-/?lang=en  /en  301
-/?lang=ja  /ja  301
-/?lang=zh  /zh  301
-/?lang=vi  /vi  301
-/?lang=id  /id  301
-/?lang=es  /es  301
-/?lang=pt  /pt  301
-/?lang=fr  /fr  301
-/?lang=th  /th  301
+/?lang=en  /en/  301
+/?lang=ja  /ja/  301
+/?lang=zh  /zh/  301
+/?lang=vi  /vi/  301
+/?lang=id  /id/  301
+/?lang=es  /es/  301
+/?lang=pt  /pt/  301
+/?lang=fr  /fr/  301
+/?lang=th  /th/  301
+
+# App route shortcuts
+/saju   /saju/input/  301
+/saju/  /saju/input/  301

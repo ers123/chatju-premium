@@ -88,7 +88,7 @@ export function LanguageSwitcher({ currentLang, onSelect, mode = 'state', basePa
               key={lang.code}
               onClick={() => {
                 if (mode === 'navigate') {
-                  const path = lang.code === 'ko' ? basePath : `/${lang.code}${basePath === '/' ? '' : basePath}`
+                  const path = `/${lang.code}${basePath === '/' ? '/' : basePath}`
                   router.push(path)
                 } else {
                   onSelect(lang.code)

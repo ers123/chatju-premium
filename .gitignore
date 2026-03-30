@@ -53,3 +53,4 @@ __pycache__/
 # Supabase (local development)
 .supabase/
 backend/somyung-deploy_accessKeys.csv
+.gstack/
