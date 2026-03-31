@@ -545,18 +545,18 @@ export default function InputFormPage() {
                       <span style={{ fontSize: '2.5rem' }}>{childZodiacInfo.branch.icon}</span>
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.zodiacLabel}</div>
-                        <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{s.animals?.[childZodiacInfo.branch.key] || childZodiacInfo.branch.key}{s.zodiacSuffix}</div>
+                        <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{(s.animals as Record<string, string>)?.[childZodiacInfo.branch.key] || childZodiacInfo.branch.key}{s.zodiacSuffix}</div>
                       </div>
                       <div style={{ width: '1px', height: '2rem', background: '#E5E7EB' }} />
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.fiveElements}</div>
                         <div style={{ fontWeight: 700, color: childZodiacInfo.stem.colorCode }}>
-                          {s.elements?.[childZodiacInfo.stem.key] || childZodiacInfo.stem.key}
+                          {(s.elements as Record<string, string>)?.[childZodiacInfo.stem.key] || childZodiacInfo.stem.key}
                         </div>
                       </div>
                     </div>
                     <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#4B5563' }}>
-                      {s.yearBornZodiac(formData.year, s.animals?.[childZodiacInfo.branch.key] || childZodiacInfo.branch.key)}
+                      {s.yearBornZodiac(formData.year, (s.animals as Record<string, string>)?.[childZodiacInfo.branch.key] || childZodiacInfo.branch.key)}
                     </p>
                   </div>
                 )}
@@ -1047,13 +1047,13 @@ export default function InputFormPage() {
                           <span style={{ fontSize: '1.875rem' }}>{parentZodiacInfo.branch.icon}</span>
                           <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.zodiacLabel}</div>
-                            <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{s.animals?.[parentZodiacInfo.branch.key] || parentZodiacInfo.branch.key}{s.zodiacSuffix}</div>
+                            <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{(s.animals as Record<string, string>)?.[parentZodiacInfo.branch.key] || parentZodiacInfo.branch.key}{s.zodiacSuffix}</div>
                           </div>
                           <div style={{ width: '1px', height: '2rem', background: '#E5E7EB' }} />
                           <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.fiveElements}</div>
                             <div style={{ fontWeight: 700, color: parentZodiacInfo.stem.colorCode }}>
-                              {s.elements?.[parentZodiacInfo.stem.key] || parentZodiacInfo.stem.key}
+                              {(s.elements as Record<string, string>)?.[parentZodiacInfo.stem.key] || parentZodiacInfo.stem.key}
                             </div>
                           </div>
                         </div>
