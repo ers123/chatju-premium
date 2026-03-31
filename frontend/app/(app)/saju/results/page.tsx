@@ -428,7 +428,7 @@ export default function ResultsPage() {
           maxWidth: '24rem',
           background: '#FFFFFF',
           padding: '3rem 2rem',
-          borderRadius: '1.5rem',
+          borderRadius: '12px',
           boxShadow: '0 4px 24px rgba(0,0,0,0.06)'
         }}>
           <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>😢</div>
@@ -447,7 +447,7 @@ export default function ResultsPage() {
               padding: '1rem 2rem',
               background: '#1A3D2E',
               color: '#FFFFFF',
-              borderRadius: '0.75rem',
+              borderRadius: '10px',
               fontWeight: 700,
               border: 'none',
               cursor: 'pointer',
@@ -527,13 +527,13 @@ export default function ResultsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button
               onClick={handlePdfExport}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: '0.5rem', border: '1px solid #EBE5DF', background: 'none', cursor: 'pointer' }}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: '10px', border: '1px solid #EBE5DF', background: 'none', cursor: 'pointer' }}
             >
               {sr.savePdf}
             </button>
             <button
               onClick={() => router.push('/chat')}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 700, color: '#FFFFFF', background: '#B8922D', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 700, color: '#FFFFFF', background: '#B8922D', borderRadius: '10px', border: 'none', cursor: 'pointer' }}
             >
               {sr.aiConsult}
             </button>
@@ -543,9 +543,9 @@ export default function ResultsPage() {
 
       <main style={{ maxWidth: '48rem', margin: '0 auto', padding: '2rem 1.5rem' }} ref={reportRef}>
         {/* Hero Result Card */}
-        <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
+        <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '9999px', background: 'rgba(184,146,45,0.1)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '6px', background: 'rgba(184,146,45,0.1)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>
               ✨ {sr.freeBadge}
             </div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginBottom: '0.5rem' }}>
@@ -558,7 +558,7 @@ export default function ResultsPage() {
           </div>
 
           {/* Main Temperament */}
-          <div style={{ borderRadius: '1rem', padding: '1.5rem', marginBottom: '2rem', backgroundColor: dominantVisual.bgColor }}>
+          <div style={{ borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', backgroundColor: dominantVisual.bgColor }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
               <div style={{ width: '4rem', height: '4rem', borderRadius: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.875rem', background: '#FFFFFF', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                 {dominantVisual.emoji}
@@ -572,7 +572,7 @@ export default function ResultsPage() {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
               {dominantElInfo.traits.map((trait, i) => (
-                <span key={i} style={{ padding: '0.25rem 0.75rem', borderRadius: '9999px', background: '#FFFFFF', fontSize: '0.875rem', fontWeight: 500, color: dominantVisual.color }}>
+                <span key={i} style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', background: '#FFFFFF', fontSize: '0.875rem', fontWeight: 500, color: dominantVisual.color }}>
                   {trait}
                 </span>
               ))}
@@ -584,7 +584,7 @@ export default function ResultsPage() {
 
           {/* AI Interpretation */}
           {result.preview && (
-            <div style={{ borderRadius: '1rem', padding: '1.5rem', marginBottom: '2rem', background: 'linear-gradient(to bottom right, #F8F6F3, #FFF8E1)', border: '1px solid rgba(184,146,45,0.2)' }}>
+            <div style={{ borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', background: 'linear-gradient(to bottom right, #F8F6F3, #FFF8E1)', border: '1px solid rgba(184,146,45,0.2)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(184,146,45,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem' }}>🔮</div>
                 <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1A3D2E' }}>{sr.aiInterpretation}</h3>
@@ -626,7 +626,7 @@ export default function ResultsPage() {
 
 
         {/* FREE: Learning Style */}
-        <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
+        <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
             <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>📚</div>
             <div>
@@ -637,7 +637,7 @@ export default function ResultsPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Recommended Learning Style */}
-            <div style={{ padding: '1.25rem', borderRadius: '1rem', backgroundColor: dominantVisual.bgColor }}>
+            <div style={{ padding: '1.25rem', borderRadius: '12px', backgroundColor: dominantVisual.bgColor }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <span style={{ fontSize: '1.125rem' }}>{dominantVisual.emoji}</span>
                 <h4 style={{ fontWeight: 700, color: dominantVisual.color }}>
@@ -652,7 +652,7 @@ export default function ResultsPage() {
             </div>
 
             {/* Weak Element Supplement */}
-            <div style={{ padding: '1.25rem', borderRadius: '1rem', backgroundColor: '#F8F6F3' }}>
+            <div style={{ padding: '1.25rem', borderRadius: '12px', backgroundColor: '#F8F6F3' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <span style={{ fontSize: '1.125rem' }}>{weakVisual.emoji}</span>
                 <h4 style={{ fontWeight: 700, color: '#6B5E52' }}>
@@ -697,10 +697,10 @@ export default function ResultsPage() {
         {premiumReport ? (
           <>
             {/* Premium Report Header */}
-            <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '1.5rem', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
+            <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '12px', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, right: 0, width: '10rem', height: '10rem', background: 'rgba(184,146,45,0.1)', borderRadius: '50%', filter: 'blur(48px)' }} />
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 1rem', borderRadius: '9999px', background: 'rgba(184,146,45,0.2)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 700, marginBottom: '1rem' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 1rem', borderRadius: '6px', background: 'rgba(184,146,45,0.2)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 700, marginBottom: '1rem' }}>
                   <CheckIcon /> 프리미엄 분석 완료
                 </div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif' }}>{sr.premiumTitle}</h2>
@@ -708,7 +708,7 @@ export default function ResultsPage() {
             </section>
 
             {/* Premium Report — rendered as markdown */}
-            <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
+            <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
               <div style={{ color: '#4B4035', maxWidth: 'none' }}>
                 <ReactMarkdown
                   components={{
@@ -760,7 +760,7 @@ export default function ResultsPage() {
             </section>
           </>
         ) : premiumLoading ? (
-          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
+          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
             <div style={{ position: 'relative', width: '4rem', height: '4rem', margin: '0 auto 1rem' }}>
               <div style={{ position: 'absolute', inset: 0, border: '4px solid #EBE5DF', borderRadius: '50%' }} />
               <div style={{ position: 'absolute', inset: 0, border: '4px solid #B8922D', borderRadius: '50%', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
@@ -769,11 +769,11 @@ export default function ResultsPage() {
             <p style={{ color: '#8B8580' }}>AI가 심층 분석을 수행하고 있습니다. 잠시만 기다려주세요.</p>
           </section>
         ) : premiumError ? (
-          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
+          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
             <p style={{ color: '#C67B6F' }}>{premiumError}</p>
           </section>
         ) : (
-          <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '1.5rem', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
+          <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '12px', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: '10rem', height: '10rem', background: 'rgba(184,146,45,0.1)', borderRadius: '50%', filter: 'blur(48px)' }} />
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -795,7 +795,7 @@ export default function ResultsPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <button
                   onClick={() => router.push('/payment')}
-                  style={{ flex: 1, padding: '1rem', borderRadius: '0.75rem', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
+                  style={{ flex: 1, padding: '1rem', borderRadius: '10px', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
                 >
                   프리미엄 분석 시작하기 — $4.99
                 </button>
@@ -836,7 +836,7 @@ export default function ResultsPage() {
             {/* Sibling comparison prompt */}
             <div style={{
               background: 'linear-gradient(135deg, rgba(184, 146, 45, 0.06) 0%, rgba(90, 122, 102, 0.06) 100%)',
-              borderRadius: '1rem',
+              borderRadius: '12px',
               padding: '1.5rem',
               border: '1px solid rgba(184, 146, 45, 0.15)',
               textAlign: 'center',
@@ -847,10 +847,9 @@ export default function ResultsPage() {
               <p style={{ fontSize: '0.875rem', color: '#6B5E52', marginBottom: '1rem', lineHeight: 1.6 }}>
                 {sr.siblingDesc || 'Analyze a sibling to compare temperaments'}
               </p>
-              <Link href={`/saju/input?from=sibling&siblingName=${encodeURIComponent(inputData?.name || '')}&siblingElement=${getDominantElement(result?.ohaengBalance || {})}`}>
-                <button style={{
+              <Link href={`/saju/input?from=sibling&siblingName=${encodeURIComponent(inputData?.name || '')}&siblingElement=${getDominantElement(result?.ohaengBalance || {})}`} style={{
                   padding: '0.75rem 1.5rem',
-                  borderRadius: '0.75rem',
+                  borderRadius: '10px',
                   fontWeight: 600,
                   color: '#FFFFFF',
                   background: '#1A3D2E',
@@ -858,9 +857,13 @@ export default function ResultsPage() {
                   cursor: 'pointer',
                   fontSize: '0.95rem',
                   width: '100%',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxSizing: 'border-box',
                 }}>
                   {sr.siblingCta || 'Analyze Sibling'}
-                </button>
               </Link>
             </div>
           </div>

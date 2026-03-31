@@ -66,7 +66,7 @@ export default function SignUpPage() {
           <div style={{
             background: 'rgba(255,255,255,0.95)',
             border: '1px solid rgba(235,229,223,0.6)',
-            borderRadius: '1.25rem',
+            borderRadius: '12px',
             padding: '3rem',
             textAlign: 'center',
             boxShadow: '0 20px 40px -5px rgba(45,58,53,0.1)'
@@ -108,8 +108,7 @@ export default function SignUpPage() {
             }}>
               {t.auth.clickLinkToComplete}
             </p>
-            <Link href="/auth/signin">
-              <button style={{
+            <Link href="/auth/signin" style={{
                 padding: '1rem 2rem',
                 fontSize: '0.9375rem',
                 fontWeight: 700,
@@ -118,17 +117,20 @@ export default function SignUpPage() {
                 cursor: 'pointer',
                 background: '#2D3A35',
                 color: '#C5A059',
-                boxShadow: '0 4px 12px rgba(45,58,53,0.15)'
+                boxShadow: '0 4px 12px rgba(45,58,53,0.15)',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
                 {t.auth.goToLogin}
-              </button>
             </Link>
           </div>
         ) : (
           <div style={{
             background: 'rgba(255,255,255,0.95)',
             border: '1px solid rgba(235,229,223,0.6)',
-            borderRadius: '1.25rem',
+            borderRadius: '12px',
             padding: '2.5rem',
             boxShadow: '0 20px 40px -5px rgba(45,58,53,0.08)'
           }}>

@@ -128,7 +128,7 @@ function PaymentFailContent() {
                 backgroundColor: '#2D3A35',
                 color: '#C5A059',
                 border: 'none',
-                borderRadius: '1.25rem',
+                borderRadius: '10px',
                 fontSize: '1rem',
                 cursor: 'pointer',
               }}
@@ -147,7 +147,7 @@ function PaymentFailContent() {
                 backgroundColor: 'transparent',
                 color: '#2D3A35',
                 border: '1px solid rgba(235, 229, 223, 0.8)',
-                borderRadius: '1.25rem',
+                borderRadius: '10px',
                 fontSize: '1rem',
                 boxSizing: 'border-box',
               }}
@@ -166,7 +166,7 @@ function PaymentFailContent() {
             padding: '1.5rem',
             backgroundColor: '#FFFFFF',
             border: '1px solid rgba(235, 229, 223, 0.6)',
-            borderRadius: '1.25rem',
+            borderRadius: '12px',
           }}>
             <h3 style={{ fontFamily: 'serif', color: '#2D3A35', marginBottom: '0.75rem' }}>{t.payment.failHelpTitle}</h3>
             <ul style={{

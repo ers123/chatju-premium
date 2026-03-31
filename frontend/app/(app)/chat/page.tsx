@@ -137,7 +137,7 @@ export default function ChatPage() {
               color: registryHovered ? '#C5A059' : '#6B5E52',
               border: registryHovered ? '1px solid #C5A059' : '1px solid rgba(235,229,223,0.6)',
               padding: '0.5rem 1rem',
-              borderRadius: '9999px',
+              borderRadius: '10px',
               textDecoration: 'none',
               textTransform: 'uppercase',
               transition: 'all 0.2s'
@@ -233,7 +233,7 @@ export default function ChatPage() {
                     padding: '0.625rem 1.25rem',
                     background: 'rgba(255,255,255,0.95)',
                     border: hoveredSuggestion === index ? '1px solid #C5A059' : '1px solid rgba(235,229,223,0.6)',
-                    borderRadius: '9999px',
+                    borderRadius: '10px',
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     color: hoveredSuggestion === index ? '#C5A059' : '#6B5E52',

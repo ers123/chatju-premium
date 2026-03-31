@@ -101,7 +101,7 @@ export default function AboutContent() {
                 border: '1px solid rgba(196, 168, 130, 0.3)',
                 color: '#C4A882',
                 padding: '6px 14px',
-                borderRadius: '20px',
+                borderRadius: '6px',
                 fontSize: '13px',
                 fontWeight: 500,
               }}>
@@ -172,7 +172,7 @@ export default function AboutContent() {
           <div style={{
             background: 'linear-gradient(135deg, rgba(196,168,130,0.08), rgba(196,168,130,0.03))',
             border: '1px solid rgba(196,168,130,0.2)',
-            borderRadius: '16px',
+            borderRadius: '12px',
             padding: '32px',
             textAlign: 'center',
           }}>
@@ -184,7 +184,7 @@ export default function AboutContent() {
               background: 'linear-gradient(135deg, #C4A882, #A67C52)',
               color: '#1A1410',
               padding: '14px 32px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               fontWeight: 700,
               fontSize: '15px',
               textDecoration: 'none',

@@ -151,8 +151,7 @@ export default function LandingPage() {
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <LanguageSwitcher currentLang={lang} onSelect={setLang} mode="navigate" />
-            <Link href="/saju/input">
-              <button style={{
+            <Link href="/saju/input" style={{
                 height: '44px',
                 padding: '0 28px',
                 fontSize: '15px',
@@ -160,12 +159,15 @@ export default function LandingPage() {
                 color: '#FFFFFF',
                 background: '#2C2420',
                 border: 'none',
-                borderRadius: '22px',
+                borderRadius: '10px',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
                 {t.nav.start}
-              </button>
             </Link>
           </div>
         </div>
@@ -242,8 +244,7 @@ export default function LandingPage() {
             alignItems: 'center',
             marginBottom: '28px'
           }}>
-            <Link href="/saju/input">
-              <button style={{
+            <Link href="/saju/input" style={{
                 height: 'clamp(52px, 8vw, 60px)',
                 padding: '0 clamp(28px, 6vw, 44px)',
                 fontSize: 'clamp(15px, 3.5vw, 17px)',
@@ -251,19 +252,22 @@ export default function LandingPage() {
                 color: '#FFFFFF',
                 background: '#1A3D2E',
                 border: 'none',
-                borderRadius: '30px',
+                borderRadius: '10px',
                 cursor: 'pointer',
                 boxShadow: '0 4px 20px rgba(26, 61, 46, 0.25)',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
                 {t.hero.cta}
-              </button>
             </Link>
           </div>
 
           <p style={{
             fontSize: 'clamp(12px, 3vw, 14px)',
-            color: '#999999',
+            color: '#767676',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -391,18 +395,6 @@ export default function LandingPage() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Subtle radial glow */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '600px',
-          height: '600px',
-          background: 'radial-gradient(circle, rgba(184, 146, 45, 0.06) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-
         <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
           {/* Section heading */}
           <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: 'clamp(48px, 8vw, 72px)' }}>
@@ -428,12 +420,12 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          {/* Two-column comparison */}
+          {/* Two-column comparison — asymmetric: MBTI small, Saju emphasized */}
           <div data-reveal style={{
             ...revealDelayStyle(1),
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: 'clamp(16px, 3vw, 32px)',
+            gridTemplateColumns: '2fr 3fr',
+            gap: 'clamp(16px, 3vw, 24px)',
             marginBottom: 'clamp(48px, 8vw, 64px)',
           }}>
             {/* MBTI Card — muted */}
@@ -479,7 +471,7 @@ export default function LandingPage() {
               padding: 'clamp(28px, 5vw, 40px)',
               border: '1px solid rgba(184, 146, 45, 0.25)',
               textAlign: 'center',
-              boxShadow: '0 0 60px rgba(184, 146, 45, 0.08)',
+              boxShadow: '0 4px 24px rgba(184, 146, 45, 0.06)',
             }}>
               <p style={{
                 fontSize: 'clamp(44px, 10vw, 72px)',
@@ -580,23 +572,23 @@ export default function LandingPage() {
           </div>
 
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '20px'
+            maxWidth: '640px',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '28px'
           }}>
             {t.problems.items.map((item, idx) => (
               <div key={idx} data-reveal style={{
-                ...revealDelayStyle((idx % 2) + 1),
-                background: '#FEFDFB',
-                borderRadius: '20px',
-                padding: '32px',
-                border: '1px solid rgba(0, 0, 0, 0.04)'
+                ...revealDelayStyle(idx + 1),
+                paddingLeft: '24px',
+                borderLeft: '2px solid rgba(184, 146, 45, 0.3)',
               }}>
                 <h3 style={{
                   fontSize: '18px',
                   fontWeight: 600,
                   color: '#2C2420',
-                  marginBottom: '10px',
+                  marginBottom: '8px',
                   letterSpacing: '-0.02em'
                 }}>
                   &ldquo;{item.title}&rdquo;
@@ -604,13 +596,47 @@ export default function LandingPage() {
                 <p style={{
                   fontSize: '15px',
                   color: '#666666',
-                  lineHeight: 1.6,
+                  lineHeight: 1.7,
                   margin: 0
                 }}>
                   {item.desc}
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Problem → Solution bridge */}
+          <div data-reveal style={{
+            ...revealStyle,
+            textAlign: 'center',
+            marginTop: '48px',
+          }}>
+            <p style={{
+              fontSize: '17px',
+              color: '#4A3F36',
+              fontFamily: '"Nanum Myeongjo", serif',
+              lineHeight: 1.7,
+              marginBottom: '24px',
+            }}>
+              {t.problems.bridge || '아이의 타고난 기질을 알면, 답이 보입니다.'}
+            </p>
+            <Link href="/saju/input" style={{
+                padding: '14px 36px',
+                fontSize: '16px',
+                fontWeight: 600,
+                color: '#FFFFFF',
+                background: '#1A3D2E',
+                border: 'none',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(26, 61, 46, 0.12)',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                {t.problems.cta || '3분 무료 분석 시작하기'}
+            </Link>
           </div>
         </div>
       </section>
@@ -635,7 +661,7 @@ export default function LandingPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '8px 16px',
-              borderRadius: '100px',
+              borderRadius: '6px',
               background: 'rgba(184, 146, 45, 0.08)',
               border: '1px solid rgba(184, 146, 45, 0.2)',
               marginBottom: '32px'
@@ -739,73 +765,85 @@ export default function LandingPage() {
           </div>
 
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '24px'
+            maxWidth: '640px',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
           }}>
             {t.howItWorks.items.map((item, idx) => (
               <div key={idx} data-reveal style={{
                 ...revealDelayStyle(idx + 1),
-                background: '#FFFFFF',
-                borderRadius: '8px',
-                padding: '32px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                 display: 'flex',
-                flexDirection: 'column'
+                gap: '24px',
               }}>
-                <div style={{
-                  width: '32px',
-                  height: '3px',
-                  background: '#B8922D',
-                  marginBottom: '20px',
-                  borderRadius: '2px'
-                }} />
-
-                <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: 600,
-                  color: '#212529',
-                  marginBottom: '16px',
-                  letterSpacing: '-0.01em',
-                  lineHeight: 1.2
-                }}>
-                  {item.title}
-                </h3>
-
-                <p style={{
-                  fontSize: '16px',
-                  color: '#6C757D',
-                  lineHeight: 1.5,
-                  marginBottom: '24px',
-                  flex: 1
-                }}>
-                  {item.desc}
-                </p>
-
-                <div style={{
-                  borderLeft: '3px solid #B8922D',
-                  paddingLeft: '16px',
-                  background: '#F8F9FA',
-                  padding: '16px',
-                  borderRadius: '0 6px 6px 0'
-                }}>
-                  <p style={{
+                {/* Step number + connector line */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: '#1A3D2E',
+                    color: '#FFFFFF',
                     fontSize: '14px',
-                    color: '#343A40',
-                    lineHeight: 1.6,
-                    margin: 0,
-                    fontStyle: 'italic'
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}>
-                    &ldquo;{item.example}&rdquo;
+                    {idx + 1}
+                  </div>
+                  {idx < t.howItWorks.items.length - 1 && (
+                    <div style={{ width: '1px', flex: 1, background: '#DDD6CC', margin: '8px 0' }} />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div style={{ paddingBottom: '40px' }}>
+                  <h3 style={{
+                    fontSize: '20px',
+                    fontWeight: 600,
+                    color: '#212529',
+                    marginBottom: '10px',
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.3
+                  }}>
+                    {item.title}
+                  </h3>
+
+                  <p style={{
+                    fontSize: '16px',
+                    color: '#6C757D',
+                    lineHeight: 1.6,
+                    marginBottom: '16px',
+                  }}>
+                    {item.desc}
                   </p>
+
+                  <div style={{
+                    borderLeft: '2px solid rgba(184, 146, 45, 0.3)',
+                    paddingLeft: '16px',
+                    background: '#F8F9FA',
+                    padding: '14px 16px',
+                    borderRadius: '0 8px 8px 0'
+                  }}>
+                    <p style={{
+                      fontSize: '14px',
+                      color: '#4A3F36',
+                      lineHeight: 1.6,
+                      margin: 0,
+                      fontStyle: 'italic'
+                    }}>
+                      &ldquo;{item.example}&rdquo;
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '64px' }}>
-            <Link href="/saju/input">
-              <button style={{
+            <Link href="/saju/input" style={{
                 height: '60px',
                 padding: '0 48px',
                 fontSize: '17px',
@@ -813,12 +851,15 @@ export default function LandingPage() {
                 color: '#FFFFFF',
                 background: '#1A3D2E',
                 border: 'none',
-                borderRadius: '30px',
+                borderRadius: '10px',
                 cursor: 'pointer',
-                boxShadow: '0 4px 20px rgba(26, 61, 46, 0.25)'
+                boxShadow: '0 4px 20px rgba(26, 61, 46, 0.25)',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
                 {t.howItWorks.cta}
-              </button>
             </Link>
           </div>
         </div>
@@ -843,49 +884,86 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '24px'
-          }}>
-            {t.testimonials.items.map((item, idx) => (
-              <div key={idx} data-reveal style={{
-                ...revealDelayStyle(idx + 1),
-                background: '#FEFDFB',
-                borderRadius: '20px',
-                padding: '32px',
-                border: '1px solid rgba(0, 0, 0, 0.04)'
+          <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+            {/* Featured testimonial */}
+            {t.testimonials.items.length > 0 && (
+              <div data-reveal style={{
+                ...revealStyle,
+                textAlign: 'center',
+                marginBottom: '40px',
               }}>
                 <span style={{
                   display: 'inline-block',
                   padding: '6px 14px',
-                  borderRadius: '100px',
-                  background: 'rgba(184, 146, 45, 0.12)',
+                  borderRadius: '6px',
+                  background: 'rgba(184, 146, 45, 0.08)',
+                  border: '1px solid rgba(184, 146, 45, 0.15)',
                   color: '#7A6420',
                   fontSize: '13px',
                   fontWeight: 600,
-                  marginBottom: '20px'
-                }}>
-                  {item.tag}
-                </span>
-                <p style={{
-                  fontSize: '16px',
-                  color: '#333333',
-                  lineHeight: 1.8,
                   marginBottom: '24px'
                 }}>
-                  &ldquo;{item.quote}&rdquo;
-                </p>
+                  {t.testimonials.items[0].tag}
+                </span>
                 <p style={{
-                  fontSize: '14px',
-                  color: '#888888',
-                  fontWeight: 500,
-                  margin: 0
+                  fontSize: '20px',
+                  color: '#2C2420',
+                  lineHeight: 1.8,
+                  fontFamily: '"Nanum Myeongjo", serif',
+                  marginBottom: '16px',
+                  whiteSpace: 'pre-line',
                 }}>
-                  — {item.author}
+                  &ldquo;{t.testimonials.items[0].quote}&rdquo;
+                </p>
+                <p style={{ fontSize: '14px', color: '#9B8B7A' }}>
+                  — {t.testimonials.items[0].author}
                 </p>
               </div>
-            ))}
+            )}
+
+            {/* Supporting testimonials */}
+            {t.testimonials.items.length > 1 && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '16px',
+                paddingTop: '32px',
+                borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+              }}>
+                {t.testimonials.items.slice(1).map((item, idx) => (
+                  <div key={idx} data-reveal style={{
+                    ...revealDelayStyle(idx + 1),
+                    background: '#FAF8F5',
+                    borderRadius: '12px',
+                    padding: '24px',
+                  }}>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      background: 'rgba(184, 146, 45, 0.08)',
+                      color: '#7A6420',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      marginBottom: '14px'
+                    }}>
+                      {item.tag}
+                    </span>
+                    <p style={{
+                      fontSize: '15px',
+                      color: '#333333',
+                      lineHeight: 1.7,
+                      marginBottom: '12px'
+                    }}>
+                      &ldquo;{item.quote}&rdquo;
+                    </p>
+                    <p style={{ fontSize: '13px', color: '#9B8B7A', margin: 0 }}>
+                      — {item.author}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -933,7 +1011,7 @@ export default function LandingPage() {
               color: '#FFFFFF',
               background: '#2D3A35',
               border: 'none',
-              borderRadius: '27px',
+              borderRadius: '10px',
               cursor: 'pointer',
               boxShadow: '0 2px 12px rgba(45, 58, 53, 0.2)',
               display: 'inline-flex',
@@ -971,7 +1049,7 @@ export default function LandingPage() {
                 color: '#6B5E52',
                 fontWeight: 500,
                 padding: '10px 20px',
-                borderRadius: '100px',
+                borderRadius: '6px',
                 background: 'rgba(184, 146, 45, 0.06)',
                 border: '1px solid rgba(184, 146, 45, 0.12)'
               }}>
@@ -1016,7 +1094,9 @@ export default function LandingPage() {
               background: 'rgba(255, 255, 255, 0.04)',
               borderRadius: '24px',
               padding: '40px 32px',
-              border: '1px solid rgba(255, 255, 255, 0.08)'
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              flexDirection: 'column',
             }}>
               <h3 style={{
                 fontSize: '16px',
@@ -1030,7 +1110,7 @@ export default function LandingPage() {
                 color: '#FFFFFF',
                 marginBottom: '32px'
               }}>{t.pricing.free.price}</p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px' }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', flex: 1 }}>
                 {t.pricing.free.features.map((item, i) => (
                   <li key={i} style={{
                     display: 'flex',
@@ -1044,8 +1124,8 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/saju/input" style={{ display: 'block' }}>
-                <button style={{
+              <Link href="/saju/input" style={{
+                  display: 'flex',
                   width: '100%',
                   height: '52px',
                   fontSize: '15px',
@@ -1053,11 +1133,13 @@ export default function LandingPage() {
                   color: '#FFFFFF',
                   background: 'transparent',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '26px',
-                  cursor: 'pointer'
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}>
                   {t.pricing.free.cta}
-                </button>
               </Link>
             </div>
 
@@ -1067,7 +1149,9 @@ export default function LandingPage() {
               background: '#1A3D2E',
               borderRadius: '24px',
               padding: '40px 32px',
-              position: 'relative'
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
             }}>
               <span style={{
                 position: 'absolute',
@@ -1109,7 +1193,7 @@ export default function LandingPage() {
                 color: 'rgba(255, 255, 255, 0.6)',
                 marginBottom: '32px'
               }}>{t.pricing.premium.note}</p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px' }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', flex: 1 }}>
                 {t.pricing.premium.features.map((item, i) => (
                   <li key={i} style={{
                     display: 'flex',
@@ -1123,8 +1207,9 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/saju/input" style={{ display: 'block' }}>
-                <button style={{
+              <Link href="/saju/input" style={{
+                  display: 'flex',
+                  marginTop: 'auto',
                   width: '100%',
                   height: '52px',
                   fontSize: '15px',
@@ -1132,11 +1217,13 @@ export default function LandingPage() {
                   color: '#1A3D2E',
                   background: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '26px',
-                  cursor: 'pointer'
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}>
                   {t.pricing.premium.cta}
-                </button>
               </Link>
             </div>
           </div>
@@ -1261,8 +1348,7 @@ export default function LandingPage() {
             gap: '16px',
             alignItems: 'center'
           }}>
-            <Link href="/saju/input">
-              <button style={{
+            <Link href="/saju/input" style={{
                 height: '60px',
                 padding: '0 48px',
                 fontSize: '17px',
@@ -1270,12 +1356,15 @@ export default function LandingPage() {
                 color: '#1A3D2E',
                 background: '#FFFFFF',
                 border: 'none',
-                borderRadius: '30px',
+                borderRadius: '10px',
                 cursor: 'pointer',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
                 {t.cta.button}
-              </button>
             </Link>
             <button
               onClick={handleShare}
@@ -1287,7 +1376,7 @@ export default function LandingPage() {
                 color: '#FFFFFF',
                 background: '#2D3A35',
                 border: 'none',
-                borderRadius: '30px',
+                borderRadius: '10px',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',

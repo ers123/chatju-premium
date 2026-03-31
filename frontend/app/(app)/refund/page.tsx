@@ -55,7 +55,7 @@ export default function RefundPolicyPage() {
         <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#2C2420', marginBottom: '16px' }}>
           환불정책
         </h1>
-        <p style={{ fontSize: '14px', color: '#888888', marginBottom: '48px' }}>
+        <p style={{ fontSize: '14px', color: '#767676', marginBottom: '48px' }}>
           시행일: 2025년 1월 1일 | 최종 수정: 2025년 1월 27일
         </p>
 

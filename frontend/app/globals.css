@@ -171,16 +171,11 @@ h4 {
 
 @layer utilities {
 
-  /* Premium Glass Effect */
+  /* Clean card surface — no glassmorphism */
   .glass-premium {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow:
-      0 4px 6px -1px rgba(0, 0, 0, 0.01),
-      0 2px 4px -1px rgba(0, 0, 0, 0.01),
-      inset 0 0 20px 0 rgba(255, 255, 255, 0.3);
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(44, 36, 32, 0.05);
   }
 }
 
@@ -210,53 +205,7 @@ h4 {
   }
 }
 
-/* Organic breathing motion - nonlinear */
-@keyframes breathe {
-  0% {
-    transform: scale(1) translateY(0);
-  }
-
-  50% {
-    transform: scale(1.03) translateY(-4px);
-  }
-
-  100% {
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* Organic float - distinct from breathe */
-@keyframes float {
-  0% {
-    transform: translateY(0px) rotate(0deg);
-  }
-
-  33% {
-    transform: translateY(-10px) rotate(1deg);
-  }
-
-  66% {
-    transform: translateY(-5px) rotate(-1deg);
-  }
-
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-}
-
-@keyframes pulse-glow {
-
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
-}
+/* Ambient animations removed — AI slop pattern */
 
 .animate-fade-in {
   animation: fadeIn 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
@@ -266,17 +215,7 @@ h4 {
   animation: fadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
-.animate-breathe {
-  animation: breathe 8s ease-in-out infinite;
-}
-
-.animate-float {
-  animation: float 12s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 4s ease-in-out infinite;
-}
+/* .animate-breathe, .animate-float, .animate-pulse-glow removed */
 
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -312,26 +251,18 @@ h4 {
    Component Styles
    ============================================ */
 
-/* Card - Paper floating effect with new glass */
+/* Card - Clean paper surface */
 .card-paper {
-  background: rgba(255, 255, 255, 0.5);
-  /* More translucent */
-  backdrop-filter: blur(24px);
-  /* Higher blur for luxury */
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow:
-    0 10px 40px -10px rgba(45, 58, 53, 0.03),
-    inset 0 0 20px 0 rgba(255, 255, 255, 0.2);
-  border-radius: 1.25rem;
-  /* Less 'bubbly' rounding */
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px -2px rgba(44, 36, 32, 0.06);
+  border-radius: 12px;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .card-paper:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 30px 60px -12px rgba(45, 58, 53, 0.08);
-  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px -4px rgba(44, 36, 32, 0.1);
 }
 
 /* Button - Rounded luxury */
@@ -347,21 +278,19 @@ h4 {
   font-weight: 600;
   letter-spacing: 0.01em;
   border: none;
-  border-radius: 9999px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 12px 24px rgba(26, 47, 35, 0.1);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(26, 47, 35, 0.08);
 }
 
 .btn-primary:hover {
   background: #244A36;
-  transform: translateY(-2px);
-  box-shadow: 0 16px 32px rgba(26, 61, 46, 0.2);
+  box-shadow: 0 4px 12px rgba(26, 61, 46, 0.12);
 }
 
 .btn-primary:active {
-  transform: translateY(0);
-  box-shadow: 0 8px 16px rgba(26, 61, 46, 0.1);
+  box-shadow: 0 1px 4px rgba(26, 61, 46, 0.08);
 }
 
 .btn-secondary {
@@ -376,7 +305,7 @@ h4 {
   font-weight: 500;
   letter-spacing: 0.02em;
   border: 1.5px solid var(--border-soft);
-  border-radius: 9999px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -459,8 +388,8 @@ h4 {
 }
 
 .card-interactive:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -12px rgba(44, 36, 32, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(44, 36, 32, 0.1);
 }
 
 /* Feature card image zoom on hover */
@@ -497,29 +426,7 @@ h4 {
               opacity 0.3s ease;
 }
 
-/* ============================================
-   Button hover glow
-   ============================================ */
-
-.btn-glow {
-  position: relative;
-}
-
-.btn-glow::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(184, 146, 45, 0.3), transparent 60%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: -1;
-  filter: blur(12px);
-}
-
-.btn-glow:hover::after {
-  opacity: 1;
-}
+/* btn-glow removed — AI slop pattern */
 
 /* ============================================
    Responsive - Mobile First

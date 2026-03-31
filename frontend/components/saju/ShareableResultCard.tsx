@@ -206,7 +206,7 @@ export default function ShareableResultCard({
               {traits.slice(0, 3).map((trait, i) => (
                 <span key={i} style={{
                   padding: '6px 14px',
-                  borderRadius: '20px',
+                  borderRadius: '6px',
                   fontSize: '13px',
                   fontWeight: 500,
                   color: elementColor,
@@ -292,7 +292,7 @@ export default function ShareableResultCard({
         disabled={generating}
         style={{
           padding: '0.75rem 1.5rem',
-          borderRadius: '0.75rem',
+          borderRadius: '10px',
           fontWeight: 600,
           border: '2px solid #B8922D',
           color: '#B8922D',

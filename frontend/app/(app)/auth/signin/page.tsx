@@ -106,7 +106,7 @@ export default function SignInPage() {
           <div style={{
             background: 'rgba(255,255,255,0.95)',
             border: '1px solid rgba(235,229,223,0.6)',
-            borderRadius: '1.25rem',
+            borderRadius: '12px',
             padding: '3rem',
             textAlign: 'center',
             boxShadow: '0 20px 40px -5px rgba(45,58,53,0.1)'
@@ -159,7 +159,7 @@ export default function SignInPage() {
           <div style={{
             background: 'rgba(255,255,255,0.95)',
             border: '1px solid rgba(235,229,223,0.6)',
-            borderRadius: '1.25rem',
+            borderRadius: '12px',
             padding: '2.5rem',
             boxShadow: '0 20px 40px -5px rgba(45,58,53,0.08)'
           }}>

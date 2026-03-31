@@ -84,8 +84,7 @@ export default function GitanLandingPage() {
               기탄교육 공식 파트너
             </span>
           </div>
-          <Link href="/saju/input?ref=gitan">
-            <button style={{
+          <Link href="/saju/input?ref=gitan" style={{
               height: '46px',
               padding: '0 28px',
               fontSize: '15px',
@@ -94,10 +93,13 @@ export default function GitanLandingPage() {
               background: colors.primary,
               border: 'none',
               borderRadius: '23px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}>
               무료 분석 시작
-            </button>
           </Link>
         </div>
       </nav>
@@ -186,8 +188,7 @@ export default function GitanLandingPage() {
             alignItems: 'center',
             marginBottom: '36px'
           }}>
-            <Link href="/saju/input?ref=gitan">
-              <button style={{
+            <Link href="/saju/input?ref=gitan" style={{
                 height: '64px',
                 padding: '0 52px',
                 fontSize: '18px',
@@ -198,19 +199,19 @@ export default function GitanLandingPage() {
                 borderRadius: '32px',
                 cursor: 'pointer',
                 boxShadow: '0 8px 32px rgba(30, 58, 95, 0.25)',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '12px'
+                gap: '12px',
+                textDecoration: 'none',
               }}>
                 <span>무료로 맞춤 학습법 찾기</span>
                 <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
-              </button>
             </Link>
             <p style={{
               fontSize: '14px',
-              color: '#999999',
+              color: '#767676',
               display: 'flex',
               alignItems: 'center',
               gap: '20px'
@@ -358,8 +359,7 @@ export default function GitanLandingPage() {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '48px' }}>
-            <Link href="/saju/input?ref=gitan">
-              <button style={{
+            <Link href="/saju/input?ref=gitan" style={{
                 height: '48px',
                 padding: '0 32px',
                 fontSize: '16px',
@@ -370,10 +370,13 @@ export default function GitanLandingPage() {
                 borderRadius: '6px',
                 cursor: 'pointer',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                transition: 'all 200ms ease-in-out'
+                transition: 'all 200ms ease-in-out',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
                 우리 아이 기질 확인하기
-              </button>
             </Link>
           </div>
         </div>
@@ -810,8 +813,8 @@ export default function GitanLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/saju/input?ref=gitan" style={{ display: 'block' }}>
-                <button style={{
+              <Link href="/saju/input?ref=gitan" style={{
+                  display: 'flex',
                   width: '100%',
                   height: '48px',
                   fontSize: '16px',
@@ -821,10 +824,12 @@ export default function GitanLandingPage() {
                   border: '1px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  transition: 'all 200ms ease-in-out'
+                  transition: 'all 200ms ease-in-out',
+                  textDecoration: 'none',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}>
                   무료로 시작
-                </button>
               </Link>
             </div>
 
@@ -865,8 +870,8 @@ export default function GitanLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/saju/input?ref=gitan&plan=premium" style={{ display: 'block' }}>
-                <button style={{
+              <Link href="/saju/input?ref=gitan&plan=premium" style={{
+                  display: 'flex',
                   width: '100%',
                   height: '48px',
                   fontSize: '16px',
@@ -877,10 +882,12 @@ export default function GitanLandingPage() {
                   borderRadius: '6px',
                   cursor: 'pointer',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                  transition: 'all 200ms ease-in-out'
+                  transition: 'all 200ms ease-in-out',
+                  textDecoration: 'none',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}>
                   프리미엄 분석 시작
-                </button>
               </Link>
             </div>
           </div>
@@ -995,8 +1002,7 @@ export default function GitanLandingPage() {
             3분 입력으로 아이의 타고난 기질과 맞춤 학습법을 알아보세요
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
-            <Link href="/saju/input?ref=gitan">
-              <button style={{
+            <Link href="/saju/input?ref=gitan" style={{
                 height: '48px',
                 padding: '0 32px',
                 fontSize: '16px',
@@ -1007,10 +1013,13 @@ export default function GitanLandingPage() {
                 borderRadius: '6px',
                 cursor: 'pointer',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                transition: 'all 200ms ease-in-out'
+                transition: 'all 200ms ease-in-out',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
                 무료 분석 시작하기
-              </button>
             </Link>
             <button
               onClick={handleKakaoShare}

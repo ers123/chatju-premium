@@ -34,7 +34,7 @@ export const translations = {
       credTitle: '자격 사항',
       cred1Subtitle: '명리심리상담사 1급',
       cred1Desc: '이 자격증은 전통 사주명리학(사주명리학)과 현대 상담심리학을 통합한 전문성을 인정합니다. 사주 차트를 심리 프로파일로 해석할 수 있는 자격 — 운세가 아닌 성격 분석입니다.',
-      cred2Subtitle: '의사결정 및 응용분석학 석사(MDA) · 대학원 수준의 데이터 및 의사결정 과학',
+      cred2Subtitle: '의사결정분석 석사(MS in Decision Analysis), Minerva University',
       cred2Desc: '이 학위는 전통 명리학 지식을 재현 가능하고 검증 가능한 프레임워크로 구조화하는 분석 도구를 제공했습니다. SoMyung의 AI 프롬프트 시스템이 어떻게 설계되고 검증되는지에 반영됩니다.',
       testimonialTitle: '부모님들의 이야기',
       ctaText: '성하가 자신의 세 자녀를 위해 개발한 프레임워크로 우리 아이의 타고난 기질을 발견하세요.',
@@ -44,7 +44,7 @@ export const translations = {
       backHome: '← 홈으로',
       noticeBar: '',
     },
-    banner: '지금 5,200명의 부모가 아이 기질을 분석했습니다',
+    banner: '오행 기질 분석 무료 체험 — 프리미엄 리포트 50% 할인 중',
     sajuDef: {
       heading: '사주(四柱)란 무엇인가요?',
       body: '사주(四柱, Four Pillars of Destiny)는 수천 년 동양 철학에 뿌리를 둔 한국의 성격 분석 체계입니다. 태어난 해, 월, 일, 시를 오행(五行: 목·화·토·금·수)과 60갑자 만세력(萬歲曆)에 대입하여 분석합니다. 그 결과는 점이 아니라 기질 프로필 — 타고난 성격 특성, 학습 스타일, 관계 경향, 오행 균형에 대한 구조화된 설명입니다. SoMyung은 이 체계를 아이에게 특화 적용하여, 부모가 각 아이의 타고난 기질 차이를 이해하고 더 효과적으로 소통할 수 있도록 돕습니다.',
@@ -62,7 +62,7 @@ export const translations = {
       multiplierLabel: 'MBTI보다 더 정밀한 분석',
       tagline: '우리 아이는 4글자로 설명할 수 없습니다',
     },
-    coreInsight: '내 새끼라고 다 이해할 수는 없다.\n나와 다른 또 다른 존재임을 받아들이는 것이 시작입니다.',
+    coreInsight: '내 자식이라고 다 이해할 수는 없습니다.\n나와 다른 또 다른 존재임을 받아들이는 것이 시작입니다.',
     hero: {
       title1: '아이와의 소통,',
       titleAccent: '어디서부터 시작해야 할지',
@@ -90,13 +90,15 @@ export const translations = {
         { title: '왜 이렇게 예민하고 불안해할까요', desc: '타고난 기질을 알면 대처법이 보여요' },
         { title: '아이의 재능이 뭔지 모르겠어요', desc: '숨겨진 강점을 발견하는 것이 첫 걸음이에요' },
       ],
+      bridge: '아이의 타고난 기질을 알면, 답이 보입니다.',
+      cta: '3분 무료 분석 시작하기',
     },
     founder: {
       heading: '저도 같은 고민을 했습니다',
-      story: '세 아이의 부모로서, 아이들 각자의 기질을 이해하고 소통하는 방법을 늘 고민했습니다. 명리심리상담사 1급 자격증을 취득하고, 데이터 분석 석사(MDA) 과정에서 배운 분석적 사고를 결합하여 전통 명리학을 현대적으로 재해석했습니다.',
+      story: '세 아이의 부모로서, 아이들 각자의 기질을 이해하고 소통하는 방법을 늘 고민했습니다. 명리심리상담사 1급 자격증을 취득하고, Minerva University 의사결정분석 석사(Master of Science in Decision Analysis) 과정에서 배운 분석적 사고를 결합하여 전통 명리학을 현대적으로 재해석했습니다.',
       detail: '큰 아이에겐 맞는 소통법이 둘째에겐 통하지 않았습니다. 각자 타고난 기질이 다르기 때문이었습니다. 이 경험을 다른 부모님들도 쉽게 하실 수 있도록 소명을 만들었습니다.',
       name: '성하 (SungHa)',
-      credentials: '명리심리상담사 1급 · MS Decision Making & Applied Analytics',
+      credentials: '명리심리상담사 1급 · MS in Decision Analysis, Minerva University',
       role: '소명 설계자 · 세 아이의 부모',
     },
     howItWorks: {
@@ -123,7 +125,7 @@ export const translations = {
     testimonials: {
       heading: '이용 후기',
       items: [
-        { quote: '사춘기 아들이랑 매일 싸웠어요. 서로 기질이 정반대란 걸 알고, 제가 먼저 한 발 물러서니까 대화가 되기 시작했어요.', author: '중2 아들 맘', tag: '관계 개선' },
+        { quote: '사춘기 아들이랑 매일 싸웠어요.\n서로 기질이 정반대란 걸 알고,\n제가 먼저 한 발 물러서니까 대화가 되기 시작했어요.', author: '중2 아들 맘', tag: '관계 개선' },
         { quote: '수학학원만 3곳째였는데, 알고보니 혼자 푸는 게 맞는 타입이었어요. 인강으로 바꾸니 아이가 덜 힘들어해요.', author: '초5 딸 맘', tag: '학습법 발견' },
         { quote: '왜 이렇게 예민한지 제가 잘못 키운 줄 알았어요. 타고난 기질이란 걸 알고 마음이 편해졌습니다.', author: '7세 아들 맘', tag: '마음의 위로' },
       ],
@@ -266,7 +268,7 @@ export const translations = {
       twinHint: '같은 사주라도 부모의 양육 방식에 따라 다른 성장을 보입니다. 출생 순서를 알려주시면 더 맞춤형 분석이 가능합니다.',
       analyzeButton: '기질 분석 시작하기',
       trustSecure: '안전한 정보 보호',
-      trustBeta: '5,200명이 이용했습니다',
+      trustBeta: '명리심리상담사 1급 설계',
     },
     sajuResults: {
       loading: '분석 중입니다',
@@ -543,7 +545,7 @@ export const translations = {
       whyP1Start: 'SoMyung was born from a very personal question: ',
       whyP1Highlight: 'why does the same parenting approach work beautifully with one child but create constant friction with another?',
       whyP2: 'As a parent of three children, SungHa observed that each child carried a distinctly different temperament from birth — different rhythms, sensitivities, and ways of engaging with the world. Traditional parenting advice treated children as interchangeable. Saju did not.',
-      whyP3: 'After earning her certification as a Myeongri Psychology Counselor (Level 1) — a qualification that bridges traditional Four Pillars astrology with modern counseling psychology — and completing a Master of Science in Decision Making and Applied Analytics, SungHa built SoMyung to make this ancient knowledge accessible, structured, and actionable for modern parents.',
+      whyP3: 'After earning her certification as a Myeongri Psychology Counselor (Level 1) — a qualification that bridges traditional Four Pillars astrology with modern counseling psychology — and completing a Master of Science in Decision Analysis from Minerva University, SungHa built SoMyung to make this ancient knowledge accessible, structured, and actionable for modern parents.',
       methodTitle: 'The Methodology',
       methodP1: 'SoMyung uses Myeongri Psychology (명리심리학) — a modern academic discipline that applies the Four Pillars of Destiny (사주팔자) as a framework for understanding innate temperament. It is not fortune-telling. It is personality science rooted in thousands of years of systematic observation about how birth timing correlates with natural disposition.',
       methodP2: 'Think of it the way a psychologist might use the MBTI or Enneagram — as a structured vocabulary for describing how a person is wired, not a prediction of what will happen to them.',
@@ -561,7 +563,7 @@ export const translations = {
       backHome: '← Home',
       noticeBar: 'The content below is provided in Korean. Translation may be available in the future.',
     },
-    banner: '5,200+ parents have analyzed their child\'s temperament',
+    banner: 'Free Five Elements analysis — Premium reports 50% off for a limited time',
     sajuDef: {
       heading: 'What is Saju (사주)?',
       body: 'Saju (사주, Four Pillars of Destiny) is a Korean system of character analysis rooted in thousands of years of East Asian philosophy. It maps a person\'s birth year, month, day, and hour onto a framework of the Five Elements (오행: Wood, Fire, Earth, Metal, Water) and the 60-cycle Sexagenary calendar (만세력). The result is not a fortune — it is a temperament profile: a structured description of innate personality traits, learning styles, relational tendencies, and elemental balance. SoMyung applies this framework specifically to children, helping parents understand why each child is wired differently and how to communicate with them more effectively.',
@@ -607,13 +609,15 @@ export const translations = {
         { title: 'Why is my child so anxious and sensitive?', desc: 'Knowing their innate nature reveals the right approach' },
         { title: 'I don\'t know what my child is talented at', desc: 'Discovering hidden strengths is the first step' },
       ],
+      bridge: 'When you understand your child\'s innate temperament, the answers become clear.',
+      cta: 'Start Free 3-Min Analysis',
     },
     founder: {
       heading: 'I faced the same struggles',
-      story: 'As a parent of three, I was always searching for better ways to understand and communicate with each of my children. After earning my Myeongri Psychology Counselor Level 1 certification and completing my Master of Science in Decision Making and Applied Analytics (MDA), I combined traditional Eastern wisdom with modern analytical thinking.',
+      story: 'As a parent of three, I was always searching for better ways to understand and communicate with each of my children. After earning my Myeongri Psychology Counselor Level 1 certification and completing my Master of Science in Decision Analysis from Minerva University, I combined traditional Eastern wisdom with modern analytical thinking.',
       detail: 'What worked for my first child didn\'t work for my second — because each has a different innate temperament. I built SoMyung so other parents could gain these same insights easily.',
       name: 'SungHa',
-      credentials: 'Certified Myeongri Psychology Counselor (Level 1) · MS Decision Making & Applied Analytics',
+      credentials: 'Certified Myeongri Psychology Counselor (Level 1) · MS in Decision Analysis, Minerva University',
       role: 'Creator of SoMyung · Parent of Three',
     },
     howItWorks: {
@@ -781,7 +785,7 @@ export const translations = {
       twinHint: 'Even with identical birth charts, twins develop differently based on parenting dynamics. Birth order helps us personalize the analysis.',
       analyzeButton: 'Start Analysis',
       trustSecure: 'Secure Data Protection',
-      trustBeta: '5,200+ parents trust us',
+      trustBeta: 'Designed by certified Myeongri counselor',
     },
     sajuResults: {
       loading: 'Analyzing',
@@ -1076,7 +1080,7 @@ export const translations = {
       backHome: '← ホーム',
       noticeBar: '以下の内容は韓国語で提供されています。',
     },
-    banner: '5,200人以上の親がお子様の気質を分析しました',
+    banner: '五行気質分析を無料体験 — プレミアムレポート50%割引中',
     sajuDef: {
       heading: '四柱（サジュ/사주）とは？',
       body: '四柱（사주、Four Pillars of Destiny）は、数千年の東アジア哲学に根ざした韓国の性格分析体系です。生まれた年・月・日・時を五行（오행：木・火・土・金・水）と六十干支暦（만세력）の枠組みに当てはめて分析します。その結果は占いではなく、気質プロフィール — 生まれ持った性格特性、学習スタイル、人間関係の傾向、五行バランスの体系的な記述です。SoMyungはこの枠組みをお子様に特化して適用し、それぞれのお子様がなぜ異なる気質を持つのか、どうすればより効果的にコミュニケーションできるかを保護者の皆さまにお伝えします。',
@@ -1122,6 +1126,8 @@ export const translations = {
         { title: 'なぜこんなに敏感で不安なの？', desc: '生まれ持った気質がわかれば対処法が見えてきます' },
         { title: '子供の才能がわからない', desc: '隠れた強みを発見することが第一歩です' },
       ],
+      bridge: '子どもの生まれ持った気質を知れば、答えが見えてきます。',
+      cta: '3分無料分析を始める',
     },
     founder: {
       heading: '私も同じ悩みを抱えていました',
@@ -1287,7 +1293,7 @@ export const translations = {
       twinHint: '同じ四柱でも、育て方の違いで異なる成長を見せます。',
       analyzeButton: '無料分析を開始する',
       trustSecure: '安全な情報保護',
-      trustBeta: '無料ベータ実施中',
+      trustBeta: '命理心理カウンセラー1級が設計',
     },
     sajuResults: {
       loading: '分析中です',
@@ -1582,7 +1588,7 @@ export const translations = {
       backHome: '← 首页',
       noticeBar: '以下内容以韩文提供。',
     },
-    banner: '5,200多位家长已分析了孩子的气质',
+    banner: '五行气质分析免费体验 — 高级报告限时5折',
     sajuDef: {
       heading: '什么是四柱（사주）？',
       body: '四柱（사주，Four Pillars of Destiny）是一套植根于数千年东亚哲学的韩国性格分析体系。它将一个人的出生年、月、日、时对应到五行（오행：木、火、土、金、水）和六十甲子万年历（만세력）的框架中进行分析。其结果不是算命——而是气质档案：对先天性格特征、学习风格、人际关系倾向和五行平衡的系统化描述。SoMyung将这一体系专门应用于儿童，帮助家长理解每个孩子为何天生不同，以及如何更有效地与他们沟通。',
@@ -1628,6 +1634,8 @@ export const translations = {
         { title: '为什么这么敏感和焦虑？', desc: '了解天生气质就能找到应对方法' },
         { title: '不知道孩子有什么天赋', desc: '发现隐藏的优势是第一步' },
       ],
+      bridge: '了解孩子的天生气质，答案自然浮现。',
+      cta: '开始3分钟免费分析',
     },
     founder: {
       heading: '我也曾有同样的困惑',
@@ -1795,7 +1803,7 @@ export const translations = {
       twinHint: '即使四柱相同，双胞胎也会因养育方式不同而有不同的成长。',
       analyzeButton: '开始免费分析',
       trustSecure: '安全信息保护',
-      trustBeta: '免费测试进行中',
+      trustBeta: '由持证命理心理咨询师设计',
     },
     sajuResults: {
       loading: '正在分析',
@@ -2091,7 +2099,7 @@ export const translations = {
     backHome: '← Trang chủ',
     noticeBar: 'Nội dung bên dưới được cung cấp bằng tiếng Hàn.',
   },
-  banner: 'Hơn 5.200 phụ huynh đã phân tích tính cách con mình',
+  banner: 'Trải nghiệm phân tích Ngũ Hành miễn phí — Giảm 50% báo cáo Premium',
   sajuDef: {
     heading: 'Tứ Trụ (사주) là gì?',
     body: 'Tứ Trụ (사주, Four Pillars of Destiny) là hệ thống phân tích tính cách của Hàn Quốc, bắt nguồn từ hàng nghìn năm triết học Đông Á. Hệ thống này ánh xạ năm, tháng, ngày, giờ sinh của một người lên khung Ngũ Hành (오행: Mộc, Hỏa, Thổ, Kim, Thủy) và lịch Lục Thập Hoa Giáp (만세력). Kết quả không phải là bói toán — mà là hồ sơ khí chất: mô tả có hệ thống về đặc điểm tính cách bẩm sinh, phong cách học tập, xu hướng quan hệ và cân bằng ngũ hành. SoMyung áp dụng khung phân tích này đặc biệt cho trẻ em, giúp cha mẹ hiểu tại sao mỗi đứa trẻ lại có tính cách khác nhau và cách giao tiếp hiệu quả hơn với con.',
@@ -2137,6 +2145,8 @@ export const translations = {
       { title: 'Tại sao con tôi hay lo lắng và nhạy cảm?', desc: 'Hiểu bản chất bẩm sinh sẽ chỉ ra cách tiếp cận đúng' },
       { title: 'Tôi không biết con mình giỏi gì', desc: 'Phát hiện điểm mạnh tiềm ẩn là bước đầu tiên' },
     ],
+    bridge: 'Khi hiểu khí chất bẩm sinh của con, câu trả lời sẽ rõ ràng.',
+    cta: 'Bắt đầu phân tích miễn phí 3 phút',
   },
   founder: {
     heading: 'Tôi cũng từng trăn trở như bạn',
@@ -2313,7 +2323,7 @@ export const translations = {
     twinHint: 'Dù có lá số giống nhau, trẻ sinh đôi phát triển khác nhau tùy vào cách nuôi dạy. Thứ tự sinh giúp chúng tôi cá nhân hóa phân tích.',
     analyzeButton: 'Bắt đầu phân tích',
     trustSecure: 'Bảo mật dữ liệu an toàn',
-    trustBeta: 'Hơn 5.200 phụ huynh tin tưởng',
+    trustBeta: 'Thiết kế bởi chuyên gia tâm lý Myeongri',
   },
   sajuResults: {
     loading: 'Đang phân tích',
@@ -2610,7 +2620,7 @@ export const translations = {
     backHome: '← Beranda',
     noticeBar: 'Konten di bawah ini disediakan dalam bahasa Korea.',
   },
-  banner: '5.200+ orang tua telah menganalisis temperamen anak mereka',
+  banner: 'Analisis Lima Elemen gratis — Laporan Premium diskon 50%',
   sajuDef: {
     heading: 'Apa itu Saju (사주)?',
     body: 'Saju (사주, Four Pillars of Destiny) adalah sistem analisis karakter dari Korea yang berakar pada ribuan tahun filosofi Asia Timur. Sistem ini memetakan tahun, bulan, hari, dan jam kelahiran seseorang ke dalam kerangka Lima Unsur (오행: Kayu, Api, Tanah, Logam, Air) dan kalender Sexagenary 60 siklus (만세력). Hasilnya bukan ramalan — melainkan profil temperamen: deskripsi terstruktur tentang sifat kepribadian bawaan, gaya belajar, kecenderungan relasional, dan keseimbangan unsur. SoMyung menerapkan kerangka ini khusus untuk anak-anak, membantu orang tua memahami mengapa setiap anak memiliki karakter berbeda dan bagaimana berkomunikasi dengan mereka secara lebih efektif.',
@@ -2656,6 +2666,8 @@ export const translations = {
       { title: 'Kenapa anak saya begitu cemas dan sensitif?', desc: 'Mengetahui sifat bawaannya akan menunjukkan pendekatan yang tepat' },
       { title: 'Saya tidak tahu bakat anak saya', desc: 'Menemukan kekuatan tersembunyi adalah langkah pertama' },
     ],
+    bridge: 'Ketika Anda memahami temperamen bawaan anak, jawabannya menjadi jelas.',
+    cta: 'Mulai Analisis Gratis 3 Menit',
   },
   founder: {
     heading: 'Saya juga pernah mengalami hal yang sama',
@@ -2832,7 +2844,7 @@ export const translations = {
     twinHint: 'Meskipun memiliki bagan kelahiran yang identik, anak kembar berkembang berbeda berdasarkan dinamika pengasuhan. Urutan kelahiran membantu kami mempersonalisasi analisis.',
     analyzeButton: 'Mulai Analisis',
     trustSecure: 'Perlindungan Data Aman',
-    trustBeta: '5.200+ orang tua mempercayai kami',
+    trustBeta: 'Dirancang oleh konselor Myeongri bersertifikat',
   },
   sajuResults: {
     loading: 'Menganalisis',
@@ -3129,7 +3141,7 @@ export const translations = {
     backHome: '← Inicio',
     noticeBar: 'El contenido a continuación se presenta en coreano.',
   },
-  banner: 'Más de 5.200 padres han analizado el temperamento de sus hijos',
+  banner: 'Análisis de Cinco Elementos gratis — Informes Premium con 50% de descuento',
   sajuDef: {
     heading: '¿Qué es el Saju (사주)?',
     body: 'Saju (사주, Four Pillars of Destiny) es un sistema coreano de análisis del carácter con raíces en miles de años de filosofía del Este de Asia. Mapea el año, mes, día y hora de nacimiento de una persona en un marco de los Cinco Elementos (오행: Madera, Fuego, Tierra, Metal, Agua) y el calendario sexagesimal de 60 ciclos (만세력). El resultado no es una adivinación — es un perfil de temperamento: una descripción estructurada de rasgos de personalidad innatos, estilos de aprendizaje, tendencias relacionales y equilibrio elemental. SoMyung aplica este marco específicamente a los niños, ayudando a los padres a comprender por qué cada hijo es diferente y cómo comunicarse con ellos de manera más efectiva.',
@@ -3175,6 +3187,8 @@ export const translations = {
       { title: '¿Por qué mi hijo/a es tan ansioso/a y sensible?', desc: 'Conocer su naturaleza innata revela el enfoque correcto' },
       { title: 'No sé cuáles son los talentos de mi hijo/a', desc: 'Descubrir sus fortalezas ocultas es el primer paso' },
     ],
+    bridge: 'Cuando entiendes el temperamento innato de tu hijo, las respuestas se aclaran.',
+    cta: 'Iniciar análisis gratuito de 3 min',
   },
   founder: {
     heading: 'Yo también pasé por lo mismo',
@@ -3351,7 +3365,7 @@ export const translations = {
     twinHint: 'Incluso con cartas natales idénticas, los gemelos se desarrollan de manera diferente según la dinámica de crianza. El orden de nacimiento nos ayuda a personalizar el análisis.',
     analyzeButton: 'Comenzar Análisis',
     trustSecure: 'Protección Segura de Datos',
-    trustBeta: 'Más de 5.200 padres confían en nosotros',
+    trustBeta: 'Diseñado por consejero Myeongri certificado',
   },
   sajuResults: {
     loading: 'Analizando',
@@ -3648,7 +3662,7 @@ export const translations = {
     backHome: '← Início',
     noticeBar: 'O conteúdo abaixo é fornecido em coreano.',
   },
-  banner: 'Mais de 5.200 pais já analisaram o temperamento de seus filhos',
+  banner: 'Análise dos Cinco Elementos grátis — Relatórios Premium com 50% de desconto',
   sajuDef: {
     heading: 'O que é Saju (사주)?',
     body: 'Saju (사주, Four Pillars of Destiny) é um sistema coreano de análise de caráter enraizado em milhares de anos de filosofia do Leste Asiático. Ele mapeia o ano, mês, dia e hora de nascimento de uma pessoa em um framework dos Cinco Elementos (오행: Madeira, Fogo, Terra, Metal, Água) e o calendário sexagenário de 60 ciclos (만세력). O resultado não é uma previsão — é um perfil de temperamento: uma descrição estruturada de traços de personalidade inatos, estilos de aprendizagem, tendências relacionais e equilíbrio elemental. SoMyung aplica esse framework especificamente para crianças, ajudando os pais a entender por que cada filho é diferente e como se comunicar com eles de forma mais eficaz.',
@@ -3694,6 +3708,8 @@ export const translations = {
       { title: 'Por que meu filho é tão ansioso e sensível?', desc: 'Conhecer a natureza inata dele revela a abordagem certa' },
       { title: 'Não sei no que meu filho tem talento', desc: 'Descobrir os pontos fortes ocultos é o primeiro passo' },
     ],
+    bridge: 'Quando você entende o temperamento inato do seu filho, as respostas ficam claras.',
+    cta: 'Iniciar análise gratuita de 3 min',
   },
   founder: {
     heading: 'Eu também passei por isso',
@@ -3870,7 +3886,7 @@ export const translations = {
     twinHint: 'Mesmo com mapas de nascimento idênticos, gêmeos se desenvolvem de formas diferentes com base na dinâmica da criação. A ordem de nascimento nos ajuda a personalizar a análise.',
     analyzeButton: 'Iniciar Análise',
     trustSecure: 'Proteção Segura de Dados',
-    trustBeta: 'Mais de 5.200 pais confiam em nós',
+    trustBeta: 'Projetado por conselheiro Myeongri certificado',
   },
   sajuResults: {
     loading: 'Analisando',
@@ -4167,7 +4183,7 @@ export const translations = {
     backHome: '← Accueil',
     noticeBar: 'Le contenu ci-dessous est fourni en coréen.',
   },
-  banner: 'Plus de 5 200 parents ont analysé le tempérament de leur enfant',
+  banner: 'Analyse des Cinq Éléments gratuite — Rapports Premium à -50%',
   sajuDef: {
     heading: 'Qu\'est-ce que le Saju (사주) ?',
     body: 'Le Saju (사주, Four Pillars of Destiny) est un système coréen d\'analyse du caractère enraciné dans des milliers d\'années de philosophie est-asiatique. Il projette l\'année, le mois, le jour et l\'heure de naissance d\'une personne sur un cadre des Cinq Éléments (오행 : Bois, Feu, Terre, Métal, Eau) et le calendrier sexagésimal à 60 cycles (만세력). Le résultat n\'est pas une divination — c\'est un profil de tempérament : une description structurée des traits de personnalité innés, des styles d\'apprentissage, des tendances relationnelles et de l\'équilibre élémentaire. SoMyung applique ce cadre spécifiquement aux enfants, aidant les parents à comprendre pourquoi chaque enfant est différent et comment communiquer avec eux plus efficacement.',
@@ -4213,6 +4229,8 @@ export const translations = {
       { title: 'Pourquoi mon enfant est-il si anxieux et sensible ?', desc: 'Connaître sa nature profonde révèle la bonne approche' },
       { title: 'Je ne sais pas dans quoi mon enfant est doué', desc: 'Découvrir ses forces cachées est la première étape' },
     ],
+    bridge: 'Quand vous comprenez le tempérament inné de votre enfant, les réponses deviennent claires.',
+    cta: 'Commencer l\'analyse gratuite de 3 min',
   },
   founder: {
     heading: "J'ai traversé les mêmes difficultés",
@@ -4389,7 +4407,7 @@ export const translations = {
     twinHint: 'Même avec des themes de naissance identiques, les jumeaux se développent différemment selon la dynamique parentale. L\'ordre de naissance nous aide a personnaliser l\'analyse.',
     analyzeButton: 'Lancer l\'analyse',
     trustSecure: 'Protection sécurisée des données',
-    trustBeta: 'Plus de 5 200 parents nous font confiance',
+    trustBeta: 'Conçu par un conseiller Myeongri certifié',
   },
   sajuResults: {
     loading: 'Analyse en cours',
@@ -4686,7 +4704,7 @@ export const translations = {
     backHome: '← หน้าแรก',
     noticeBar: 'เนื้อหาด้านล่างแสดงเป็นภาษาเกาหลี',
   },
-  banner: 'ผู้ปกครองกว่า 5,200 คนวิเคราะห์นิสัยลูกแล้ว',
+  banner: 'วิเคราะห์ธาตุทั้ง 5 ฟรี — รายงานพรีเมียมลด 50%',
   sajuDef: {
     heading: 'ซาจู (사주) คืออะไร?',
     body: 'ซาจู (사주, Four Pillars of Destiny) เป็นระบบวิเคราะห์บุคลิกภาพของเกาหลีที่มีรากฐานจากปรัชญาเอเชียตะวันออกนับพันปี ระบบนี้จับคู่ปีเกิด เดือน วัน และชั่วโมงของบุคคลเข้ากับกรอบธาตุทั้ง 5 (오행: ไม้ ไฟ ดิน โลหะ น้ำ) และปฏิทินหกสิบวงจร (만세력) ผลลัพธ์ไม่ใช่การดูดวง — แต่เป็นโปรไฟล์นิสัย: คำอธิบายอย่างเป็นระบบเกี่ยวกับลักษณะบุคลิกภาพที่ติดตัวมาแต่กำเนิด รูปแบบการเรียนรู้ แนวโน้มความสัมพันธ์ และสมดุลธาตุ SoMyung นำกรอบนี้มาประยุกต์ใช้กับเด็กโดยเฉพาะ ช่วยให้ผู้ปกครองเข้าใจว่าทำไมลูกแต่ละคนถึงมีนิสัยต่างกัน และจะสื่อสารกับลูกอย่างไรให้มีประสิทธิภาพมากขึ้น',
@@ -4732,6 +4750,8 @@ export const translations = {
       { title: 'ทำไมลูกถึงวิตกกังวลและอ่อนไหวนัก?', desc: 'รู้จักธรรมชาติที่ติดตัวมาจะเห็นวิธีที่ถูกต้อง' },
       { title: 'ไม่รู้ว่าลูกเก่งเรื่องอะไร', desc: 'การค้นพบจุดแข็งที่ซ่อนอยู่คือก้าวแรก' },
     ],
+    bridge: 'เมื่อเข้าใจนิสัยที่ติดตัวมาของลูก คำตอบจะชัดเจนขึ้น',
+    cta: 'เริ่มวิเคราะห์ฟรี 3 นาที',
   },
   founder: {
     heading: 'ผมก็เคยมีความกังวลเหมือนกัน',
@@ -4908,7 +4928,7 @@ export const translations = {
     twinHint: 'แม้จะมีดวงชะตาเหมือนกัน ฝาแฝดก็พัฒนาต่างกันตามรูปแบบการเลี้ยงดู ลำดับการเกิดช่วยให้เราปรับการวิเคราะห์ให้เหมาะสม',
     analyzeButton: 'เริ่มวิเคราะห์',
     trustSecure: 'ปกป้องข้อมูลอย่างปลอดภัย',
-    trustBeta: 'ผู้ปกครองกว่า 5,200 คนไว้วางใจ',
+    trustBeta: 'ออกแบบโดยที่ปรึกษา Myeongri ระดับ 1',
   },
   sajuResults: {
     loading: 'กำลังวิเคราะห์',

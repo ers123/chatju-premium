@@ -318,7 +318,7 @@ export default function InputFormPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               <div style={{
                 background: '#FFFFFF',
-                borderRadius: '1rem',
+                borderRadius: '12px',
                 padding: '1.5rem',
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
@@ -362,7 +362,7 @@ export default function InputFormPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: '1.5rem',
-                        borderRadius: '0.75rem',
+                        borderRadius: '10px',
                         border: formData.gender === 'male' ? '2px solid #5A7A66' : '2px solid #E5E7EB',
                         background: formData.gender === 'male' ? 'rgba(74, 99, 84, 0.05)' : '#FFFFFF',
                         cursor: 'pointer',
@@ -399,7 +399,7 @@ export default function InputFormPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: '1.5rem',
-                        borderRadius: '0.75rem',
+                        borderRadius: '10px',
                         border: formData.gender === 'female' ? '2px solid #A85544' : '2px solid #E5E7EB',
                         background: formData.gender === 'female' ? 'rgba(178, 94, 84, 0.05)' : '#FFFFFF',
                         cursor: 'pointer',
@@ -437,7 +437,7 @@ export default function InputFormPage() {
                 style={{
                   width: '100%',
                   padding: '1rem',
-                  borderRadius: '0.75rem',
+                  borderRadius: '10px',
                   fontSize: '1.125rem',
                   fontWeight: 700,
                   border: 'none',
@@ -457,7 +457,7 @@ export default function InputFormPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               <div style={{
                 background: '#FFFFFF',
-                borderRadius: '1rem',
+                borderRadius: '12px',
                 padding: '1.5rem',
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
@@ -569,7 +569,7 @@ export default function InputFormPage() {
                   style={{
                     flex: 1,
                     padding: '1rem',
-                    borderRadius: '0.75rem',
+                    borderRadius: '10px',
                     fontSize: '1.125rem',
                     fontWeight: 600,
                     border: '2px solid #E5E7EB',
@@ -609,7 +609,7 @@ export default function InputFormPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               <div style={{
                 background: '#FFFFFF',
-                borderRadius: '1rem',
+                borderRadius: '12px',
                 padding: '1.5rem',
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
@@ -681,7 +681,7 @@ export default function InputFormPage() {
               {/* Birth Place (optional) */}
               <div style={{
                 background: '#FFFFFF',
-                borderRadius: '1rem',
+                borderRadius: '12px',
                 padding: '1.5rem',
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
@@ -735,7 +735,7 @@ export default function InputFormPage() {
               {/* Twin (optional) */}
               <div style={{
                 background: '#FFFFFF',
-                borderRadius: '1rem',
+                borderRadius: '12px',
                 padding: '1.5rem',
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
@@ -835,7 +835,7 @@ export default function InputFormPage() {
                   style={{
                     flex: 1,
                     padding: '1rem',
-                    borderRadius: '0.75rem',
+                    borderRadius: '10px',
                     fontSize: '1.125rem',
                     fontWeight: 600,
                     border: '2px solid #E5E7EB',
@@ -875,7 +875,7 @@ export default function InputFormPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               <div style={{
                 background: '#FFFFFF',
-                borderRadius: '1rem',
+                borderRadius: '12px',
                 padding: '1.5rem',
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
@@ -896,7 +896,7 @@ export default function InputFormPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: '1.5rem',
-                        borderRadius: '0.75rem',
+                        borderRadius: '10px',
                         border: formData.parentRole === 'mother' ? '2px solid #A85544' : '2px solid #E5E7EB',
                         background: formData.parentRole === 'mother' ? 'rgba(178, 94, 84, 0.05)' : '#FFFFFF',
                         cursor: 'pointer',
@@ -933,7 +933,7 @@ export default function InputFormPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: '1.5rem',
-                        borderRadius: '0.75rem',
+                        borderRadius: '10px',
                         border: formData.parentRole === 'father' ? '2px solid #5A7A66' : '2px solid #E5E7EB',
                         background: formData.parentRole === 'father' ? 'rgba(74, 99, 84, 0.05)' : '#FFFFFF',
                         cursor: 'pointer',
@@ -1070,7 +1070,7 @@ export default function InputFormPage() {
                   style={{
                     flex: 1,
                     padding: '1rem',
-                    borderRadius: '0.75rem',
+                    borderRadius: '10px',
                     fontSize: '1.125rem',
                     fontWeight: 600,
                     border: '2px solid #E5E7EB',
@@ -1111,7 +1111,7 @@ export default function InputFormPage() {
               {/* Parent Birth Time */}
               <div style={{
                 background: '#FFFFFF',
-                borderRadius: '1rem',
+                borderRadius: '12px',
                 padding: '1.5rem',
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
@@ -1289,7 +1289,7 @@ export default function InputFormPage() {
                   style={{
                     flex: 1,
                     padding: '1rem',
-                    borderRadius: '0.75rem',
+                    borderRadius: '10px',
                     fontSize: '1.125rem',
                     fontWeight: 600,
                     border: '2px solid #E5E7EB',

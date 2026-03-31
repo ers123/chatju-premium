@@ -15,14 +15,14 @@ const s = {
   logoText: { fontFamily: 'serif', fontSize: '0.75rem', color: '#C5A059', fontWeight: 700 },
   logoName: { fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35' },
   main: { maxWidth: '36rem', margin: '0 auto', padding: '2rem 1.5rem 4rem' },
-  card: { background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '1.25rem', padding: '1.5rem', marginBottom: '1rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' } as React.CSSProperties,
+  card: { background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '1rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' } as React.CSSProperties,
   h1: { fontSize: '1.5rem', fontWeight: 700, color: '#2D3A35', marginBottom: '0.5rem' },
   h2: { fontSize: '1rem', fontWeight: 600, color: '#2D3A35', marginBottom: '1rem' },
   text: { fontSize: '0.875rem', color: '#6B5E52', lineHeight: 1.6 },
   textMuted: { fontSize: '0.75rem', color: '#8B8580' },
   center: { textAlign: 'center' as const },
   spinner: { display: 'inline-block', width: '1rem', height: '1rem', border: '2px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' },
-  btnPrimary: { width: '100%', padding: '1rem', fontSize: '1rem', fontWeight: 700, border: 'none', borderRadius: '0.75rem', cursor: 'pointer', background: '#C5A059', color: '#2D3A35' },
+  btnPrimary: { width: '100%', padding: '1rem', fontSize: '1rem', fontWeight: 700, border: 'none', borderRadius: '10px', cursor: 'pointer', background: '#C5A059', color: '#2D3A35' },
   error: { marginTop: '1rem', padding: '0.75rem', background: 'rgba(198,123,111,0.08)', border: '1px solid rgba(198,123,111,0.2)', borderRadius: '0.75rem', fontSize: '0.875rem', color: '#C67B6F' },
   link: { fontSize: '0.875rem', color: '#8B8580', textDecoration: 'none' },
 }
@@ -148,7 +148,7 @@ function PaymentSuccessContent() {
         </div>
 
         {/* Next Steps */}
-        <div style={{ color: '#fff', padding: '1.5rem', marginBottom: '1rem', background: 'linear-gradient(135deg, #2D3A35, #3D5A4E)', borderRadius: '1rem' }}>
+        <div style={{ color: '#fff', padding: '1.5rem', marginBottom: '1rem', background: 'linear-gradient(135deg, #2D3A35, #3D5A4E)', borderRadius: '12px' }}>
           <h2 style={{ fontFamily: 'serif', marginBottom: '1rem' }}>{t.payment.successNextSteps}</h2>
           <p style={{ marginBottom: '1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
             {t.payment.successNextDesc}
