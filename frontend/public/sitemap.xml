@@ -88,4 +88,10 @@
   <url><loc>https://somyung.cc/terms/</loc><priority>0.3</priority></url>
   <url><loc>https://somyung.cc/privacy/</loc><priority>0.3</priority></url>
   <url><loc>https://somyung.cc/refund/</loc><priority>0.3</priority></url>
+
+  <!-- Blog -->
+  <url><loc>https://somyung.cc/blog/</loc><lastmod>2026-03-31</lastmod><priority>0.7</priority></url>
+  <url><loc>https://somyung.cc/blog/saju-vs-mbti/</loc><lastmod>2026-03-30</lastmod><priority>0.8</priority></url>
+  <url><loc>https://somyung.cc/blog/what-is-korean-saju/</loc><lastmod>2026-03-30</lastmod><priority>0.8</priority></url>
+  <url><loc>https://somyung.cc/blog/five-elements-child-personality/</loc><lastmod>2026-03-30</lastmod><priority>0.8</priority></url>
 </urlset>
