@@ -20,9 +20,18 @@ async function verifyPayPalWebhook(req, res, next) {
   try {
     const webhookId = process.env.PAYPAL_WEBHOOK_ID;
 
-    // Skip verification if no webhook ID configured (development)
+    // Fail closed in production — reject webhooks if verification is not configured
     if (!webhookId) {
-      logger.warn('PayPal webhook verification skipped - no webhook ID configured');
+      if (process.env.NODE_ENV === 'production') {
+        logger.error('PayPal webhook rejected — PAYPAL_WEBHOOK_ID not configured in production');
+        return res.status(500).json({
+          success: false,
+          error: 'Webhook verification not configured',
+          code: 'WEBHOOK_CONFIG_MISSING'
+        });
+      }
+      // Development only: skip verification
+      logger.warn('PayPal webhook verification skipped — development mode, no webhook ID');
       return next();
     }
 

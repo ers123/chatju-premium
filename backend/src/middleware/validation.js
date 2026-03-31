@@ -276,20 +276,18 @@ function validatePaymentRequest(req, res, next) {
     return sendValidationError(res, 'amount', 'Amount must be a positive number');
   }
 
-  // Validate currency (optional, defaults in service)
-  if (currency && !isValidCurrency(currency)) {
-    return sendValidationError(res, 'currency', 'Invalid currency (must be KRW, USD, EUR, or CNY)');
-  }
+  // Currency is always USD (PayPal only gateway) — ignore client-supplied currency
+  // Prevents mismatch where client sends KRW amount but PayPal charges USD
 
   // Validate product type
   if (product_type && !isValidProductType(product_type)) {
     return sendValidationError(res, 'product_type', 'Invalid product type (must be basic or deluxe)');
   }
 
-  // Security: Check amount limits
-  const maxAmount = currency === 'KRW' ? 100000 : 200; // 100k KRW or $200 USD
+  // Security: Check amount limits (always USD — max product is $4.99)
+  const maxAmount = 50;
   if (amount > maxAmount) {
-    return sendValidationError(res, 'amount', `Amount exceeds maximum allowed (${maxAmount} ${currency || 'KRW'})`);
+    return sendValidationError(res, 'amount', `Amount exceeds maximum allowed ($${maxAmount} USD)`);
   }
 
   next();

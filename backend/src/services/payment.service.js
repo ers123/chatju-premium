@@ -145,6 +145,23 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
  */
 async function capturePayPalPayment(paypalOrderId) {
   try {
+    // Idempotency: check if payment is already completed
+    const { data: existing } = await supabaseAdmin
+      .from('payments')
+      .select('status, id, order_id')
+      .eq('payment_key', paypalOrderId)
+      .single();
+
+    if (existing?.status === 'completed') {
+      console.log('[Payment Service] Payment already completed, returning existing:', paypalOrderId);
+      const { data: fullPayment } = await supabaseAdmin
+        .from('payments')
+        .select('*')
+        .eq('payment_key', paypalOrderId)
+        .single();
+      return { success: true, payment: fullPayment, alreadyCaptured: true };
+    }
+
     // Get PayPal access token
     const accessToken = await getPayPalAccessToken();
 
@@ -208,17 +225,25 @@ async function capturePayPalPayment(paypalOrderId) {
   } catch (error) {
     console.error('[Payment Service] Capture PayPal payment error:', error);
 
-    // Update payment as failed
-    await supabaseAdmin
+    // Only mark as failed if not already completed (prevent downgrading successful payments)
+    const { data: currentPayment } = await supabaseAdmin
       .from('payments')
-      .update({
-        status: 'failed',
-        metadata: {
-          error: error.message,
-          failed_at: new Date().toISOString(),
-        }
-      })
-      .eq('payment_key', paypalOrderId);
+      .select('status')
+      .eq('payment_key', paypalOrderId)
+      .single();
+
+    if (currentPayment && currentPayment.status !== 'completed') {
+      await supabaseAdmin
+        .from('payments')
+        .update({
+          status: 'failed',
+          metadata: {
+            error: error.message,
+            failed_at: new Date().toISOString(),
+          }
+        })
+        .eq('payment_key', paypalOrderId);
+    }
 
     throw error;
   }

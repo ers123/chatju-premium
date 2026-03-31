@@ -369,17 +369,8 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole);
     }
 
-    // Step 4: Record promo usage early (reserve the code)
-    // We create a placeholder usage record before the long AI call
-    const usagePlaceholder = await promoService.usePromoCode({
-      promoCodeId: promoResult.promoCode.id,
-      email,
-      childName: subjectName,
-      childBirthDate: normalizedBirthDate,
-      readingId: null, // Will be updated after reading is created
-    });
-
-    // Step 5: Generate reading synchronously (Lambda needs to complete before exiting)
+    // Step 4: Generate reading first (before consuming promo code)
+    // If AI generation fails, the promo code stays available for retry
     const reading = await sajuService.generateSajuReading({
       userId: null,
       orderId: null,
@@ -400,14 +391,14 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       skipPaymentCheck: true,
     });
 
-    // Update usage record with reading ID
-    if (usagePlaceholder?.id) {
-      const { supabaseAdmin } = require('../config/supabase');
-      await supabaseAdmin
-        .from('promo_usage')
-        .update({ reading_id: reading.readingId })
-        .eq('id', usagePlaceholder.id);
-    }
+    // Step 5: Reading succeeded — now consume the promo code
+    await promoService.usePromoCode({
+      promoCodeId: promoResult.promoCode.id,
+      email,
+      childName: subjectName,
+      childBirthDate: normalizedBirthDate,
+      readingId: reading.readingId,
+    });
 
     console.log('[Saju Route] Promo reading generated:', {
       readingId: reading.readingId,
