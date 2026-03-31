@@ -51,7 +51,7 @@ async function getPayPalAccessToken() {
  * @param {string} description - Payment description
  * @returns {object} Payment creation result
  */
-async function createPayPalPayment(userId, amount, description = 'Premium Fortune Reading') {
+async function createPayPalPayment(userId, amount, description = 'Premium Fortune Reading', email = null) {
   try {
     const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -102,6 +102,7 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
         order_name: description,
         metadata: {
           paypal_order_id: paypalOrder.id,
+          email: email,
           created_at: new Date().toISOString(),
         }
       }])

@@ -269,6 +269,8 @@ export default function ResultsPage() {
             parentBirthTime: input.parentBirthTime,
             parentRole: input.parentRole,
             parentGender: input.parentGender,
+            // Email for PDF delivery
+            deliveryEmail: completed.email,
           })
           r = reading
         }

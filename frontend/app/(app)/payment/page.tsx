@@ -93,11 +93,7 @@ function PaymentContent() {
       }).catch(() => { setIsPromoFlow(false) })
       return
     }
-    if (!isAuthenticated()) {
-      sessionStorage.setItem('redirect_after_login', '/payment')
-      router.push('/auth/signin')
-      return
-    }
+    // No auth required — email collected on payment page
     setIsLoading(false)
   }, [router, t])
 
@@ -109,7 +105,7 @@ function PaymentContent() {
       window.paypal.Buttons({
         createOrder: async () => {
           try {
-            const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading' })
+            const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email })
             if (response.success && response.paypalOrderId) {
               sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, amount: PRODUCT_AMOUNT }))
               return response.paypalOrderId
@@ -126,9 +122,10 @@ function PaymentContent() {
             const result = await apiClient.capturePayPalPayment(data.orderID)
             if (result && (result as any).success && (result as any).payment) {
               const payment = (result as any).payment
-              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString() }))
+              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString(), email }))
               sessionStorage.removeItem('pending_order')
-              router.push('/payment/success')
+              // Go directly to results page to show premium content
+              router.push('/saju/results')
             } else { setError(t.payment.errorCapturePayment) }
           } catch (err: any) { setError(err.error || t.payment.errorProcessPayment) }
           finally { setIsProcessing(false) }
@@ -159,7 +156,7 @@ function PaymentContent() {
         const btn = paymentsClient.createButton({
           onClick: async () => {
             try {
-              const res = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading' })
+              const res = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email })
               if (!res.success || !res.paypalOrderId) throw new Error('Order creation failed')
               sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, amount: PRODUCT_AMOUNT }))
 
@@ -390,7 +387,21 @@ function PaymentContent() {
               {error && <div style={s.error}>{error}</div>}
             </div>
           ) : (
+            <>
+            {/* Email collection for receipt */}
             <div style={s.card}>
+              <h2 style={s.h2}>{t.payment.emailLabel || 'Email for receipt'}</h2>
+              <p style={{ ...s.text, marginBottom: '0.75rem' }}>{t.payment.emailDesc || 'Your premium report will be sent to this email.'}</p>
+              <input
+                type="email"
+                placeholder="email@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={s.input}
+              />
+            </div>
+
+            <div style={{ ...s.card, opacity: email.trim() ? 1 : 0.5, pointerEvents: email.trim() ? 'auto' : 'none' }}>
               <h2 style={s.h2}>{t.payment.paymentMethodTitle}</h2>
               {isProcessing && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 0' }}>
@@ -408,6 +419,7 @@ function PaymentContent() {
               )}
               {error && <div style={s.error}>{error}</div>}
             </div>
+            </>
           )}
 
           {/* Terms */}

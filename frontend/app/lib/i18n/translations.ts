@@ -386,6 +386,8 @@ export const translations = {
     },
     payment: {
       loading: '결제 정보를 준비하고 있습니다...',
+      emailLabel: '리포트 받을 이메일',
+      emailDesc: '프리미엄 리포트가 이 이메일로 전송됩니다.',
       loadingShort: '로딩 중...',
       backButton: '← 뒤로가기',
       productTitle: '사주팔자 프리미엄 분석',
@@ -913,6 +915,8 @@ export const translations = {
     },
     payment: {
       loading: 'Preparing payment information...',
+      emailLabel: 'Email for your report',
+      emailDesc: 'Your premium report will be sent to this email.',
       loadingShort: 'Loading...',
       backButton: '← Go back',
       productTitle: 'Premium Saju Analysis',
@@ -1431,6 +1435,8 @@ export const translations = {
     },
     payment: {
       loading: 'お支払い情報を準備しています...',
+      emailLabel: 'レポート受信メール',
+      emailDesc: 'プレミアムレポートはこのメールに送信されます。',
       loadingShort: '読み込み中...',
       backButton: '← 戻る',
       productTitle: '四柱推命プレミアム分析',
@@ -1951,6 +1957,8 @@ export const translations = {
     },
     payment: {
       loading: '正在准备支付信息...',
+      emailLabel: '接收报告的邮箱',
+      emailDesc: '高级报告将发送到此邮箱。',
       loadingShort: '加载中...',
       backButton: '← 返回',
       productTitle: '四柱命理高级分析',
@@ -2481,6 +2489,8 @@ export const translations = {
   },
   payment: {
     loading: 'Đang chuẩn bị thông tin thanh toán...',
+    emailLabel: 'Email nhận báo cáo',
+    emailDesc: 'Báo cáo Premium sẽ được gửi đến email này.',
     loadingShort: 'Đang tải...',
     backButton: '← Quay lại',
     productTitle: 'Phân tích Tứ Trụ Premium',
@@ -3012,6 +3022,8 @@ export const translations = {
   },
   payment: {
     loading: 'Menyiapkan informasi pembayaran...',
+    emailLabel: 'Email untuk laporan',
+    emailDesc: 'Laporan Premium akan dikirim ke email ini.',
     loadingShort: 'Memuat...',
     backButton: '← Kembali',
     productTitle: 'Analisis Saju Premium',
@@ -3543,6 +3555,8 @@ export const translations = {
   },
   payment: {
     loading: 'Preparando información de pago...',
+    emailLabel: 'Email para el informe',
+    emailDesc: 'Tu informe Premium se enviará a este email.',
     loadingShort: 'Cargando...',
     backButton: '← Volver',
     productTitle: 'Análisis Saju Premium',
@@ -4074,6 +4088,8 @@ export const translations = {
   },
   payment: {
     loading: 'Preparando informações de pagamento...',
+    emailLabel: 'Email para o relatório',
+    emailDesc: 'Seu relatório Premium será enviado para este email.',
     loadingShort: 'Carregando...',
     backButton: '← Voltar',
     productTitle: 'Análise Saju Premium',
@@ -4605,6 +4621,8 @@ export const translations = {
   },
   payment: {
     loading: 'Préparation des informations de paiement...',
+    emailLabel: 'Email pour le rapport',
+    emailDesc: 'Votre rapport Premium sera envoyé à cet email.',
     loadingShort: 'Chargement...',
     backButton: '← Retour',
     productTitle: 'Analyse Saju Premium',
@@ -5136,6 +5154,8 @@ export const translations = {
   },
   payment: {
     loading: 'กำลังเตรียมข้อมูลการชำระเงิน...',
+    emailLabel: 'อีเมลสำหรับรายงาน',
+    emailDesc: 'รายงานพรีเมียมจะถูกส่งไปยังอีเมลนี้',
     loadingShort: 'กำลังโหลด...',
     backButton: '← ย้อนกลับ',
     productTitle: 'วิเคราะห์ซาจูพรีเมียม',

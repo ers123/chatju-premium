@@ -58,6 +58,8 @@ export interface BirthInfo {
   // Twin information
   twinOrder?: 1 | 2; // 1 = first born, 2 = second born
   twinSiblingName?: string; // Twin sibling's name
+  // Email for PDF delivery
+  deliveryEmail?: string;
 }
 
 export interface Pillar {
@@ -201,6 +203,7 @@ export interface Payment {
 export interface PayPalPaymentRequest {
   amount: number;
   description: string; // e.g., "Premium Fortune Reading"
+  email?: string; // For receipt and PDF delivery
 }
 
 export interface PayPalPaymentResponse {

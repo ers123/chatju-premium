@@ -35,10 +35,11 @@ router.use(sanitizeStrings);
  * - amount: number (required) - Amount in USD (e.g., 10.00 = $10.00)
  * - description: string (optional) - Payment description
  */
-router.post('/paypal/create', authMiddleware, paymentCreationLimiter, validatePaymentRequest, async (req, res) => {
+router.post('/paypal/create', paymentCreationLimiter, validatePaymentRequest, async (req, res) => {
   try {
-    const { amount, description } = req.body;
-    const userId = req.user.id;
+    const { amount, description, email } = req.body;
+    // Use authenticated user ID if available, otherwise use email as identifier
+    const userId = req.user?.id || null;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({
@@ -47,7 +48,14 @@ router.post('/paypal/create', authMiddleware, paymentCreationLimiter, validatePa
       });
     }
 
-    const result = await paymentService.createPayPalPayment(userId, amount, description);
+    if (!email) {
+      return res.status(400).json({
+        error: 'Email is required',
+        code: 'EMAIL_REQUIRED',
+      });
+    }
+
+    const result = await paymentService.createPayPalPayment(userId, amount, description, email);
 
     res.status(200).json(result);
 
@@ -71,10 +79,9 @@ router.post('/paypal/create', authMiddleware, paymentCreationLimiter, validatePa
  * Body:
  * - paypalOrderId: string (required) - PayPal order ID
  */
-router.post('/paypal/capture', authMiddleware, paymentConfirmLimiter, validatePayPalCapture, async (req, res) => {
+router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, async (req, res) => {
   try {
     const { paypalOrderId } = req.body;
-    const userId = req.user.id;
 
     if (!paypalOrderId) {
       return res.status(400).json({
@@ -83,23 +90,7 @@ router.post('/paypal/capture', authMiddleware, paymentConfirmLimiter, validatePa
       });
     }
 
-    // SECURITY: Verify payment ownership before capturing
-    // Prevents race conditions and unauthorized payment capture
-    const payment = await paymentService.getPaymentByPaymentKey(paypalOrderId);
-
-    if (payment.user_id !== userId) {
-      console.warn('[Payment Routes] Payment ownership verification failed', {
-        paypalOrderId,
-        paymentUserId: payment.user_id,
-        requestUserId: userId,
-      });
-      return res.status(403).json({
-        error: 'Access denied - payment belongs to different user',
-        code: 'ACCESS_DENIED',
-      });
-    }
-
-    // Ownership verified - proceed with capture
+    // Capture payment — PayPal handles payment authentication
     const result = await paymentService.capturePayPalPayment(paypalOrderId);
 
     res.status(200).json(result);
