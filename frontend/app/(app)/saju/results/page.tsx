@@ -103,6 +103,42 @@ function translateElement(korean: string, lang: string): string {
   return elementNameMap[lang]?.[korean] || korean
 }
 
+// Heavenly Stems (천간) translation map
+const stemNameMap: Record<string, Record<string, string>> = {
+  ko: { '갑': '갑', '을': '을', '병': '병', '정': '정', '무': '무', '기': '기', '경': '경', '신': '신', '임': '임', '계': '계' },
+  ja: { '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊', '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸' },
+  zh: { '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊', '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸' },
+  en: { '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊', '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸' },
+  fr: { '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊', '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸' },
+  es: { '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊', '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸' },
+  pt: { '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊', '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸' },
+  id: { '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊', '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸' },
+  th: { '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊', '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸' },
+  vi: { '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊', '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸' },
+}
+
+// Earthly Branches (지지) translation map
+const branchNameMap: Record<string, Record<string, string>> = {
+  ko: { '자': '자', '축': '축', '인': '인', '묘': '묘', '진': '진', '사': '사', '오': '오', '미': '미', '신': '신', '유': '유', '술': '술', '해': '해' },
+  ja: { '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥' },
+  zh: { '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥' },
+  en: { '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥' },
+  fr: { '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥' },
+  es: { '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥' },
+  pt: { '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥' },
+  id: { '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥' },
+  th: { '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥' },
+  vi: { '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥' },
+}
+
+function translateStem(korean: string, lang: string): string {
+  return stemNameMap[lang]?.[korean] || korean
+}
+
+function translateBranch(korean: string, lang: string): string {
+  return branchNameMap[lang]?.[korean] || korean
+}
+
 // Four Pillars Display Component
 function FourPillarsDisplay({ pillars, t, lang }: { pillars: SajuResult['fourPillars']; t: { pillarYear: string; pillarMonth: string; pillarDay: string; pillarHour: string }; lang: string }) {
   const pillarOrder = ['시주', '일주', '월주', '년주'] as const
@@ -117,11 +153,11 @@ function FourPillarsDisplay({ pillars, t, lang }: { pillars: SajuResult['fourPil
             <div style={{ fontSize: '0.75rem', marginBottom: '0.5rem', color: '#8B8580' }}>{pillarLabels[key]}</div>
             <div style={{ background: '#1A3D2E', borderRadius: '0.75rem', overflow: 'hidden' }}>
               <div style={{ padding: '0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{pillar.천간}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{translateStem(pillar.천간, lang)}</div>
                 <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{translateElement(pillar.천간오행, lang)}</div>
               </div>
               <div style={{ padding: '0.75rem 0' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{pillar.지지}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{translateBranch(pillar.지지, lang)}</div>
                 <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{translateElement(pillar.지지오행, lang)}</div>
               </div>
             </div>
@@ -642,7 +678,9 @@ export default function ResultsPage() {
               <div style={{ marginTop: '0.75rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', border: '1px solid #E2DDD6', background: '#FAF8F5' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
                   <span style={{ fontSize: '1rem' }}>🕐</span>
-                  <span style={{ color: '#6B5E52' }}>{corrections.note}</span>
+                  <span style={{ color: '#6B5E52' }}>
+                    {sr.solarTimeLabel || 'Solar time correction'} {(corrections as any).solarTimeCorrection > 0 ? '+' : ''}{(corrections as any).solarTimeCorrection || ''}{lang === 'ko' ? '분' : 'min'}
+                  </span>
                 </div>
                 {corrections.adjustedTime && (
                   <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.25rem', marginLeft: '1.75rem' }}>

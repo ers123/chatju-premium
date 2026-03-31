@@ -352,6 +352,7 @@ export const translations = {
       siblingDesc: '같은 날, 같은 시간에 태어난 쌍둥이도 기질이 다릅니다. 형제자매를 비교 분석해서 그 이유를 알아보세요.',
       siblingCta: '형제자매 분석하기',
       goHome: '홈으로 돌아가기',
+      solarTimeLabel: '진태양시 보정',
       footerDisclaimer: '본 분석은 동양 철학에 기반한 기질 분석 도구로, 참고 자료로 활용해주세요.',
       elements: {
         '목': { name: '나무(木)', traits: ['창의적', '성장 지향적', '유연함', '인내심'], learningStyle: '혼자 깊이 파고드는 학습, 독서 후 토론, 자연 속 학습이 효과적', caution: '압박감에 약해요. 격려와 기다림이 필요합니다.' },
@@ -878,6 +879,7 @@ export const translations = {
       siblingDesc: 'Born the same day, same hour, yet so different. Analyze a sibling or twin to see why.',
       siblingCta: 'Analyze Sibling',
       goHome: 'Back to Home',
+      solarTimeLabel: 'Solar time correction',
       footerDisclaimer: 'This analysis is a temperament analysis tool based on Eastern philosophy. Please use as reference material.',
       elements: {
         '목': { name: 'Wood (木)', traits: ['Creative', 'Growth-oriented', 'Flexible', 'Patient'], learningStyle: 'Deep solo study, reading then discussing, learning in nature', caution: 'Sensitive to pressure. Encouragement and patience are needed.' },
@@ -1395,6 +1397,7 @@ export const translations = {
       siblingDesc: 'きょうだいを分析して気質を比べてみましょう。同じ親なのに、なぜ違うのか分かります。',
       siblingCta: 'きょうだいを分析する',
       goHome: 'ホームに戻る',
+      solarTimeLabel: '真太陽時補正',
       footerDisclaimer: '本分析は東洋哲学に基づいた気質分析ツールです。参考資料としてご活用ください。',
       elements: {
         '목': { name: '木', traits: ['創造的', '成長志向', '柔軟', '忍耐力'], learningStyle: '一人で深く掘り下げる学習、読書後の議論、自然の中での学習が効果的', caution: 'プレッシャーに弱いです。励ましと待つことが必要です。' },
@@ -1914,6 +1917,7 @@ export const translations = {
       siblingDesc: '分析兄弟姐妹来比较气质。同样的父母，不同的天性。',
       siblingCta: '分析兄弟姐妹',
       goHome: '返回首页',
+      solarTimeLabel: '真太阳时校正',
       footerDisclaimer: '本分析是基于东方哲学的气质分析工具，请作为参考资料使用。',
       elements: {
         '목': { name: '木', traits: ['创造力', '成长导向', '灵活', '耐心'], learningStyle: '独自深入学习、阅读后讨论、自然中学习效果好', caution: '对压力敏感。需要鼓励和耐心等待。' },
@@ -2443,6 +2447,7 @@ export const translations = {
     siblingDesc: 'Phân tích anh chị em để so sánh khí chất. Cùng cha mẹ, khác bản chất.',
     siblingCta: 'Phân tích anh chị em',
     goHome: 'Về trang chủ',
+    solarTimeLabel: 'Hiệu chỉnh giờ mặt trời',
     footerDisclaimer: 'Đây là công cụ phân tích tính cách dựa trên triết học phương Đông. Vui lòng sử dụng làm tài liệu tham khảo.',
     elements: {
       '목': { name: 'Mộc (木)', traits: ['Sáng tạo', 'Hướng phát triển', 'Linh hoạt', 'Kiên nhẫn'], learningStyle: 'Tự học sâu, đọc rồi thảo luận, học trong thiên nhiên', caution: 'Nhạy cảm với áp lực. Cần sự khuyến khích và kiên nhẫn.' },
@@ -2973,6 +2978,7 @@ export const translations = {
     siblingDesc: 'Analisis saudara kandung untuk membandingkan temperamen. Orang tua sama, karakter berbeda.',
     siblingCta: 'Analisis Saudara Kandung',
     goHome: 'Kembali ke Beranda',
+    solarTimeLabel: 'Koreksi waktu matahari',
     footerDisclaimer: 'Analisis ini adalah alat analisis temperamen berdasarkan filosofi Timur. Harap gunakan sebagai bahan referensi.',
     elements: {
       '목': { name: 'Kayu (木)', traits: ['Kreatif', 'Berorientasi pertumbuhan', 'Fleksibel', 'Sabar'], learningStyle: 'Belajar mandiri mendalam, membaca lalu berdiskusi, belajar di alam', caution: 'Sensitif terhadap tekanan. Dibutuhkan dorongan dan kesabaran.' },
@@ -3503,6 +3509,7 @@ export const translations = {
     siblingDesc: 'Analiza a un hermano para comparar temperamentos. Mismos padres, diferente naturaleza.',
     siblingCta: 'Analizar Hermano/a',
     goHome: 'Volver al Inicio',
+    solarTimeLabel: 'Corrección hora solar',
     footerDisclaimer: 'Este análisis es una herramienta de análisis de temperamento basada en la filosofía oriental. Úsalo como material de referencia.',
     elements: {
       '목': { name: 'Madera (木)', traits: ['Creativo/a', 'Orientado/a al crecimiento', 'Flexible', 'Paciente'], learningStyle: 'Estudio profundo individual, leer y luego debatir, aprender en la naturaleza', caution: 'Sensible a la presión. Necesita estímulo y paciencia.' },
@@ -4033,6 +4040,7 @@ export const translations = {
     siblingDesc: 'Analise um irmao para comparar temperamentos. Mesmos pais, naturezas diferentes.',
     siblingCta: 'Analisar Irmao/Irma',
     goHome: 'Voltar ao Início',
+    solarTimeLabel: 'Correção de hora solar',
     footerDisclaimer: 'Esta análise é uma ferramenta de análise de temperamento baseada na filosofia oriental. Use apenas como material de referência.',
     elements: {
       '목': { name: 'Madeira (木)', traits: ['Criativo', 'Orientado ao crescimento', 'Flexível', 'Paciente'], learningStyle: 'Estudo solo aprofundado, ler e depois discutir, aprender na natureza', caution: 'Sensível à pressão. Incentivo e paciência são necessários.' },
@@ -4563,6 +4571,7 @@ export const translations = {
     siblingDesc: 'Analysez un frere ou une soeur pour comparer les temperaments. Memes parents, natures differentes.',
     siblingCta: 'Analyser un frere/une soeur',
     goHome: 'Retour à l\'accueil',
+    solarTimeLabel: 'Correction heure solaire',
     footerDisclaimer: 'Cette analyse est un outil d\'analyse du tempérament basé sur la philosophie orientale. À utiliser à titre indicatif.',
     elements: {
       '목': { name: 'Bois (木)', traits: ['Créatif', 'Orienté vers la croissance', 'Flexible', 'Patient'], learningStyle: 'Étude approfondie en solo, lecture puis discussion, apprentissage dans la nature', caution: 'Sensible à la pression. Encouragement et patience sont nécessaires.' },
@@ -5093,6 +5102,7 @@ export const translations = {
     siblingDesc: 'วิเคราะห์พี่น้องเพื่อเปรียบเทียบนิสัย พ่อแม่เดียวกัน แต่ธรรมชาติต่างกัน',
     siblingCta: 'วิเคราะห์พี่น้อง',
     goHome: 'กลับหน้าแรก',
+    solarTimeLabel: 'ปรับเวลาสุริยะ',
     footerDisclaimer: 'การวิเคราะห์นี้เป็นเครื่องมือวิเคราะห์นิสัยตามปรัชญาตะวันออก กรุณาใช้เป็นข้อมูลอ้างอิง',
     elements: {
       '목': { name: 'ไม้ (木)', traits: ['สร้างสรรค์', 'มุ่งเติบโต', 'ยืดหยุ่น', 'อดทน'], learningStyle: 'เรียนลึกคนเดียว อ่านแล้วอภิปราย เรียนรู้ในธรรมชาติ', caution: 'อ่อนไหวต่อแรงกดดัน ต้องการกำลังใจและความอดทน' },
