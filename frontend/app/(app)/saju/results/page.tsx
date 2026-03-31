@@ -234,15 +234,18 @@ export default function ResultsPage() {
   const [promoValidating, setPromoValidating] = useState(false)
   const [promoResult, setPromoResult] = useState<{ valid: boolean; promoCode?: { id: string; code: string } } | null>(null)
 
-  // Render PayPal buttons when SDK is ready and payment form is shown
+  // Render PayPal buttons once when SDK is ready and email is entered
   useEffect(() => {
-    if (!paypalSdkReady || !showPayment || !paymentEmail.trim() || paypalRendered.current) return
+    if (!paypalSdkReady || !showPayment || paypalRendered.current) return
     if (typeof window === 'undefined' || !(window as any).paypal) return
+    const container = document.getElementById('inline-paypal-container')
+    if (!container) return
     paypalRendered.current = true
 
     try {
       ;(window as any).paypal.Buttons({
         createOrder: async () => {
+          if (!paymentEmail.trim()) { setPaymentError('Please enter your email first'); throw new Error('Email required') }
           const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email: paymentEmail })
           if (response.success && response.paypalOrderId) {
             sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId }))
@@ -272,7 +275,7 @@ export default function ResultsPage() {
         onCancel: () => {},
       }).render('#inline-paypal-container')
     } catch { setPaymentError('Failed to initialize payment.') }
-  }, [paypalSdkReady, showPayment, paymentEmail])
+  }, [paypalSdkReady, showPayment])
 
   // Handle promo code submit inline
   // Poll for reading completion (used when API Gateway times out but Lambda continues)
@@ -741,12 +744,6 @@ export default function ResultsPage() {
             >
               {sr.savePdf}
             </button>
-            <button
-              onClick={() => router.push('/chat')}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 700, color: '#FFFFFF', background: '#B8922D', borderRadius: '10px', border: 'none', cursor: 'pointer' }}
-            >
-              {sr.aiConsult}
-            </button>
           </div>
         </div>
       </header>
@@ -1023,7 +1020,7 @@ export default function ResultsPage() {
                     type="email"
                     placeholder="email@example.com"
                     value={paymentEmail}
-                    onChange={(e) => { setPaymentEmail(e.target.value); paypalRendered.current = false }}
+                    onChange={(e) => setPaymentEmail(e.target.value)}
                     style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.875rem', boxSizing: 'border-box' as const, marginBottom: '0.75rem' }}
                   />
 
@@ -1045,19 +1042,15 @@ export default function ResultsPage() {
                     </button>
                   </div>
 
-                  {/* PayPal buttons — only show when email is entered */}
-                  {paymentEmail.trim() && (
-                    <>
-                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
-                        {(t.payment as any).orPayWith || 'Or pay with'}
-                      </div>
-                      <div id="inline-paypal-container" />
-                      <Script
-                        src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay`}
-                        onReady={() => setPaypalSdkReady(true)}
-                      />
-                    </>
-                  )}
+                  {/* PayPal buttons */}
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
+                    {(t.payment as any).orPayWith || 'Or pay with'}
+                  </div>
+                  <div id="inline-paypal-container" />
+                  <Script
+                    src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay`}
+                    onReady={() => setPaypalSdkReady(true)}
+                  />
 
                   {paymentProcessing && (
                     <div style={{ textAlign: 'center', padding: '1rem 0' }}>
