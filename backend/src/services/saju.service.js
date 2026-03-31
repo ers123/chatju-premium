@@ -455,9 +455,12 @@ async function generateAIPreview(childManseryeok, parentManseryeok = null, paren
     ? '\n**참고: 아이의 출생 시간을 모르므로 시주(時柱)는 정오(12시) 기준입니다.**\n'
     : '';
 
+  // Language instruction for non-Korean previews (same pattern as premium)
+  const languageInstruction = language !== 'ko' ? `\n**언어 지시:** 이 미리보기는 반드시 ${language === 'en' ? '영어(English)' : language === 'zh' ? '중국어(中文)' : language === 'ja' ? '일본어(日本語)' : language === 'vi' ? '베트남어(Tiếng Việt)' : language === 'id' ? '인도네시아어(Bahasa Indonesia)' : language === 'es' ? '스페인어(Español)' : language === 'pt' ? '포르투갈어(Português)' : language === 'fr' ? '프랑스어(Français)' : language === 'th' ? '태국어(ภาษาไทย)' : language}로 작성하세요. 사주 용어는 원어(한자)를 병기하되, 설명과 조언은 모두 해당 언어로 작성.\n` : '';
+
   const prompt = `당신은 20년 경력의 아동 심리 전문 사주 상담사입니다.
 부모가 아이를 더 잘 이해하고, 갈등을 줄일 수 있도록 도와주세요.
-${timeDisclaimer}
+${timeDisclaimer}${languageInstruction}
 
 **아이 사주팔자:**
 - 년주(年柱): ${childPillars.year.korean} (${childPillars.year.element})
@@ -774,7 +777,7 @@ ${twinInfo.siblingName ? `**쌍둥이 형제/자매 이름:** ${twinInfo.sibling
   }
 
   // Language instruction for non-Korean reports
-  const languageInstruction = language !== 'ko' ? `\n**언어 지시:** 이 리포트는 반드시 ${language === 'en' ? '영어(English)' : language === 'zh' ? '중국어(中文)' : language === 'ja' ? '일본어(日本語)' : language}로 작성하세요. 사주 용어는 원어(한자)를 병기하되, 설명과 조언은 모두 해당 언어로 작성.\n` : '';
+  const languageInstruction = language !== 'ko' ? `\n**언어 지시:** 이 리포트는 반드시 ${language === 'en' ? '영어(English)' : language === 'zh' ? '중국어(中文)' : language === 'ja' ? '일본어(日本語)' : language === 'vi' ? '베트남어(Tiếng Việt)' : language === 'id' ? '인도네시아어(Bahasa Indonesia)' : language === 'es' ? '스페인어(Español)' : language === 'pt' ? '포르투갈어(Português)' : language === 'fr' ? '프랑스어(Français)' : language === 'th' ? '태국어(ภาษาไทย)' : language}로 작성하세요. 사주 용어는 원어(한자)를 병기하되, 설명과 조언은 모두 해당 언어로 작성.\n` : '';
 
   // Build solar time correction context for AI
   let correctionNote = '';

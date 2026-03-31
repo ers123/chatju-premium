@@ -85,8 +85,26 @@ const getWeakElement = (balance: Record<string, number>) => {
   return minKey
 }
 
+// Element name translation map (backend returns Korean keys)
+const elementNameMap: Record<string, Record<string, string>> = {
+  ko: { '목': '목', '화': '화', '토': '토', '금': '금', '수': '수' },
+  en: { '목': 'Wood', '화': 'Fire', '토': 'Earth', '금': 'Metal', '수': 'Water' },
+  ja: { '목': '木', '화': '火', '토': '土', '금': '金', '수': '水' },
+  zh: { '목': '木', '화': '火', '토': '土', '금': '金', '수': '水' },
+  vi: { '목': 'Mộc', '화': 'Hỏa', '토': 'Thổ', '금': 'Kim', '수': 'Thủy' },
+  id: { '목': 'Kayu', '화': 'Api', '토': 'Tanah', '금': 'Logam', '수': 'Air' },
+  es: { '목': 'Madera', '화': 'Fuego', '토': 'Tierra', '금': 'Metal', '수': 'Agua' },
+  pt: { '목': 'Madeira', '화': 'Fogo', '토': 'Terra', '금': 'Metal', '수': 'Água' },
+  fr: { '목': 'Bois', '화': 'Feu', '토': 'Terre', '금': 'Métal', '수': 'Eau' },
+  th: { '목': 'ไม้', '화': 'ไฟ', '토': 'ดิน', '금': 'ทอง', '수': 'น้ำ' },
+}
+
+function translateElement(korean: string, lang: string): string {
+  return elementNameMap[lang]?.[korean] || korean
+}
+
 // Four Pillars Display Component
-function FourPillarsDisplay({ pillars, t }: { pillars: SajuResult['fourPillars']; t: { pillarYear: string; pillarMonth: string; pillarDay: string; pillarHour: string } }) {
+function FourPillarsDisplay({ pillars, t, lang }: { pillars: SajuResult['fourPillars']; t: { pillarYear: string; pillarMonth: string; pillarDay: string; pillarHour: string }; lang: string }) {
   const pillarOrder = ['시주', '일주', '월주', '년주'] as const
   const pillarLabels = { 년주: t.pillarYear, 월주: t.pillarMonth, 일주: t.pillarDay, 시주: t.pillarHour }
 
@@ -100,11 +118,11 @@ function FourPillarsDisplay({ pillars, t }: { pillars: SajuResult['fourPillars']
             <div style={{ background: '#1A3D2E', borderRadius: '0.75rem', overflow: 'hidden' }}>
               <div style={{ padding: '0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                 <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{pillar.천간}</div>
-                <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{pillar.천간오행}</div>
+                <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{translateElement(pillar.천간오행, lang)}</div>
               </div>
               <div style={{ padding: '0.75rem 0' }}>
                 <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{pillar.지지}</div>
-                <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{pillar.지지오행}</div>
+                <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{translateElement(pillar.지지오행, lang)}</div>
               </div>
             </div>
           </div>
@@ -190,12 +208,21 @@ export default function ResultsPage() {
           if (!stored) return
           const input = JSON.parse(stored)
 
+          // Resolve language with localStorage fallback (same as preview)
+          let resolvedLang = lang
+          if (resolvedLang === 'ko') {
+            const savedLang = localStorage.getItem('somyung-lang')
+            if (savedLang && savedLang !== 'ko') {
+              resolvedLang = savedLang as typeof lang
+            }
+          }
+
           const reading = await apiClient.getFullReading(completed.orderId, {
             birthDate: input.birthDate,
             birthTime: input.birthTime,
             gender: input.gender,
             isLunar: input.calendar === 'lunar',
-            language: lang,
+            language: resolvedLang,
             // Location for solar time correction
             birthPlace: input.birthPlace,
             // Twin info
@@ -258,7 +285,7 @@ export default function ResultsPage() {
       pdf.text(`SoMyung - ${inputData?.name || ''}`, 10, 8)
       pdf.setFontSize(8)
       pdf.setTextColor(139, 133, 128)
-      pdf.text(new Date().toLocaleDateString('ko-KR'), pdfWidth - 30, 8)
+      pdf.text(new Date().toLocaleDateString(lang), pdfWidth - 30, 8)
 
       // Add image pages
       pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
@@ -274,9 +301,9 @@ export default function ResultsPage() {
       pdf.save(`SoMyung_${inputData?.name || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`)
     } catch (err) {
       console.error('PDF export error:', err)
-      alert('PDF 저장에 실패했습니다. 다시 시도해주세요.')
+      alert(sr.pdfError)
     }
-  }, [inputData])
+  }, [inputData, sr.pdfError])
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -290,13 +317,23 @@ export default function ResultsPage() {
         const input = JSON.parse(stored)
         setInputData(input)
 
+        // Resolve language: prefer context lang, but if still default 'ko',
+        // check localStorage directly (context useEffect may not have run yet)
+        let resolvedLang = lang
+        if (resolvedLang === 'ko') {
+          const savedLang = localStorage.getItem('somyung-lang')
+          if (savedLang && savedLang !== 'ko') {
+            resolvedLang = savedLang as typeof lang
+          }
+        }
+
         // Send both child and parent data for relationship analysis
         const previewData = await apiClient.getPreview({
           birthDate: input.birthDate,
           birthTime: input.birthTime,
           gender: input.gender,
           isLunar: input.calendar === 'lunar',
-          language: lang,
+          language: resolvedLang,
           // Location for solar time correction
           birthPlace: input.birthPlace,
           // Twin info
@@ -598,7 +635,7 @@ export default function ResultsPage() {
           {/* Four Pillars */}
           <div style={{ marginBottom: '2rem' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginBottom: '1rem' }}>{sr.fourPillars}</h3>
-            <FourPillarsDisplay pillars={result.fourPillars} t={sr} />
+            <FourPillarsDisplay pillars={result.fourPillars} t={sr} lang={lang} />
 
             {/* Solar Time Correction Note */}
             {corrections?.applied && (
@@ -609,8 +646,8 @@ export default function ResultsPage() {
                 </div>
                 {corrections.adjustedTime && (
                   <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.25rem', marginLeft: '1.75rem' }}>
-                    보정된 출생 시각: {corrections.adjustedTime}
-                    {corrections.isSouthernHemisphere && ' (남반구 만세력 적용)'}
+                    {sr.adjustedBirthTime}: {corrections.adjustedTime}
+                    {corrections.isSouthernHemisphere && ` (${sr.southernHemisphere})`}
                   </div>
                 )}
               </div>
@@ -701,7 +738,7 @@ export default function ResultsPage() {
               <div style={{ position: 'absolute', top: 0, right: 0, width: '10rem', height: '10rem', background: 'rgba(184,146,45,0.1)', borderRadius: '50%', filter: 'blur(48px)' }} />
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 1rem', borderRadius: '6px', background: 'rgba(184,146,45,0.2)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 700, marginBottom: '1rem' }}>
-                  <CheckIcon /> 프리미엄 분석 완료
+                  <CheckIcon /> {sr.premiumComplete}
                 </div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif' }}>{sr.premiumTitle}</h2>
               </div>
@@ -765,8 +802,8 @@ export default function ResultsPage() {
               <div style={{ position: 'absolute', inset: 0, border: '4px solid #EBE5DF', borderRadius: '50%' }} />
               <div style={{ position: 'absolute', inset: 0, border: '4px solid #B8922D', borderRadius: '50%', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
             </div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.5rem' }}>프리미엄 분석 생성 중...</h3>
-            <p style={{ color: '#8B8580' }}>AI가 심층 분석을 수행하고 있습니다. 잠시만 기다려주세요.</p>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.5rem' }}>{sr.premiumGenerating}</h3>
+            <p style={{ color: '#8B8580' }}>{sr.premiumGeneratingDesc}</p>
           </section>
         ) : premiumError ? (
           <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
@@ -797,7 +834,7 @@ export default function ResultsPage() {
                   onClick={() => router.push('/payment')}
                   style={{ flex: 1, padding: '1rem', borderRadius: '10px', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
                 >
-                  프리미엄 분석 시작하기 — $4.99
+                  {sr.premiumStartCta} — {t.pricing.premium.price}
                 </button>
               </div>
             </div>
