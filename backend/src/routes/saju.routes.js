@@ -426,4 +426,40 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
   }
 });
 
+/**
+ * GET /saju/reading-check
+ * Poll for a completed reading by email (used after API Gateway timeout)
+ * The Lambda continues running after timeout and saves to DB — this endpoint checks if it's done.
+ */
+router.get('/reading-check', readLimiter, async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ error: 'Email required', code: 'MISSING_EMAIL' });
+    }
+
+    const { supabaseAdmin } = require('../config/supabase');
+
+    // Find the most recent reading for this email (created in last 5 minutes)
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data: reading, error } = await supabaseAdmin
+      .from('readings')
+      .select('*')
+      .eq('delivery_email', email)
+      .gte('created_at', fiveMinAgo)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !reading) {
+      return res.status(200).json({ status: 'pending' });
+    }
+
+    return res.status(200).json({ status: 'complete', reading });
+  } catch (error) {
+    console.error('[Saju Route] Reading check error:', error);
+    return res.status(200).json({ status: 'pending' });
+  }
+});
+
 module.exports = router;

@@ -275,6 +275,22 @@ export default function ResultsPage() {
   }, [paypalSdkReady, showPayment, paymentEmail])
 
   // Handle promo code submit inline
+  // Poll for reading completion (used when API Gateway times out but Lambda continues)
+  const pollForReading = async (email: string, maxAttempts = 12) => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(r => setTimeout(r, 5000)) // 5s between polls
+      try {
+        const res = await fetch(`${API_URL}/saju/reading-check?email=${encodeURIComponent(email)}`)
+        const data = await res.json()
+        if (data.status === 'complete' && data.reading) {
+          return data.reading
+        }
+      } catch { /* keep polling */ }
+    }
+    return null
+  }
+
   const handleInlinePromo = async () => {
     if (!promoCode.trim() || !paymentEmail.trim()) return
     setPromoValidating(true)
@@ -287,34 +303,49 @@ export default function ResultsPage() {
         return
       }
       setPromoResult(validation)
-      // Get reading via promo
       setPaymentProcessing(true)
       const stored = sessionStorage.getItem('sajuInput')
       if (!stored) return
       const input = JSON.parse(stored)
-      const reading = await apiClient.calculateWithPromo({
-        promoCode,
-        email: paymentEmail,
-        birthDate: input.birthDate,
-        birthTime: input.birthTime,
-        gender: input.gender,
-        isLunar: input.calendar === 'lunar',
-        language: lang,
-        subjectName: input.name,
-        birthPlace: input.birthPlace,
-        parentBirthDate: input.parentBirthDate,
-        parentBirthTime: input.parentBirthTime,
-        parentRole: input.parentRole,
-        twinOrder: input.twinOrder,
-        twinSiblingName: input.twinSiblingName,
-      })
+
+      let reading = null
+      try {
+        // Try the direct call — may timeout at 30s via API Gateway
+        reading = await apiClient.calculateWithPromo({
+          promoCode,
+          email: paymentEmail,
+          birthDate: input.birthDate,
+          birthTime: input.birthTime,
+          gender: input.gender,
+          isLunar: input.calendar === 'lunar',
+          language: lang,
+          subjectName: input.name,
+          birthPlace: input.birthPlace,
+          parentBirthDate: input.parentBirthDate,
+          parentBirthTime: input.parentBirthTime,
+          parentRole: input.parentRole,
+          twinOrder: input.twinOrder,
+          twinSiblingName: input.twinSiblingName,
+        })
+      } catch {
+        // API Gateway likely timed out at 30s, but Lambda is still running.
+        // Poll for the result — Lambda will save to DB when done.
+        reading = await pollForReading(paymentEmail)
+        if (!reading) {
+          setPaymentError('Generation is taking longer than expected. Please refresh in 1 minute.')
+          setPaymentProcessing(false)
+          setPromoValidating(false)
+          return
+        }
+      }
+
       // Store and reload to show premium
       sessionStorage.setItem('promo_reading', JSON.stringify(reading))
       sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail }))
       setShowPayment(false)
       window.location.reload()
     } catch (err: any) {
-      setPaymentError(err.error || err.message || 'Promo code error')
+      setPaymentError(err.error || err.message || 'Error processing promo code')
     } finally {
       setPromoValidating(false)
       setPaymentProcessing(false)
