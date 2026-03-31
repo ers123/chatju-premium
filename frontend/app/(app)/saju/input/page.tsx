@@ -13,37 +13,37 @@ const CheckIcon = () => (
   </svg>
 )
 
-// Saju Helpers
+// Saju Helpers — language-independent data, display names come from translations
 const getZodiacInfo = (yearStr: string) => {
   const year = parseInt(yearStr)
   if (isNaN(year) || year < 1900 || year > 2100) return null
 
   const stems = [
-    { name: '경', color: '백', colorName: '흰색(金)', colorCode: '#6B7578', element: '금' },
-    { name: '신', color: '백', colorName: '흰색(金)', colorCode: '#6B7578', element: '금' },
-    { name: '임', color: '흑', colorName: '검정(水)', colorCode: '#1A3D2E', element: '수' },
-    { name: '계', color: '흑', colorName: '검정(水)', colorCode: '#1A3D2E', element: '수' },
-    { name: '갑', color: '청', colorName: '파랑(木)', colorCode: '#5A7A66', element: '목' },
-    { name: '을', color: '청', colorName: '파랑(木)', colorCode: '#5A7A66', element: '목' },
-    { name: '병', color: '적', colorName: '빨강(火)', colorCode: '#A85544', element: '화' },
-    { name: '정', color: '적', colorName: '빨강(火)', colorCode: '#A85544', element: '화' },
-    { name: '무', color: '황', colorName: '노랑(土)', colorCode: '#B8922D', element: '토' },
-    { name: '기', color: '황', colorName: '노랑(土)', colorCode: '#B8922D', element: '토' },
+    { key: 'metal', colorCode: '#6B7578' },
+    { key: 'metal', colorCode: '#6B7578' },
+    { key: 'water', colorCode: '#1A3D2E' },
+    { key: 'water', colorCode: '#1A3D2E' },
+    { key: 'wood', colorCode: '#5A7A66' },
+    { key: 'wood', colorCode: '#5A7A66' },
+    { key: 'fire', colorCode: '#A85544' },
+    { key: 'fire', colorCode: '#A85544' },
+    { key: 'earth', colorCode: '#B8922D' },
+    { key: 'earth', colorCode: '#B8922D' },
   ]
 
   const branches = [
-    { name: '신', animal: '원숭이', icon: '🐵' },
-    { name: '유', animal: '닭', icon: '🐔' },
-    { name: '술', animal: '개', icon: '🐶' },
-    { name: '해', animal: '돼지', icon: '🐷' },
-    { name: '자', animal: '쥐', icon: '🐭' },
-    { name: '축', animal: '소', icon: '🐮' },
-    { name: '인', animal: '호랑이', icon: '🐯' },
-    { name: '묘', animal: '토끼', icon: '🐰' },
-    { name: '진', animal: '용', icon: '🐲' },
-    { name: '사', animal: '뱀', icon: '🐍' },
-    { name: '오', animal: '말', icon: '🐴' },
-    { name: '미', animal: '양', icon: '🐑' },
+    { key: 'monkey', icon: '🐵' },
+    { key: 'rooster', icon: '🐔' },
+    { key: 'dog', icon: '🐶' },
+    { key: 'pig', icon: '🐷' },
+    { key: 'rat', icon: '🐭' },
+    { key: 'ox', icon: '🐮' },
+    { key: 'tiger', icon: '🐯' },
+    { key: 'rabbit', icon: '🐰' },
+    { key: 'dragon', icon: '🐲' },
+    { key: 'snake', icon: '🐍' },
+    { key: 'horse', icon: '🐴' },
+    { key: 'sheep', icon: '🐑' },
   ]
 
   const stem = stems[year % 10]
@@ -545,18 +545,18 @@ export default function InputFormPage() {
                       <span style={{ fontSize: '2.5rem' }}>{childZodiacInfo.branch.icon}</span>
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.zodiacLabel}</div>
-                        <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{childZodiacInfo.branch.animal}{s.zodiacSuffix}</div>
+                        <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{s.animals?.[childZodiacInfo.branch.key] || childZodiacInfo.branch.key}{s.zodiacSuffix}</div>
                       </div>
                       <div style={{ width: '1px', height: '2rem', background: '#E5E7EB' }} />
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.fiveElements}</div>
                         <div style={{ fontWeight: 700, color: childZodiacInfo.stem.colorCode }}>
-                          {childZodiacInfo.stem.element}({childZodiacInfo.stem.colorName})
+                          {s.elements?.[childZodiacInfo.stem.key] || childZodiacInfo.stem.key}
                         </div>
                       </div>
                     </div>
                     <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#4B5563' }}>
-                      {s.yearBornZodiac(formData.year, childZodiacInfo.branch.animal)}
+                      {s.yearBornZodiac(formData.year, s.animals?.[childZodiacInfo.branch.key] || childZodiacInfo.branch.key)}
                     </p>
                   </div>
                 )}
@@ -1047,13 +1047,13 @@ export default function InputFormPage() {
                           <span style={{ fontSize: '1.875rem' }}>{parentZodiacInfo.branch.icon}</span>
                           <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.zodiacLabel}</div>
-                            <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{parentZodiacInfo.branch.animal}{s.zodiacSuffix}</div>
+                            <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{s.animals?.[parentZodiacInfo.branch.key] || parentZodiacInfo.branch.key}{s.zodiacSuffix}</div>
                           </div>
                           <div style={{ width: '1px', height: '2rem', background: '#E5E7EB' }} />
                           <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.fiveElements}</div>
                             <div style={{ fontWeight: 700, color: parentZodiacInfo.stem.colorCode }}>
-                              {parentZodiacInfo.stem.element}
+                              {s.elements?.[parentZodiacInfo.stem.key] || parentZodiacInfo.stem.key}
                             </div>
                           </div>
                         </div>

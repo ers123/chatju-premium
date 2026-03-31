@@ -269,6 +269,8 @@ export const translations = {
       analyzeButton: '기질 분석 시작하기',
       trustSecure: '안전한 정보 보호',
       trustBeta: '명리심리상담사 1급 설계',
+      animals: { rat: '쥐', ox: '소', tiger: '호랑이', rabbit: '토끼', dragon: '용', snake: '뱀', horse: '말', sheep: '양', monkey: '원숭이', rooster: '닭', dog: '개', pig: '돼지' },
+      elements: { wood: '목(파랑/木)', fire: '화(빨강/火)', earth: '토(노랑/土)', metal: '금(흰색/金)', water: '수(검정/水)' },
     },
     sajuResults: {
       loading: '분석 중입니다',
@@ -786,6 +788,8 @@ export const translations = {
       analyzeButton: 'Start Analysis',
       trustSecure: 'Secure Data Protection',
       trustBeta: 'Designed by certified Myeongri counselor',
+      animals: { rat: 'Rat', ox: 'Ox', tiger: 'Tiger', rabbit: 'Rabbit', dragon: 'Dragon', snake: 'Snake', horse: 'Horse', sheep: 'Sheep', monkey: 'Monkey', rooster: 'Rooster', dog: 'Dog', pig: 'Pig' },
+      elements: { wood: 'Wood (木)', fire: 'Fire (火)', earth: 'Earth (土)', metal: 'Metal (金)', water: 'Water (水)' },
     },
     sajuResults: {
       loading: 'Analyzing',
@@ -1294,6 +1298,8 @@ export const translations = {
       analyzeButton: '無料分析を開始する',
       trustSecure: '安全な情報保護',
       trustBeta: '命理心理カウンセラー1級が設計',
+      animals: { rat: 'ねずみ', ox: 'うし', tiger: 'とら', rabbit: 'うさぎ', dragon: 'たつ', snake: 'へび', horse: 'うま', sheep: 'ひつじ', monkey: 'さる', rooster: 'とり', dog: 'いぬ', pig: 'いのしし' },
+      elements: { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' },
     },
     sajuResults: {
       loading: '分析中です',
@@ -1804,6 +1810,8 @@ export const translations = {
       analyzeButton: '开始免费分析',
       trustSecure: '安全信息保护',
       trustBeta: '由持证命理心理咨询师设计',
+      animals: { rat: '鼠', ox: '牛', tiger: '虎', rabbit: '兔', dragon: '龙', snake: '蛇', horse: '马', sheep: '羊', monkey: '猴', rooster: '鸡', dog: '狗', pig: '猪' },
+      elements: { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' },
     },
     sajuResults: {
       loading: '正在分析',
@@ -2324,6 +2332,8 @@ export const translations = {
     analyzeButton: 'Bắt đầu phân tích',
     trustSecure: 'Bảo mật dữ liệu an toàn',
     trustBeta: 'Thiết kế bởi chuyên gia tâm lý Myeongri',
+    animals: { rat: 'Tý', ox: 'Sửu', tiger: 'Dần', rabbit: 'Mão', dragon: 'Thìn', snake: 'Tỵ', horse: 'Ngọ', sheep: 'Mùi', monkey: 'Thân', rooster: 'Dậu', dog: 'Tuất', pig: 'Hợi' },
+    elements: { wood: 'Mộc (木)', fire: 'Hỏa (火)', earth: 'Thổ (土)', metal: 'Kim (金)', water: 'Thủy (水)' },
   },
   sajuResults: {
     loading: 'Đang phân tích',
@@ -2845,6 +2855,8 @@ export const translations = {
     analyzeButton: 'Mulai Analisis',
     trustSecure: 'Perlindungan Data Aman',
     trustBeta: 'Dirancang oleh konselor Myeongri bersertifikat',
+    animals: { rat: 'Tikus', ox: 'Kerbau', tiger: 'Harimau', rabbit: 'Kelinci', dragon: 'Naga', snake: 'Ular', horse: 'Kuda', sheep: 'Kambing', monkey: 'Monyet', rooster: 'Ayam', dog: 'Anjing', pig: 'Babi' },
+    elements: { wood: 'Kayu (木)', fire: 'Api (火)', earth: 'Tanah (土)', metal: 'Logam (金)', water: 'Air (水)' },
   },
   sajuResults: {
     loading: 'Menganalisis',
@@ -3366,6 +3378,8 @@ export const translations = {
     analyzeButton: 'Comenzar Análisis',
     trustSecure: 'Protección Segura de Datos',
     trustBeta: 'Diseñado por consejero Myeongri certificado',
+    animals: { rat: 'Rata', ox: 'Buey', tiger: 'Tigre', rabbit: 'Conejo', dragon: 'Dragón', snake: 'Serpiente', horse: 'Caballo', sheep: 'Oveja', monkey: 'Mono', rooster: 'Gallo', dog: 'Perro', pig: 'Cerdo' },
+    elements: { wood: 'Madera (木)', fire: 'Fuego (火)', earth: 'Tierra (土)', metal: 'Metal (金)', water: 'Agua (水)' },
   },
   sajuResults: {
     loading: 'Analizando',
@@ -3887,6 +3901,8 @@ export const translations = {
     analyzeButton: 'Iniciar Análise',
     trustSecure: 'Proteção Segura de Dados',
     trustBeta: 'Projetado por conselheiro Myeongri certificado',
+    animals: { rat: 'Rato', ox: 'Boi', tiger: 'Tigre', rabbit: 'Coelho', dragon: 'Dragão', snake: 'Serpente', horse: 'Cavalo', sheep: 'Ovelha', monkey: 'Macaco', rooster: 'Galo', dog: 'Cão', pig: 'Porco' },
+    elements: { wood: 'Madeira (木)', fire: 'Fogo (火)', earth: 'Terra (土)', metal: 'Metal (金)', water: 'Água (水)' },
   },
   sajuResults: {
     loading: 'Analisando',
@@ -4408,6 +4424,8 @@ export const translations = {
     analyzeButton: 'Lancer l\'analyse',
     trustSecure: 'Protection sécurisée des données',
     trustBeta: 'Conçu par un conseiller Myeongri certifié',
+    animals: { rat: 'Rat', ox: 'Bœuf', tiger: 'Tigre', rabbit: 'Lapin', dragon: 'Dragon', snake: 'Serpent', horse: 'Cheval', sheep: 'Mouton', monkey: 'Singe', rooster: 'Coq', dog: 'Chien', pig: 'Cochon' },
+    elements: { wood: 'Bois (木)', fire: 'Feu (火)', earth: 'Terre (土)', metal: 'Métal (金)', water: 'Eau (水)' },
   },
   sajuResults: {
     loading: 'Analyse en cours',
@@ -4929,6 +4947,8 @@ export const translations = {
     analyzeButton: 'เริ่มวิเคราะห์',
     trustSecure: 'ปกป้องข้อมูลอย่างปลอดภัย',
     trustBeta: 'ออกแบบโดยที่ปรึกษา Myeongri ระดับ 1',
+    animals: { rat: 'หนู', ox: 'วัว', tiger: 'เสือ', rabbit: 'กระต่าย', dragon: 'มังกร', snake: 'งู', horse: 'ม้า', sheep: 'แกะ', monkey: 'ลิง', rooster: 'ไก่', dog: 'หมา', pig: 'หมู' },
+    elements: { wood: 'ไม้ (木)', fire: 'ไฟ (火)', earth: 'ดิน (土)', metal: 'ทอง (金)', water: 'น้ำ (水)' },
   },
   sajuResults: {
     loading: 'กำลังวิเคราะห์',
