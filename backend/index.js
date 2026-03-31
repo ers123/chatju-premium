@@ -14,8 +14,8 @@ const app = express();
 
 // CORS 설정 (Environment-aware)
 const allowedOrigins = process.env.NODE_ENV === 'production'
-    ? ['https://somyung.pages.dev'] // Production: Only allow production domain
-    : ['https://somyung.pages.dev', 'http://localhost:8080', 'http://localhost:3001']; // Development: Allow local dev servers
+    ? ['https://somyung.cc', 'https://somyung.pages.dev']
+    : ['https://somyung.cc', 'https://somyung.pages.dev', 'http://localhost:8080', 'http://localhost:3001'];
 
 const corsOptions = {
     origin: allowedOrigins,
