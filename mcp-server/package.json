@@ -1,5 +1,5 @@
 {
-  "name": "@somyung/mcp-server",
+  "name": "somyung-saju-mcp",
   "version": "1.0.0",
   "description": "MCP server for Korean Saju (Four Pillars of Destiny) child temperament analysis",
   "type": "module",
@@ -33,9 +33,9 @@
     "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.19.15",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
+    "typescript": "^6.0.2",
     "zod": "^3.25.0"
   },
   "engines": {
