@@ -24,8 +24,20 @@ const localeMap: Record<Language, string> = {
   fr: 'fr_FR', th: 'th_TH',
 }
 
+// Market-specific OG images
+const ogImageMap: Record<string, string> = {
+  ko: '/assets/images/marketing/og-hero-ko.png',
+  ja: '/assets/images/marketing/og-hero-ja.png',
+}
+const defaultOgImage = '/assets/images/marketing/og-hero-en.png'
+
+function getOgImage(lang: Language): string {
+  return ogImageMap[lang] || defaultOgImage
+}
+
 export function getMetadataForLang(lang: Language, path: string = '/'): Metadata {
   const t = translations[lang]
+  const ogImage = getOgImage(lang)
 
   return {
     metadataBase: new URL(BASE_URL),
@@ -41,9 +53,9 @@ export function getMetadataForLang(lang: Language, path: string = '/'): Metadata
       locale: localeMap[lang],
       type: 'website',
       images: [{
-        url: '/assets/images/key_nature_sprout_new.png',
-        width: 1024,
-        height: 1024,
+        url: ogImage,
+        width: 1200,
+        height: 630,
         alt: 'SoMyung — Saju Child Temperament Analysis',
       }],
     },
@@ -51,7 +63,7 @@ export function getMetadataForLang(lang: Language, path: string = '/'): Metadata
       card: 'summary_large_image',
       title: 'SoMyung | ' + t.hero.title1,
       description: t.hero.subtitle,
-      images: ['/assets/images/key_nature_sprout_new.png'],
+      images: [ogImage],
     },
     robots: { index: true, follow: true },
     alternates: {

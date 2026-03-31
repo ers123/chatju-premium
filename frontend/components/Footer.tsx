@@ -53,6 +53,11 @@ export default function Footer() {
                   {f.aboutCreator}
                 </Link>
               </li>
+              <li style={{ marginBottom: '10px' }}>
+                <Link href="/blog" style={{ fontSize: '14px', color: '#888888', textDecoration: 'none' }}>
+                  Blog
+                </Link>
+              </li>
             </ul>
           </div>
 

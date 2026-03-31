@@ -17,12 +17,12 @@ interface ShareableCardProps {
   downloadLabel: string
 }
 
-const elementVisuals: Record<string, { emoji: string; color: string }> = {
-  '목': { emoji: '🌿', color: '#5A7A66' },
-  '화': { emoji: '🔥', color: '#A85544' },
-  '토': { emoji: '🏔️', color: '#B8922D' },
-  '금': { emoji: '⚔️', color: '#6B7578' },
-  '수': { emoji: '💧', color: '#556B7E' },
+const elementVisuals: Record<string, { emoji: string; color: string; bgImage: string }> = {
+  '목': { emoji: '🌿', color: '#5A7A66', bgImage: '/assets/images/marketing/element-wood.png' },
+  '화': { emoji: '🔥', color: '#A85544', bgImage: '/assets/images/marketing/element-fire.png' },
+  '토': { emoji: '🏔️', color: '#B8922D', bgImage: '/assets/images/marketing/element-earth.png' },
+  '금': { emoji: '⚔️', color: '#6B7578', bgImage: '/assets/images/marketing/element-metal.png' },
+  '수': { emoji: '💧', color: '#556B7E', bgImage: '/assets/images/marketing/element-water.png' },
 }
 
 export default function ShareableResultCard({
@@ -105,10 +105,26 @@ export default function ShareableResultCard({
             overflow: 'hidden',
           }}
         >
+          {/* Element background image — subtle watermark */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: `url(${elementVisuals[dominantElement]?.bgImage || ''})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.08,
+            pointerEvents: 'none',
+          }} />
+
           {/* Top accent bar */}
           <div style={{
             height: '4px',
             background: `linear-gradient(90deg, ${elementColor}, #B8922D)`,
+            position: 'relative',
+            zIndex: 1,
           }} />
 
           {/* Header */}

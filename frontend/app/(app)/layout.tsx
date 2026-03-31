@@ -20,9 +20,9 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/assets/images/key_nature_sprout_new.png",
-        width: 1024,
-        height: 1024,
+        url: "/assets/images/marketing/og-hero-ko.png",
+        width: 1200,
+        height: 630,
         alt: "SoMyung — Saju Child Temperament Analysis",
       }
     ],
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SoMyung | Discover Your Child's Hidden Talents Through Saju",
     description: "Created by a certified Myeongri Psychology Counselor & MS in Analytics. Understand your child's innate temperament in 3 minutes.",
-    images: ["/assets/images/key_nature_sprout_new.png"],
+    images: ["/assets/images/marketing/og-hero-ko.png"],
   },
   robots: {
     index: true,
