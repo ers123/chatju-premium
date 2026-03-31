@@ -3,10 +3,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Script from 'next/script'
 import { apiClient } from '@/lib/api'
 import { useLanguage } from '@/app/lib/i18n/context'
 import ReactMarkdown from 'react-markdown'
 import ShareableResultCard from '@/components/saju/ShareableResultCard'
+
+const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
+const PRODUCT_AMOUNT = 4.99
 
 // Types
 interface FourPillar {
@@ -216,6 +220,106 @@ export default function ResultsPage() {
   const [premiumLoading, setPremiumLoading] = useState(false)
   const [premiumError, setPremiumError] = useState('')
   const reportRef = useRef<HTMLDivElement>(null)
+
+  // Inline payment state
+  const [showPayment, setShowPayment] = useState(false)
+  const [paymentEmail, setPaymentEmail] = useState('')
+  const [paymentProcessing, setPaymentProcessing] = useState(false)
+  const [paymentError, setPaymentError] = useState('')
+  const [paypalSdkReady, setPaypalSdkReady] = useState(false)
+  const paypalRendered = useRef(false)
+
+  // Promo code state
+  const [promoCode, setPromoCode] = useState('')
+  const [promoValidating, setPromoValidating] = useState(false)
+  const [promoResult, setPromoResult] = useState<{ valid: boolean; promoCode?: { id: string; code: string } } | null>(null)
+
+  // Render PayPal buttons when SDK is ready and payment form is shown
+  useEffect(() => {
+    if (!paypalSdkReady || !showPayment || !paymentEmail.trim() || paypalRendered.current) return
+    if (typeof window === 'undefined' || !(window as any).paypal) return
+    paypalRendered.current = true
+
+    try {
+      ;(window as any).paypal.Buttons({
+        createOrder: async () => {
+          const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email: paymentEmail })
+          if (response.success && response.paypalOrderId) {
+            sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId }))
+            return response.paypalOrderId
+          }
+          throw new Error('Order creation failed')
+        },
+        onApprove: async (data: { orderID: string }) => {
+          setPaymentProcessing(true)
+          setPaymentError('')
+          try {
+            const captureResult = await apiClient.capturePayPalPayment(data.orderID)
+            if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
+              const payment = (captureResult as any).payment
+              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString(), email: paymentEmail }))
+              sessionStorage.removeItem('pending_order')
+              setShowPayment(false)
+              // Trigger premium report fetch
+              window.location.reload()
+            } else {
+              setPaymentError('Payment capture failed. Please try again.')
+            }
+          } catch { setPaymentError('Payment processing error. Please try again.') }
+          finally { setPaymentProcessing(false) }
+        },
+        onError: () => setPaymentError('Payment error. Please try again.'),
+        onCancel: () => {},
+      }).render('#inline-paypal-container')
+    } catch { setPaymentError('Failed to initialize payment.') }
+  }, [paypalSdkReady, showPayment, paymentEmail])
+
+  // Handle promo code submit inline
+  const handleInlinePromo = async () => {
+    if (!promoCode.trim() || !paymentEmail.trim()) return
+    setPromoValidating(true)
+    setPaymentError('')
+    try {
+      const validation = await apiClient.validatePromoCode(promoCode)
+      if (!validation.valid) {
+        setPaymentError(validation.error || 'Invalid promo code')
+        setPromoValidating(false)
+        return
+      }
+      setPromoResult(validation)
+      // Get reading via promo
+      setPaymentProcessing(true)
+      const stored = sessionStorage.getItem('sajuInput')
+      if (!stored) return
+      const input = JSON.parse(stored)
+      const reading = await apiClient.calculateWithPromo({
+        promoCode,
+        email: paymentEmail,
+        birthDate: input.birthDate,
+        birthTime: input.birthTime,
+        gender: input.gender,
+        isLunar: input.calendar === 'lunar',
+        language: lang,
+        subjectName: input.name,
+        birthPlace: input.birthPlace,
+        parentBirthDate: input.parentBirthDate,
+        parentBirthTime: input.parentBirthTime,
+        parentRole: input.parentRole,
+        twinOrder: input.twinOrder,
+        twinSiblingName: input.twinSiblingName,
+      })
+      // Store and reload to show premium
+      sessionStorage.setItem('promo_reading', JSON.stringify(reading))
+      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail }))
+      setShowPayment(false)
+      window.location.reload()
+    } catch (err: any) {
+      setPaymentError(err.error || err.message || 'Promo code error')
+    } finally {
+      setPromoValidating(false)
+      setPaymentProcessing(false)
+    }
+  }
 
   // Check for completed payment and fetch premium report
   useEffect(() => {
@@ -869,14 +973,73 @@ export default function ResultsPage() {
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <button
-                  onClick={() => router.push('/payment')}
-                  style={{ flex: 1, padding: '1rem', borderRadius: '10px', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
-                >
-                  {sr.premiumStartCta} — {t.pricing.premium.price}
-                </button>
-              </div>
+              {!showPayment ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <button
+                    onClick={() => setShowPayment(true)}
+                    style={{ flex: 1, padding: '1rem', borderRadius: '10px', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
+                  >
+                    {sr.premiumStartCta} — {t.pricing.premium.price}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '1.25rem', marginTop: '0.5rem' }}>
+                  {/* Email input */}
+                  <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>
+                    {t.payment.emailLabel}
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="email@example.com"
+                    value={paymentEmail}
+                    onChange={(e) => { setPaymentEmail(e.target.value); paypalRendered.current = false }}
+                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.875rem', boxSizing: 'border-box' as const, marginBottom: '0.75rem' }}
+                  />
+
+                  {/* Promo code */}
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <input
+                      type="text"
+                      placeholder={t.payment.promoCodePlaceholder || 'Promo code'}
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      style={{ flex: 1, padding: '0.625rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.8125rem' }}
+                    />
+                    <button
+                      onClick={handleInlinePromo}
+                      disabled={!promoCode.trim() || !paymentEmail.trim() || promoValidating}
+                      style={{ padding: '0.625rem 1rem', borderRadius: '8px', background: '#C5A059', color: '#2D3A35', border: 'none', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer', opacity: (!promoCode.trim() || !paymentEmail.trim() || promoValidating) ? 0.5 : 1 }}
+                    >
+                      {promoValidating ? '...' : (t.payment.promoApply || 'Apply')}
+                    </button>
+                  </div>
+
+                  {/* PayPal buttons — only show when email is entered */}
+                  {paymentEmail.trim() && (
+                    <>
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
+                        {(t.payment as any).orPayWith || 'Or pay with'}
+                      </div>
+                      <div id="inline-paypal-container" />
+                      <Script
+                        src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay`}
+                        onReady={() => setPaypalSdkReady(true)}
+                      />
+                    </>
+                  )}
+
+                  {paymentProcessing && (
+                    <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                      <div style={{ display: 'inline-block', width: '1.5rem', height: '1.5rem', border: '3px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                      <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', marginTop: '0.5rem' }}>{sr.premiumGeneratingDesc}</p>
+                    </div>
+                  )}
+
+                  {paymentError && (
+                    <p style={{ color: '#E88', fontSize: '0.875rem', textAlign: 'center', marginTop: '0.5rem' }}>{paymentError}</p>
+                  )}
+                </div>
+              )}
             </div>
           </section>
         )}
