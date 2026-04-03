@@ -687,7 +687,7 @@ export default function InputFormPage() {
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
               }}>
                 <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                  {s.birthPlace} <span style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 400 }}>(선택)</span>
+                  {s.birthPlace} <span style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 400 }}>{s.optional}</span>
                 </label>
                 <select
                   value={formData.birthPlace}

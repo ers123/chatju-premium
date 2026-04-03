@@ -192,4 +192,6 @@ if (require.main === module) {
 // ============================================
 // AWS Lambda용 핸들러 (배포 시 사용)
 // ============================================
-module.exports.handler = serverless(app);
+module.exports.handler = serverless(app, {
+  binary: ['application/pdf', 'image/png', 'image/jpeg'],
+});

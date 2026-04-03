@@ -114,15 +114,20 @@ export interface AIInterpretation {
     health?: string;
     wealth?: string;
     advice?: string;
-    // Premium 8-section structure
-    coreProfile?: string;        // 1. 사주 핵심 프로필
-    parentChildAnalysis?: string; // 2. 부모-자녀 관계 분석
-    developmentGuide?: string;   // 3. 연령별 발달 가이드
-    careerAptitude?: string;     // 4. 진로/적성 심층 분석
-    fortuneCycles?: string;      // 5. 대운/세운 운세 흐름
-    monthlyFortune?: string;     // 6. 월별 운세 리포트
-    elementBalance?: string;     // 7. 오행 밸런스 & 개운법
-    weeklyActions?: string;      // 8. 이번 주 실천 과제
+    // Premium 9-section structure (v2)
+    executiveSummary?: string;    // 1. 한눈에 보기
+    whatChildIsNot?: string;      // 2. 이 아이는 ~이 아닙니다
+    behavioralSignature?: string; // 3. 행동 시그니처
+    situationPlaybook?: string;   // 4. 상황별 대응 플레이북
+    hiddenStrengths?: string;     // 5. 숨겨진 강점
+    timelineFocus?: string;       // 6. 이 시기의 흐름
+    sevenDayExperiment?: string;  // 7. 7일 양육 실험
+    coParentSummary?: string;     // 8. 함께 읽는 양육 카드
+    lifestyleHarmony?: string;    // 9. 생활 속 밸런스
+    // Legacy keys (backward compat)
+    coreProfile?: string;
+    fortuneCycles?: string;
+    monthlyFortune?: string;
     preamble?: string;           // Intro text before sections
   };
   metadata: {

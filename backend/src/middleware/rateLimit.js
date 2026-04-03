@@ -140,12 +140,12 @@ const webhookLimiter = rateLimit({
 });
 
 /**
- * Read operations rate limit - generous limits
- * 50 requests per 5 minutes per user/IP
+ * Read operations rate limit - generous for polling
+ * 100 requests per 5 minutes per user/IP (~20/min, supports 5s polling)
  */
 const readLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 50, // 50 read requests per window
+  max: 100, // 100 read requests per window (polling-safe)
   message: {
     success: false,
     error: 'Too many requests, please slow down.',

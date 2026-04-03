@@ -295,7 +295,7 @@ async function generateSajuReading(params) {
     if (deliveryEmail) {
       try {
         const emailService = require('./email.service');
-        await emailService.sendReportEmail({
+        emailService.sendReportEmail({
           email: deliveryEmail,
           childName: subjectName,
           readingId: reading.id,
@@ -304,18 +304,23 @@ async function generateSajuReading(params) {
           birthDate,
           gender,
           language,
-        });
-        await supabaseAdmin
-          .from('readings')
-          .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
-          .eq('id', reading.id);
-        console.log('[Saju Service] Report email sent to:', deliveryEmail);
+        })
+          .then(async () => {
+            await supabaseAdmin
+              .from('readings')
+              .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
+              .eq('id', reading.id);
+            console.log('[Saju Service] Report email sent to:', deliveryEmail);
+          })
+          .catch(async (emailErr) => {
+            console.error('[Saju Service] Email delivery failed:', emailErr.message);
+            await supabaseAdmin
+              .from('readings')
+              .update({ email_status: 'failed' })
+              .eq('id', reading.id);
+          });
       } catch (emailErr) {
         console.error('[Saju Service] Email delivery failed:', emailErr.message);
-        await supabaseAdmin
-          .from('readings')
-          .update({ email_status: 'failed' })
-          .eq('id', reading.id);
       }
     }
 
@@ -448,7 +453,7 @@ async function generateAIPreview(childManseryeok, parentManseryeok = null, paren
 
     relationshipAnalysis = `
 3. **부모-자녀 관계 힌트** (2문장): ${parentLabel}(${parentDominant} 기질)과 아이(${childDominant} 기질)의 관계에서 가장 자주 발생하는 갈등 패턴 1가지만 짧게. 구체적 해결 방법은 언급하지 말고 "왜 부딪히는지"만 설명.
-4. **프리미엄 티저** (1문장): "상세 리포트에서는 이 갈등을 줄이는 구체적 대화 스크립트, 연령별 훈육법, 대운/세운 운세 흐름까지 확인할 수 있습니다." 라고 마무리.`;
+4. **프리미엄 티저** (1문장): "상세 리포트에서는 이 아이만의 행동 시그니처, 6가지 상황별 대응 스크립트, 7일 양육 실험까지 확인할 수 있습니다." 라고 마무리.`;
   }
 
   const timeDisclaimer = childTimeUnknown
@@ -456,7 +461,7 @@ async function generateAIPreview(childManseryeok, parentManseryeok = null, paren
     : '';
 
   // Language instruction for non-Korean previews (same pattern as premium)
-  const languageInstruction = language !== 'ko' ? `\n**언어 지시:** 이 미리보기는 반드시 ${language === 'en' ? '영어(English)' : language === 'zh' ? '중국어(中文)' : language === 'ja' ? '일본어(日本語)' : language === 'vi' ? '베트남어(Tiếng Việt)' : language === 'id' ? '인도네시아어(Bahasa Indonesia)' : language === 'es' ? '스페인어(Español)' : language === 'pt' ? '포르투갈어(Português)' : language === 'fr' ? '프랑스어(Français)' : language === 'th' ? '태국어(ภาษาไทย)' : language}로 작성하세요. 사주 용어는 원어(한자)를 병기하되, 설명과 조언은 모두 해당 언어로 작성.\n` : '';
+  const languageInstruction = language !== 'ko' ? `\n**언어 지시:** 이 미리보기는 반드시 ${language === 'en' ? '영어(English)' : language === 'zh' ? '중국어(中文)' : language === 'ja' ? '일본어(日本語)' : language === 'vi' ? '베트남어(Tiếng Việt)' : language === 'id' ? '인도네시아어(Bahasa Indonesia)' : language === 'es' ? '스페인어(Español)' : language === 'pt' ? '포르투갈어(Português)' : language === 'fr' ? '프랑스어(Français)' : language === 'th' ? '태국어(ภาษาไทย)' : language}로 작성하세요. **섹션 제목, 볼드 레이블, 테이블 헤더 모두 해당 언어로 작성하세요.** 입력 데이터의 한글(을미, 갑오 등)은 한자(乙未, 甲午 등)로 변환 표기. 오행도 해당 언어(木, 火, 土, 金, 水)로. 한국어 텍스트가 출력에 절대 포함되면 안 됩니다.\n` : '';
 
   const prompt = `당신은 20년 경력의 아동 심리 전문 사주 상담사입니다.
 부모가 아이를 더 잘 이해하고, 갈등을 줄일 수 있도록 도와주세요.
@@ -510,11 +515,15 @@ ${parentManseryeok ? relationshipAnalysis : `3. **한 줄 양육 조언** (1문�
         content: prompt,
       },
     ], {
-      maxTokens: 400,
+      maxTokens: 1200, // GPT-5.4-mini uses reasoning tokens within this budget
       temperature: 0.7,
     });
 
-    const previewText = result.content;
+    const previewText = result.content || '';
+
+    if (!previewText) {
+      console.warn('[Saju Service] AI returned empty preview content, provider:', result.provider);
+    }
 
     console.log('[Saju Service] Relationship preview received:', {
       length: previewText.length,
@@ -777,7 +786,7 @@ ${twinInfo.siblingName ? `**쌍둥이 형제/자매 이름:** ${twinInfo.sibling
   }
 
   // Language instruction for non-Korean reports
-  const languageInstruction = language !== 'ko' ? `\n**언어 지시:** 이 리포트는 반드시 ${language === 'en' ? '영어(English)' : language === 'zh' ? '중국어(中文)' : language === 'ja' ? '일본어(日本語)' : language === 'vi' ? '베트남어(Tiếng Việt)' : language === 'id' ? '인도네시아어(Bahasa Indonesia)' : language === 'es' ? '스페인어(Español)' : language === 'pt' ? '포르투갈어(Português)' : language === 'fr' ? '프랑스어(Français)' : language === 'th' ? '태국어(ภาษาไทย)' : language}로 작성하세요. 사주 용어는 원어(한자)를 병기하되, 설명과 조언은 모두 해당 언어로 작성.\n` : '';
+  const languageInstruction = language !== 'ko' ? `\n**언어 지시:** 이 리포트는 반드시 ${language === 'en' ? '영어(English)' : language === 'zh' ? '중국어(中文)' : language === 'ja' ? '일본어(日本語)' : language === 'vi' ? '베트남어(Tiếng Việt)' : language === 'id' ? '인도네시아어(Bahasa Indonesia)' : language === 'es' ? '스페인어(Español)' : language === 'pt' ? '포르투갈어(Português)' : language === 'fr' ? '프랑스어(Français)' : language === 'th' ? '태국어(ภาษาไทย)' : language}로 작성하세요. **섹션 제목, 볼드 레이블, 테이블 헤더 모두 해당 언어로 작성하세요.** 입력 데이터의 한글(을미, 갑오 등)은 한자(乙未, 甲午 등)로 변환 표기. 오행도 해당 언어(木, 火, 土, 金, 水)로. 한국어 텍스트가 출력에 절대 포함되면 안 됩니다.\n` : '';
 
   // Build solar time correction context for AI
   let correctionNote = '';
@@ -845,8 +854,10 @@ ${transitionNote}
     }
   }
 
-  // Construct 8-section premium prompt
-  const premiumPrompt = `당신은 20년 경력의 아동심리 전문 사주 상담사입니다.
+  // ── Data Context: split into 3 layers (core / fortune / remedy) ──
+
+  // coreDataContext — used by BOTH Call 1 and Call 2
+  const coreDataContext = `당신은 아동 기질 해석 전문가이자 개인화된 양육 전략가입니다.
 부모가 아이를 더 깊이 이해하고, 관계의 갈등을 줄이고 성장을 돕고 싶어서 찾아왔습니다.
 
 **중요 전제:** 사주는 아이의 타고난 기질(命)을 보여주는 지도이지, 정해진 운명이 아닙니다. 같은 사주를 가진 아이도 부모의 양육(運)에 따라 전혀 다른 사람이 됩니다. 이 리포트는 아이에게 가장 잘 맞는 양육 방향을 찾는 나침반입니다.
@@ -859,19 +870,18 @@ ${languageInstruction}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **사주팔자 (四柱八字):**
-| 구분 | 천간 | 지지 | 오행 |
-|------|------|------|------|
-| 년주 | ${childPillars.year.korean[0]} | ${childPillars.year.korean[1]} | ${childPillars.year.element} |
-| 월주 | ${childPillars.month.korean[0]} | ${childPillars.month.korean[1]} | ${childPillars.month.element} |
-| 일주 | ${childPillars.day.korean[0]} | ${childPillars.day.korean[1]} | ${childPillars.day.element} |
-| 시주 | ${childPillars.hour.korean[0]} | ${childPillars.hour.korean[1]} | ${childPillars.hour.element} |
+| 구분 | 천간 | 지지 | 한자 | 오행 |
+|------|------|------|------|------|
+| 년주 | ${childPillars.year.korean[0]} | ${childPillars.year.korean[1]} | ${childPillars.year.hanja || ''} | ${childPillars.year.element} |
+| 월주 | ${childPillars.month.korean[0]} | ${childPillars.month.korean[1]} | ${childPillars.month.hanja || ''} | ${childPillars.month.element} |
+| 일주 | ${childPillars.day.korean[0]} | ${childPillars.day.korean[1]} | ${childPillars.day.hanja || ''} | ${childPillars.day.element} |
+| 시주 | ${childPillars.hour.korean[0]} | ${childPillars.hour.korean[1]} | ${childPillars.hour.hanja || ''} | ${childPillars.hour.element} |
 
-**일간(日干):** ${dayMasterDesc}
-**일간 상세 프로필:** ${dayStem} = ${deepProfile.nature}, 이미지: ${deepProfile.image}, 계절: ${deepProfile.season}
+**일간(日干):** ${dayStem}${childPillars.day.hanja ? '(' + childPillars.day.hanja[0] + ')' : ''} — ${dayMasterDesc}
+**일간 상세 프로필:** ${dayStem}${childPillars.day.hanja ? '(' + childPillars.day.hanja[0] + ')' : ''} = ${deepProfile.nature}, 이미지: ${deepProfile.image}, 계절: ${deepProfile.season}
   강점: ${deepProfile.strengths} / 성장 포인트: ${deepProfile.weaknesses}
   아이 특성: ${deepProfile.childTrait}
   양육 팁: ${deepProfile.parentAdvice}
-  건강 주의: ${deepProfile.health} / 진로 방향: ${deepProfile.career}
 **일주 강약:** ${strengthLabel} — ${strengthDesc}
 **현재 나이:** ${childAge}세 (한국 나이) — ${ageGroup}
 
@@ -886,175 +896,287 @@ ${languageInstruction}
 ${childSecond && childSecondTraits ? `**부 기질:** ${childSecond} (${childSecondTraits.name}) — ${childSecondTraits.traits}` : ''}
 **부족 오행:** ${childWeak} (${elementTraits[childWeak].name}) — ${elementTraits[childWeak].stress}에 취약
 ${parentSection}
-${twinSection}
-${fortuneCyclesSection}
+${twinSection}`;
+
+  // fortuneDataContext — used by Call 2 ONLY (fortune cycles)
+  const fortuneDataContext = `${fortuneCyclesSection}
+${monthlyFortuneData}`;
+
+  // remedyDataContext — used by Call 2 ONLY (lifestyle remedies)
+  const remedyDataContext = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌿 오행 밸런스 데이터
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**부족 오행 (${childWeak}) 보완:**
+- 색상: ${weakElementRemedies.colors || '정보 없음'}
+- 음식: ${weakElementRemedies.foods || '정보 없음'}
+- 활동: ${weakElementRemedies.activities || '정보 없음'}
+- 피해야 할 환경: ${weakElementRemedies.avoidExcess || '정보 없음'}
+
+**강한 오행 (${childDominant}) 조절:**
+- 과할 때 주의: ${dominantElementRemedies.avoidExcess || '정보 없음'}
+- 계절 에너지: ${weakElementRemedies.season || '정보 없음'}이 가장 보완이 필요한 시기`;
+
+  // ── Call 1: Sections 1-5 (Executive summary, misconceptions, behavioral, playbook, strengths) ──
+  const call1SectionInstructions = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 개인화된 양육 리포트 (섹션 1~5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**반드시 ## N. 형식을 사용하세요. 제목은 자연스럽게 작성하되, 각 섹션의 포맷을 정확히 따르세요.**
+
+## 1. 아이 한눈에 보기
+
+따뜻한 3문장으로 시작: 이 아이의 일간 기질(${deepProfile.image || ''})을 자연 비유로 소개하되, 바로 일상 행동으로 연결.
+
+그다음 구조화 (볼드 레이블도 리포트 언어로):
+
+- [Most common misreading] (1문장, 구체적 상황)
+- [What helps most] (1문장, 실행 가능)
+- [Phrases to avoid] — 3개, 각각 이유 포함
+- [Phrases that work] — 3개, 각각 왜 효과적인지
+- [This month's parenting focus] (1문장, 리포트 언어로)
+
+## 2. 이 아이는 ○○이 아닙니다
+
+4-6개 항목. 부모의 흔한 오해를 정면 반박.
+각 항목:
+- **오해:** "..." (부모가 실제로 생각하는 것)
+- **실제:** ... (내면에서 일어나는 일, 구체적으로)
+- **더 나은 반응:** "..." (부모가 할 수 있는 말이나 행동)
+
+짧고 직접적으로. 장식 금지. 이 섹션은 펀치력이 생명.
+
+## 3. 아이의 행동 시그니처
+
+5-7개 고확률 행동 패턴. ${ageGroup}(${childAge}세) 기준.
+각 패턴마다:
+
+짧은 일상 장면 (2-3문장, 집에서 일어나는 일: 숙제, 아침, 식사, 스크린, 친구):
+그다음:
+- **관찰되는 행동:** ...
+- **내면의 논리:** ...
+- **악화 조건:** ...
+- **개선 조건:** ...
+
+## 4. 상황별 대응 플레이북
+
+다음 6가지 상황을 다루세요:
+① 숙제 거부/미루기 ② 침묵/지연 반응 ③ 친구 관계 상처 ④ 스크린/게임 전환 ⑤ 방과후 감정 과부하 ⑥ 부모가 너무 몰아붙일 때
+
+각 상황:
+- **부모가 흔히 하는 말:** "..."
+- **왜 역효과인지:** ... (이 기질에서 어떻게 받아들여지는지)
+- **더 나은 스크립트:** "..."
+- **개선 신호:** ... (이 방법이 통하고 있다는 증거)
+
+이 섹션이 리포트의 심장입니다. 대화 스크립트가 현실적이어야 합니다.
+
+## 5. 숨겨진 강점
+
+3가지 강점. 각 항목:
+- **[강점명]**
+- 약점으로 오해받는 상황: ... (구체적 장면)
+- 이 강점이 빛나는 환경: ...
+- 키워줄 활동 1가지: ... (이 나이에 바로 시작 가능한 것)
+- 진로 방향 힌트: (1문장)
+
+따뜻한 서사로 감싸되, 구체적 행동으로 마무리.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📝 프리미엄 리포트 작성 요청 (8개 섹션)
+
+모든 섹션에서: 인식(insight) + 실행(action)이 반드시 함께. 인식만 있는 문단 금지.
+- 절대 "다음에 더 자세히", "추가 분석이 필요하면" 같은 추가 서비스 유도 멘트 금지 — 이 리포트가 완결된 작품이어야 합니다.
+- 섹션 5의 끝에서 자연스럽게 마무리하되, 리포트 전체의 최종 결론은 쓰지 마세요 (후반부에서 이어집니다).
+
+<execution_order>
+1단계: 입력 데이터(사주 팔자, 오행 분포) 파싱
+2단계: 해당 섹션들에 대해 데이터 기반 분석
+3단계: 출력 형식에 맞춰 마크다운으로 렌더
+</execution_order>`;
+
+  // ── Call 2: Sections 6-9 (Timeline, experiment, co-parent, lifestyle) ──
+  const call2SectionInstructions = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 개인화된 양육 리포트 (섹션 6~9)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**아래 8개 영역을 반드시 다루되, 각 섹션 제목은 내용에 맞게 자연스럽게 지어주세요.**
-**## N. 형식은 유지하되, 기계적 제목(예: "사주 핵심 프로필") 대신 읽고 싶은 제목으로.**
-**부정적 특성은 모두 "아직 자라고 있는 강점"으로 재프레이밍하세요.**
+**반드시 ## N. 형식을 사용하세요. 제목은 자연스럽게 작성하되, 각 섹션의 포맷을 정확히 따르세요.**
 
-## 1. 이 아이의 마음 읽기
-아이의 일간 기질(${deepProfile.image || ''})을 자연스러운 비유로 풀어서 설명.
-- ${ageGroup}(${childAge}세)에 나타나는 구체적 일상 장면으로 기질을 보여주기
-- ${strengthLabel}: ${strengthDesc}
-- 강점: ${deepProfile.strengths || ''}
-- 성장 중인 부분: ${deepProfile.weaknesses || ''} — 이것이 지금 어떤 행동으로 나타나는지
-- 감정 표현 방식과 또래 관계에서의 위치
-- 이 아이에게 절대 하면 안 되는 말 1가지와 그 이유
-- 양육 핵심: ${deepProfile.parentAdvice || ''}
-${twinInfo ? `- 쌍둥이 맥락: 이 아이가 ${twinInfo.order === 1 ? '첫째' : '둘째'}로서 갖는 기질적 특징 반영` : ''}
+## 6. 이 시기의 흐름
 
-## 2. ${parentManseryeok ? (parentRole === 'mother' ? '엄마' : '아빠') + '와 아이 사이의 에너지' : '부모와 아이 사이의 역학'}
-${parentManseryeok && parentDominant ? `부모의 기질과 아이의 기질이 만나면 어떤 일이 일어나는지 서술.
-- 이 관계의 큰 흐름 (상생/상극을 일상어로 풀어서)
-- 서로의 마음을 잘 읽는 부분 vs 오해가 생기는 부분
-- 갈등이 반복되는 구체적 상황 2-3가지 (일상 장면으로)
-- 부모가 무심코 하는 말 중 상처가 되는 것 3가지 → 대안 표현 3가지
-- 이 관계만의 특별한 강점과 시너지
-- 갈등 상황 대화 스크립트: 실제 상황 → 부모 말 → 아이 반응 → 효과적 전환
-- 이 관계의 핵심 한 문장으로 정리` : `이 기질의 아이가 부모와 흔히 겪는 갈등과 해결법.
-- 부모가 오해하기 쉬운 행동 3가지와 진짜 속마음
-- 상처가 되는 말 3가지 → 열리는 말 3가지
-- 이 아이에게 잘 맞는 소통 스타일과 대화 예시`}
-
-## 3. ${childAge}세, 지금 이 시기에 중요한 것
-${ageGroup} 시기에 이 기질의 아이에게 실제로 일어나는 일들.
-${childAge <= 7 ? `떼쓰기/고집/감정폭발에 대한 기질 맞춤 대응, 초등 입학 준비` :
-childAge <= 13 ? `숙제, 친구 갈등, 게임/미디어 과몰입 — 각 상황별로 "피해야 할 대응"과 "효과적 대응"을 구체적 대화 예시와 함께. 사춘기 초입 대비.` :
-`사춘기와 이 기질이 만나면 나타나는 특수한 패턴. 소통에서 절대 하면 안 되는 것. 진로/이성/외모 관련 갈등 대응.`}
-- 각 상황에 대해 피해야 할 대응 vs 효과적 대응을 구체적 대화 예시로 보여주세요.
-
-## 4. 이 아이의 재능과 공부법
-- 타고난 강점 영역과 적성 방향: ${deepProfile.career || ''}
-- ${ageGroup}에서 시작할 수 있는 강점 계발 활동 3가지
-- 이 기질에 최적화된 학습 스타일 (집중 환경, 시간대, 동기부여 방식)
-- 빠지기 쉬운 비효율적 공부 패턴과 대안
-- 미래 진로 가능성 5가지 이상
-
-## 5. 올해와 앞으로의 흐름
 ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean || '?'})과 올해 세운(${fortuneCycles.currentSeun?.pillar?.korean || '?'})을 중심으로.
-- "대운"이라는 개념을 자연어로 설명 (10년 주기의 환경 배경 전환)
-- 지금 이 시기가 아이에게 어떤 의미인지
-- 올해 구체적으로 어떤 기운이 흘러오는지
-- 부모가 이 시기에 집중해야 할 양육 포인트` : `현재 나이대의 주요 흐름과 가까운 미래 변화`}
+- "대운"을 자연어로 설명 (10년 주기의 환경 배경 전환, 운명이 아닌 무대 배경)
+- 지금 이 시기가 아이에게 어떤 의미인지 (운영적 톤, 신비주의 아님)
+- 부모가 이 시기에 집중해야 할 양육 포인트` : `현재 나이대(${ageGroup})의 주요 흐름과 가까운 미래 변화`}
 
-## 6. 월별 가이드 (${new Date().getMonth() + 1}월~${new Date().getMonth() + 4}월)
-${monthlyFortuneData}
-각 달마다: 학업 에너지, 교우 관계, 가정 내 분위기, 부모 양육 포인트를 구체적으로.
+아래 월별 정보를 리포트 언어로 작성하세요 (${new Date().getMonth() + 1}월~${new Date().getMonth() + 4}월).
+월 간지는 한자(漢字)로 표기하세요 (예: 甲午, 乙未).
 
-## 7. 생활 속 밸런스 찾기
-부족한 ${childWeak}(${elementTraits[childWeak].name}) 기운 보완법과 강한 ${childDominant}(${elementTraits[childDominant].name}) 조절법.
-- 색상: ${weakElementRemedies.colors || ''} — 구체적 활용법 (옷, 학용품, 방)
-- 음식: ${weakElementRemedies.foods || ''} — 식탁에서 자연스럽게
-- 활동: ${weakElementRemedies.activities || ''} — 왜 이 활동이 좋은지 설명
-- 공간: ${weakElementRemedies.direction || ''}쪽 활용, 책상/방 배치 팁
-- 건강: ${weakElementRemedies.body || ''} + ${deepProfile.health || ''} 주의
-- ${childDominant} 기운이 과할 때 나타나는 증상과 조절법
-- 계절별 에너지 관리 (가장 컨디션 좋은 계절, 힘든 계절 대처)
-- 원리: 아이가 특정 색상이나 활동에 끌린다면 그것이 바로 무의식적으로 필요한 기운을 찾는 것
+**형식: 각 달을 소제목(### 또는 볼드)으로 구분하고, 아래 4항목을 불릿으로 작성하세요:**
+- **압력 포인트:** ...
+- **주시할 행동 변화:** ...
+- **도움이 되는 것:** ...
+- **피해야 할 것:** ...
 
-## 8. 오늘부터 할 수 있는 7가지
-각각 왜 이 기질에 효과적인지 한 줄 설명 포함. 구체적 행동으로.
+각 항목은 구체적으로 1-2문장.
+
+## 7. 7일 양육 실험
+
+3가지 작은 변화. 각 항목:
+- **부모 행동 변화:** ... (구체적, 오늘 저녁부터 할 수 있는 것)
+- **예상되는 아이 반응:** ... (첫 1-2일 / 3-4일 / 5-7일)
+- **성공 신호:** ... (이 방법이 통하고 있다는 증거)
+
+실험이므로 부담 없이 시작할 수 있어야 합니다. "하루 5분"이면 충분한 수준.
+
+## 8. 함께 읽는 양육 카드
+
+이 섹션은 스크린샷으로 공유할 수 있을 만큼 간결해야 합니다. 장식 없이 핵심만.
+
+모든 레이블/볼드 제목은 리포트 언어로 작성. 포맷:
+
+- [5 things to remember about this child] — 번호 리스트
+- [3 phrases to stop using] — 각각 왜 역효과인지 1문장
+- [3 phrases to start using] — 각각 왜 효과적인지 1문장
+- [3 de-escalation steps when emotions rise] — 즉시/5분 후/안정 후
+
+## 9. 생활 속 밸런스 (참고 사항)
+
+⚠️ **이 섹션은 참고 사항입니다. 건강 진단이나 방위 풍수가 아닙니다.**
+⚠️ **아래 데이터의 한국어(목, 화, 토, 금, 수, 나무, 불, 흙, 쇠, 물 등)는 리포트 언어로 번역하세요. 한국어 그대로 출력 금지.**
+
+부족한 오행(${childWeak} = Wood/Fire/Earth/Metal/Water 중 해당) 보완법:
+- **색상:** ${weakElementRemedies.colors || '정보 없음'} — 옷, 학용품, 방 소품에서 활용
+- **음식:** ${weakElementRemedies.foods || '정보 없음'} — 식탁에서 자연스럽게
+- **활동:** ${weakElementRemedies.activities || '정보 없음'} — 왜 이 활동이 이 기질에 좋은지 1문장
+
 마지막에 이 리포트의 핵심을 한 문장으로 요약하고, 부모의 마음을 어루만지는 완결형 메시지로 끝내세요.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**작성 원칙:**
-- 십신/용신 등 점술 전문 용어 사용 금지 (일상 언어로)
-- 삼재, 원진살, 도화살 등 공포를 유발하는 개념 사용 금지
-- "좋은 사주/나쁜 사주" 이분법 금지 — 모든 사주는 고유한 강점과 성장점이 있음
-- 모든 설명에 구체적 대화/상황 예시 포함
-- 부정적 특성은 "성장 포인트"로 긍정 재프레이밍
-- 재물운을 말할 때: "큰돈"이 아닌 "꿈을 펼칠 자원이 갖춰지는 시기"로
-- 대운을 말할 때: "대박 운"이 아닌 "삶의 무대 배경 전환"으로
-- 궁합을 말할 때: "잘 맞다/안 맞다"가 아닌 "관계를 효율적으로 유지하는 법"으로
-- 판단하지 않고 공감하는 따뜻한 톤
-- **전체 분량 최소 5000자 이상 (8개 섹션 합계)**
-- 각 섹션이 "이것만으로도 돈 값한다"는 느낌이 들어야 함
-- 절대 "다음에 더 자세히", "추가 분석이 필요하면" 같은 추가 서비스 유도 멘트 금지 — 이 리포트가 완결된 작품이어야 합니다
-- 돈을 낸 부모가 "커피 한 잔 가격에 이 정도면 대단하다"고 느낄 수 있는 퀄리티`;
+모든 섹션에서: 인식(insight) + 실행(action)이 반드시 함께. 인식만 있는 문단 금지.
+- 절대 "다음에 더 자세히", "추가 분석이 필요하면" 같은 추가 서비스 유도 멘트 금지 — 이 리포트가 완결된 작품이어야 합니다.
+- 마지막에 부모의 마음을 어루만지는 완결형 메시지로 끝내세요.
 
-  // Premium reports: generous token budgets for comprehensive reports
-  // gpt-5.4-mini: ~$0.01-0.02 per report at these token levels
-  const maxTokens = productType === 'deluxe' ? 14000 : 10000;
+<execution_order>
+1단계: 입력 데이터(사주 팔자, 오행 분포, 대운/세운, 오행 밸런스) 파싱
+2단계: 해당 섹션들에 대해 데이터 기반 분석
+3단계: 출력 형식에 맞춰 마크다운으로 렌더
+</execution_order>`;
 
-  try {
-    console.log('[Saju Service] Generating premium 8-section report...');
+  // Shared system message base — v2 prompt redesign
+  const systemMessageBase = `당신은 아동 기질 해석 전문가입니다. 동양 철학(명리학)의 기질 분석 프레임워크와 현대 발달심리학을 결합하여, 부모가 아이의 행동 패턴을 이해하고 일상에서 바로 쓸 수 있는 양육 전략을 제공합니다.
 
-    const result = await aiService.generateFortune([
-      {
-        role: 'system',
-        content: `당신은 20년 경력의 부모-자녀 관계 전문 상담사입니다. 동양 철학(명리학)에 기반한 기질 분석과 현대 아동 심리학을 결합하여, 부모가 아이를 더 잘 이해하고 관계를 개선할 수 있도록 돕습니다.
+당신은 점술가가 아닙니다. 당신은 개인화된 양육 해석 전문가입니다.
 
-**당신의 역할:**
-부모에게 편지를 쓰듯 따뜻하고 구체적으로 이야기합니다. 부모가 이 리포트를 읽으면 "아, 그래서 그랬구나"라고 느끼고, "이렇게 해보면 되겠구나"라는 방향을 찾을 수 있어야 합니다.
+**품질 기준 (우선순위 순):**
+1. 구체적(specific): "감정이 풍부합니다" ✗ → "저녁 식사 때 학교 이야기를 하다가 갑자기 울 수 있습니다" ✓
+2. 행동 기반(behavioral): "창의적인 아이" ✗ → "레고를 설명서 없이 자기만의 방식으로 조립하려 합니다" ✓
+3. 실행 가능(actionable): 모든 문단에 인식(insight) + 실행(action)이 함께
+4. 따뜻하되 허술하지 않게(warm but not fluffy): 공감은 짧게, 해결책은 구체적으로
+5. 프리미엄 톤: 명확하고 세련되게. 학술적이거나 신비주의적이지 않게
 
-**용어 사용 원칙:**
-- "사주"라는 단어를 제목이나 첫 문장에 앞세우지 마세요. 자연스럽게 녹이세요.
-- 명리학 용어(임수, 갑목, 상생, 상극, 대운, 세운, 오행, 신강/신약 등)를 사용할 때는:
-  1) 용어를 쓰되 2) 바로 옆에 일상어로 풀어서 설명하세요.
-  예: "임수(壬水), 큰 강이나 바다처럼 마음의 깊이가 있는 기질"
-  예: "수생목(水生木)의 흐름 — 아이의 에너지가 자연스럽게 부모를 키워주는 구조"
-  예: "신약한 편 — 쉽게 말하면 외부 도움과 안정적 환경이 있을 때 힘을 발휘하는 타입"
-  예: "대운(大運) — 10년 주기로 바뀌는 삶의 무대 배경"
-- 용어를 깊이 있게 다루되, 독자가 명리학을 몰라도 "아, 그런 뜻이구나"를 바로 느끼게.
-- 오행의 상생/상극 관계를 설명할 때는 물리적 비유를 사용하세요:
-  "물이 나무를 키우듯", "흙이 물의 흐름을 막듯", "불이 쇠를 녹이듯"
-- 삼재, 원진살, 도화살 등 공포를 유발하는 개념은 절대 사용하지 마세요.
-- "좋은 사주/나쁜 사주"라는 이분법은 존재하지 않습니다.
+**금지 패턴:**
+1. 반복 금지: 같은 인사이트를 다른 표현으로 반복하지 마세요. 한 번 말한 것은 다시 말하지 않습니다.
+2. 장식적 은유 제한: 자연 비유는 섹션당 1개만. 행동 변화로 이어지지 않는 은유는 삭제.
+3. 광범위 주장 금지: "이 아이는 리더십이 있습니다" ✗ → "4명 이상 모이면 자연스럽게 역할을 나누려 합니다" ✓
+4. 신비주의 과잉 금지: 오행을 설명할 때 물리적 비유만. "우주의 기운" 같은 표현 금지.
+5. 의학적 추측 금지: 건강 진단 금지. "활동량이 많은 시기에 충분한 수면이 중요합니다" ✓
+6. 긴 직업 목록 금지: 진로 방향은 3개 이하, 각각 왜 이 기질에 맞는지 1문장 설명.
+7. 진단적 압축: 3문장으로 설명 가능한 것을 6문장으로 늘리지 마세요. 같은 뜻의 다른 표현 연속 사용은 "물 타기"로 느껴집니다.
 
-**핵심 철학:**
-- 같은 기질의 아이도 부모의 양육 방식에 따라 전혀 다른 사람이 됩니다. 기질은 지도이지 운명이 아닙니다.
-- 부모가 아이의 타고난 에너지를 이해하고 꺾지 않으려 노력하면, 관계는 반드시 좋아집니다.
-- 공부를 다그치기만 해서는 도움이 되지 않습니다. 아이의 기질에 맞는 적성을 찾아주는 것이 먼저입니다.
-- 형제 비교("형만도 못한 놈")는 어떤 기질의 아이에게도 치명적입니다.
+**확신도 보정:**
+- 사주 데이터에서 직접 도출 → "~하는 경향이 뚜렷합니다"
+- 기질에서 추론 가능한 패턴 → "~할 수 있습니다"
+- 환경 의존적 발현 → "환경에 따라 ~하는 모습을 보이기도 합니다"
 
-**글쓰기 스타일:**
-- 상담사가 부모에게 대화하듯 서술체로.
-- 섹션 제목은 자연스럽게 (예: "이 아이의 마음 읽기", "엄마와 딸 사이의 에너지"). 기계적 번호+제목 느낌 X.
-- 반드시 ## 1. ~ ## 8. 형식이되, 제목은 내용에 맞는 자연스러운 문장으로.
-- 제목에 (~000자), (최소 000자) 같은 분량 지시를 절대 넣지 마세요.
-- **섹션 1~6은 깊고 풍부한 서술체** (편지처럼 이야기하듯). 각 섹션이 독립적인 에세이처럼 충분히 길어야 합니다.
-  · 섹션 1: 아이의 기질 — 일간 이미지를 자연 비유로 풀어서, 일상에서 어떻게 나타나는지 구체적 장면으로. 최소 600자.
-  · 섹션 2: 부모의 기질 — 부모의 일간과 양육 에너지를 아이와의 관계 속에서 설명. 최소 600자.
-  · 섹션 3: 부모-자녀 관계 역학 — 상생/상극을 자연어로 풀고, 구체적 갈등 상황 + 대화 예시(before/after). 최소 700자.
-  · 섹션 4: 아이의 강점과 힘든 순간 — 강점이 언제 약점처럼 보이는지, 상황별 대응 포함. 최소 500자.
-  · 섹션 5: 올해의 흐름(대운/세운) — 대운과 세운을 자연어로 설명, 부모가 이 시기에 해야 할 것. 최소 500자.
-  · 섹션 6: 관계를 바꾸는 핵심 — 부모가 바꿀 수 있는 구체적 포인트, 대화 예시. 최소 400자.
-- **섹션 7(생활 보완법)은 하위 번호(1~6)로 구조화:**
-  1) 색상 — 구체적 활용법 (옷, 학용품, 방)
-  2) 음식 — 일상에서 자연스럽게 넣는 법
-  3) 활동 — 왜 이 활동이 좋은지 설명 포함
-  4) 방향/공간 — 책상/방 배치 팁
-  5) 강한 오행 조절법 — 과할 때 나타나는 증상과 대응
-  6) 계절별 에너지 관리
-  + 건강 주의 사항
-- **섹션 8(실천 미션)은 번호 목록** — 7가지 미션, 각각 "왜 효과적인가" 한 줄. 마지막에 리포트 핵심 한 줄 요약 + 완결형 마무리.
-- **전체 최소 8000자 이상 (10000자 목표)**. 각 섹션이 "이것만으로도 돈 값한다"는 느낌.
+**비유 규칙:** 자연 비유를 사용했으면 바로 다음 문장에서 구체적 행동으로 연결하세요.
+
+**용어 사용:** 명리학 용어는 쓰되, 바로 옆에 일상어로 풀어서 설명. 삼재/원진살/도화살 등 공포 유발 개념 금지. "좋은 사주/나쁜 사주" 이분법 금지.
+**한자 표기:** 천간/지지를 언급할 때 반드시 한자를 괄호 안에 표기하세요. 예: 신금(辛金), 을목(乙木), 갑오(甲午). 데이터의 '한자' 열을 참조하세요. 빈 괄호 ( ) 금지.
+
+**핵심 철학:** 기질은 지도이지 운명이 아닙니다. 같은 기질의 아이도 부모의 양육에 따라 전혀 다른 사람이 됩니다.`;
+
+  // Call 1 system message: sections 1-5 structure guidance
+  const call1SystemMessage = `${systemMessageBase}
+
+**이번 요청은 9개 섹션 리포트 중 섹션 1~5를 작성하는 것입니다.**
+- 섹션 1: 한눈에 보기 (Executive Summary) — 서사 3문장 + 구조화 불릿
+- 섹션 2: 이 아이는 ~이 아닙니다 — 오해 정면 반박, 펀치력
+- 섹션 3: 행동 시그니처 — 일상 장면 + 패턴 분석
+- 섹션 4: 상황별 대응 플레이북 — 6가지 상황 대화 스크립트
+- 섹션 5: 숨겨진 강점 — 서사 + 구체적 행동
+- "다음에 더 자세히 분석해드리겠습니다" 같은 추가 서비스 유도 멘트 절대 금지.
+- 섹션 5의 끝에서 자연스럽게 마무리하되, 리포트 전체의 최종 결론은 쓰지 마세요 (후반부에서 이어집니다).
+
+**중요: 사주팔자 테이블, 오행 분포, 대운/세운 요약은 리포트 앞에 별도로 첨부됩니다. 본문에서 이 데이터를 표로 반복하지 마세요. 바로 해석과 이야기로 들어가세요.**`;
+
+  // Call 2 system message: sections 6-9 structure guidance
+  const call2SystemMessage = `${systemMessageBase}
+
+**이번 요청은 9개 섹션 리포트 중 섹션 6~9를 작성하는 것입니다.**
+**참고: 섹션 1~5(한눈에 보기, 오해 반박, 행동 시그니처, 상황별 플레이북, 숨겨진 강점)는 이미 작성 완료되었습니다. 섹션 6부터 이어서 작성하세요.**
+
+- 섹션 6: 이 시기의 흐름 — 대운/세운 기반 월별 테이블, 운영적 톤
+- 섹션 7: 7일 양육 실험 — 3가지 작은 변화, 각각 행동→반응→성공 신호
+- 섹션 8: 함께 읽는 양육 카드 — 스크린샷 공유 최적화, 핵심만
+- 섹션 9: 생활 속 밸런스 — "참고 사항" 톤, 색상/음식/활동 간결하게
 - "다음에 더 자세히 분석해드리겠습니다" 같은 추가 서비스 유도 멘트 절대 금지. 이 리포트가 완결된 작품이어야 합니다.
 - 마지막에 부모의 마음을 어루만지는 완결형 메시지로 끝내세요.
 
-**중요: 사주팔자 테이블, 오행 분포, 대운/세운 요약은 리포트 앞에 별도로 첨부됩니다. 본문에서 이 데이터를 표로 반복하지 마세요. 바로 해석과 이야기로 들어가세요.**`,
-      },
-      {
-        role: 'user',
-        content: premiumPrompt,
-      },
-    ], {
-      maxTokens: maxTokens,
-      temperature: 0.7,
-    });
+**중요: 사주팔자 테이블, 오행 분포 요약은 리포트 앞에 별도로 첨부됩니다. 본문에서 이 데이터를 표로 반복하지 마세요. 바로 해석과 이야기로 들어가세요.**`;
 
-    const interpretationText = result.content;
+  // Premium reports: split into 2 calls of ~5000 tokens each
+  // Total budget stays the same (~10000 tokens)
+  const halfTokens = productType === 'deluxe' ? 7000 : 5000;
 
-    console.log('[Saju Service] Premium report generated:', {
+  try {
+    console.log('[Saju Service] Generating premium 9-section report (2-call split)...');
+    const totalStart = Date.now();
+
+    // ── Call 1: Sections 1-5 ──
+    const call1Start = Date.now();
+    console.log('[Saju Service] Call 1/2: Generating sections 1-5...');
+
+    // ── Call 2: Sections 6-9 ──
+    const call2Start = Date.now();
+    console.log('[Saju Service] Call 2/2: Generating sections 6-9...');
+
+    const [result1, result2] = await Promise.all([
+      aiService.generateFortune([
+        { role: 'system', content: call1SystemMessage },
+        { role: 'user', content: coreDataContext + call1SectionInstructions },
+      ], {
+        maxTokens: halfTokens,
+        temperature: 0.7,
+      }),
+      aiService.generateFortune([
+        { role: 'system', content: call2SystemMessage },
+        { role: 'user', content: coreDataContext + fortuneDataContext + remedyDataContext + call2SectionInstructions },
+      ], {
+        maxTokens: halfTokens,
+        temperature: 0.7,
+      }),
+    ]);
+
+    const call1Duration = Date.now() - call1Start;
+    const call2Duration = Date.now() - call2Start;
+    const totalDuration = Date.now() - totalStart;
+    console.log(`[Saju Service] Call 1/2 (sections 1-5) complete: ${call1Duration}ms, ${result1.content.length} chars, ${result1.tokensUsed} tokens`);
+    console.log(`[Saju Service] Call 2/2 (sections 6-9) complete: ${call2Duration}ms, ${result2.content.length} chars, ${result2.tokensUsed} tokens`);
+
+    // Combine results
+    const interpretationText = result1.content + '\n\n' + result2.content;
+    const totalTokens = (result1.tokensUsed || 0) + (result2.tokensUsed || 0);
+
+    console.log('[Saju Service] Premium report generated (2-call split):', {
       length: interpretationText.length,
-      tokens: result.tokensUsed,
-      provider: result.provider,
+      totalTokens,
+      call1: { duration: `${call1Duration}ms`, tokens: result1.tokensUsed, provider: result1.provider },
+      call2: { duration: `${call2Duration}ms`, tokens: result2.tokensUsed, provider: result2.provider },
+      totalDuration: `${totalDuration}ms`,
       hasParentData: !!parentManseryeok,
     });
 
@@ -1062,12 +1184,17 @@ ${monthlyFortuneData}
       fullText: interpretationText,
       sections: parsePremiumSections(interpretationText),
       metadata: {
-        provider: result.provider,
-        model: result.model,
-        tokens: result.tokensUsed,
+        provider: result1.provider,
+        model: result1.model,
+        tokens: totalTokens,
         generatedAt: new Date().toISOString(),
         reportType: 'relationship_focused',
         hasParentAnalysis: !!parentManseryeok,
+        splitCalls: {
+          call1: { duration: call1Duration, tokens: result1.tokensUsed },
+          call2: { duration: call2Duration, tokens: result2.tokensUsed },
+          totalDuration,
+        },
       },
     };
 
@@ -1085,14 +1212,15 @@ function parsePremiumSections(text) {
   if (!text) return {};
 
   const sectionKeys = [
-    'coreProfile',          // 1. 사주 핵심 프로필
-    'parentChildAnalysis',  // 2. 부모-자녀 궁합 분석
-    'developmentGuide',     // 3. 연령별 발달 가이드
-    'careerAptitude',       // 4. 진로/적성 심층 분석
-    'fortuneCycles',        // 5. 대운/세운 운세 흐름
-    'monthlyFortune',       // 6. 월별 운세 리포트
-    'elementBalance',       // 7. 오행 밸런스 & 개운법
-    'weeklyActions',        // 8. 이번 주 실천 과제
+    'executiveSummary',     // 1. 한눈에 보기
+    'whatChildIsNot',       // 2. 이 아이는 ~이 아닙니다
+    'behavioralSignature',  // 3. 행동 시그니처
+    'situationPlaybook',    // 4. 상황별 대응 플레이북
+    'hiddenStrengths',      // 5. 숨겨진 강점
+    'timelineFocus',        // 6. 이 시기의 흐름
+    'sevenDayExperiment',   // 7. 7일 양육 실험
+    'coParentSummary',      // 8. 함께 읽는 양육 카드
+    'lifestyleHarmony',     // 9. 생활 속 밸런스
   ];
 
   const result = {};
@@ -1119,9 +1247,9 @@ function parsePremiumSections(text) {
     }
   }
 
-  // Fallback: if nothing parsed, dump everything into coreProfile
+  // Fallback: if nothing parsed, dump everything into executiveSummary
   if (Object.keys(result).length === 0) {
-    result['coreProfile'] = text;
+    result['executiveSummary'] = text;
   }
 
   return result;

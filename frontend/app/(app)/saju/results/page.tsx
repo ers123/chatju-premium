@@ -7,6 +7,7 @@ import Script from 'next/script'
 import { apiClient } from '@/lib/api'
 import { useLanguage } from '@/app/lib/i18n/context'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import ShareableResultCard from '@/components/saju/ShareableResultCard'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
@@ -219,11 +220,13 @@ export default function ResultsPage() {
   const [corrections, setCorrections] = useState<{ applied: boolean; note: string; adjustedTime?: string | null; isSouthernHemisphere?: boolean } | null>(null)
   const [premiumLoading, setPremiumLoading] = useState(false)
   const [premiumError, setPremiumError] = useState('')
+  const [readingId, setReadingId] = useState<string | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
 
   // Inline payment state
   const [showPayment, setShowPayment] = useState(false)
   const [paymentEmail, setPaymentEmail] = useState('')
+  const paymentEmailRef = useRef('')
   const [paymentProcessing, setPaymentProcessing] = useState(false)
   const [paymentError, setPaymentError] = useState('')
   const [paypalSdkReady, setPaypalSdkReady] = useState(false)
@@ -234,19 +237,31 @@ export default function ResultsPage() {
   const [promoValidating, setPromoValidating] = useState(false)
   const [promoResult, setPromoResult] = useState<{ valid: boolean; promoCode?: { id: string; code: string } } | null>(null)
 
-  // Render PayPal buttons once when SDK is ready and email is entered
+  // Track if email is valid (controls PayPal container visibility in JSX)
+  const emailValid = paymentEmail.trim() !== '' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentEmail)
+
+  // Reset PayPal rendered flag when conditions change that destroy the container div
   useEffect(() => {
-    if (!paypalSdkReady || !showPayment || paypalRendered.current) return
+    if (!showPayment || !emailValid) {
+      paypalRendered.current = false
+    }
+  }, [showPayment, emailValid])
+
+  // Render PayPal buttons when SDK is ready, panel is open, and email is valid (container div exists)
+  useEffect(() => {
+    if (!paypalSdkReady || !showPayment || !emailValid || paypalRendered.current) return
     if (typeof window === 'undefined' || !(window as any).paypal) return
-    const container = document.getElementById('inline-paypal-container')
-    if (!container) return
-    paypalRendered.current = true
+    // Small delay to ensure DOM is rendered after email validation shows the container
+    const timer = setTimeout(() => {
+      const container = document.getElementById('inline-paypal-container')
+      if (!container || paypalRendered.current) return
+      paypalRendered.current = true
 
     try {
       ;(window as any).paypal.Buttons({
         createOrder: async () => {
-          if (!paymentEmail.trim()) { setPaymentError('Please enter your email first'); throw new Error('Email required') }
-          const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email: paymentEmail })
+          if (!paymentEmailRef.current.trim()) { setPaymentError('Please enter your email first'); throw new Error('Email required') }
+          const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email: paymentEmailRef.current })
           if (response.success && response.paypalOrderId) {
             sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId }))
             return response.paypalOrderId
@@ -275,7 +290,9 @@ export default function ResultsPage() {
         onCancel: () => {},
       }).render('#inline-paypal-container')
     } catch { setPaymentError('Failed to initialize payment.') }
-  }, [paypalSdkReady, showPayment])
+    }, 100) // 100ms delay for DOM render
+    return () => clearTimeout(timer)
+  }, [paypalSdkReady, showPayment, emailValid])
 
   // Handle promo code submit inline
   // Poll for reading completion (used when API Gateway times out but Lambda continues)
@@ -335,9 +352,13 @@ export default function ResultsPage() {
         // Poll for the result — Lambda will save to DB when done.
         reading = await pollForReading(paymentEmail)
         if (!reading) {
-          setPaymentError('Generation is taking longer than expected. Please refresh in 1 minute.')
+          // Polling failed — try one more extended poll cycle on reload
+          sessionStorage.setItem('pending_promo_email', paymentEmail)
+          sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail }))
+          setPaymentError('Report is being generated. This page will refresh automatically...')
           setPaymentProcessing(false)
           setPromoValidating(false)
+          setTimeout(() => window.location.reload(), 10000)
           return
         }
       }
@@ -377,6 +398,20 @@ export default function ResultsPage() {
         if (promoReadingRaw) {
           r = JSON.parse(promoReadingRaw)
           sessionStorage.removeItem('promo_reading') // One-time use
+        } else if (completed.orderId === 'promo') {
+          // Promo flow after reload — poll for the reading by email
+          const promoEmail = sessionStorage.getItem('pending_promo_email') || completed.email
+          if (promoEmail) {
+            r = await pollForReading(promoEmail, 18) // 18 attempts = 90s
+            sessionStorage.removeItem('pending_promo_email')
+            if (!r) {
+              setPremiumError('Report generation is still in progress. Please refresh the page in a moment.')
+              return
+            }
+          } else {
+            setPremiumError('Could not find your report. Please try again.')
+            return
+          }
         } else {
           const stored = sessionStorage.getItem('sajuInput')
           if (!stored) return
@@ -413,6 +448,10 @@ export default function ResultsPage() {
           r = reading
         }
 
+        // Store reading ID for PDF download (API returns readingId, DB row has id)
+        const rid = r.readingId || r.id
+        if (rid) setReadingId(rid)
+
         // Backend returns aiInterpretation: { fullText, sections, metadata }
         if (r.aiInterpretation?.fullText) {
           setPremiumReport({ fullText: r.aiInterpretation.fullText, ...(r.aiInterpretation.sections || {}) })
@@ -433,53 +472,25 @@ export default function ResultsPage() {
   }, [result, inputData])
 
   const handlePdfExport = useCallback(async () => {
-    if (!reportRef.current) return
-
+    if (!readingId) return
     try {
-      const html2canvas = (await import('html2canvas')).default
-      const { jsPDF } = await import('jspdf')
-
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#FDFCFA',
-      })
-
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = pdfWidth - 20
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      let heightLeft = imgHeight
-      let position = 10
-
-      // Header
-      pdf.setFontSize(12)
-      pdf.setTextColor(45, 58, 53)
-      pdf.text(`SoMyung - ${inputData?.name || ''}`, 10, 8)
-      pdf.setFontSize(8)
-      pdf.setTextColor(139, 133, 128)
-      pdf.text(new Date().toLocaleDateString(lang), pdfWidth - 30, 8)
-
-      // Add image pages
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
-      heightLeft -= (pdfHeight - position)
-
-      while (heightLeft > 0) {
-        position = 10
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 10, position - (imgHeight - heightLeft), imgWidth, imgHeight)
-        heightLeft -= (pdfHeight - position)
-      }
-
-      pdf.save(`SoMyung_${inputData?.name || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`)
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+      const response = await fetch(`${API_URL}/saju/reading/${readingId}/pdf`)
+      if (!response.ok) throw new Error('PDF download failed')
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `SoMyung_${inputData?.name || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
     } catch (err) {
       console.error('PDF export error:', err)
       alert(sr.pdfError)
     }
-  }, [inputData, sr.pdfError])
+  }, [readingId, inputData, sr.pdfError])
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -738,12 +749,14 @@ export default function ResultsPage() {
             <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button
-              onClick={handlePdfExport}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: '10px', border: '1px solid #EBE5DF', background: 'none', cursor: 'pointer' }}
-            >
-              {sr.savePdf}
-            </button>
+            {readingId && (
+              <button
+                onClick={handlePdfExport}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: '10px', border: '1px solid #EBE5DF', background: 'none', cursor: 'pointer' }}
+              >
+                {sr.savePdf}
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -920,6 +933,7 @@ export default function ResultsPage() {
             <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
               <div style={{ color: '#4B4035', maxWidth: 'none' }}>
                 <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
                   components={{
                     h2: ({ children }) => (
                       <h2 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginTop: '2.5rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #EBE5DF' }}>
@@ -969,17 +983,36 @@ export default function ResultsPage() {
             </section>
           </>
         ) : premiumLoading ? (
-          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
-            <div style={{ position: 'relative', width: '4rem', height: '4rem', margin: '0 auto 1rem' }}>
+          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '2rem 1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
+            <div style={{ position: 'relative', width: '4rem', height: '4rem', margin: '0 auto 1.25rem' }}>
               <div style={{ position: 'absolute', inset: 0, border: '4px solid #EBE5DF', borderRadius: '50%' }} />
               <div style={{ position: 'absolute', inset: 0, border: '4px solid #B8922D', borderRadius: '50%', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
             </div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.5rem' }}>{sr.premiumGenerating}</h3>
-            <p style={{ color: '#8B8580' }}>{sr.premiumGeneratingDesc}</p>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.75rem' }}>{sr.premiumGenerating}</h3>
+            <p style={{ color: '#6B5E52', fontSize: '1rem', lineHeight: 1.6, marginBottom: '1rem' }}>{sr.premiumGeneratingDesc}</p>
+            <div style={{ background: '#F8F6F3', borderRadius: '10px', padding: '1rem', border: '1px solid #EBE5DF' }}>
+              <p style={{ color: '#C5A059', fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>✉ {(() => { try { const c = sessionStorage.getItem('completed_payment'); return c ? JSON.parse(c).email : '' } catch { return '' } })()}</p>
+              <p style={{ color: '#6B5E52', fontSize: '0.9375rem' }}>
+                {lang === 'ko'
+                  ? '리포트는 위 이메일로도 전송됩니다. 이 페이지를 닫아도 괜찮습니다.'
+                  : lang === 'ja'
+                  ? 'レポートは上記のメールにも送信されます。このページを閉じても大丈夫です。'
+                  : 'Your report will also be sent to this email. Feel free to close this page.'}
+              </p>
+            </div>
           </section>
         ) : premiumError ? (
-          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
-            <p style={{ color: '#C67B6F' }}>{premiumError}</p>
+          <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '2rem 1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
+            <p style={{ color: '#C67B6F', fontSize: '1rem', marginBottom: '1rem' }}>{premiumError}</p>
+            <div style={{ background: '#F8F6F3', borderRadius: '10px', padding: '1rem', border: '1px solid #EBE5DF' }}>
+              <p style={{ color: '#6B5E52', fontSize: '0.9375rem' }}>
+                {lang === 'ko'
+                  ? '리포트는 이메일로도 전송됩니다. 잠시 후 새로고침하시거나 이메일을 확인해주세요.'
+                  : lang === 'ja'
+                  ? 'レポートはメールでも送信されます。しばらくしてからページを更新するか、メールをご確認ください。'
+                  : 'Your report will also be delivered by email. Please refresh shortly or check your inbox.'}
+              </p>
+            </div>
           </section>
         ) : (
           <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '12px', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
@@ -1012,55 +1045,92 @@ export default function ResultsPage() {
                 </div>
               ) : (
                 <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '1.25rem', marginTop: '0.5rem' }}>
-                  {/* Email input */}
+                  {/* Step 1: Email */}
                   <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>
-                    {t.payment.emailLabel}
+                    {t.payment.emailLabel} <span style={{ color: '#C5A059' }}>*</span>
                   </label>
                   <input
                     type="email"
                     placeholder="email@example.com"
                     value={paymentEmail}
-                    onChange={(e) => setPaymentEmail(e.target.value)}
+                    onChange={(e) => { setPaymentEmail(e.target.value); paymentEmailRef.current = e.target.value }}
                     style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.875rem', boxSizing: 'border-box' as const, marginBottom: '0.75rem' }}
                   />
 
-                  {/* Promo code */}
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                    <input
-                      type="text"
-                      placeholder={t.payment.promoCodePlaceholder || 'Promo code'}
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                      style={{ flex: 1, padding: '0.625rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.8125rem' }}
-                    />
-                    <button
-                      onClick={handleInlinePromo}
-                      disabled={!promoCode.trim() || !paymentEmail.trim() || promoValidating}
-                      style={{ padding: '0.625rem 1rem', borderRadius: '8px', background: '#C5A059', color: '#2D3A35', border: 'none', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer', opacity: (!promoCode.trim() || !paymentEmail.trim() || promoValidating) ? 0.5 : 1 }}
-                    >
-                      {promoValidating ? '...' : (t.payment.promoApply || 'Apply')}
-                    </button>
-                  </div>
+                  {/* Step 2: Payment options — only show when email is entered */}
+                  {paymentEmail.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentEmail) ? (
+                    <>
+                      {/* Promo code */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <input
+                          type="text"
+                          placeholder={t.payment.promoCodePlaceholder || 'Promo code'}
+                          value={promoCode}
+                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                          style={{ flex: 1, padding: '0.625rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.8125rem' }}
+                        />
+                        <button
+                          onClick={handleInlinePromo}
+                          disabled={!promoCode.trim() || promoValidating}
+                          style={{ padding: '0.625rem 1rem', borderRadius: '8px', background: '#C5A059', color: '#2D3A35', border: 'none', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer', opacity: (!promoCode.trim() || promoValidating) ? 0.5 : 1 }}
+                        >
+                          {promoValidating ? '...' : (t.payment.promoApply || 'Apply')}
+                        </button>
+                      </div>
 
-                  {/* PayPal buttons */}
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
-                    {(t.payment as any).orPayWith || 'Or pay with'}
-                  </div>
-                  <div id="inline-paypal-container" />
-                  <Script
-                    src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay`}
-                    onReady={() => setPaypalSdkReady(true)}
-                  />
+                      {/* Divider */}
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
+                        {(t.payment as any).orPayWith || 'Or pay with'}
+                      </div>
+
+                      {/* PayPal buttons */}
+                      <div id="inline-paypal-container" />
+                      <Script
+                        src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay`}
+                        onReady={() => setPaypalSdkReady(true)}
+                      />
+                    </>
+                  ) : (
+                    <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '1rem 0' }}>
+                      Enter your email above to see payment options
+                    </p>
+                  )}
 
                   {paymentProcessing && (
-                    <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                      <div style={{ display: 'inline-block', width: '1.5rem', height: '1.5rem', border: '3px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                      <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', marginTop: '0.5rem' }}>{sr.premiumGeneratingDesc}</p>
+                    <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(197,160,89,0.1)', borderRadius: '12px', marginTop: '1rem' }}>
+                      <div style={{ display: 'inline-block', width: '2.5rem', height: '2.5rem', border: '4px solid #C5A059', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
+                      <p style={{ color: '#FFFFFF', fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                        {sr.premiumGeneratingDesc || 'Generating your premium report...'}
+                      </p>
+                      <p style={{ color: '#C5A059', fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem' }}>
+                        ✉ {paymentEmail}
+                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9375rem', lineHeight: 1.6 }}>
+                        {lang === 'ko'
+                          ? '리포트가 준비되면 위 이메일로도 전송됩니다.\n이 페이지를 닫아도 괜찮습니다.'
+                          : lang === 'ja'
+                          ? 'レポートは上記のメールにも送信されます。\nこのページを閉じても大丈夫です。'
+                          : 'Your report will also be sent to the email above.\nFeel free to close this page.'}
+                      </p>
                     </div>
                   )}
 
                   {paymentError && (
-                    <p style={{ color: '#E88', fontSize: '0.875rem', textAlign: 'center', marginTop: '0.5rem' }}>{paymentError}</p>
+                    <div style={{ textAlign: 'center', padding: '1.5rem 1rem', background: 'rgba(197,160,89,0.08)', borderRadius: '12px', marginTop: '1rem' }}>
+                      <p style={{ color: '#C5A059', fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                        ✉ {paymentEmail}
+                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '0.75rem' }}>
+                        {paymentError}
+                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem' }}>
+                        {lang === 'ko'
+                          ? '리포트는 이메일로도 전송됩니다. 창을 닫아도 괜찮습니다.'
+                          : lang === 'ja'
+                          ? 'レポートはメールでも送信されます。ページを閉じても大丈夫です。'
+                          : 'Your report will also be delivered by email. You can safely close this page.'}
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
@@ -1076,6 +1146,7 @@ export default function ResultsPage() {
             {result && inputData && (() => {
               const dominant = getDominantElement(result.ohaengBalance)
               const visual = elementVisuals[dominant]
+              if (!visual) return null
               const elInfo = sr.elements?.[dominant as keyof typeof sr.elements]
               const dominantName = elInfo?.name || dominant
               const traitList = elInfo?.traits || []

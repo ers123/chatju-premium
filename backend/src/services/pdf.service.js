@@ -1,19 +1,230 @@
 // backend/src/services/pdf.service.js
-// PDF report generation using pdfkit
+// Premium PDF report generation using pdfkit — text-based, ~200-500KB
 
-const logger = require('../utils/logger');
 const path = require('path');
 const fs = require('fs');
 
-// Noto Sans CJK KR — supports Korean, Chinese, Japanese characters including 한자
-const FONT_PATH = path.join(__dirname, '../../assets/fonts/NotoSansCJKkr-Regular.otf');
-const FONT_BOLD_PATH = path.join(__dirname, '../../assets/fonts/NotoSansCJKkr-Bold.otf');
+const FONTS_DIR = path.join(__dirname, '../../assets/fonts');
+const FONT_MAP = {
+  default: {
+    family: 'NotoSansKR',
+    regular: path.join(FONTS_DIR, 'NotoSansKR-Regular.ttf'),
+    bold: path.join(FONTS_DIR, 'NotoSansKR-Bold.ttf'),
+  },
+  ja: {
+    family: 'NotoSansJP',
+    regular: path.join(FONTS_DIR, 'NotoSansJP-Regular.ttf'),
+    bold: path.join(FONTS_DIR, 'NotoSansJP-Bold.ttf'),
+  },
+};
+
+// ─── i18n labels ────────────────────────────────────────────────────────────
+const LABELS = {
+  ko: {
+    pillars: ['년주', '월주', '일주', '시주'],
+    elements: ['목', '화', '토', '금', '수'],
+    elementAnalysis: '오행 분석',
+    fourPillars: '사주팔자',
+    birthInfo: '기본 정보',
+    birthDate: '생년월일',
+    gender: '성별',
+    male: '남자',
+    female: '여자',
+    premiumReport: '프리미엄 사주 리포트',
+    generatedOn: '생성일',
+    footer: 'SoMyung | somyung.cc',
+  },
+  en: {
+    pillars: ['Year', 'Month', 'Day', 'Hour'],
+    elements: ['Wood (木)', 'Fire (火)', 'Earth (土)', 'Metal (金)', 'Water (水)'],
+    elementAnalysis: 'Five Elements Analysis',
+    fourPillars: 'Four Pillars of Destiny',
+    birthInfo: 'Basic Information',
+    birthDate: 'Date of Birth',
+    gender: 'Gender',
+    male: 'Male',
+    female: 'Female',
+    premiumReport: 'Premium Saju Report',
+    generatedOn: 'Generated on',
+    footer: 'SoMyung | somyung.cc',
+  },
+  ja: {
+    pillars: ['年柱', '月柱', '日柱', '時柱'],
+    elements: ['木 (もく)', '火 (か)', '土 (ど)', '金 (きん)', '水 (すい)'],
+    elementAnalysis: '五行分析',
+    fourPillars: '四柱推命',
+    birthInfo: '基本情報',
+    birthDate: '生年月日',
+    gender: '性別',
+    male: '男性',
+    female: '女性',
+    premiumReport: 'プレミアム四柱推命レポート',
+    generatedOn: '生成日',
+    footer: 'SoMyung | somyung.cc',
+  },
+  zh: {
+    pillars: ['年柱', '月柱', '日柱', '时柱'],
+    elements: ['木', '火', '土', '金', '水'],
+    elementAnalysis: '五行分析',
+    fourPillars: '四柱八字',
+    birthInfo: '基本信息',
+    birthDate: '出生日期',
+    gender: '性别',
+    male: '男',
+    female: '女',
+    premiumReport: '高级四柱八字报告',
+    generatedOn: '生成日期',
+    footer: 'SoMyung | somyung.cc',
+  },
+};
+
+function getLabels(language) {
+  return LABELS[language] || LABELS.en;
+}
+
+// ─── Color palette ──────────────────────────────────────────────────────────
+const COLORS = {
+  headerBg: '#2D3A35',
+  gold: '#C5A059',
+  darkText: '#2D3A35',
+  bodyText: '#4A4440',
+  lightText: '#8B8580',
+  subtleText: '#B0A9A2',
+  divider: '#EBE5DF',
+  pillarBg: '#2D3A35',
+  pageBg: '#FDFCFA',
+};
+
+const ELEMENT_COLORS = {
+  wood: '#5A7A66',
+  fire: '#A85544',
+  earth: '#B8922D',
+  metal: '#6B7578',
+  water: '#556B7E',
+};
+
+// ─── Markdown parser ────────────────────────────────────────────────────────
+// Returns an array of { type, text, items? } blocks
+function parseMarkdown(text) {
+  const lines = text.split('\n');
+  const blocks = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Section header: ## N. Title
+    const headerMatch = line.match(/^#{1,4}\s+(.+)$/);
+    if (headerMatch) {
+      blocks.push({ type: 'header', text: headerMatch[1].trim() });
+      i++;
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^---+$/.test(line.trim())) {
+      i++;
+      continue;
+    }
+
+    // Table separator line (|---|---|) — skip
+    if (/^\|[\s-:]+\|/.test(line.trim()) && line.includes('---')) {
+      i++;
+      continue;
+    }
+
+    // Table row (| col | col |) — convert to clean text
+    if (/^\|.+\|$/.test(line.trim())) {
+      const cells = line.trim().split('|').filter(c => c.trim()).map(c => c.trim());
+      if (cells.length > 0) {
+        blocks.push({ type: 'text', text: cells.join(' — ') });
+      }
+      i++;
+      continue;
+    }
+
+    // Empty line → paragraph break
+    if (line.trim() === '') {
+      blocks.push({ type: 'blank' });
+      i++;
+      continue;
+    }
+
+    // Bullet list item
+    const bulletMatch = line.match(/^\s*[-*]\s+(.+)$/);
+    if (bulletMatch) {
+      const items = [];
+      while (i < lines.length) {
+        const bm = lines[i].match(/^\s*[-*]\s+(.+)$/);
+        if (!bm) break;
+        items.push(bm[1].trim());
+        i++;
+      }
+      blocks.push({ type: 'bullets', items });
+      continue;
+    }
+
+    // Numbered list item — preserve original numbers
+    const numMatch = line.match(/^\s*(\d+)\.\s+(.+)$/);
+    if (numMatch) {
+      const items = [];
+      while (i < lines.length) {
+        const nm = lines[i].match(/^\s*(\d+)\.\s+(.+)$/);
+        if (!nm) break;
+        items.push({ num: parseInt(nm[1], 10), text: nm[2].trim() });
+        i++;
+      }
+      blocks.push({ type: 'numbered', items });
+      continue;
+    }
+
+    // Regular text line
+    blocks.push({ type: 'text', text: line.trim() });
+    i++;
+  }
+
+  return blocks;
+}
+
+// Parse inline bold markers and return segments: [{ text, bold }]
+function parseInline(text) {
+  const segments = [];
+  const regex = /\*\*(.+?)\*\*/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ text: match.input.slice(lastIndex, match.index), bold: false });
+    }
+    segments.push({ text: match[1], bold: true });
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ text: text.slice(lastIndex), bold: false });
+  }
+
+  // Strip ALL remaining markdown artifacts — **, *, `, ~~, etc.
+  return segments.map(s => ({
+    ...s,
+    text: s.text
+      .replace(/\*\*(.+?)\*\*/g, '$1')   // leftover **bold**
+      .replace(/\*([^*]+)\*/g, '$1')      // *italic*
+      .replace(/`([^`]+)`/g, '$1')        // `code`
+      .replace(/~~/g, '')                 // ~~strikethrough~~
+      .replace(/\*\*/g, '')              // orphaned ** with no closing
+      .replace(/\*/g, ''),               // orphaned single *
+  }));
+}
+
 
 /**
  * Generate a premium report PDF
  */
 async function generateReportPDF(params) {
-  const { childName, birthDate, gender, manseryeok, aiInterpretation } = params;
+  const { childName, birthDate, gender, manseryeok, aiInterpretation, language } = params;
+  const labels = getLabels(language || 'ko');
 
   const PDFDocument = require('pdfkit');
 
@@ -21,11 +232,13 @@ async function generateReportPDF(params) {
     try {
       const doc = new PDFDocument({
         size: 'A4',
-        margins: { top: 60, bottom: 70, left: 50, right: 50 },
+        margins: { top: 50, bottom: 60, left: 50, right: 50 },
+        bufferPages: true,
         info: {
-          Title: `${childName || 'Child'}'s Saju Report - SoMyung`,
-          Author: 'SoMyung',
-          Subject: 'Premium Saju Report',
+          Title: `${childName || 'Child'} - ${labels.premiumReport} - SoMyung`,
+          Author: 'SoMyung (somyung.cc)',
+          Subject: labels.premiumReport,
+          Creator: 'SoMyung PDF Engine',
         },
       });
 
@@ -34,155 +247,390 @@ async function generateReportPDF(params) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      const hasFont = fs.existsSync(FONT_PATH);
-      const hasBoldFont = fs.existsSync(FONT_BOLD_PATH);
+      // Register both supported font families so pdfkit can switch cleanly per language.
+      const registeredFonts = {};
+      for (const key of ['default', 'ja']) {
+        const fontFiles = FONT_MAP[key];
+        const hasFont = fs.existsSync(fontFiles.regular);
+        const hasBoldFont = fs.existsSync(fontFiles.bold);
 
-      if (hasFont) doc.registerFont('Korean', FONT_PATH);
-      if (hasBoldFont) doc.registerFont('KoreanBold', FONT_BOLD_PATH);
+        console.log('[PDF] Font check:', {
+          key,
+          regularPath: fontFiles.regular,
+          boldPath: fontFiles.bold,
+          hasFont,
+          hasBoldFont,
+          regularSize: hasFont ? fs.statSync(fontFiles.regular).size : 0,
+        });
 
-      const fontName = hasFont ? 'Korean' : 'Helvetica';
-      const fontBold = hasBoldFont ? 'KoreanBold' : (hasFont ? 'Korean' : 'Helvetica-Bold');
-      const pageW = doc.page.width;
-      const contentW = pageW - 100; // 50 margin each side
-      const bottomLimit = doc.page.height - 90; // Leave room for footer
+        if (hasFont) doc.registerFont(`${fontFiles.family}-Regular`, fontFiles.regular);
+        if (hasBoldFont) doc.registerFont(`${fontFiles.family}-Bold`, fontFiles.bold);
 
-      // Helper: ensure enough space, sync y with doc cursor, add page if needed
+        registeredFonts[key] = {
+          hasFont,
+          hasBoldFont,
+          regular: hasFont ? `${fontFiles.family}-Regular` : 'Helvetica',
+          bold: hasBoldFont ? `${fontFiles.family}-Bold` : 'Helvetica-Bold',
+        };
+      }
+
+      const activeFontKey = (language === 'ja' || language === 'zh') ? 'ja' : 'default';
+      const fontRegular = registeredFonts[activeFontKey].regular;
+      const fontBold = registeredFonts[activeFontKey].bold;
+      const pillarCardFont = registeredFonts.ja.bold || registeredFonts.ja.regular || fontBold;
+
+      console.log('[PDF] Using fonts:', { fontRegular, fontBold });
+
+      const PAGE_W = doc.page.width;   // 595.28 for A4
+      const PAGE_H = doc.page.height;  // 841.89 for A4
+      const MARGIN_L = 50;
+      const MARGIN_R = 50;
+      const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
+      const FOOTER_Y = PAGE_H - 45;
+
+      // ─── Helper: render rich text (with inline bold) ──────────────────
+      function renderRichText(text, x, y, options = {}) {
+        const {
+          fontSize = 10,
+          color = COLORS.bodyText,
+          lineGap = 5,
+          width = CONTENT_W,
+          indent = 0,
+        } = options;
+
+        const segments = parseInline(text);
+        const effectiveX = x + indent;
+        const effectiveW = width - indent;
+
+        // If no bold segments, use simple text for efficiency
+        if (segments.length === 1 && !segments[0].bold) {
+          doc.font(fontRegular).fontSize(fontSize).fillColor(color);
+          doc.text(segments[0].text, effectiveX, y, { width: effectiveW, lineGap });
+          return doc.y;
+        }
+
+        // Mixed bold/regular — use pdfkit's continued text
+        doc.fontSize(fontSize).fillColor(color);
+        let first = true;
+        for (let i = 0; i < segments.length; i++) {
+          const seg = segments[i];
+          const isLast = i === segments.length - 1;
+          doc.font(seg.bold ? fontBold : fontRegular);
+          if (first) {
+            doc.text(seg.text, effectiveX, y, {
+              width: effectiveW,
+              lineGap,
+              continued: !isLast,
+            });
+            first = false;
+          } else {
+            doc.text(seg.text, {
+              width: effectiveW,
+              lineGap,
+              continued: !isLast,
+            });
+          }
+        }
+        return doc.y;
+      }
+
+      // ─── Helper: ensure space on page ─────────────────────────────────
+      // Only add page manually if there's genuinely no space.
+      // Use a stricter threshold to avoid double-page-breaks
+      // (pdfkit also auto-adds pages when text overflows)
       function ensureSpace(needed) {
-        // Sync y with pdfkit's actual cursor position
-        if (doc.y > 60) y = doc.y;
-        if (y > bottomLimit - needed) {
-          doc.addPage();
-          y = 60;
+        if (doc.y + needed > FOOTER_Y) {
+          // Check if pdfkit already added a page (y would be near top)
+          if (doc.y > 100) {
+            doc.addPage();
+          }
         }
       }
 
-      // ===== PAGE 1: HEADER =====
-      doc.rect(0, 0, pageW, 120).fill('#2D3A35');
-      doc.font(fontBold).fontSize(24).fillColor('#C5A059')
-        .text('☯ SoMyung', 50, 35, { align: 'center' });
-      doc.font(fontName).fontSize(12).fillColor('#A09990')
-        .text('Premium Saju Report', 50, 65, { align: 'center' });
-      doc.font(fontBold).fontSize(16).fillColor('#FFFFFF')
-        .text(`${childName || 'Child'}'s Saju Analysis`, 50, 88, { align: 'center' });
+      // ─── Helper: draw gold divider line with section title ────────────
+      function drawSectionHeader(title) {
+        ensureSpace(50);
 
-      let y = 145;
+        const y = doc.y;
 
-      // ===== BIRTH INFO =====
-      doc.font(fontBold).fontSize(14).fillColor('#2D3A35').text('Basic Info', 50, y);
-      y += 25;
+        // Thin gold line
+        doc.moveTo(MARGIN_L, y)
+          .lineTo(MARGIN_L + CONTENT_W, y)
+          .strokeColor(COLORS.gold)
+          .lineWidth(0.75)
+          .stroke();
 
-      const genderLabel = gender === 'male' ? 'Male' : 'Female';
-      doc.font(fontName).fontSize(11).fillColor('#6B5E52');
-      doc.text(`Birth Date: ${birthDate}`, 50, y);
-      y += 18;
-      doc.text(`Gender: ${genderLabel}`, 50, y);
-      y += 30;
-
-      // ===== FOUR PILLARS =====
-      const pillars = manseryeok?.pillars;
-      if (pillars) {
-        doc.font(fontBold).fontSize(14).fillColor('#2D3A35').text('Four Pillars (四柱八字)', 50, y);
-        y += 25;
-
-        const pillarLabels = ['Year', 'Month', 'Day', 'Hour'];
-        const pillarKeys = ['year', 'month', 'day', 'hour'];
-        const pillarWidth = 110;
-        const startX = (pageW - pillarWidth * 4 - 30) / 2;
-
-        pillarKeys.forEach((key, i) => {
-          const px = startX + i * (pillarWidth + 10);
-          doc.roundedRect(px, y, pillarWidth, 60, 8).fill('#2D3A35');
-          doc.font(fontName).fontSize(9).fillColor('#C5A059')
-            .text(pillarLabels[i], px, y + 8, { width: pillarWidth, align: 'center' });
-          doc.font(fontBold).fontSize(18).fillColor('#FFFFFF')
-            .text(pillars[key]?.korean || '-', px, y + 28, { width: pillarWidth, align: 'center' });
-        });
-
-        y += 80;
+        // Section title
+        doc.font(fontBold).fontSize(13).fillColor(COLORS.darkText);
+        doc.text(title, MARGIN_L, y + 8, { width: CONTENT_W });
+        doc.moveDown(0.5);
       }
 
-      // ===== FIVE ELEMENTS =====
+
+      // ═════════════════════════════════════════════════════════════════
+      // COVER PAGE
+      // ═════════════════════════════════════════════════════════════════
+
+      // Dark header band
+      doc.rect(0, 0, PAGE_W, 160).fill(COLORS.headerBg);
+
+      // Branding
+      doc.font(fontBold).fontSize(28).fillColor(COLORS.gold);
+      doc.text('SoMyung', MARGIN_L, 40, { width: CONTENT_W, align: 'center' });
+
+      doc.font(fontRegular).fontSize(11).fillColor('#A09990');
+      doc.text(labels.premiumReport, MARGIN_L, 75, { width: CONTENT_W, align: 'center' });
+
+      // Child name
+      doc.font(fontBold).fontSize(22).fillColor('#FFFFFF');
+      doc.text(childName || '', MARGIN_L, 105, { width: CONTENT_W, align: 'center' });
+
+      // Birth info below header band
+      const infoY = 185;
+      doc.font(fontRegular).fontSize(10).fillColor(COLORS.lightText);
+      doc.text(`${labels.birthDate}: ${birthDate || '-'}`, MARGIN_L, infoY);
+      doc.text(
+        `${labels.gender}: ${gender === 'male' ? labels.male : labels.female}`,
+        MARGIN_L, infoY + 18
+      );
+      doc.text(
+        `${labels.generatedOn}: ${new Date().toISOString().split('T')[0]}`,
+        MARGIN_L, infoY + 36
+      );
+
+      doc.y = infoY + 65;
+
+
+      // ═════════════════════════════════════════════════════════════════
+      // FOUR PILLARS
+      // ═════════════════════════════════════════════════════════════════
+      const pillars = manseryeok?.pillars;
+      if (pillars) {
+        drawSectionHeader(labels.fourPillars);
+
+        const pillarKeys = ['year', 'month', 'day', 'hour'];
+        const pillarW = 110;
+        const pillarH = 70;
+        const gap = 10;
+        const totalW = pillarW * 4 + gap * 3;
+        const startX = MARGIN_L + (CONTENT_W - totalW) / 2;
+        const py = doc.y;
+
+        pillarKeys.forEach((key, i) => {
+          const px = startX + i * (pillarW + gap);
+          const pillarData = pillars[key];
+
+          // Dark card background
+          doc.roundedRect(px, py, pillarW, pillarH, 6).fill(COLORS.pillarBg);
+
+          // Pillar label (gold)
+          doc.font(fontRegular).fontSize(8).fillColor(COLORS.gold);
+          doc.text(labels.pillars[i], px, py + 6, { width: pillarW, align: 'center' });
+
+          // Pillar characters must always render as hanja, so use the CJK-capable font.
+          const pillarChars = pillarData?.hanja || pillarData?.korean || '-';
+          doc.font(pillarCardFont).fontSize(20).fillColor('#FFFFFF');
+          doc.text(pillarChars, px, py + 22, { width: pillarW, align: 'center' });
+
+          // Element label below — translate Korean element names for non-Korean PDFs
+          let element = pillarData?.element || pillarData?.오행 || '';
+          if (language && language !== 'ko' && element) {
+            const elementMap = { '목': '木', '화': '火', '토': '土', '금': '金', '수': '水' };
+            element = element.replace(/목|화|토|금|수/g, m => elementMap[m] || m);
+          }
+          if (element) {
+            doc.font(fontRegular).fontSize(8).fillColor(COLORS.gold);
+            doc.text(element, px, py + 50, { width: pillarW, align: 'center' });
+          }
+        });
+
+        doc.y = py + pillarH + 20;
+      }
+
+
+      // ═════════════════════════════════════════════════════════════════
+      // FIVE ELEMENTS BAR CHART
+      // ═════════════════════════════════════════════════════════════════
       const elements = manseryeok?.elements;
       if (elements) {
-        doc.font(fontBold).fontSize(14).fillColor('#2D3A35').text('Five Elements Analysis', 50, y);
-        y += 25;
+        drawSectionHeader(labels.elementAnalysis);
 
-        const elementNames = ['Wood (木)', 'Fire (火)', 'Earth (土)', 'Metal (金)', 'Water (水)'];
         const elementKeys = ['wood', 'fire', 'earth', 'metal', 'water'];
-        const elementColors = ['#5A7A66', '#A85544', '#B8922D', '#6B7578', '#556B7E'];
+        const elementColorList = [
+          ELEMENT_COLORS.wood,
+          ELEMENT_COLORS.fire,
+          ELEMENT_COLORS.earth,
+          ELEMENT_COLORS.metal,
+          ELEMENT_COLORS.water,
+        ];
         const total = elementKeys.reduce((sum, k) => sum + (elements[k] || 0), 0) || 1;
+
+        const barStartX = MARGIN_L + 85;
+        const barMaxW = 250;
+        let ey = doc.y;
 
         elementKeys.forEach((key, i) => {
           const value = elements[key] || 0;
           const pct = Math.round((value / total) * 100);
-          const barWidth = Math.max(10, (value / total) * 300);
+          const barW = Math.max(8, (value / total) * barMaxW);
 
-          doc.font(fontName).fontSize(10).fillColor('#6B5E52')
-            .text(elementNames[i], 50, y, { width: 70 });
-          doc.roundedRect(130, y + 2, barWidth, 14, 4).fill(elementColors[i]);
-          doc.font(fontName).fontSize(9).fillColor('#8B8580')
-            .text(`${value} (${pct}%)`, 440, y, { width: 60 });
-          y += 22;
+          // Element name
+          doc.font(fontRegular).fontSize(9).fillColor(COLORS.bodyText);
+          doc.text(labels.elements[i], MARGIN_L, ey + 2, { width: 80 });
+
+          // Bar
+          doc.roundedRect(barStartX, ey + 1, barW, 14, 3).fill(elementColorList[i]);
+
+          // Count + percentage
+          doc.font(fontRegular).fontSize(8).fillColor(COLORS.lightText);
+          doc.text(`${value}  (${pct}%)`, barStartX + barMaxW + 10, ey + 3, { width: 70 });
+
+          ey += 24;
         });
 
-        y += 15;
+        doc.y = ey + 12;
       }
 
-      // ===== AI INTERPRETATION SECTIONS =====
-      const sections = aiInterpretation?.sections || {};
-      const sectionOrder = [
-        { key: 'coreProfile', title: 'Core Profile' },
-        { key: 'parentChildAnalysis', title: 'Parent-Child Analysis' },
-        { key: 'developmentGuide', title: 'Development Guide' },
-        { key: 'careerAptitude', title: 'Career Aptitude' },
-        { key: 'fortuneCycles', title: 'Fortune Cycles' },
-        { key: 'monthlyFortune', title: 'Monthly Fortune' },
-        { key: 'elementBalance', title: 'Element Balance' },
-        { key: 'weeklyActions', title: 'Weekly Actions' },
-      ];
 
-      for (const section of sectionOrder) {
-        const content = sections[section.key];
-        if (!content) continue;
+      // ═════════════════════════════════════════════════════════════════
+      // AI REPORT SECTIONS
+      // ═════════════════════════════════════════════════════════════════
 
-        // Clean content: strip markdown + 한자
-        let cleanContent = content
-          .replace(/^#{1,4}\s+.*$/gm, '')
-          .replace(/\*\*(.*?)\*\*/g, '$1')
-          .replace(/\*(.*?)\*/g, '$1')
-          .replace(/`(.*?)`/g, '$1')
-          .replace(/^---+$/gm, '')
-          .trim();
+      // Prefer fullText (preserves original section titles from AI)
+      const fullText = aiInterpretation?.fullText || '';
+      let sections = [];
 
-        // 한자 유지 — Noto Sans CJK KR이 한자/일본어/중국어 모두 지원
+      if (fullText) {
+        // Split on ## N. headers
+        const sectionRegex = /^##\s+\d+\.\s+/m;
+        const parts = fullText.split(sectionRegex);
+        const headerMatches = [...fullText.matchAll(/^(##\s+\d+\.\s+.+)$/gm)];
 
-        // Always start section title with enough room (title + at least a few lines)
-        ensureSpace(80);
+        // First part before any ## header (skip if empty)
+        if (parts[0] && parts[0].trim()) {
+          sections.push({ title: null, content: parts[0].trim() });
+        }
 
-        // Section divider line
-        doc.moveTo(50, y).lineTo(pageW - 50, y).strokeColor('#EBE5DF').lineWidth(0.5).stroke();
-        y += 12;
-
-        // Section title
-        doc.font(fontBold).fontSize(13).fillColor('#2D3A35').text(section.title, 50, y);
-        y += 24;
-
-        // Render entire section content, let pdfkit handle page breaks automatically
-        doc.font(fontName).fontSize(10).fillColor('#6B5E52');
-        doc.text(cleanContent, 50, y, { width: contentW, lineGap: 4 });
-
-        // After text(), doc.y reflects the actual cursor position (even across page breaks)
-        y = doc.y + 16;
+        // Matched sections
+        headerMatches.forEach((match, idx) => {
+          const title = match[1].replace(/^##\s+\d+\.\s+/, '').trim();
+          const content = (parts[idx + 1] || '').trim();
+          if (content) {
+            sections.push({ title, content });
+          }
+        });
       }
 
-      // ===== FINAL FOOTER (last page only) =====
-      doc.moveDown(2);
-      doc.font(fontName).fontSize(7).fillColor('#B0A9A2')
-        .text(
-          `☯ SoMyung | somyung.cc | ${new Date().toISOString().split('T')[0]}`,
-          50, doc.y,
-          { width: contentW, align: 'center' }
-        );
+      // Fallback to sections object if fullText parsing yields nothing
+      if (sections.length === 0 && aiInterpretation?.sections) {
+        const sectionMap = aiInterpretation.sections;
+        const sectionOrder = [
+          'executiveSummary', 'whatChildIsNot', 'behavioralSignature',
+          'situationPlaybook', 'hiddenStrengths', 'timelineFocus',
+          'sevenDayExperiment', 'coParentSummary', 'lifestyleHarmony',
+        ];
+        for (const key of sectionOrder) {
+          if (sectionMap[key]) {
+            sections.push({ title: key, content: sectionMap[key] });
+          }
+        }
+      }
+
+      // Render each section
+      for (const section of sections) {
+        if (section.title) {
+          drawSectionHeader(section.title);
+        } else {
+          ensureSpace(30);
+        }
+
+        const blocks = parseMarkdown(section.content);
+
+        for (const block of blocks) {
+          switch (block.type) {
+            case 'header':
+              // Sub-header within a section
+              ensureSpace(35);
+              doc.font(fontBold).fontSize(11).fillColor(COLORS.darkText);
+              doc.text(block.text, MARGIN_L, doc.y, { width: CONTENT_W });
+              doc.moveDown(0.3);
+              break;
+
+            case 'text':
+              ensureSpace(20);
+              renderRichText(block.text, MARGIN_L, doc.y, {
+                fontSize: 10,
+                color: COLORS.bodyText,
+                lineGap: 5,
+              });
+              doc.moveDown(0.15);
+              break;
+
+            case 'bullets':
+              for (const item of block.items) {
+                ensureSpace(18);
+                // Prepend bullet to text and render as single block with indent
+                renderRichText('\u2022  ' + item, MARGIN_L, doc.y, {
+                  fontSize: 10,
+                  color: COLORS.bodyText,
+                  lineGap: 4,
+                  indent: 8,
+                });
+              }
+              doc.moveDown(0.2);
+              break;
+
+            case 'numbered':
+              block.items.forEach((item) => {
+                ensureSpace(18);
+                const numLabel = typeof item === 'object' ? item.num : '?';
+                const itemText = typeof item === 'object' ? item.text : item;
+                renderRichText(`${numLabel}.  ` + itemText, MARGIN_L, doc.y, {
+                  fontSize: 10,
+                  color: COLORS.bodyText,
+                  lineGap: 4,
+                  indent: 8,
+                });
+              });
+              doc.moveDown(0.2);
+              break;
+
+            case 'blank':
+              doc.moveDown(0.4);
+              break;
+          }
+        }
+
+        // Extra space after each major section
+        doc.moveDown(0.6);
+      }
+
+
+      // ═════════════════════════════════════════════════════════════════
+      // FOOTERS ON EVERY PAGE
+      // ═════════════════════════════════════════════════════════════════
+      // Snapshot page count BEFORE adding footers
+      const contentPageCount = doc.bufferedPageRange().count;
+
+      for (let i = 0; i < contentPageCount; i++) {
+        doc.switchToPage(i);
+
+        // Divider line
+        doc.save();
+        doc.moveTo(MARGIN_L, FOOTER_Y - 5)
+          .lineTo(PAGE_W - MARGIN_R, FOOTER_Y - 5)
+          .strokeColor(COLORS.divider)
+          .lineWidth(0.5)
+          .stroke();
+        doc.restore();
+
+        // Use low-level _fragment to avoid page creation side effects
+        doc.font(fontRegular).fontSize(7).fillColor(COLORS.subtleText);
+        const footerText = `☯ ${labels.footer}`;
+        const textWidth = doc.widthOfString(footerText);
+        const footerX = MARGIN_L + (CONTENT_W - textWidth) / 2;
+        doc.text(footerText, footerX, FOOTER_Y + 2, { lineBreak: false });
+      }
 
       doc.end();
     } catch (err) {

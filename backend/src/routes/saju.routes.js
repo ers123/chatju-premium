@@ -462,4 +462,49 @@ router.get('/reading-check', readLimiter, async (req, res) => {
   }
 });
 
+/**
+ * GET /saju/reading/:id/pdf
+ * Download reading as PDF
+ */
+router.get('/reading/:id/pdf', readLimiter, async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return res.status(400).json({ error: 'Invalid reading ID' });
+    }
+
+    const { supabaseAdmin } = require('../config/supabase');
+    const { data: reading, error } = await supabaseAdmin
+      .from('readings')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !reading) {
+      return res.status(404).json({ error: 'Reading not found' });
+    }
+
+    const pdfService = require('../services/pdf.service');
+    const pdfBuffer = await pdfService.generateReportPDF({
+      childName: reading.subject_name,
+      birthDate: reading.birth_date,
+      gender: reading.gender,
+      manseryeok: reading.saju_data,
+      aiInterpretation: reading.ai_interpretation,
+      language: reading.language || 'ko',
+    });
+
+    const filename = `SoMyung_${reading.subject_name || 'Report'}_${reading.birth_date}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('[Saju Route] PDF download error:', error);
+    res.status(500).json({ error: 'Failed to generate PDF' });
+  }
+});
+
 module.exports = router;

@@ -129,7 +129,7 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
 
   // Extract first section as summary, strip markdown only (한자는 유지)
   const sections = aiInterpretation?.sections || {};
-  const summaryText = sections.coreProfile || sections.preamble || aiInterpretation?.fullText?.substring(0, 500) || '';
+  const summaryText = sections.executiveSummary || sections.preamble || aiInterpretation?.fullText?.substring(0, 500) || '';
   const cleanSummary = summaryText.replace(/[#*_`]/g, '').substring(0, 600);
 
   // Table-based email layout for maximum email client compatibility

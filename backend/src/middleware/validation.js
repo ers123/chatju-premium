@@ -57,7 +57,7 @@ function isValidGender(gender) {
  * Validate language
  */
 function isValidLanguage(language) {
-  return ['ko', 'en', 'zh'].includes(language);
+  return ['ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th'].includes(language);
 }
 
 /**
@@ -120,7 +120,7 @@ function validateAuthRequest(req, res, next) {
 
   // Validate language preference (optional)
   if (language_preference && !isValidLanguage(language_preference)) {
-    return sendValidationError(res, 'language_preference', 'Invalid language (must be ko, en, or zh)');
+    return sendValidationError(res, 'language_preference', 'Invalid language (must be one of: ko, en, ja, zh, vi, id, es, pt, fr, th)');
   }
 
   next();
@@ -208,7 +208,7 @@ function validateBirthInfo(req, res, next) {
 
   // Validate language (optional)
   if (language && !isValidLanguage(language)) {
-    return sendValidationError(res, 'language', 'Invalid language (must be ko, en, or zh)');
+    return sendValidationError(res, 'language', 'Invalid language (must be one of: ko, en, ja, zh, vi, id, es, pt, fr, th)');
   }
 
   // Validate timezone (optional, just check if string)

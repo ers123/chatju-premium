@@ -173,8 +173,22 @@ class AIService {
       temperature,
     });
 
+    const message = completion.choices[0].message;
+    const content = message.content || '';
+
+    if (!content && message.refusal) {
+      logger.warn('OpenAI refusal:', message.refusal);
+    }
+    if (!content) {
+      logger.warn('OpenAI returned empty content', {
+        finishReason: completion.choices[0].finish_reason,
+        refusal: message.refusal,
+        usage: completion.usage,
+      });
+    }
+
     return {
-      content: completion.choices[0].message.content,
+      content,
       usage: completion.usage,
       model: 'gpt-5.4-mini',
     };

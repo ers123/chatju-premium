@@ -2,6 +2,32 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Mandatory: Plan-Execute-Evaluate Loop
+
+**Every code change MUST follow this loop. No exceptions.**
+
+```
+Plan → Execute → Evaluate (local) → Deploy → Evaluate (live)
+         ↑_________ FAIL? fix and re-evaluate _________|
+```
+
+### Rules:
+1. **Plan**: State what you're changing and how you'll verify it works.
+2. **Execute**: Write the code.
+3. **Evaluate (local)**: Before deploying, run real tests:
+   - Backend changes: `node -c <file>` + `curl` the endpoint locally or test with a node script
+   - Frontend changes: `npx tsc --noEmit` + `npm run build`
+   - **Never deploy code that hasn't been tested locally.**
+4. **Deploy**: Only after local evaluation passes.
+5. **Evaluate (live)**: After deploy, test the user-facing flow on somyung.cc:
+   - Core flow: Input → Preview → Payment/Promo → Premium Report → PDF Download
+   - Report any failures before declaring "done".
+
+### What counts as Evaluate:
+- Syntax check alone is NOT evaluation.
+- You must test the **actual behavior** — call the API, check the response, verify the data.
+- For frontend: build must succeed AND the component must render correctly.
+
 ## Project Overview
 
 ChatJu Premium is an AI-powered Korean fortune-telling service (사주팔자/Saju) with a freemium model. The platform calculates Four Pillars of Destiny based on birth data and generates AI interpretations.

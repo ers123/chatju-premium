@@ -44,6 +44,14 @@ export default function ShareableResultCard({
 
   const generateImage = useCallback(async (): Promise<Blob | null> => {
     if (!cardRef.current) return null
+    // Temporarily make the card visible for html2canvas capture
+    const wrapper = cardRef.current.parentElement
+    if (wrapper) {
+      wrapper.style.height = 'auto'
+      wrapper.style.overflow = 'visible'
+      wrapper.style.position = 'absolute'
+      wrapper.style.left = '-9999px'
+    }
     const html2canvas = (await import('html2canvas')).default
     const canvas = await html2canvas(cardRef.current, {
       scale: 2,
@@ -53,6 +61,13 @@ export default function ShareableResultCard({
       width: 540,
       height: 540,
     })
+    // Restore hidden state
+    if (wrapper) {
+      wrapper.style.height = '0'
+      wrapper.style.overflow = 'hidden'
+      wrapper.style.position = ''
+      wrapper.style.left = ''
+    }
     return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
   }, [])
 
@@ -90,8 +105,8 @@ export default function ShareableResultCard({
 
   return (
     <div>
-      {/* Off-screen card for rendering — positioned absolutely to avoid layout shift */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+      {/* Off-screen card for rendering — hidden via overflow to keep in document flow for html2canvas */}
+      <div style={{ overflow: 'hidden', height: 0 }}>
         <div
           ref={cardRef}
           style={{
