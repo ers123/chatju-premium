@@ -184,6 +184,7 @@ export const translations = {
       disclaimer: '소명은 사주 명리학에 기반한 기질 분석 서비스입니다. 참고용으로 활용하시고, 중요한 결정은 전문가와 상담하시기 바랍니다.',
     },
     sajuInput: {
+      pageTitle: 'SoMyung | 아이 기질 분석',
       stepOf: '단계',
       steps: [
         { icon: '👶', title: '아이 정보 입력', subtitle: '분석할 아이의 이름과 성별을 알려주세요' },
@@ -274,6 +275,7 @@ export const translations = {
       elements: { wood: '목(파랑/木)', fire: '화(빨강/火)', earth: '토(노랑/土)', metal: '금(흰색/金)', water: '수(검정/水)' },
     },
     sajuResults: {
+      pageTitle: 'SoMyung | 분석 결과',
       loading: '분석 중입니다',
       loadingDesc: '잠시만 기다려주세요',
       errorTitle: '오류가 발생했습니다',
@@ -386,6 +388,7 @@ export const translations = {
       ],
     },
     payment: {
+      pageTitle: 'SoMyung | 프리미엄 리포트',
       loading: '결제 정보를 준비하고 있습니다...',
       emailLabel: '리포트 받을 이메일',
       emailDesc: '프리미엄 리포트가 이 이메일로 전송됩니다.',
@@ -716,6 +719,7 @@ export const translations = {
       disclaimer: 'Somyung is a temperament analysis service based on Saju philosophy. Please use as reference only. Consult a professional for important decisions.',
     },
     sajuInput: {
+      pageTitle: 'SoMyung | Child Temperament Analysis',
       stepOf: 'Step',
       steps: [
         { icon: '👶', title: 'Child Information', subtitle: 'Enter your child\'s name and gender' },
@@ -804,6 +808,7 @@ export const translations = {
       elements: { wood: 'Wood (木)', fire: 'Fire (火)', earth: 'Earth (土)', metal: 'Metal (金)', water: 'Water (水)' },
     },
     sajuResults: {
+      pageTitle: 'SoMyung | Analysis Results',
       loading: 'Analyzing',
       loadingDesc: 'Please wait a moment',
       errorTitle: 'An error occurred',
@@ -916,6 +921,7 @@ export const translations = {
       ],
     },
     payment: {
+      pageTitle: 'SoMyung | Premium Report',
       loading: 'Preparing payment information...',
       emailLabel: 'Email for your report',
       emailDesc: 'Your premium report will be sent to this email.',
@@ -1246,6 +1252,7 @@ export const translations = {
       disclaimer: '昭命は四柱推命に基づいた気質分析サービスです。参考資料としてご利用ください。重要な決定は専門家にご相談ください。',
     },
     sajuInput: {
+      pageTitle: 'SoMyung | お子様の気質分析',
       stepOf: 'ステップ',
       steps: [
         { icon: '👶', title: 'お子様の情報入力', subtitle: '分析するお子様の名前と性別を教えてください' },
@@ -1325,6 +1332,7 @@ export const translations = {
       elements: { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' },
     },
     sajuResults: {
+      pageTitle: 'SoMyung | 分析結果',
       loading: '分析中です',
       loadingDesc: '少々お待ちください',
       errorTitle: 'エラーが発生しました',
@@ -1437,6 +1445,7 @@ export const translations = {
       ],
     },
     payment: {
+      pageTitle: 'SoMyung | プレミアムレポート',
       loading: 'お支払い情報を準備しています...',
       emailLabel: 'レポート受信メール',
       emailDesc: 'プレミアムレポートはこのメールに送信されます。',
@@ -1767,6 +1776,7 @@ export const translations = {
       disclaimer: '昭命是基于四柱命理的气质分析服务。请作为参考使用，重要决定请咨询专业人士。',
     },
     sajuInput: {
+      pageTitle: 'SoMyung | 孩子气质分析',
       stepOf: '步骤',
       steps: [
         { icon: '👶', title: '孩子信息输入', subtitle: '请输入要分析的孩子的姓名和性别' },
@@ -1848,6 +1858,7 @@ export const translations = {
       elements: { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' },
     },
     sajuResults: {
+      pageTitle: 'SoMyung | 分析结果',
       loading: '正在分析',
       loadingDesc: '请稍候',
       errorTitle: '发生了错误',
@@ -1960,6 +1971,7 @@ export const translations = {
       ],
     },
     payment: {
+      pageTitle: 'SoMyung | 高级报告',
       loading: '正在准备支付信息...',
       emailLabel: '接收报告的邮箱',
       emailDesc: '高级报告将发送到此邮箱。',
@@ -2291,6 +2303,7 @@ export const translations = {
     disclaimer: 'Somyung là dịch vụ phân tích tính cách dựa trên triết học Tứ Trụ. Vui lòng chỉ sử dụng làm tài liệu tham khảo. Hãy tham vấn chuyên gia cho các quyết định quan trọng.',
   },
   sajuInput: {
+    pageTitle: 'SoMyung | Phân tích khí chất của trẻ',
     stepOf: 'Bước',
     steps: [
       { icon: '👶', title: 'Thông tin trẻ', subtitle: 'Nhập tên và giới tính của trẻ' },
@@ -2381,6 +2394,7 @@ export const translations = {
     elements: { wood: 'Mộc (木)', fire: 'Hỏa (火)', earth: 'Thổ (土)', metal: 'Kim (金)', water: 'Thủy (水)' },
   },
   sajuResults: {
+    pageTitle: 'SoMyung | Kết quả phân tích',
     loading: 'Đang phân tích',
     loadingDesc: 'Vui lòng đợi một chút',
     errorTitle: 'Đã xảy ra lỗi',
@@ -2493,6 +2507,7 @@ export const translations = {
     ],
   },
   payment: {
+    pageTitle: 'SoMyung | Báo cáo Premium',
     loading: 'Đang chuẩn bị thông tin thanh toán...',
     emailLabel: 'Email nhận báo cáo',
     emailDesc: 'Báo cáo Premium sẽ được gửi đến email này.',
@@ -2825,6 +2840,7 @@ export const translations = {
     disclaimer: 'Somyung adalah layanan analisis temperamen berdasarkan filosofi Saju. Harap gunakan sebagai referensi saja. Konsultasikan dengan profesional untuk keputusan penting.',
   },
   sajuInput: {
+    pageTitle: 'SoMyung | Analisis Temperamen Anak',
     stepOf: 'Langkah',
     steps: [
       { icon: '👶', title: 'Informasi Anak', subtitle: 'Masukkan nama dan jenis kelamin anak Anda' },
@@ -2915,6 +2931,7 @@ export const translations = {
     elements: { wood: 'Kayu (木)', fire: 'Api (火)', earth: 'Tanah (土)', metal: 'Logam (金)', water: 'Air (水)' },
   },
   sajuResults: {
+    pageTitle: 'SoMyung | Hasil Analisis',
     loading: 'Menganalisis',
     loadingDesc: 'Mohon tunggu sebentar',
     errorTitle: 'Terjadi kesalahan',
@@ -3027,6 +3044,7 @@ export const translations = {
     ],
   },
   payment: {
+    pageTitle: 'SoMyung | Laporan Premium',
     loading: 'Menyiapkan informasi pembayaran...',
     emailLabel: 'Email untuk laporan',
     emailDesc: 'Laporan Premium akan dikirim ke email ini.',
@@ -3359,6 +3377,7 @@ export const translations = {
     disclaimer: 'Somyung es un servicio de análisis de temperamento basado en la filosofía Saju. Úsalo solo como referencia. Consulta a un profesional para decisiones importantes.',
   },
   sajuInput: {
+    pageTitle: 'SoMyung | Análisis del Temperamento de tu Hijo',
     stepOf: 'Paso',
     steps: [
       { icon: '👶', title: 'Información del Niño/a', subtitle: 'Ingresa el nombre y género de tu hijo/a' },
@@ -3449,6 +3468,7 @@ export const translations = {
     elements: { wood: 'Madera (木)', fire: 'Fuego (火)', earth: 'Tierra (土)', metal: 'Metal (金)', water: 'Agua (水)' },
   },
   sajuResults: {
+    pageTitle: 'SoMyung | Resultados del Análisis',
     loading: 'Analizando',
     loadingDesc: 'Por favor espera un momento',
     errorTitle: 'Ocurrió un error',
@@ -3561,6 +3581,7 @@ export const translations = {
     ],
   },
   payment: {
+    pageTitle: 'SoMyung | Informe Premium',
     loading: 'Preparando información de pago...',
     emailLabel: 'Email para el informe',
     emailDesc: 'Tu informe Premium se enviará a este email.',
@@ -3893,6 +3914,7 @@ export const translations = {
     disclaimer: 'Somyung é um serviço de análise de temperamento baseado na filosofia Saju. Use apenas como referência. Consulte um profissional para decisões importantes.',
   },
   sajuInput: {
+    pageTitle: 'SoMyung | Análise do Temperamento do Seu Filho',
     stepOf: 'Etapa',
     steps: [
       { icon: '👶', title: 'Informações da Criança', subtitle: 'Insira o nome e o sexo da criança' },
@@ -3983,6 +4005,7 @@ export const translations = {
     elements: { wood: 'Madeira (木)', fire: 'Fogo (火)', earth: 'Terra (土)', metal: 'Metal (金)', water: 'Água (水)' },
   },
   sajuResults: {
+    pageTitle: 'SoMyung | Resultados da Análise',
     loading: 'Analisando',
     loadingDesc: 'Aguarde um momento',
     errorTitle: 'Ocorreu um erro',
@@ -4095,6 +4118,7 @@ export const translations = {
     ],
   },
   payment: {
+    pageTitle: 'SoMyung | Relatório Premium',
     loading: 'Preparando informações de pagamento...',
     emailLabel: 'Email para o relatório',
     emailDesc: 'Seu relatório Premium será enviado para este email.',
@@ -4427,6 +4451,7 @@ export const translations = {
     disclaimer: 'Somyung est un service d\'analyse du tempérament basé sur la philosophie du Saju. À utiliser à titre indicatif uniquement. Consultez un professionnel pour les décisions importantes.',
   },
   sajuInput: {
+    pageTitle: 'SoMyung | Analyse du tempérament de votre enfant',
     stepOf: 'Étape',
     steps: [
       { icon: '👶', title: 'Informations de l\'enfant', subtitle: 'Entrez le nom et le sexe de votre enfant' },
@@ -4517,6 +4542,7 @@ export const translations = {
     elements: { wood: 'Bois (木)', fire: 'Feu (火)', earth: 'Terre (土)', metal: 'Métal (金)', water: 'Eau (水)' },
   },
   sajuResults: {
+    pageTitle: 'SoMyung | Résultats de l\'analyse',
     loading: 'Analyse en cours',
     loadingDesc: 'Veuillez patienter un instant',
     errorTitle: 'Une erreur est survenue',
@@ -4629,6 +4655,7 @@ export const translations = {
     ],
   },
   payment: {
+    pageTitle: 'SoMyung | Rapport Premium',
     loading: 'Préparation des informations de paiement...',
     emailLabel: 'Email pour le rapport',
     emailDesc: 'Votre rapport Premium sera envoyé à cet email.',
@@ -4961,6 +4988,7 @@ export const translations = {
     disclaimer: 'Somyung เป็นบริการวิเคราะห์นิสัยตามปรัชญาซาจู กรุณาใช้เป็นข้อมูลอ้างอิงเท่านั้น ปรึกษาผู้เชี่ยวชาญสำหรับการตัดสินใจสำคัญ',
   },
   sajuInput: {
+    pageTitle: 'SoMyung | วิเคราะห์อุปนิสัยของลูก',
     stepOf: 'ขั้นตอน',
     steps: [
       { icon: '👶', title: 'ข้อมูลเด็ก', subtitle: 'กรอกชื่อและเพศของลูก' },
@@ -5051,6 +5079,7 @@ export const translations = {
     elements: { wood: 'ไม้ (木)', fire: 'ไฟ (火)', earth: 'ดิน (土)', metal: 'ทอง (金)', water: 'น้ำ (水)' },
   },
   sajuResults: {
+    pageTitle: 'SoMyung | ผลการวิเคราะห์',
     loading: 'กำลังวิเคราะห์',
     loadingDesc: 'กรุณารอสักครู่',
     errorTitle: 'เกิดข้อผิดพลาด',
@@ -5163,6 +5192,7 @@ export const translations = {
     ],
   },
   payment: {
+    pageTitle: 'SoMyung | รายงานพรีเมียม',
     loading: 'กำลังเตรียมข้อมูลการชำระเงิน...',
     emailLabel: 'อีเมลสำหรับรายงาน',
     emailDesc: 'รายงานพรีเมียมจะถูกส่งไปยังอีเมลนี้',
