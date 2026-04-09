@@ -151,7 +151,7 @@ export default function LandingPage() {
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <LanguageSwitcher currentLang={lang} onSelect={setLang} mode="navigate" />
-            <Link href="/saju/input" style={{
+            <Link href="/saju/input" className="nav-cta" style={{
                 height: '44px',
                 padding: '0 28px',
                 fontSize: '15px',
@@ -166,6 +166,7 @@ export default function LandingPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                whiteSpace: 'nowrap' as const,
               }}>
                 {t.nav.start}
             </Link>
