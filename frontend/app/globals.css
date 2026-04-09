@@ -7,6 +7,11 @@
    설화수, 오설록 inspired Korean aesthetic
    ============================================ */
 
+/* Force visited link color — mobile Safari ignores inline color on :visited */
+a:visited {
+  color: inherit;
+}
+
 :root {
   /* Modern Oriental Luxury Palette - Warm Premium */
   --warm-sand: #FEFDFB;

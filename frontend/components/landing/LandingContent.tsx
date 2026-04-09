@@ -87,6 +87,9 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const pageRef = useScrollReveal()
   const { lang, setLang, t } = useLanguage()
+  // Nanum Myeongjo only covers Korean glyphs — accented Latin chars (à, ù, é)
+  // fall back to system serif with mismatched metrics. Use Georgia for non-KO.
+  const serifFont = lang === 'ko' ? '"Nanum Myeongjo", serif' : 'Georgia, "Times New Roman", serif'
   const sajuCounter = useAnimatedCounter(518400, 2400)
   const multiplierCounter = useAnimatedCounter(32400, 2000)
 
@@ -208,7 +211,7 @@ export default function LandingPage() {
             lineHeight: 1.2,
             letterSpacing: '-0.04em',
             marginBottom: '28px',
-            fontFamily: '"Nanum Myeongjo", serif'
+            fontFamily: serifFont
           }}>
             {t.hero.title1}<br />
             <span style={{ color: '#B8922D' }}>{t.hero.titleAccent}</span><br />
@@ -232,7 +235,7 @@ export default function LandingPage() {
             lineHeight: 1.8,
             fontStyle: 'italic',
             marginBottom: 'clamp(32px, 6vw, 48px)',
-            fontFamily: '"Nanum Myeongjo", serif',
+            fontFamily: serifFont,
             whiteSpace: 'pre-line',
           }}>
             &ldquo;{t.coreInsight}&rdquo;
@@ -297,7 +300,7 @@ export default function LandingPage() {
               fontWeight: 700,
               color: '#2C2420',
               letterSpacing: '-0.03em',
-              fontFamily: '"Nanum Myeongjo", serif'
+              fontFamily: serifFont
             }}>
               {t.features.heading}
             </h2>
@@ -340,7 +343,7 @@ export default function LandingPage() {
                     color: '#2C2420',
                     marginBottom: '10px',
                     letterSpacing: '-0.01em',
-                    fontFamily: '"Nanum Myeongjo", serif'
+                    fontFamily: serifFont
                   }}>
                     {item.title}
                   </h3>
@@ -414,7 +417,7 @@ export default function LandingPage() {
               fontWeight: 700,
               color: '#F5F0EB',
               letterSpacing: '-0.03em',
-              fontFamily: '"Nanum Myeongjo", serif',
+              fontFamily: serifFont,
               lineHeight: 1.3,
             }}>
               {t.precision.heading}
@@ -441,7 +444,7 @@ export default function LandingPage() {
                 fontSize: 'clamp(56px, 12vw, 80px)',
                 fontWeight: 800,
                 color: 'rgba(245, 240, 235, 0.25)',
-                fontFamily: '"Nanum Myeongjo", serif',
+                fontFamily: serifFont,
                 lineHeight: 1,
                 marginBottom: '12px',
                 letterSpacing: '-0.04em',
@@ -478,7 +481,7 @@ export default function LandingPage() {
                 fontSize: 'clamp(44px, 10vw, 72px)',
                 fontWeight: 800,
                 color: '#B8922D',
-                fontFamily: '"Nanum Myeongjo", serif',
+                fontFamily: serifFont,
                 lineHeight: 1,
                 marginBottom: '12px',
                 letterSpacing: '-0.04em',
@@ -518,7 +521,7 @@ export default function LandingPage() {
                 fontSize: 'clamp(48px, 10vw, 72px)',
                 fontWeight: 800,
                 color: '#B8922D',
-                fontFamily: '"Nanum Myeongjo", serif',
+                fontFamily: serifFont,
                 letterSpacing: '-0.04em',
                 lineHeight: 1,
               }}>
@@ -543,7 +546,7 @@ export default function LandingPage() {
               fontSize: 'clamp(18px, 4vw, 24px)',
               fontWeight: 600,
               color: '#F5F0EB',
-              fontFamily: '"Nanum Myeongjo", serif',
+              fontFamily: serifFont,
               letterSpacing: '-0.02em',
               lineHeight: 1.5,
             }}>
@@ -566,7 +569,7 @@ export default function LandingPage() {
               fontWeight: 700,
               color: '#2C2420',
               letterSpacing: '-0.03em',
-              fontFamily: '"Nanum Myeongjo", serif'
+              fontFamily: serifFont
             }}>
               {t.problems.heading}
             </h2>
@@ -615,7 +618,7 @@ export default function LandingPage() {
             <p style={{
               fontSize: '17px',
               color: '#4A3F36',
-              fontFamily: '"Nanum Myeongjo", serif',
+              fontFamily: serifFont,
               lineHeight: 1.7,
               marginBottom: '24px',
             }}>
@@ -679,7 +682,7 @@ export default function LandingPage() {
               color: '#2C2420',
               letterSpacing: '-0.03em',
               marginBottom: '24px',
-              fontFamily: '"Nanum Myeongjo", serif',
+              fontFamily: serifFont,
               lineHeight: 1.3
             }}>
               {t.founder.heading}
@@ -759,7 +762,7 @@ export default function LandingPage() {
               fontWeight: 700,
               color: '#2C2420',
               letterSpacing: '-0.03em',
-              fontFamily: '"Nanum Myeongjo", serif'
+              fontFamily: serifFont
             }}>
               {t.howItWorks.heading}
             </h2>
@@ -879,7 +882,7 @@ export default function LandingPage() {
               fontWeight: 700,
               color: '#2C2420',
               letterSpacing: '-0.03em',
-              fontFamily: '"Nanum Myeongjo", serif'
+              fontFamily: serifFont
             }}>
               {t.testimonials.heading}
             </h2>
@@ -910,7 +913,7 @@ export default function LandingPage() {
                   fontSize: '20px',
                   color: '#2C2420',
                   lineHeight: 1.8,
-                  fontFamily: '"Nanum Myeongjo", serif',
+                  fontFamily: serifFont,
                   marginBottom: '16px',
                   whiteSpace: 'pre-line',
                 }}>
@@ -989,7 +992,7 @@ export default function LandingPage() {
             color: '#2C2420',
             marginBottom: '14px',
             letterSpacing: '-0.02em',
-            fontFamily: '"Nanum Myeongjo", serif'
+            fontFamily: serifFont
           }}>
             {t.share.heading}
           </h2>
@@ -1075,7 +1078,7 @@ export default function LandingPage() {
               color: '#FFFFFF',
               letterSpacing: '-0.03em',
               marginBottom: '12px',
-              fontFamily: '"Nanum Myeongjo", serif'
+              fontFamily: serifFont
             }}>
               {t.pricing.heading}
             </h2>
@@ -1249,7 +1252,7 @@ export default function LandingPage() {
               fontWeight: 700,
               color: '#2C2420',
               letterSpacing: '-0.03em',
-              fontFamily: '"Nanum Myeongjo", serif'
+              fontFamily: serifFont
             }}>
               {t.faq.heading}
             </h2>
@@ -1332,7 +1335,7 @@ export default function LandingPage() {
             letterSpacing: '-0.03em',
             marginBottom: '20px',
             lineHeight: 1.3,
-            fontFamily: '"Nanum Myeongjo", serif'
+            fontFamily: serifFont
           }}>
             {t.cta.title1}<br />{t.cta.title2}
           </h2>
