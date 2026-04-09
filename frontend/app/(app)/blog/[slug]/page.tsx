@@ -29,7 +29,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
           <Link href="/blog" style={{ textDecoration: 'none', fontSize: '14px', color: '#9B8B7A' }}>
             ← Blog
           </Link>
-          <Link href="/" style={{ textDecoration: 'none', fontSize: '20px', fontWeight: 700, color: '#2C2420' }}>
+          <Link href="/" className="logo-link" style={{ textDecoration: 'none', fontSize: '20px', fontWeight: 700, color: '#2C2420' }}>
             ☯ SoMyung
           </Link>
           <Link href="/saju/input" style={{

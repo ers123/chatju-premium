@@ -7,9 +7,25 @@
    설화수, 오설록 inspired Korean aesthetic
    ============================================ */
 
-/* Force visited link color — mobile Safari ignores inline color on :visited */
+/* Force visited link color — mobile Safari ignores inline color and
+   computed values (inherit/currentColor) on :visited for security.
+   Must use explicit color values for each link context. */
 a:visited {
   color: inherit;
+}
+
+/* Logo links — prevent purple visited state on mobile Safari */
+.logo-link,
+.logo-link:visited,
+.logo-link:active {
+  color: #2C2420 !important;
+  -webkit-text-fill-color: #2C2420 !important;
+}
+.logo-link-dark,
+.logo-link-dark:visited,
+.logo-link-dark:active {
+  color: #1A3D2E !important;
+  -webkit-text-fill-color: #1A3D2E !important;
 }
 
 :root {

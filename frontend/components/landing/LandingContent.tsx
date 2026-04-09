@@ -142,7 +142,7 @@ export default function LandingPage() {
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          <Link href="/" style={{ textDecoration: 'none', color: '#2C2420' }}>
+          <Link href="/" className="logo-link" style={{ textDecoration: 'none', color: '#2C2420' }}>
             <span style={{
               fontSize: '24px',
               fontWeight: 700,
