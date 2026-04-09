@@ -1212,8 +1212,49 @@ export default function ResultsPage() {
         </section>
       </main>
 
+      {/* Sticky Premium CTA — shows when no premium report and not in payment flow */}
+      {!premiumReport && !premiumLoading && !showPayment && result && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 20,
+          background: 'linear-gradient(to right, #1A3D2E, #2D4A3E)',
+          padding: '0.75rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '1rem',
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+        }}>
+          <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.875rem', fontWeight: 500 }}>
+            {sr.premiumTitle}
+          </span>
+          <button
+            onClick={() => {
+              setShowPayment(true);
+              document.querySelector('[id="inline-paypal-container"]')?.closest('section')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{
+              padding: '0.5rem 1.25rem',
+              borderRadius: '8px',
+              background: '#C5A059',
+              color: '#2D3A35',
+              border: 'none',
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {t.pricing.premium.price} →
+          </button>
+        </div>
+      )}
+
       {/* Footer */}
-      <footer style={{ padding: '2rem 0', borderTop: '1px solid #EBE5DF', backgroundColor: '#FEFDFB' }}>
+      <footer style={{ padding: !premiumReport ? '2rem 0 5rem' : '2rem 0', borderTop: '1px solid #EBE5DF', backgroundColor: '#FEFDFB' }}>
         <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '0 1.5rem', textAlign: 'center' }}>
           <p style={{ fontSize: '0.75rem', color: '#8B8580' }}>
             {sr.footerDisclaimer}

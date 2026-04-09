@@ -1108,12 +1108,12 @@ export default function InputFormPage() {
 
           {/* Step 5: Parent Time & Agreements */}
           {step === 5 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Parent Birth Time */}
               <div style={{
                 background: '#FFFFFF',
                 borderRadius: '12px',
-                padding: '1.5rem',
+                padding: '1.25rem',
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
               }}>
@@ -1176,7 +1176,7 @@ export default function InputFormPage() {
                 </div>
 
                 {/* Summary */}
-                <div style={{ padding: '1rem', background: '#F8F6F3', borderRadius: '0.75rem', marginBottom: '1.5rem' }}>
+                <div style={{ padding: '0.75rem 1rem', background: '#F8F6F3', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
                   <h4 style={{ fontWeight: 600, color: '#1A3D2E', marginBottom: '0.75rem' }}>{s.summaryTitle}</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1194,16 +1194,16 @@ export default function InputFormPage() {
                   </div>
                 </div>
 
-                <div style={{ height: '1px', width: '100%', background: '#F3F4F6', margin: '1.5rem 0' }} />
+                <div style={{ height: '1px', width: '100%', background: '#F3F4F6', margin: '1rem 0' }} />
 
                 {/* Agreements */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {/* Age Verification */}
                   <label style={{
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '0.75rem',
-                    padding: '1rem',
+                    padding: '0.75rem',
                     borderRadius: '0.75rem',
                     border: formData.ageVerified ? '2px solid #5A7A66' : '2px solid #E5E7EB',
                     background: formData.ageVerified ? 'rgba(74, 99, 84, 0.05)' : 'transparent',
@@ -1231,7 +1231,7 @@ export default function InputFormPage() {
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '0.75rem',
-                    padding: '1rem',
+                    padding: '0.75rem',
                     borderRadius: '0.75rem',
                     border: formData.privacyAgreed ? '2px solid #5A7A66' : '2px solid #E5E7EB',
                     background: formData.privacyAgreed ? 'rgba(74, 99, 84, 0.05)' : 'transparent',
@@ -1260,7 +1260,7 @@ export default function InputFormPage() {
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '0.75rem',
-                    padding: '1rem',
+                    padding: '0.75rem',
                     borderRadius: '0.75rem',
                     border: formData.marketingAgreed ? '2px solid #B8922D' : '2px solid #E5E7EB',
                     background: formData.marketingAgreed ? 'rgba(197, 160, 89, 0.05)' : 'transparent',
