@@ -25,11 +25,13 @@ export function LanguageProvider({ children, initialLang }: { children: ReactNod
     const saved = localStorage.getItem('somyung-lang') as Language | null
     if (saved && translations[saved]) {
       setLangState(saved)
+      document.documentElement.lang = saved
     } else {
       const browserLang = navigator.language.slice(0, 2)
       const langMap: Record<string, Language> = { ko: 'ko', en: 'en', ja: 'ja', zh: 'zh', vi: 'vi', id: 'id', es: 'es', pt: 'pt', fr: 'fr', th: 'th' }
       if (langMap[browserLang]) {
         setLangState(langMap[browserLang])
+        document.documentElement.lang = langMap[browserLang]
       }
     }
   }, [initialLang])
