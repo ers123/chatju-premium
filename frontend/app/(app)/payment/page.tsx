@@ -65,6 +65,7 @@ const INCLUDED_ICONS = ['🌊', '🌳', '👨‍👩‍👧', '💪', '🔮', '�
 function PaymentContent() {
   const router = useRouter()
   const { t } = useLanguage()
+  useEffect(() => { document.title = t.payment.pageTitle }, [t])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [sdkReady, setSdkReady] = useState(false)

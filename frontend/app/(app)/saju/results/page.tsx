@@ -211,6 +211,7 @@ function OhaengBalanceChart({ balance, ohaengElements, elementCount }: { balance
 export default function ResultsPage() {
   const router = useRouter()
   const { t, lang } = useLanguage()
+  useEffect(() => { document.title = t.sajuResults.pageTitle }, [t])
   const sr = t.sajuResults
   const [result, setResult] = useState<SajuResult | null>(null)
   const [inputData, setInputData] = useState<{ name: string; birthDate: string; birthTime: string } | null>(null)

@@ -56,6 +56,7 @@ const getZodiacInfo = (yearStr: string) => {
 export default function InputFormPage() {
   const router = useRouter()
   const { t } = useLanguage()
+  useEffect(() => { document.title = t.sajuInput.pageTitle }, [t])
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     // Child info
