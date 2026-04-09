@@ -203,7 +203,7 @@ export default function InputFormPage() {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Link href="/" style={{ textDecoration: 'none', color: '#1A3D2E', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
               width: '2rem',
               height: '2rem',
@@ -213,7 +213,7 @@ export default function InputFormPage() {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☯</span>
+              <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>☯</span>
             </div>
             <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
           </Link>
