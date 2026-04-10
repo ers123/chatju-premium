@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 export default function SignUpPage() {
   const { t } = useLanguage()
@@ -52,7 +53,7 @@ export default function SignUpPage() {
         zIndex: 10
       }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontSize: '1.875rem', fontWeight: 700, color: '#2D3A35' }}>☯ SoMyung</span>
+          <span style={{ fontSize: '1.875rem', fontWeight: 700, color: '#2D3A35' }}><YinYangIcon size={20} /> SoMyung</span>
         </Link>
       </div>
 

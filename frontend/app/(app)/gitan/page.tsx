@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Footer from '@/components/Footer'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 
 export default function GitanLandingPage() {
@@ -65,7 +66,7 @@ export default function GitanLandingPage() {
                 color: colors.dark,
                 letterSpacing: '-0.04em'
               }}>
-                ☯ SoMyung
+                <YinYangIcon size={20} color={colors.dark} /> SoMyung
               </span>
             </Link>
             <span style={{
@@ -142,7 +143,7 @@ export default function GitanLandingPage() {
                 fontSize: '15px',
                 fontWeight: 700,
                 color: colors.primary
-              }}>☯ SoMyung</span>
+              }}><YinYangIcon size={20} /> SoMyung</span>
             </div>
             <span style={{
               width: '1px',

@@ -9,6 +9,7 @@ import { useLanguage } from '@/app/lib/i18n/context'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ShareableResultCard from '@/components/saju/ShareableResultCard'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
 const PRODUCT_AMOUNT = 4.99
@@ -745,7 +746,7 @@ export default function ResultsPage() {
         <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/" className="logo-link-dark" style={{ textDecoration: 'none', color: '#1A3D2E', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: '#1A3D2E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>☯</span>
+              <YinYangIcon size={18} color="#FFFFFF" />
             </div>
             <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
           </Link>

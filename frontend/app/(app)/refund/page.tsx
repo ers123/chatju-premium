@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 export default function RefundPolicyPage() {
   const { lang, t } = useLanguage()
@@ -23,7 +24,7 @@ export default function RefundPolicyPage() {
       }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/" className="logo-link" style={{ textDecoration: 'none', color: '#2C2420' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#2C2420' }}>☯ SoMyung</span>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: '#2C2420' }}><YinYangIcon size={20} /> SoMyung</span>
           </Link>
           <Link href="/" style={{ fontSize: '14px', color: '#666666', textDecoration: 'none' }}>
             {ln.backHome}

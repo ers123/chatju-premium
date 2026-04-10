@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 interface Message {
   id: string
@@ -113,7 +114,7 @@ export default function ChatPage() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>☯</span>
+                <YinYangIcon size={18} color="#FFFFFF" />
               </div>
               <span style={{
                 fontFamily: 'serif',

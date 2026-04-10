@@ -7,6 +7,7 @@ import Script from 'next/script'
 import { apiClient } from '@/lib/api'
 import { useLanguage } from '@/app/lib/i18n/context'
 import type { PromoValidateResponse } from '@/types'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
 const PRODUCT_AMOUNT = 4.99
@@ -271,7 +272,7 @@ function PaymentContent() {
           <div style={s.headerInner}>
             <Link href="/" style={s.logo}>
               <div style={s.logoCircle}>
-                <span style={{...s.logoText, fontSize: '1.1rem', fontFamily: 'initial'}}>☯</span>
+                <YinYangIcon size={18} color="#C5A059" />
               </div>
               <span style={s.logoName}>SoMyung</span>
             </Link>

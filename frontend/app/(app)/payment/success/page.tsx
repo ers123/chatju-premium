@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 // Shared styles
 const s = {
@@ -106,7 +107,7 @@ function PaymentSuccessContent() {
         <div style={s.headerInner}>
           <Link href="/" style={s.logo}>
             <div style={s.logoCircle}>
-              <span style={{...s.logoText, fontSize: '1.1rem', fontFamily: 'initial'}}>☯</span>
+              <YinYangIcon size={18} color="#C5A059" />
             </div>
             <span style={s.logoName}>SoMyung</span>
           </Link>

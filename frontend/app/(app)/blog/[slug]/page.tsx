@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import { getAllSlugs, getPostBySlug } from '@/lib/blog'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 export function generateStaticParams() {
   return getAllSlugs().map(slug => ({ slug }))
@@ -29,8 +30,8 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
           <Link href="/blog" style={{ textDecoration: 'none', fontSize: '14px', color: '#9B8B7A' }}>
             ← Blog
           </Link>
-          <Link href="/" className="logo-link" style={{ textDecoration: 'none', fontSize: '20px', fontWeight: 700, color: '#2C2420' }}>
-            ☯ SoMyung
+          <Link href="/" className="logo-link" style={{ textDecoration: 'none', fontSize: '20px', fontWeight: 700, color: '#2C2420', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <YinYangIcon size={18} color="#2C2420" /> SoMyung
           </Link>
           <Link href="/saju/input" style={{
             textDecoration: 'none',

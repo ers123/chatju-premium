@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Footer from '@/components/Footer'
 import { useLanguage } from '@/app/lib/i18n/context'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 
 // Scroll reveal hook
@@ -142,14 +143,15 @@ export default function LandingPage() {
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          <Link href="/" className="logo-link" style={{ textDecoration: 'none', color: '#2C2420' }}>
+          <Link href="/" className="logo-link" style={{ textDecoration: 'none', color: '#2C2420', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <YinYangIcon size={22} color="#2C2420" />
             <span style={{
               fontSize: '24px',
               fontWeight: 700,
               color: '#2C2420',
               letterSpacing: '-0.04em'
             }}>
-              ☯ SoMyung
+              SoMyung
             </span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -410,7 +412,7 @@ export default function LandingPage() {
               textTransform: 'uppercase',
               marginBottom: '16px',
             }}>
-              ☯
+              <YinYangIcon size={28} />
             </p>
             <h2 style={{
               fontSize: 'clamp(28px, 5vw, 40px)',
@@ -670,7 +672,7 @@ export default function LandingPage() {
               border: '1px solid rgba(184, 146, 45, 0.2)',
               marginBottom: '32px'
             }}>
-              <span style={{ fontSize: '16px' }}>☯</span>
+              <YinYangIcon size={16} />
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#7A6420' }}>
                 {t.founder.role}
               </span>
@@ -724,7 +726,7 @@ export default function LandingPage() {
                 fontSize: '20px',
                 flexShrink: 0
               }}>
-                ☯
+                <YinYangIcon size={14} />
               </div>
               <div>
                 <p style={{

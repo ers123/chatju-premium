@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 // UI components (using native elements with inline styles)
 
 // Check icon
@@ -213,7 +214,7 @@ export default function InputFormPage() {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>☯</span>
+              <YinYangIcon size={18} color="#FFFFFF" />
             </div>
             <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
           </Link>

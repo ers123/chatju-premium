@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getAllPosts } from '@/lib/blog'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 export default function BlogIndex() {
   const posts = getAllPosts()
@@ -16,8 +17,8 @@ export default function BlogIndex() {
         padding: '24px 0',
       }}>
         <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" className="logo-link" style={{ textDecoration: 'none', fontSize: '20px', fontWeight: 700, color: '#2C2420' }}>
-            ☯ SoMyung
+          <Link href="/" className="logo-link" style={{ textDecoration: 'none', fontSize: '20px', fontWeight: 700, color: '#2C2420', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <YinYangIcon size={18} color="#2C2420" /> SoMyung
           </Link>
           <Link href="/saju/input" style={{
             textDecoration: 'none',

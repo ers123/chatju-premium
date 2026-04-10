@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 export default function SignInPage() {
   const router = useRouter()
@@ -92,7 +93,7 @@ export default function SignInPage() {
         zIndex: 10
       }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontSize: '1.875rem', fontWeight: 700, color: '#2D3A35' }}>☯ SoMyung</span>
+          <span style={{ fontSize: '1.875rem', fontWeight: 700, color: '#2D3A35' }}><YinYangIcon size={20} /> SoMyung</span>
         </Link>
       </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useCallback, useState } from 'react'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 interface ShareableCardProps {
   childName: string
@@ -155,7 +156,7 @@ export default function ShareableResultCard({
               color: '#2C2420',
               letterSpacing: '-0.03em',
             }}>
-              ☯ SoMyung
+              <YinYangIcon size={16} color="#2C2420" /> SoMyung
             </span>
             <span style={{
               fontSize: '11px',

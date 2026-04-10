@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 function PaymentFailContent() {
   const router = useRouter()
@@ -50,7 +51,7 @@ function PaymentFailContent() {
               borderRadius: '50%',
               backgroundColor: '#2D3A35',
             }}>
-              <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>☯</span>
+              <YinYangIcon size={18} color="#FFFFFF" />
             </div>
             <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35' }}>SoMyung</span>
           </Link>
