@@ -50,7 +50,7 @@ function PaymentFailContent() {
               borderRadius: '50%',
               backgroundColor: '#2D3A35',
             }}>
-              <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>â¯︎</span>
+              <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>☯</span>
             </div>
             <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#2D3A35' }}>SoMyung</span>
           </Link>

@@ -65,7 +65,7 @@ export default function GitanLandingPage() {
                 color: colors.dark,
                 letterSpacing: '-0.04em'
               }}>
-                â¯︎ SoMyung
+                ☯ SoMyung
               </span>
             </Link>
             <span style={{
@@ -142,7 +142,7 @@ export default function GitanLandingPage() {
                 fontSize: '15px',
                 fontWeight: 700,
                 color: colors.primary
-              }}>â¯︎ SoMyung</span>
+              }}>☯ SoMyung</span>
             </div>
             <span style={{
               width: '1px',

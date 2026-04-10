@@ -113,7 +113,7 @@ export default function ChatPage() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>â¯︎</span>
+                <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>☯</span>
               </div>
               <span style={{
                 fontFamily: 'serif',

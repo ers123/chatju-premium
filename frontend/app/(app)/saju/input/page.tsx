@@ -213,7 +213,7 @@ export default function InputFormPage() {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>â¯︎</span>
+              <span style={{ fontSize: '1.1rem', lineHeight: 1, color: '#FFFFFF' }}>☯</span>
             </div>
             <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
           </Link>
