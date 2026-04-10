@@ -155,7 +155,7 @@ export default function ShareableResultCard({
               color: '#2C2420',
               letterSpacing: '-0.03em',
             }}>
-              ☯ SoMyung
+              â¯︎ SoMyung
             </span>
             <span style={{
               fontSize: '11px',

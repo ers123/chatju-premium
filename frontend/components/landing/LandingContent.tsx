@@ -149,7 +149,7 @@ export default function LandingPage() {
               color: '#2C2420',
               letterSpacing: '-0.04em'
             }}>
-              ☯ SoMyung
+              â¯︎ SoMyung
             </span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -410,7 +410,7 @@ export default function LandingPage() {
               textTransform: 'uppercase',
               marginBottom: '16px',
             }}>
-              ☯
+              â¯︎
             </p>
             <h2 style={{
               fontSize: 'clamp(28px, 5vw, 40px)',
@@ -670,7 +670,7 @@ export default function LandingPage() {
               border: '1px solid rgba(184, 146, 45, 0.2)',
               marginBottom: '32px'
             }}>
-              <span style={{ fontSize: '16px' }}>☯</span>
+              <span style={{ fontSize: '16px' }}>â¯︎</span>
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#7A6420' }}>
                 {t.founder.role}
               </span>
@@ -724,7 +724,7 @@ export default function LandingPage() {
                 fontSize: '20px',
                 flexShrink: 0
               }}>
-                ☯
+                â¯︎
               </div>
               <div>
                 <p style={{

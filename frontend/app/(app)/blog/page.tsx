@@ -17,7 +17,7 @@ export default function BlogIndex() {
       }}>
         <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/" className="logo-link" style={{ textDecoration: 'none', fontSize: '20px', fontWeight: 700, color: '#2C2420' }}>
-            ☯ SoMyung
+            â¯︎ SoMyung
           </Link>
           <Link href="/saju/input" style={{
             textDecoration: 'none',

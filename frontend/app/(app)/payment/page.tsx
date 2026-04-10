@@ -271,7 +271,7 @@ function PaymentContent() {
           <div style={s.headerInner}>
             <Link href="/" style={s.logo}>
               <div style={s.logoCircle}>
-                <span style={{...s.logoText, fontSize: '1.1rem', fontFamily: 'initial'}}>☯</span>
+                <span style={{...s.logoText, fontSize: '1.1rem', fontFamily: 'initial'}}>â¯︎</span>
               </div>
               <span style={s.logoName}>SoMyung</span>
             </Link>
