@@ -54,3 +54,7 @@ __pycache__/
 .supabase/
 backend/somyung-deploy_accessKeys.csv
 .gstack/
+
+# Local tooling / internal notes (not shipped)
+.omx/
+security-check-*.md
