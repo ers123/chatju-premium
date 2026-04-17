@@ -102,6 +102,7 @@ export interface ManseryeokResult {
   solarDate?: string;
   lunarDate?: string;
   corrections?: SolarTimeCorrection; // 진태양시 보정 정보
+  dstWarning?: boolean; // 한국 서머타임 기간 출생 경고
 }
 
 export interface AIInterpretation {

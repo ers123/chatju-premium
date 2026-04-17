@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "../globals.css";
 import { LanguageProvider } from "../lib/i18n/context";
+import GoogleAnalytics from "../../components/GoogleAnalytics";
+import CookieConsent from "../../components/CookieConsent";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
@@ -232,21 +233,12 @@ export default function RootLayout({
             }
           })}}
         />
-        {GA_ID && (
-          <>
-            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
-            <Script id="ga4" strategy="afterInteractive">{`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${GA_ID}');
-            `}</Script>
-          </>
-        )}
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <LanguageProvider>
           {children}
+          {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
+          <CookieConsent />
         </LanguageProvider>
       </body>
     </html>

@@ -212,10 +212,26 @@ function getSolarTimeCorrection(longitude, timezoneOffset) {
 function resolveLocation(options = {}) {
   const { birthPlace, latitude, longitude, timezoneOffset, birthYear, birthMonth, birthDay } = options;
 
-  // Direct coordinates take priority
+  // Direct coordinates take priority.
+  // Attach country='KR' when coordinates fall inside Korea's bounding box so
+  // downstream logic (DST warning, historical timezone) can treat coordinate
+  // inputs the same as named Korean cities.
   if (latitude != null && longitude != null) {
-    const tz = timezoneOffset != null ? timezoneOffset : Math.round(longitude / 15);
-    return { lat: latitude, lng: longitude, tz };
+    const isKoreanCoord =
+      latitude >= 33 && latitude <= 43 && longitude >= 124 && longitude <= 132;
+    let tz = timezoneOffset != null ? timezoneOffset : Math.round(longitude / 15);
+    const resolved = { lat: latitude, lng: longitude, tz };
+    if (isKoreanCoord) {
+      resolved.country = 'KR';
+      if (timezoneOffset == null && birthYear) {
+        const historicalTz = getKoreaHistoricalTimezone(birthYear, birthMonth || 1, birthDay || 1);
+        if (historicalTz !== resolved.tz) {
+          resolved.tz = historicalTz;
+          resolved.historicalTzNote = `${birthYear}년 출생 → 당시 한국 표준시 UTC+${historicalTz} 적용 (현재 UTC+9와 다름)`;
+        }
+      }
+    }
+    return resolved;
   }
 
   // Look up by city name
@@ -577,7 +593,9 @@ function calculateMansae(birthDate, birthTime, gender, locationOptions = {}) {
     const monthPillar = calculateMonthPillar(calcMonth, calcDay, yearStemIndex, calcYear, isSouthernHemisphere);
     const dayPillar = calculateDayPillar(calcYear, calcMonth, calcDay);
     const dayStemIndex = HEAVENLY_STEMS.indexOf(dayPillar.stem);
-    const hourPillar = calculateHourPillar(calcHour, dayStemIndex);
+    // 야자시 (夜子時): 23:00-23:59 uses next day's stem for hour pillar calculation
+    const adjustedDayStemIndex = calcHour >= 23 ? (dayStemIndex + 1) % 10 : dayStemIndex;
+    const hourPillar = calculateHourPillar(calcHour, adjustedDayStemIndex);
 
     // Build pillars object with format expected by both frontend and daeun.service.js
     const pillars = {
@@ -638,11 +656,52 @@ function calculateMansae(birthDate, birthTime, gender, locationOptions = {}) {
     // Day master (일간)
     const dayMaster = dayPillar.stem;
 
+    // Korean Daylight Saving Time warning check
+    const KOREA_DST_RANGES = [
+      { start: [1948, 6, 1], end: [1948, 9, 12] },
+      { start: [1949, 4, 3], end: [1949, 9, 10] },
+      { start: [1950, 4, 1], end: [1950, 9, 9] },
+      { start: [1951, 5, 6], end: [1951, 9, 8] },
+      { start: [1955, 5, 5], end: [1955, 9, 8] },
+      { start: [1956, 5, 20], end: [1956, 9, 29] },
+      { start: [1957, 5, 5], end: [1957, 9, 21] },
+      { start: [1958, 5, 4], end: [1958, 9, 20] },
+      { start: [1959, 5, 3], end: [1959, 9, 19] },
+      { start: [1960, 5, 1], end: [1960, 9, 17] },
+      { start: [1987, 5, 10], end: [1987, 10, 10] },
+      { start: [1988, 5, 8], end: [1988, 10, 8] },
+    ];
+
+    // DST advisory. This is a Korean service — when the caller does not
+    // supply any location, assume a Korean birth (product default).
+    // resolveLocation() attaches country='KR' for both named Korean cities
+    // and coordinates inside the Korean bbox, so foreign births with explicit
+    // location no longer trip the warning (bug_007).
+    const hasExplicitLocation =
+      locationOptions.birthPlace != null ||
+      locationOptions.latitude != null ||
+      locationOptions.longitude != null;
+    const isKorea = location?.country === 'KR' || !hasExplicitLocation;
+
+    let dstWarning = false;
+    if (isKorea) {
+      const dateNum = year * 10000 + month * 100 + day;
+      for (const range of KOREA_DST_RANGES) {
+        const startNum = range.start[0] * 10000 + range.start[1] * 100 + range.start[2];
+        const endNum = range.end[0] * 10000 + range.end[1] * 100 + range.end[2];
+        if (dateNum >= startNum && dateNum <= endNum) {
+          dstWarning = true;
+          break;
+        }
+      }
+    }
+
     return {
       pillars,
       elements,
       dayMaster,
       gender,
+      dstWarning,
       input: {
         birthDate,
         birthTime,

@@ -31,7 +31,7 @@ CREATE POLICY "Users can update own data" ON users
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- 전자상거래법: 5yr retention
   order_id TEXT UNIQUE NOT NULL,
   amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
   currency TEXT DEFAULT 'USD' CHECK (currency IN ('USD', 'KRW', 'EUR', 'CNY')),

@@ -1,13 +1,44 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { useLanguage } from '@/app/lib/i18n/context'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
+import { apiClient } from '@/lib/api'
 
 export default function PrivacyPolicyPage() {
   const { lang, t } = useLanguage()
   const ln = t.legalNotice
+  const [deleting, setDeleting] = useState(false)
+  const [deleteResult, setDeleteResult] = useState<'success' | 'error' | null>(null)
+  // Initialize false so SSR and first client render match; read localStorage
+  // after mount to avoid hydration mismatch on the account-deletion slot.
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem('chatju_token'))
+  }, [])
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      lang === 'ko'
+        ? '정말로 계정을 삭제하시겠습니까? 모든 데이터가 영구적으로 삭제되며 되돌릴 수 없습니다.'
+        : 'Are you sure you want to delete your account? All data will be permanently deleted and cannot be recovered.'
+    )
+    if (!confirmed) return
+
+    try {
+      setDeleting(true)
+      await apiClient.deleteAccount()
+      localStorage.removeItem('chatju_token')
+      setDeleteResult('success')
+    } catch {
+      setDeleteResult('error')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div style={{
@@ -223,6 +254,56 @@ export default function PrivacyPolicyPage() {
               변경 사항은 서비스 내 공지사항을 통해 안내드립니다.
             </p>
           </section>
+        </div>
+
+        {/* Account Deletion Section */}
+        <div style={{ marginTop: '48px', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', background: '#FAFAFA' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#2C2420', marginBottom: '12px' }}>
+            {lang === 'ko' ? '계정 삭제' : 'Delete Account'}
+          </h2>
+          <p style={{ marginBottom: '16px', fontSize: '14px', color: '#6B5E52' }}>
+            {lang === 'ko'
+              ? '계정을 삭제하면 모든 개인정보, 분석 결과, 결제 기록이 영구적으로 삭제됩니다.'
+              : 'Deleting your account will permanently remove all personal data, analysis results, and payment records.'}
+          </p>
+
+          {deleteResult === 'success' ? (
+            <p style={{ color: '#059669', fontWeight: 500 }}>
+              {lang === 'ko' ? '계정이 삭제되었습니다.' : 'Your account has been deleted.'}
+            </p>
+          ) : deleteResult === 'error' ? (
+            <p style={{ color: '#DC2626', fontSize: '14px' }}>
+              {lang === 'ko'
+                ? '삭제에 실패했습니다. support@somyung.cc로 문의해주세요.'
+                : 'Deletion failed. Please contact support@somyung.cc.'}
+            </p>
+          ) : isLoggedIn ? (
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+              style={{
+                padding: '8px 20px',
+                borderRadius: '8px',
+                border: '1px solid #DC2626',
+                background: 'white',
+                color: '#DC2626',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: deleting ? 'wait' : 'pointer',
+                opacity: deleting ? 0.6 : 1,
+              }}
+            >
+              {deleting
+                ? (lang === 'ko' ? '삭제 중...' : 'Deleting...')
+                : (lang === 'ko' ? '계정 삭제하기' : 'Delete My Account')}
+            </button>
+          ) : (
+            <p style={{ fontSize: '14px', color: '#9CA3AF' }}>
+              {lang === 'ko'
+                ? '로그인 후 이 페이지에서 계정을 삭제할 수 있습니다. 또는 support@somyung.cc로 요청해주세요.'
+                : 'Sign in to delete your account from this page, or email support@somyung.cc.'}
+            </p>
+          )}
         </div>
       </main>
 

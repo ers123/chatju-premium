@@ -247,10 +247,33 @@ router.patch('/me', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * DELETE /auth/me
+ * Delete current user account and all associated data
+ * Requires authentication
+ */
+router.delete('/me', authMiddleware, async (req, res) => {
+  try {
+    await authService.deleteUser(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Account and all associated data deleted',
+    });
+
+  } catch (error) {
+    console.error('[Auth Routes] Delete account error:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to delete account',
+      code: 'DELETE_ACCOUNT_ERROR',
+    });
+  }
+});
+
 // ========================================
 // DEV-ONLY: Test login bypass
 // ========================================
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV === 'development') {
   const { supabaseAdmin } = require('../config/supabase');
 
   /**

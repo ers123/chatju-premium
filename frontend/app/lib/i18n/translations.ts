@@ -356,6 +356,7 @@ export const translations = {
       siblingCta: '형제자매 분석하기',
       goHome: '홈으로 돌아가기',
       solarTimeLabel: '진태양시 보정',
+      dstWarning: '이 출생일은 한국 서머타임(일광절약시간) 기간에 해당합니다. 기록된 출생 시각이 실제 태양시보다 1시간 빠를 수 있으며, 시주 계산에 영향을 줄 수 있습니다.',
       footerDisclaimer: '본 분석은 동양 철학에 기반한 기질 분석 도구로, 참고 자료로 활용해주세요.',
       elements: {
         '목': { name: '나무(木)', traits: ['창의적', '성장 지향적', '유연함', '인내심'], learningStyle: '혼자 깊이 파고드는 학습, 독서 후 토론, 자연 속 학습이 효과적', caution: '압박감에 약해요. 격려와 기다림이 필요합니다.' },
@@ -531,6 +532,12 @@ export const translations = {
       alreadyHaveAccount: '이미 계정이 있으신가요?',
       login: '로그인',
       copyright: '© 2025 SoMyung. All rights reserved.',
+    },
+    cookieConsent: {
+      message: '서비스 개선을 위해 분석 쿠키를 사용합니다.',
+      accept: '수락',
+      decline: '거절',
+      learnMore: '개인정보처리방침',
     },
   },
 
@@ -889,6 +896,7 @@ export const translations = {
       siblingCta: 'Analyze Sibling',
       goHome: 'Back to Home',
       solarTimeLabel: 'Solar time correction',
+      dstWarning: 'This birth date falls within a Korean Daylight Saving Time period. The recorded birth time may be 1 hour ahead of actual solar time, which could affect the hour pillar calculation.',
       footerDisclaimer: 'This analysis is a temperament analysis tool based on Eastern philosophy. Please use as reference material.',
       elements: {
         '목': { name: 'Wood (木)', traits: ['Creative', 'Growth-oriented', 'Flexible', 'Patient'], learningStyle: 'Deep solo study, reading then discussing, learning in nature', caution: 'Sensitive to pressure. Encouragement and patience are needed.' },
@@ -1064,6 +1072,12 @@ export const translations = {
       alreadyHaveAccount: 'Already have an account?',
       login: 'Log in',
       copyright: '© 2025 Somyung. All rights reserved.',
+    },
+    cookieConsent: {
+      message: 'We use analytics cookies to improve our service.',
+      accept: 'Accept',
+      decline: 'Decline',
+      learnMore: 'Privacy Policy',
     },
   },
 
@@ -1413,6 +1427,7 @@ export const translations = {
       siblingCta: 'きょうだいを分析する',
       goHome: 'ホームに戻る',
       solarTimeLabel: '真太陽時補正',
+      dstWarning: 'この生年月日は韓国の夏時間（サマータイム）期間に該当します。記録された出生時刻は実際の太陽時より1時間早い可能性があり、時柱の計算に影響する場合があります。',
       footerDisclaimer: '本分析は東洋哲学に基づいた気質分析ツールです。参考資料としてご活用ください。',
       elements: {
         '목': { name: '木', traits: ['創造的', '成長志向', '柔軟', '忍耐力'], learningStyle: '一人で深く掘り下げる学習、読書後の議論、自然の中での学習が効果的', caution: 'プレッシャーに弱いです。励ましと待つことが必要です。' },
@@ -1588,6 +1603,12 @@ export const translations = {
       alreadyHaveAccount: 'すでにアカウントをお持ちですか？',
       login: 'ログイン',
       copyright: '© 2025 昭命. All rights reserved.',
+    },
+    cookieConsent: {
+      message: 'サービス改善のため、分析クッキーを使用しています。',
+      accept: '同意する',
+      decline: '拒否する',
+      learnMore: 'プライバシーポリシー',
     },
   },
 
@@ -1939,6 +1960,7 @@ export const translations = {
       siblingCta: '分析兄弟姐妹',
       goHome: '返回首页',
       solarTimeLabel: '真太阳时校正',
+      dstWarning: '该出生日期处于韩国夏令时期间。记录的出生时间可能比实际太阳时快1小时，这可能影响时柱的计算。',
       footerDisclaimer: '本分析是基于东方哲学的气质分析工具，请作为参考资料使用。',
       elements: {
         '목': { name: '木', traits: ['创造力', '成长导向', '灵活', '耐心'], learningStyle: '独自深入学习、阅读后讨论、自然中学习效果好', caution: '对压力敏感。需要鼓励和耐心等待。' },
@@ -2114,6 +2136,12 @@ export const translations = {
       alreadyHaveAccount: '已有账户？',
       login: '登录',
       copyright: '© 2025 昭命. All rights reserved.',
+    },
+    cookieConsent: {
+      message: '我们使用分析Cookie来改善服务。',
+      accept: '接受',
+      decline: '拒绝',
+      learnMore: '隐私政策',
     },
   },
 
@@ -2475,6 +2503,7 @@ export const translations = {
     siblingCta: 'Phân tích anh chị em',
     goHome: 'Về trang chủ',
     solarTimeLabel: 'Hiệu chỉnh giờ mặt trời',
+    dstWarning: 'Ngày sinh này thuộc giai đoạn giờ mùa hè của Hàn Quốc. Thời gian sinh được ghi nhận có thể sớm hơn 1 giờ so với giờ mặt trời thực tế, điều này có thể ảnh hưởng đến tính toán trụ giờ.',
     footerDisclaimer: 'Đây là công cụ phân tích tính cách dựa trên triết học phương Đông. Vui lòng sử dụng làm tài liệu tham khảo.',
     elements: {
       '목': { name: 'Mộc (木)', traits: ['Sáng tạo', 'Hướng phát triển', 'Linh hoạt', 'Kiên nhẫn'], learningStyle: 'Tự học sâu, đọc rồi thảo luận, học trong thiên nhiên', caution: 'Nhạy cảm với áp lực. Cần sự khuyến khích và kiên nhẫn.' },
@@ -2651,7 +2680,12 @@ export const translations = {
     login: 'Đăng nhập',
     copyright: '© 2025 Somyung. Bảo lưu mọi quyền.',
   },
-
+    cookieConsent: {
+      message: 'Chúng tôi sử dụng cookie phân tích để cải thiện dịch vụ.',
+      accept: 'Chấp nhận',
+      decline: 'Từ chối',
+      learnMore: 'Chính sách bảo mật',
+    },
   },
 
   id: {
@@ -3012,6 +3046,7 @@ export const translations = {
     siblingCta: 'Analisis Saudara Kandung',
     goHome: 'Kembali ke Beranda',
     solarTimeLabel: 'Koreksi waktu matahari',
+    dstWarning: 'Tanggal lahir ini berada dalam periode waktu musim panas Korea. Waktu lahir yang tercatat mungkin 1 jam lebih awal dari waktu matahari sebenarnya, yang dapat mempengaruhi perhitungan pilar jam.',
     footerDisclaimer: 'Analisis ini adalah alat analisis temperamen berdasarkan filosofi Timur. Harap gunakan sebagai bahan referensi.',
     elements: {
       '목': { name: 'Kayu (木)', traits: ['Kreatif', 'Berorientasi pertumbuhan', 'Fleksibel', 'Sabar'], learningStyle: 'Belajar mandiri mendalam, membaca lalu berdiskusi, belajar di alam', caution: 'Sensitif terhadap tekanan. Dibutuhkan dorongan dan kesabaran.' },
@@ -3188,7 +3223,12 @@ export const translations = {
     login: 'Masuk',
     copyright: '© 2025 Somyung. Hak cipta dilindungi.',
   },
-
+    cookieConsent: {
+      message: 'Kami menggunakan cookie analitik untuk meningkatkan layanan.',
+      accept: 'Terima',
+      decline: 'Tolak',
+      learnMore: 'Kebijakan Privasi',
+    },
   },
 
   es: {
@@ -3549,6 +3589,7 @@ export const translations = {
     siblingCta: 'Analizar Hermano/a',
     goHome: 'Volver al Inicio',
     solarTimeLabel: 'Corrección hora solar',
+    dstWarning: 'Esta fecha de nacimiento corresponde a un periodo de horario de verano en Corea. La hora de nacimiento registrada puede ser 1 hora adelantada respecto a la hora solar real, lo que podría afectar el cálculo del pilar de la hora.',
     footerDisclaimer: 'Este análisis es una herramienta de análisis de temperamento basada en la filosofía oriental. Úsalo como material de referencia.',
     elements: {
       '목': { name: 'Madera (木)', traits: ['Creativo/a', 'Orientado/a al crecimiento', 'Flexible', 'Paciente'], learningStyle: 'Estudio profundo individual, leer y luego debatir, aprender en la naturaleza', caution: 'Sensible a la presión. Necesita estímulo y paciencia.' },
@@ -3725,7 +3766,12 @@ export const translations = {
     login: 'Iniciar sesión',
     copyright: '© 2025 Somyung. Todos los derechos reservados.',
   },
-
+    cookieConsent: {
+      message: 'Usamos cookies analíticas para mejorar nuestro servicio.',
+      accept: 'Aceptar',
+      decline: 'Rechazar',
+      learnMore: 'Política de Privacidad',
+    },
   },
 
   pt: {
@@ -4086,6 +4132,7 @@ export const translations = {
     siblingCta: 'Analisar Irmão/Irmã',
     goHome: 'Voltar ao Início',
     solarTimeLabel: 'Correção de hora solar',
+    dstWarning: 'Esta data de nascimento está dentro de um período de horário de verão coreano. O horário de nascimento registrado pode estar 1 hora adiantado em relação ao horário solar real, o que pode afetar o cálculo do pilar da hora.',
     footerDisclaimer: 'Esta análise é uma ferramenta de análise de temperamento baseada na filosofia oriental. Use apenas como material de referência.',
     elements: {
       '목': { name: 'Madeira (木)', traits: ['Criativo', 'Orientado ao crescimento', 'Flexível', 'Paciente'], learningStyle: 'Estudo solo aprofundado, ler e depois discutir, aprender na natureza', caution: 'Sensível à pressão. Incentivo e paciência são necessários.' },
@@ -4262,7 +4309,12 @@ export const translations = {
     login: 'Entrar',
     copyright: '© 2025 Somyung. Todos os direitos reservados.',
   },
-
+    cookieConsent: {
+      message: 'Usamos cookies analíticos para melhorar nosso serviço.',
+      accept: 'Aceitar',
+      decline: 'Recusar',
+      learnMore: 'Política de Privacidade',
+    },
   },
 
   fr: {
@@ -4623,6 +4675,7 @@ export const translations = {
     siblingCta: 'Analyser un frère/une sœur',
     goHome: 'Retour à l\'accueil',
     solarTimeLabel: 'Correction heure solaire',
+    dstWarning: 'Cette date de naissance correspond à une période d\'heure d\'été coréenne. L\'heure de naissance enregistrée peut être avancée d\'1 heure par rapport à l\'heure solaire réelle, ce qui pourrait affecter le calcul du pilier de l\'heure.',
     footerDisclaimer: 'Cette analyse est un outil d\'analyse du tempérament basé sur la philosophie orientale. À utiliser à titre indicatif.',
     elements: {
       '목': { name: 'Bois (木)', traits: ['Créatif', 'Orienté vers la croissance', 'Flexible', 'Patient'], learningStyle: 'Étude approfondie en solo, lecture puis discussion, apprentissage dans la nature', caution: 'Sensible à la pression. Encouragement et patience sont nécessaires.' },
@@ -4799,7 +4852,12 @@ export const translations = {
     login: 'Se connecter',
     copyright: '© 2025 Somyung. Tous droits réservés.',
   },
-
+    cookieConsent: {
+      message: 'Nous utilisons des cookies analytiques pour améliorer notre service.',
+      accept: 'Accepter',
+      decline: 'Refuser',
+      learnMore: 'Politique de confidentialité',
+    },
   },
 
   th: {
@@ -5160,6 +5218,7 @@ export const translations = {
     siblingCta: 'วิเคราะห์พี่น้อง',
     goHome: 'กลับหน้าแรก',
     solarTimeLabel: 'ปรับเวลาสุริยะ',
+    dstWarning: 'วันเกิดนี้อยู่ในช่วงเวลาฤดูร้อนของเกาหลี เวลาเกิดที่บันทึกอาจเร็วกว่าเวลาสุริยะจริง 1 ชั่วโมง ซึ่งอาจส่งผลต่อการคำนวณเสาชั่วโมง',
     footerDisclaimer: 'การวิเคราะห์นี้เป็นเครื่องมือวิเคราะห์นิสัยตามปรัชญาตะวันออก กรุณาใช้เป็นข้อมูลอ้างอิง',
     elements: {
       '목': { name: 'ไม้ (木)', traits: ['สร้างสรรค์', 'มุ่งเติบโต', 'ยืดหยุ่น', 'อดทน'], learningStyle: 'เรียนลึกคนเดียว อ่านแล้วอภิปราย เรียนรู้ในธรรมชาติ', caution: 'อ่อนไหวต่อแรงกดดัน ต้องการกำลังใจและความอดทน' },
@@ -5336,7 +5395,12 @@ export const translations = {
     login: 'เข้าสู่ระบบ',
     copyright: '© 2025 Somyung. All rights reserved.',
   },
-
+    cookieConsent: {
+      message: 'เราใช้คุกกี้วิเคราะห์เพื่อปรับปรุงบริการ',
+      accept: 'ยอมรับ',
+      decline: 'ปฏิเสธ',
+      learnMore: 'นโยบายความเป็นส่วนตัว',
+    },
   },
 }
 

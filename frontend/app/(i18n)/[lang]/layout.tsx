@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import '../../globals.css'
 import { LanguageProvider } from '../../lib/i18n/context'
 import { Language } from '../../lib/i18n/translations'
 import { getMetadataForLang } from '../../lib/i18n/metadata'
 import { getJsonLdForLang, getSpeakableJsonLd } from '../../lib/i18n/jsonld'
+import GoogleAnalytics from '../../../components/GoogleAnalytics'
+import CookieConsent from '../../../components/CookieConsent'
 
 const SUPPORTED: Language[] = ['ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th']
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
@@ -44,21 +45,12 @@ export default async function I18nLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(speakable) }}
         />
-        {GA_ID && (
-          <>
-            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
-            <Script id="ga4" strategy="afterInteractive">{`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${GA_ID}');
-            `}</Script>
-          </>
-        )}
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <LanguageProvider initialLang={lang as Language}>
           {children}
+          {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
+          <CookieConsent />
         </LanguageProvider>
       </body>
     </html>

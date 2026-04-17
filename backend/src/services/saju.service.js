@@ -39,8 +39,7 @@ async function generateSajuPreview(params) {
 
   try {
     console.log('[Saju Service] Starting preview generation:', {
-      birthDate,
-      birthTime,
+      birthYear: birthDate?.slice(0, 4),
       gender,
       hasParentData: !!parentManseryeok,
     });
@@ -168,8 +167,7 @@ async function generateSajuReading(params) {
   try {
     console.log('[Saju Service] Starting reading generation:', {
       orderId,
-      birthDate,
-      birthTime,
+      birthYear: birthDate?.slice(0, 4),
       gender,
     });
 
@@ -276,7 +274,7 @@ async function generateSajuReading(params) {
     if (userId) readingRow.user_id = userId;
     if (payment) readingRow.payment_id = payment.id;
     if (promoCodeId) readingRow.promo_code_id = promoCodeId;
-    if (deliveryEmail) readingRow.delivery_email = deliveryEmail;
+    if (deliveryEmail) readingRow.delivery_email = deliveryEmail.toLowerCase().trim();
 
     const { data: reading, error: insertError } = await supabaseAdmin
       .from('readings')
@@ -310,7 +308,7 @@ async function generateSajuReading(params) {
               .from('readings')
               .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
               .eq('id', reading.id);
-            console.log('[Saju Service] Report email sent to:', deliveryEmail);
+            console.log('[Saju Service] Report email sent to:', require('../utils/logger').maskEmail(deliveryEmail));
           })
           .catch(async (emailErr) => {
             console.error('[Saju Service] Email delivery failed:', emailErr.message);

@@ -66,25 +66,23 @@ const logger = winston.createLogger({
   exitOnError: false,
 });
 
-/**
- * Add file transports in production
- */
-if (isProduction) {
-  // Error logs - separate file for errors only
-  logger.add(new winston.transports.File({
-    filename: 'logs/error.log',
-    level: 'error',
-    maxsize: 5242880, // 5MB
-    maxFiles: 5,
-  }));
+// Note: File transports removed — Lambda has read-only filesystem.
+// All production logs go to stdout → CloudWatch via console transport.
 
-  // Combined logs - all log levels
-  logger.add(new winston.transports.File({
-    filename: 'logs/combined.log',
-    maxsize: 5242880, // 5MB
-    maxFiles: 5,
-  }));
+/**
+ * Mask email for logging: "john@example.com" → "jo***@example.com".
+ * Keeps the domain intact so log triage can still distinguish user cohorts
+ * (e.g. @gmail.com vs @somyung.cc) without exposing the identifying local part.
+ * Single-char local parts fall back to one visible char + mask.
+ */
+function maskEmail(email) {
+  if (!email || typeof email !== 'string') return '[redacted]';
+  const [local, domain] = email.split('@');
+  if (!domain || !local) return '[redacted]';
+  const visible = local.length >= 2 ? local.slice(0, 2) : local;
+  return `${visible}***@${domain}`;
 }
+logger.maskEmail = maskEmail;
 
 /**
  * Helper function to log HTTP requests
@@ -98,14 +96,13 @@ logger.logRequest = (req, res, duration) => {
     url: req.originalUrl || req.url,
     statusCode: res.statusCode,
     duration: `${duration}ms`,
-    ip: req.ip || req.connection?.remoteAddress,
-    userAgent: req.get('user-agent'),
+    userAgent: req.get('user-agent')?.slice(0, 50),
   };
 
   // Add user info if authenticated
   if (req.user) {
     logData.userId = req.user.id;
-    logData.userEmail = req.user.email;
+    logData.userEmail = maskEmail(req.user.email);
   }
 
   const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info';
@@ -153,7 +150,7 @@ logger.logPayment = (event, data) => {
 logger.logAuth = (event, data) => {
   logger.info(`Auth: ${event}`, {
     event,
-    email: data.email,
+    email: maskEmail(data.email),
     userId: data.userId || data.user_id,
     success: data.success !== false,
   });
@@ -168,7 +165,7 @@ logger.logSaju = (type, data) => {
   logger.info(`Saju: ${type} calculation`, {
     type,
     userId: data.userId,
-    birthDate: data.birthDate,
+    birthYear: data.birthDate?.slice(0, 4),
     gender: data.gender,
     hasTime: !!data.birthTime,
     language: data.language,

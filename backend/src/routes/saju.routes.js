@@ -403,7 +403,7 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
     console.log('[Saju Route] Promo reading generated:', {
       readingId: reading.readingId,
       promoCode: promoResult.promoCode.code,
-      email,
+      email: require('../utils/logger').maskEmail(email),
     });
 
     // Step 6: Return reading data (email is sent fire-and-forget from saju.service)
@@ -440,12 +440,14 @@ router.get('/reading-check', readLimiter, async (req, res) => {
 
     const { supabaseAdmin } = require('../config/supabase');
 
-    // Find the most recent reading for this email (created in last 5 minutes)
+    // Find the most recent reading for this email (created in last 5 minutes).
+    // Normalize to match the lowercase+trim applied at write time (saju.service.js).
+    const normalizedEmail = email.toLowerCase().trim();
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const { data: reading, error } = await supabaseAdmin
       .from('readings')
       .select('*')
-      .eq('delivery_email', email)
+      .eq('delivery_email', normalizedEmail)
       .gte('created_at', fiveMinAgo)
       .order('created_at', { ascending: false })
       .limit(1)

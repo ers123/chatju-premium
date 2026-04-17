@@ -129,6 +129,14 @@ export const apiClient = {
     return response.data;
   },
 
+  /**
+   * Delete current user account and all associated data (requires authentication)
+   */
+  deleteAccount: async (): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete('/auth/me');
+    return response.data;
+  },
+
   // ===========================================
   // Saju (사주) - FREE Preview
   // ===========================================

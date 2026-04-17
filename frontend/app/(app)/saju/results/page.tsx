@@ -220,6 +220,7 @@ export default function ResultsPage() {
   const [error, setError] = useState('')
   const [premiumReport, setPremiumReport] = useState<Record<string, string> | null>(null)
   const [corrections, setCorrections] = useState<{ applied: boolean; note: string; adjustedTime?: string | null; isSouthernHemisphere?: boolean } | null>(null)
+  const [dstWarning, setDstWarning] = useState(false)
   const [premiumLoading, setPremiumLoading] = useState(false)
   const [premiumError, setPremiumError] = useState('')
   const [readingId, setReadingId] = useState<string | null>(null)
@@ -577,6 +578,9 @@ export default function ResultsPage() {
         if (manseryeok.corrections) {
           setCorrections(manseryeok.corrections)
         }
+        if (manseryeok.dstWarning) {
+          setDstWarning(true)
+        }
 
         setResult(transformedResult)
       } catch (err) {
@@ -837,6 +841,18 @@ export default function ResultsPage() {
                     {corrections.isSouthernHemisphere && ` (${sr.southernHemisphere})`}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* DST Warning for historical Korean births */}
+            {dstWarning && (
+              <div style={{ marginTop: '0.75rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', border: '1px solid #F5D98E', background: '#FFFBEB' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.813rem' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
+                  <span style={{ color: '#92400E' }}>
+                    {(sr as any).dstWarning || 'This birth date falls within a Korean Daylight Saving Time period. The recorded birth time may be 1 hour ahead of actual solar time, which could affect the hour pillar calculation.'}
+                  </span>
+                </div>
               </div>
             )}
           </div>

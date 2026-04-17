@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { resetCookieConsent } from './CookieConsent'
 
 export default function Footer() {
   const { t } = useLanguage()
@@ -81,6 +82,14 @@ export default function Footer() {
                 <Link href="/refund" style={{ fontSize: '14px', color: '#888888', textDecoration: 'none' }}>
                   {t.footer.refund}
                 </Link>
+              </li>
+              <li style={{ marginBottom: '10px' }}>
+                <button
+                  onClick={() => resetCookieConsent()}
+                  style={{ fontSize: '14px', color: '#888888', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  {(t as any).cookieConsent?.learnMore || 'Cookie Settings'}
+                </button>
               </li>
             </ul>
           </div>

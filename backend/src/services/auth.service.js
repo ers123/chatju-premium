@@ -2,6 +2,7 @@
 // Level 6: Authentication Service with Supabase Auth
 
 const { supabase, supabaseAdmin, handleSupabaseError } = require('../config/supabase');
+const logger = require('../utils/logger');
 
 /**
  * Sign up a new user with email
@@ -13,7 +14,7 @@ const { supabase, supabaseAdmin, handleSupabaseError } = require('../config/supa
  */
 async function signUp(email, languagePreference = 'ko') {
   try {
-    console.log('[Auth Service] Signing up user:', email);
+    logger.info('[Auth Service] Signing up user:', { email: logger.maskEmail(email) });
 
     // Create user in Supabase Auth
     const { data, error } = await supabase.auth.signInWithOtp({
@@ -47,7 +48,7 @@ async function signUp(email, languagePreference = 'ko') {
       console.warn('[Auth Service] Profile creation warning:', profileError);
     }
 
-    console.log('[Auth Service] Signup successful, magic link sent to:', email);
+    logger.info('[Auth Service] Signup successful, magic link sent', { email: logger.maskEmail(email) });
 
     return {
       email: email,
@@ -70,7 +71,7 @@ async function signUp(email, languagePreference = 'ko') {
  */
 async function signIn(email) {
   try {
-    console.log('[Auth Service] Signing in user:', email);
+    logger.info('[Auth Service] Signing in user:', { email: logger.maskEmail(email) });
 
     const { data, error } = await supabase.auth.signInWithOtp({
       email: email,
@@ -80,7 +81,7 @@ async function signIn(email) {
       throw handleSupabaseError(error) || new Error('Sign in failed');
     }
 
-    console.log('[Auth Service] Magic link sent to:', email);
+    logger.info('[Auth Service] Magic link sent', { email: logger.maskEmail(email) });
 
     return {
       email: email,
@@ -103,7 +104,7 @@ async function signIn(email) {
  */
 async function verifyOTP(email, token) {
   try {
-    console.log('[Auth Service] Verifying OTP for:', email);
+    logger.info('[Auth Service] Verifying OTP', { email: logger.maskEmail(email) });
 
     const { data, error } = await supabase.auth.verifyOtp({
       email: email,
@@ -115,7 +116,7 @@ async function verifyOTP(email, token) {
       throw handleSupabaseError(error) || new Error('OTP verification failed');
     }
 
-    console.log('[Auth Service] OTP verified for:', email);
+    logger.info('[Auth Service] OTP verified', { email: logger.maskEmail(email) });
 
     return {
       user: {
@@ -256,6 +257,124 @@ async function refreshSession(refreshToken) {
   }
 }
 
+/**
+ * Delete user account and all associated data
+ * Cascades to payments and readings via DB foreign keys
+ *
+ * @param {string} userId - User ID
+ * @returns {Promise<void>}
+ */
+async function deleteUser(userId) {
+  try {
+    logger.info('[Auth Service] Deleting user account', { userId });
+
+    // Step 0: Get user email for orphan cleanup (promo tables have no FK to users)
+    const { data: user, error: lookupError } = await supabaseAdmin
+      .from('users')
+      .select('email')
+      .eq('id', userId)
+      .single();
+
+    if (lookupError || !user) {
+      throw new Error('User not found');
+    }
+
+    // Normalize for case-insensitive match — readings.delivery_email /
+    // promo_usage.user_email are raw TEXT, and pre-normalization rows may exist
+    // from older code paths. Escape LIKE metacharacters so emails containing
+    // '_' or '%' cannot match unrelated rows.
+    const normalizedEmail = user.email.toLowerCase().trim();
+    const ilikePattern = normalizedEmail.replace(/([\\%_])/g, '\\$1');
+
+    // Step 1a: Clean promo_usage rows (stores email + child PII, not cascaded)
+    const { error: promoError } = await supabaseAdmin
+      .from('promo_usage')
+      .delete()
+      .ilike('user_email', ilikePattern);
+
+    if (promoError) {
+      throw new Error(`Failed to clean promo usage: ${promoError.message}`);
+    }
+
+    // Step 1b: Clean orphaned readings from promo flow (user_id = NULL but delivery_email matches)
+    const { error: orphanError } = await supabaseAdmin
+      .from('readings')
+      .delete()
+      .ilike('delivery_email', ilikePattern)
+      .is('user_id', null);
+
+    if (orphanError) {
+      throw new Error(`Failed to clean orphaned readings: ${orphanError.message}`);
+    }
+
+    // Step 2: Anonymize payments for 전자상거래법 5-year retention.
+    // Merge with existing metadata to preserve paypal_capture (capture_id, amounts,
+    // payer info) required for refund + audit within the retention window.
+    const { data: existingPayments, error: paymentLookupError } = await supabaseAdmin
+      .from('payments')
+      .select('id, metadata')
+      .eq('user_id', userId);
+
+    if (paymentLookupError) {
+      throw new Error(`Failed to load payments: ${paymentLookupError.message}`);
+    }
+
+    const anonymizedAt = new Date().toISOString();
+    for (const payment of existingPayments || []) {
+      const mergedMetadata = {
+        ...(payment.metadata || {}),
+        anonymized: true,
+        anonymized_at: anonymizedAt,
+      };
+      const { error: paymentError } = await supabaseAdmin
+        .from('payments')
+        .update({ user_id: null, metadata: mergedMetadata })
+        .eq('id', payment.id);
+
+      if (paymentError) {
+        throw new Error(`Failed to anonymize payment ${payment.id}: ${paymentError.message}`);
+      }
+    }
+
+    // Step 3: Delete readings owned by user (birth PII)
+    const { error: readingsError } = await supabaseAdmin
+      .from('readings')
+      .delete()
+      .eq('user_id', userId);
+
+    if (readingsError) {
+      throw new Error(`Failed to delete readings: ${readingsError.message}`);
+    }
+
+    // Step 4: Delete user profile
+    const { error: dbError } = await supabaseAdmin
+      .from('users')
+      .delete()
+      .eq('id', userId);
+
+    if (dbError) {
+      throw handleSupabaseError(dbError) || new Error('Failed to delete user data');
+    }
+
+    // Step 5: Delete from Supabase Auth — fail-closed per GDPR Art. 17 /
+    // 개인정보보호법. A lingering auth.users row lets the email sign back in
+    // via magic link and the signUp() upsert resurrects the profile, so we
+    // must surface the failure instead of silently reporting success.
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+    if (authError) {
+      logger.error('[Auth Service] Auth deletion failed after data deletion', { userId, error: authError.message });
+      throw new Error(`Failed to delete auth record: ${authError.message}`);
+    }
+
+    logger.info('[Auth Service] User account deleted', { userId });
+
+  } catch (error) {
+    logger.error('[Auth Service] Delete user error', { userId, error: error.message });
+    throw error;
+  }
+}
+
 module.exports = {
   signUp,
   signIn,
@@ -264,4 +383,5 @@ module.exports = {
   getUserById,
   updateUserProfile,
   refreshSession,
+  deleteUser,
 };
