@@ -89,6 +89,7 @@ export default function InputFormPage() {
     parentUnknownTime: false,
     // Agreements
     privacyAgreed: false,
+    overseasProcessingAgreed: false,
     ageVerified: false,
     marketingAgreed: false
   })
@@ -177,7 +178,7 @@ export default function InputFormPage() {
   const canProceedStep2 = formData.year && formData.month && formData.day && formData.calendar
   const canProceedStep3 = formData.unknownTime || (formData.hour && formData.minute)
   const canProceedStep4 = formData.parentRole && formData.parentYear && formData.parentMonth && formData.parentDay
-  const canProceedStep5 = (formData.parentUnknownTime || (formData.parentHour && formData.parentMinute)) && formData.privacyAgreed && formData.ageVerified
+  const canProceedStep5 = (formData.parentUnknownTime || (formData.parentHour && formData.parentMinute)) && formData.privacyAgreed && formData.overseasProcessingAgreed && formData.ageVerified
 
   const childZodiacInfo = getZodiacInfo(formData.year)
   const parentZodiacInfo = getZodiacInfo(formData.parentYear)
@@ -1252,6 +1253,34 @@ export default function InputFormPage() {
                       <div style={{ fontSize: '0.875rem', color: '#6B7280', lineHeight: 1.6 }}>
                         {s.privacyAgreementDesc}
                         <a href="/privacy" style={{ color: '#B8922D', textDecoration: 'underline', marginLeft: '0.25rem' }}>{s.privacyLink}</a>
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* Overseas Processing Agreement */}
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.75rem',
+                    padding: '0.75rem',
+                    borderRadius: '0.75rem',
+                    border: formData.overseasProcessingAgreed ? '2px solid #5A7A66' : '2px solid #E5E7EB',
+                    background: formData.overseasProcessingAgreed ? 'rgba(74, 99, 84, 0.05)' : 'transparent',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.overseasProcessingAgreed}
+                      onChange={e => setFormData(prev => ({ ...prev, overseasProcessingAgreed: e.target.checked }))}
+                      style={{ width: '1.25rem', height: '1.25rem', accentColor: '#5A7A66', marginTop: '0.125rem' }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#1A3D2E' }}>
+                        {s.overseasProcessingAgreement} <span style={{ color: '#A85544' }}>*</span>
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: '#6B7280', lineHeight: 1.6 }}>
+                        {s.overseasProcessingAgreementDesc}
                       </div>
                     </div>
                   </label>
