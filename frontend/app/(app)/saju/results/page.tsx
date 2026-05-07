@@ -224,6 +224,7 @@ export default function ResultsPage() {
   const [premiumLoading, setPremiumLoading] = useState(false)
   const [premiumError, setPremiumError] = useState('')
   const [readingId, setReadingId] = useState<string | null>(null)
+  const [reportAccessToken, setReportAccessToken] = useState<string | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
 
   // Inline payment state
@@ -234,6 +235,7 @@ export default function ResultsPage() {
   const [paymentError, setPaymentError] = useState('')
   const [paypalSdkReady, setPaypalSdkReady] = useState(false)
   const paypalRendered = useRef(false)
+  const paymentAccessTokenRef = useRef('')
 
   // Promo code state
   const [promoCode, setPromoCode] = useState('')
@@ -265,8 +267,9 @@ export default function ResultsPage() {
         createOrder: async () => {
           if (!paymentEmailRef.current.trim()) { setPaymentError('Please enter your email first'); throw new Error('Email required') }
           const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email: paymentEmailRef.current })
-          if (response.success && response.paypalOrderId) {
-            sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId }))
+          if (response.success && response.paypalOrderId && response.paymentAccessToken) {
+            paymentAccessTokenRef.current = response.paymentAccessToken
+            sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken }))
             return response.paypalOrderId
           }
           throw new Error('Order creation failed')
@@ -275,7 +278,11 @@ export default function ResultsPage() {
           setPaymentProcessing(true)
           setPaymentError('')
           try {
-            const captureResult = await apiClient.capturePayPalPayment(data.orderID)
+            const pendingRaw = sessionStorage.getItem('pending_order')
+            const pending = pendingRaw ? JSON.parse(pendingRaw) : null
+            const paymentAccessToken = paymentAccessTokenRef.current || pending?.paymentAccessToken
+            if (!paymentAccessToken) throw new Error('Missing payment access token')
+            const captureResult = await apiClient.capturePayPalPayment(data.orderID, paymentAccessToken)
             if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
               const payment = (captureResult as any).payment
               sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString(), email: paymentEmail }))
@@ -297,23 +304,20 @@ export default function ResultsPage() {
     return () => clearTimeout(timer)
   }, [paypalSdkReady, showPayment, emailValid])
 
-  // Handle promo code submit inline
-  // Poll for reading completion (used when API Gateway times out but Lambda continues)
-  const pollForReading = async (email: string, maxAttempts = 12) => {
+  const pollForReading = async (token: string, maxAttempts = 18) => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
     for (let i = 0; i < maxAttempts; i++) {
-      await new Promise(r => setTimeout(r, 5000)) // 5s between polls
+      await new Promise(r => setTimeout(r, 5000))
       try {
-        const res = await fetch(`${API_URL}/saju/reading-check?email=${encodeURIComponent(email)}`)
+        const res = await fetch(`${API_URL}/saju/reading-check?token=${encodeURIComponent(token)}`)
         const data = await res.json()
-        if (data.status === 'complete' && data.reading) {
-          return data.reading
-        }
-      } catch { /* keep polling */ }
+        if (data.status === 'complete' && data.reading) return data.reading
+      } catch {}
     }
     return null
   }
 
+  // Handle promo code submit inline
   const handleInlinePromo = async () => {
     if (!promoCode.trim() || !paymentEmail.trim()) return
     setPromoValidating(true)
@@ -330,6 +334,8 @@ export default function ResultsPage() {
       const stored = sessionStorage.getItem('sajuInput')
       if (!stored) return
       const input = JSON.parse(stored)
+      const lookup = await apiClient.createReportLookupToken({ email: paymentEmail, promoCode })
+      const reportLookupToken = lookup.reportLookupToken
 
       let reading = null
       try {
@@ -351,14 +357,10 @@ export default function ResultsPage() {
           twinSiblingName: input.twinSiblingName,
         })
       } catch {
-        // API Gateway likely timed out at 30s, but Lambda is still running.
-        // Poll for the result — Lambda will save to DB when done.
-        reading = await pollForReading(paymentEmail)
+        reading = await pollForReading(reportLookupToken)
         if (!reading) {
-          // Polling failed — try one more extended poll cycle on reload
-          sessionStorage.setItem('pending_promo_email', paymentEmail)
-          sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail }))
-          setPaymentError('Report is being generated. This page will refresh automatically...')
+          sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, reportLookupToken }))
+          setPaymentError('Report is still being generated. This page will refresh automatically.')
           setPaymentProcessing(false)
           setPromoValidating(false)
           setTimeout(() => window.location.reload(), 10000)
@@ -368,7 +370,7 @@ export default function ResultsPage() {
 
       // Store and reload to show premium
       sessionStorage.setItem('promo_reading', JSON.stringify(reading))
-      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail }))
+      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, reportLookupToken }))
       setShowPayment(false)
       window.location.reload()
     } catch (err: any) {
@@ -402,17 +404,13 @@ export default function ResultsPage() {
           r = JSON.parse(promoReadingRaw)
           sessionStorage.removeItem('promo_reading') // One-time use
         } else if (completed.orderId === 'promo') {
-          // Promo flow after reload — poll for the reading by email
-          const promoEmail = sessionStorage.getItem('pending_promo_email') || completed.email
-          if (promoEmail) {
-            r = await pollForReading(promoEmail, 18) // 18 attempts = 90s
-            sessionStorage.removeItem('pending_promo_email')
-            if (!r) {
-              setPremiumError('Report generation is still in progress. Please refresh the page in a moment.')
-              return
-            }
-          } else {
-            setPremiumError('Could not find your report. Please try again.')
+          if (!completed.reportLookupToken) {
+            setPremiumError('Report generation is still in progress. Please check your email shortly.')
+            return
+          }
+          r = await pollForReading(completed.reportLookupToken)
+          if (!r) {
+            setPremiumError('Report generation is still in progress. Please refresh this page in a moment.')
             return
           }
         } else {
@@ -429,7 +427,10 @@ export default function ResultsPage() {
             }
           }
 
-          const reading = await apiClient.getFullReading(completed.orderId, {
+          const lookup = await apiClient.createReportLookupToken({ email: completed.email, orderId: completed.orderId })
+          let reading
+          try {
+            reading = await apiClient.getFullReading(completed.orderId, {
             birthDate: input.birthDate,
             birthTime: input.birthTime,
             gender: input.gender,
@@ -447,13 +448,24 @@ export default function ResultsPage() {
             parentGender: input.parentGender,
             // Email for PDF delivery
             deliveryEmail: completed.email,
-          })
+            })
+          } catch {
+            reading = await pollForReading(lookup.reportLookupToken)
+            if (!reading) {
+              setPremiumError('Report generation is still in progress. Please refresh this page in a moment.')
+              return
+            }
+          }
           r = reading
         }
 
         // Store reading ID for PDF download (API returns readingId, DB row has id)
         const rid = r.readingId || r.id
         if (rid) setReadingId(rid)
+        if (r.reportAccessToken) {
+          setReportAccessToken(r.reportAccessToken)
+          sessionStorage.setItem('report_access_token', r.reportAccessToken)
+        }
 
         // Backend returns aiInterpretation: { fullText, sections, metadata }
         if (r.aiInterpretation?.fullText) {
@@ -475,10 +487,11 @@ export default function ResultsPage() {
   }, [result, inputData])
 
   const handlePdfExport = useCallback(async () => {
-    if (!readingId) return
+    const token = reportAccessToken || sessionStorage.getItem('report_access_token')
+    if (!readingId || !token) return
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
-      const response = await fetch(`${API_URL}/saju/reading/${readingId}/pdf`)
+      const response = await fetch(`${API_URL}/saju/reading/${readingId}/pdf?token=${encodeURIComponent(token)}`)
       if (!response.ok) throw new Error('PDF download failed')
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
@@ -493,7 +506,7 @@ export default function ResultsPage() {
       console.error('PDF export error:', err)
       alert(sr.pdfError)
     }
-  }, [readingId, inputData, sr.pdfError])
+  }, [readingId, reportAccessToken, inputData, sr.pdfError])
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -755,7 +768,7 @@ export default function ResultsPage() {
             <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {readingId && (
+            {readingId && reportAccessToken && (
               <button
                 onClick={handlePdfExport}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: '10px', border: '1px solid #EBE5DF', background: 'none', cursor: 'pointer' }}

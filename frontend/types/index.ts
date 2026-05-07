@@ -171,6 +171,8 @@ export interface SajuPreview {
 
 export interface SajuReading {
   id: string;
+  readingId?: string;
+  reportAccessToken?: string;
   user_id: string;
   order_id: string;
   birth_date: string;
@@ -215,7 +217,9 @@ export interface PayPalPaymentRequest {
 export interface PayPalPaymentResponse {
   success: boolean;
   orderId: string;
+  paymentId?: string;
   paypalOrderId: string;
+  paymentAccessToken: string;
   approvalUrl: string;
   amount: number;
   currency: string;
@@ -241,6 +245,11 @@ export interface PromoCalculateRequest extends BirthInfo {
   promoCode: string;
   email: string;
   subjectName?: string;
+}
+
+export interface ReportLookupTokenResponse {
+  success: boolean;
+  reportLookupToken: string;
 }
 
 // ---------------------------------------------

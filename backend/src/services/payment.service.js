@@ -3,7 +3,21 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const axios = require('axios');
-const logger = require('../utils/logger');
+const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
+
+function toClientPayment(payment) {
+  if (!payment) return null;
+  return {
+    id: payment.id,
+    order_id: payment.order_id,
+    amount: payment.amount,
+    currency: payment.currency,
+    status: payment.status,
+    payment_method: payment.payment_method,
+    confirmed_at: payment.confirmed_at,
+    created_at: payment.created_at,
+  };
+}
 
 /**
  * Payment Service
@@ -123,6 +137,14 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
       paypalOrderId: paypalOrder.id,
     });
 
+    const paymentAccessToken = createAccessToken({
+      purpose: 'payment',
+      paymentId: payment.id,
+      orderId,
+      paypalOrderId: paypalOrder.id,
+      email: email ? email.toLowerCase().trim() : undefined,
+    });
+
     return {
       success: true,
       orderId: orderId,
@@ -131,6 +153,7 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
       currency: 'USD',
       paypalOrderId: paypalOrder.id,
       approvalUrl: approvalLink ? approvalLink.href : null,
+      paymentAccessToken,
     };
 
   } catch (error) {
@@ -144,8 +167,13 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
  * @param {string} paypalOrderId - PayPal order ID
  * @returns {object} Capture result
  */
-async function capturePayPalPayment(paypalOrderId) {
+async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
   try {
+    verifyAccessToken(paymentAccessToken, {
+      purpose: 'payment',
+      paypalOrderId,
+    });
+
     // Idempotency: check if payment is already completed
     const { data: existing } = await supabaseAdmin
       .from('payments')
@@ -160,7 +188,7 @@ async function capturePayPalPayment(paypalOrderId) {
         .select('*')
         .eq('payment_key', paypalOrderId)
         .single();
-      return { success: true, payment: fullPayment, alreadyCaptured: true };
+      return { success: true, payment: toClientPayment(fullPayment), alreadyCaptured: true };
     }
 
     // Get PayPal access token
@@ -219,12 +247,15 @@ async function capturePayPalPayment(paypalOrderId) {
 
     return {
       success: true,
-      payment: payment,
-      paypalCapture: captureData,
+      payment: toClientPayment(payment),
     };
 
   } catch (error) {
     console.error('[Payment Service] Capture PayPal payment error:', error);
+
+    if (error.message && error.message.includes('access token')) {
+      throw error;
+    }
 
     // Only mark as failed if not already completed (prevent downgrading successful payments)
     const { data: currentPayment } = await supabaseAdmin

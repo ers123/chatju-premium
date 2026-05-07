@@ -5,6 +5,7 @@ const { getAIService } = require('./ai.service');
 const { supabaseAdmin, handleSupabaseError } = require('../config/supabase');
 const { calculateFullFortuneCycles } = require('./daeun.service');
 const { calculateMansae } = require('../utils/mansae-wrapper');
+const { createAccessToken } = require('../utils/accessToken');
 
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
@@ -289,6 +290,13 @@ async function generateSajuReading(params) {
 
     console.log('[Saju Service] Reading saved to database:', reading.id);
 
+    const reportAccessToken = createAccessToken({
+      purpose: 'report',
+      readingId: reading.id,
+      email: deliveryEmail ? deliveryEmail.toLowerCase().trim() : undefined,
+      orderId: orderId || undefined,
+    }, 24 * 60 * 60);
+
     // Step 6: Fire-and-forget email delivery (if deliveryEmail provided)
     if (deliveryEmail) {
       try {
@@ -302,6 +310,7 @@ async function generateSajuReading(params) {
           birthDate,
           gender,
           language,
+          reportAccessToken,
         })
           .then(async () => {
             await supabaseAdmin
@@ -325,6 +334,7 @@ async function generateSajuReading(params) {
     // Step 7: Return complete reading with database ID
     return {
       readingId: reading.id, // Real UUID from database!
+      reportAccessToken,
       manseryeok: manseryeokResult,
       fortuneCycles: fortuneCycles, // Full 대운/세운 data for Premium
       aiInterpretation: aiInterpretation,

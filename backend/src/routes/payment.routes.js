@@ -73,15 +73,14 @@ router.post('/paypal/create', paymentCreationLimiter, validatePaymentRequest, as
  * Capture PayPal payment after user approval
  * Called from frontend after PayPal approval
  *
- * SECURITY: Requires authentication to prevent unauthorized payment capture
- * Verifies payment ownership before capturing to prevent race conditions
+ * SECURITY: Requires a server-issued paymentAccessToken bound to the PayPal order.
  *
  * Body:
  * - paypalOrderId: string (required) - PayPal order ID
  */
 router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, async (req, res) => {
   try {
-    const { paypalOrderId } = req.body;
+    const { paypalOrderId, paymentAccessToken } = req.body;
 
     if (!paypalOrderId) {
       return res.status(400).json({
@@ -91,7 +90,14 @@ router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, asy
     }
 
     // Capture payment — PayPal handles payment authentication
-    const result = await paymentService.capturePayPalPayment(paypalOrderId);
+    if (!paymentAccessToken) {
+      return res.status(401).json({
+        error: 'Payment access token is required',
+        code: 'MISSING_PAYMENT_ACCESS_TOKEN',
+      });
+    }
+
+    const result = await paymentService.capturePayPalPayment(paypalOrderId, paymentAccessToken);
 
     res.status(200).json(result);
 
@@ -102,6 +108,13 @@ router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, asy
       return res.status(404).json({
         error: 'Payment not found',
         code: 'PAYMENT_NOT_FOUND',
+      });
+    }
+
+    if (error.message && error.message.includes('access token')) {
+      return res.status(401).json({
+        error: 'Invalid or expired payment access token',
+        code: 'INVALID_PAYMENT_ACCESS_TOKEN',
       });
     }
 

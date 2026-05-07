@@ -32,6 +32,7 @@ const REPLY_TO = 'support@somyung.cc';
  * @param {string} params.birthDate - Birth date
  * @param {string} params.gender - Gender
  * @param {string} params.language - Language code
+ * @param {string} [params.reportAccessToken] - Short-lived report access token
  * @param {Buffer} [params.pdfBuffer] - Optional PDF attachment
  */
 async function sendReportEmail(params) {
@@ -44,6 +45,7 @@ async function sendReportEmail(params) {
     birthDate,
     gender,
     language = 'ko',
+    reportAccessToken,
     pdfBuffer,
   } = params;
 
@@ -63,6 +65,7 @@ async function sendReportEmail(params) {
     birthDate,
     gender,
     isKorean,
+    reportAccessToken,
   });
 
   const emailPayload = {
@@ -121,7 +124,7 @@ async function sendReportEmail(params) {
 /**
  * Build HTML email template for report delivery
  */
-function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpretation, birthDate, gender, isKorean }) {
+function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpretation, birthDate, gender, isKorean, reportAccessToken }) {
   const pillars = manseryeok?.pillars;
   const genderLabel = isKorean
     ? (gender === 'male' ? '남아' : '여아')
@@ -131,6 +134,9 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
   const sections = aiInterpretation?.sections || {};
   const summaryText = sections.executiveSummary || sections.preamble || aiInterpretation?.fullText?.substring(0, 500) || '';
   const cleanSummary = summaryText.replace(/[#*_`]/g, '').substring(0, 600);
+  const reportUrl = reportAccessToken
+    ? `https://somyung.cc/reading/${readingId}?token=${encodeURIComponent(reportAccessToken)}`
+    : `https://somyung.cc/reading/${readingId}`;
 
   // Table-based email layout for maximum email client compatibility
   const pillarHtml = pillars ? `
@@ -206,7 +212,7 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
               ${cleanSummary}...
             </td></tr>
             <tr><td align="center">
-              <a href="https://somyung.pages.dev/reading/${readingId}"
+              <a href="${reportUrl}"
                  style="display: inline-block; background: #3D3028; color: #C5A059; padding: 14px 36px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 15px;">
                 ${isKorean ? '전체 리포트 보기' : 'View Full Report'}
               </a>

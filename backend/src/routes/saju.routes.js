@@ -9,6 +9,7 @@ const promoService = require('../services/promo.service');
 const { validateBirthInfo, validateUUIDParam, sanitizeStrings } = require('../middleware/validation');
 const { sajuPreviewLimiter, sajuPremiumLimiter, readLimiter } = require('../middleware/rateLimit');
 const { calculateMansae } = require('../utils/mansae-wrapper');
+const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
 
 // Apply sanitization to all routes
 router.use(sanitizeStrings);
@@ -426,6 +427,36 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
   }
 });
 
+router.post('/report-lookup-token', readLimiter, async (req, res) => {
+  try {
+    const { email, orderId, promoCode } = req.body;
+    if (!email || (!orderId && !promoCode)) {
+      return res.status(400).json({ error: 'Email and orderId or promoCode required', code: 'MISSING_LOOKUP_SCOPE' });
+    }
+
+    const claims = {
+      purpose: 'report_lookup',
+      email: email.toLowerCase().trim(),
+      orderId: orderId || undefined,
+      promoCodeId: undefined,
+    };
+
+    if (promoCode) {
+      const promoResult = await promoService.validatePromoCode(promoCode);
+      if (!promoResult.valid) {
+        return res.status(400).json({ error: promoResult.error, code: 'INVALID_PROMO' });
+      }
+      claims.promoCodeId = promoResult.promoCode.id;
+    }
+
+    const reportLookupToken = createAccessToken(claims, 2 * 60 * 60);
+    return res.status(200).json({ success: true, reportLookupToken });
+  } catch (error) {
+    console.error('[Saju Route] Report lookup token error:', error);
+    return res.status(500).json({ error: 'Failed to create report lookup token', code: 'REPORT_LOOKUP_TOKEN_ERROR' });
+  }
+});
+
 /**
  * GET /saju/reading-check
  * Poll for a completed reading by email (used after API Gateway timeout)
@@ -433,22 +464,41 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
  */
 router.get('/reading-check', readLimiter, async (req, res) => {
   try {
-    const { email } = req.query;
-    if (!email) {
-      return res.status(400).json({ error: 'Email required', code: 'MISSING_EMAIL' });
+    const { token } = req.query;
+    if (!token) {
+      return res.status(401).json({ error: 'Report access token required', code: 'MISSING_REPORT_ACCESS_TOKEN' });
     }
 
     const { supabaseAdmin } = require('../config/supabase');
+    let tokenPayload;
+    try {
+      tokenPayload = verifyAccessToken(token, { purpose: 'report' });
+    } catch {
+      tokenPayload = verifyAccessToken(token, { purpose: 'report_lookup' });
+    }
 
-    // Find the most recent reading for this email (created in last 5 minutes).
-    // Normalize to match the lowercase+trim applied at write time (saju.service.js).
-    const normalizedEmail = email.toLowerCase().trim();
-    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    const { data: reading, error } = await supabaseAdmin
-      .from('readings')
-      .select('*')
-      .eq('delivery_email', normalizedEmail)
-      .gte('created_at', fiveMinAgo)
+    let query = supabaseAdmin.from('readings').select('*');
+
+    if (tokenPayload.purpose === 'report') {
+      if (!tokenPayload.readingId) {
+        return res.status(401).json({ error: 'Invalid report access token', code: 'INVALID_REPORT_ACCESS_TOKEN' });
+      }
+      query = query.eq('id', tokenPayload.readingId);
+    } else if (tokenPayload.orderId) {
+      const { data: payment } = await supabaseAdmin
+        .from('payments')
+        .select('id')
+        .eq('order_id', tokenPayload.orderId)
+        .single();
+      if (!payment) return res.status(200).json({ status: 'pending' });
+      query = query.eq('payment_id', payment.id);
+    } else {
+      query = query
+        .eq('delivery_email', tokenPayload.email)
+        .eq('promo_code_id', tokenPayload.promoCodeId);
+    }
+
+    const { data: reading, error } = await query
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
@@ -457,9 +507,21 @@ router.get('/reading-check', readLimiter, async (req, res) => {
       return res.status(200).json({ status: 'pending' });
     }
 
-    return res.status(200).json({ status: 'complete', reading });
+    const reportAccessToken = tokenPayload.purpose === 'report'
+      ? token
+      : createAccessToken({
+          purpose: 'report',
+          readingId: reading.id,
+          email: reading.delivery_email || tokenPayload.email,
+          orderId: tokenPayload.orderId,
+        }, 24 * 60 * 60);
+
+    return res.status(200).json({ status: 'complete', reading: { ...reading, reportAccessToken } });
   } catch (error) {
     console.error('[Saju Route] Reading check error:', error);
+    if (error.message && error.message.includes('access token')) {
+      return res.status(401).json({ error: 'Invalid or expired report access token', code: 'INVALID_REPORT_ACCESS_TOKEN' });
+    }
     return res.status(200).json({ status: 'pending' });
   }
 });
@@ -471,11 +533,20 @@ router.get('/reading-check', readLimiter, async (req, res) => {
 router.get('/reading/:id/pdf', readLimiter, async (req, res) => {
   try {
     const { id } = req.params;
+    const { token } = req.query;
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {
       return res.status(400).json({ error: 'Invalid reading ID' });
     }
+    if (!token) {
+      return res.status(401).json({ error: 'Report access token required' });
+    }
+
+    verifyAccessToken(token, {
+      purpose: 'report',
+      readingId: id,
+    });
 
     const { supabaseAdmin } = require('../config/supabase');
     const { data: reading, error } = await supabaseAdmin
@@ -505,6 +576,9 @@ router.get('/reading/:id/pdf', readLimiter, async (req, res) => {
     res.send(pdfBuffer);
   } catch (error) {
     console.error('[Saju Route] PDF download error:', error);
+    if (error.message && error.message.includes('access token')) {
+      return res.status(401).json({ error: 'Invalid or expired report access token' });
+    }
     res.status(500).json({ error: 'Failed to generate PDF' });
   }
 });

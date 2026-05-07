@@ -72,6 +72,7 @@ function PaymentContent() {
   const [sdkReady, setSdkReady] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const buttonsRenderedRef = useRef(false)
+  const paymentAccessTokenRef = useRef('')
 
   const [promoCode, setPromoCode] = useState('')
   const [promoResult, setPromoResult] = useState<PromoValidateResponse | null>(null)
@@ -108,8 +109,9 @@ function PaymentContent() {
         createOrder: async () => {
           try {
             const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email })
-            if (response.success && response.paypalOrderId) {
-              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, amount: PRODUCT_AMOUNT }))
+            if (response.success && response.paypalOrderId && response.paymentAccessToken) {
+              paymentAccessTokenRef.current = response.paymentAccessToken
+              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken, amount: PRODUCT_AMOUNT }))
               return response.paypalOrderId
             }
             throw new Error(t.payment.errorCreateOrder)
@@ -121,7 +123,11 @@ function PaymentContent() {
         onApprove: async (data: { orderID: string }) => {
           setIsProcessing(true); setError('')
           try {
-            const result = await apiClient.capturePayPalPayment(data.orderID)
+            const pendingRaw = sessionStorage.getItem('pending_order')
+            const pending = pendingRaw ? JSON.parse(pendingRaw) : null
+            const paymentAccessToken = paymentAccessTokenRef.current || pending?.paymentAccessToken
+            if (!paymentAccessToken) throw new Error('Missing payment access token')
+            const result = await apiClient.capturePayPalPayment(data.orderID, paymentAccessToken)
             if (result && (result as any).success && (result as any).payment) {
               const payment = (result as any).payment
               sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString(), email }))
@@ -159,8 +165,8 @@ function PaymentContent() {
           onClick: async () => {
             try {
               const res = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email })
-              if (!res.success || !res.paypalOrderId) throw new Error('Order creation failed')
-              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, amount: PRODUCT_AMOUNT }))
+              if (!res.success || !res.paypalOrderId || !res.paymentAccessToken) throw new Error('Order creation failed')
+              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, paymentAccessToken: res.paymentAccessToken, amount: PRODUCT_AMOUNT }))
 
               const paymentDataRequest = {
                 apiVersion: 2, apiVersionMinor: 0,
@@ -174,7 +180,7 @@ function PaymentContent() {
                 orderId: res.paypalOrderId,
                 paymentMethodData: paymentData.paymentMethodData,
               })
-              const captureResult = await apiClient.capturePayPalPayment(res.paypalOrderId)
+              const captureResult = await apiClient.capturePayPalPayment(res.paypalOrderId, res.paymentAccessToken)
               if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
                 const payment = (captureResult as any).payment
                 sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString() }))
@@ -215,6 +221,7 @@ function PaymentContent() {
       const sajuInput = sessionStorage.getItem('sajuInput')
       if (!sajuInput) { setError(t.payment.errorNoBirthInfo); setIsProcessing(false); return }
       const birthInfo = JSON.parse(sajuInput)
+      const lookup = await apiClient.createReportLookupToken({ email: email.trim(), promoCode: promoCode.trim() })
       // Fire request — don't await response (API Gateway may timeout at 30s)
       // Lambda continues running and will send email regardless
       apiClient.calculateWithPromo({
@@ -228,7 +235,7 @@ function PaymentContent() {
 
       // Wait a moment for the request to be received by server, then redirect
       await new Promise(r => setTimeout(r, 3000))
-      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: `promo_${promoCode.trim()}`, promoCode: promoCode.trim(), email: email.trim(), completedAt: new Date().toISOString() }))
+      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', promoCode: promoCode.trim(), email: email.trim(), reportLookupToken: lookup.reportLookupToken, completedAt: new Date().toISOString() }))
       router.push('/payment/success')
     } catch (err: any) { setError(err.error || t.payment.errorReportGenerate) }
     finally { setIsProcessing(false) }

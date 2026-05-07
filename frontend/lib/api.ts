@@ -17,6 +17,7 @@ import type {
   ApiError,
   PromoValidateResponse,
   PromoCalculateRequest,
+  ReportLookupTokenResponse,
 } from '@/types';
 
 // ---------------------------------------------
@@ -197,9 +198,10 @@ export const apiClient = {
   /**
    * Capture PayPal payment (after user approval)
    */
-  capturePayPalPayment: async (paypalOrderId: string): Promise<Payment> => {
+  capturePayPalPayment: async (paypalOrderId: string, paymentAccessToken: string): Promise<Payment> => {
     const response = await api.post<Payment>('/payment/paypal/capture', {
       paypalOrderId,
+      paymentAccessToken,
     });
     return response.data;
   },
@@ -241,6 +243,11 @@ export const apiClient = {
    */
   calculateWithPromo: async (data: PromoCalculateRequest): Promise<SajuReading> => {
     const response = await api.post<SajuReading>('/saju/calculate-promo', data);
+    return response.data;
+  },
+
+  createReportLookupToken: async (data: { email: string; orderId?: string; promoCode?: string }): Promise<ReportLookupTokenResponse> => {
+    const response = await api.post<ReportLookupTokenResponse>('/saju/report-lookup-token', data);
     return response.data;
   },
 
