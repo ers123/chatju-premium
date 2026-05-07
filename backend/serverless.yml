@@ -27,6 +27,22 @@ provider:
   region: ${opt:region, 'ap-northeast-2'} # Seoul region (Korea)
   memorySize: 1024 # MB - 1024 needed for CJK font rendering in PDF
   timeout: 60 # seconds - AI generation + PDF + email can take 40-50s
+  httpApi:
+    cors:
+      allowedOrigins:
+        - https://somyung.cc
+        - https://somyung.pages.dev
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      allowCredentials: true
 
   # Environment variables (CRITICAL: Set these in AWS Console or use .env)
   environment:
@@ -59,8 +75,11 @@ provider:
     # Email Service (Resend)
     RESEND_API_KEY: ${env:RESEND_API_KEY, ''}
 
+    # Signed report/payment access tokens
+    ACCESS_TOKEN_SECRET: ${env:ACCESS_TOKEN_SECRET, ''}
+
     # CORS Configuration (production only allows production domain)
-    CORS_ORIGIN: https://somyung.pages.dev
+    CORS_ORIGIN: https://somyung.cc
 
   # IAM Role Statements (permissions for Lambda)
   iam:
@@ -86,35 +105,11 @@ functions:
       - httpApi:
           path: /{proxy+}
           method: ANY
-          cors:
-            allowedOrigins:
-              - https://somyung.pages.dev
-            allowedHeaders:
-              - Content-Type
-              - Authorization
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - PATCH
-              - DELETE
-              - OPTIONS
-            allowCredentials: true
 
       # Root path
       - httpApi:
           path: /
           method: ANY
-          cors:
-            allowedOrigins:
-              - https://somyung.pages.dev
-            allowedHeaders:
-              - Content-Type
-              - Authorization
-            allowedMethods:
-              - GET
-              - POST
-            allowCredentials: true
 
 # ============================================
 # Plugins
