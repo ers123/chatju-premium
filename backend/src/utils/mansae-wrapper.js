@@ -518,6 +518,29 @@ function getTraditionalMonthInfo(year, month, day, hour = 12, minute = 0) {
   return { monthIndex: 11, termName: '소한', termTime: null };
 }
 
+function getAdjacentMonthTerms(year, month, day, hour = 12, minute = 0) {
+  if (![year, month, day, hour, minute].every(Number.isFinite)) {
+    return { previous: null, next: null };
+  }
+
+  const kstDate = buildKstDate(year, month, day, hour, minute);
+  const terms = [year - 1, year, year + 1]
+    .flatMap(getMonthTermsForYear)
+    .sort((a, b) => a.time.getTime() - b.time.getTime());
+
+  let previous = null;
+  let next = null;
+  for (const term of terms) {
+    if (term.time.getTime() <= kstDate.getTime()) previous = term;
+    if (term.time.getTime() > kstDate.getTime()) {
+      next = term;
+      break;
+    }
+  }
+
+  return { previous, next };
+}
+
 /**
  * Calculate month pillar based on SOLAR TERMS (節氣)
  * The month pillar is determined by which solar term period the date falls into,
@@ -864,6 +887,7 @@ function calculateMansae(birthDate, birthTime, gender, locationOptions = {}) {
 
 module.exports = {
   calculateMansae,
+  getAdjacentMonthTerms,
   resolveLocation,
   getSolarTimeCorrection,
   getKoreaHistoricalTimezone,

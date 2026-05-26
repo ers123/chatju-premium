@@ -1,6 +1,7 @@
 // backend/src/services/daeun.service.js
 // 대운(大運) 및 세운(歲運) 계산 서비스
 // Premium Version - Comprehensive Fortune Cycle Calculations
+const { getAdjacentMonthTerms } = require('../utils/mansae-wrapper');
 
 /**
  * 천간 (10 Heavenly Stems)
@@ -28,24 +29,6 @@ const ELEMENT_RELATIONS = {
   금: { generates: '수', isGeneratedBy: '토', controls: '목', isControlledBy: '화' },
   수: { generates: '목', isGeneratedBy: '금', controls: '화', isControlledBy: '토' },
 };
-
-/**
- * 절기 정보 (월별 절기 시작일 대략적 기준)
- */
-const SOLAR_TERMS = [
-  { month: 1, name: '입춘', approxDay: 4 },
-  { month: 2, name: '경칩', approxDay: 6 },
-  { month: 3, name: '청명', approxDay: 5 },
-  { month: 4, name: '입하', approxDay: 6 },
-  { month: 5, name: '망종', approxDay: 6 },
-  { month: 6, name: '소서', approxDay: 7 },
-  { month: 7, name: '입추', approxDay: 8 },
-  { month: 8, name: '백로', approxDay: 8 },
-  { month: 9, name: '한로', approxDay: 8 },
-  { month: 10, name: '입동', approxDay: 8 },
-  { month: 11, name: '대설', approxDay: 7 },
-  { month: 12, name: '소한', approxDay: 6 },
-];
 
 /**
  * 십신 (Ten Gods) 계산
@@ -154,44 +137,19 @@ function getDaeunDirection(yearStemYinYang, gender) {
  * 대운 시작 나이 계산
  * @param {string} birthDate - 생년월일 (YYYY-MM-DD)
  * @param {string} direction - 'forward' 또는 'backward'
+ * @param {string} birthTime - 출생시각 (HH:MM)
  * @returns {Object} 대운 시작 정보
  */
-function calculateDaeunStartAge(birthDate, direction) {
-  const birth = new Date(birthDate);
-  const birthMonth = birth.getMonth(); // 0-indexed
-  const birthDay = birth.getDate();
-
-  // 해당 월의 절기 찾기
-  const currentTermInfo = SOLAR_TERMS[birthMonth];
-  const nextTermInfo = SOLAR_TERMS[(birthMonth + 1) % 12];
-
-  let daysToTerm;
-
-  if (direction === 'forward') {
-    // 순행: 다음 절기까지 일수
-    if (birthMonth === 11) {
-      // 12월이면 다음해 1월 절기
-      const nextYear = birth.getFullYear() + 1;
-      const nextTerm = new Date(nextYear, 0, SOLAR_TERMS[0].approxDay);
-      daysToTerm = Math.ceil((nextTerm - birth) / (1000 * 60 * 60 * 24));
-    } else {
-      const nextTerm = new Date(birth.getFullYear(), birthMonth + 1, nextTermInfo.approxDay);
-      daysToTerm = Math.ceil((nextTerm - birth) / (1000 * 60 * 60 * 24));
-    }
-  } else {
-    // 역행: 이전 절기까지 일수
-    if (birthDay >= currentTermInfo.approxDay) {
-      // 절기 이후 출생: 현재 월 절기까지
-      daysToTerm = birthDay - currentTermInfo.approxDay;
-    } else {
-      // 절기 이전 출생: 이전 월 절기까지
-      const prevMonth = birthMonth === 0 ? 11 : birthMonth - 1;
-      const prevTermInfo = SOLAR_TERMS[prevMonth];
-      const prevYear = birthMonth === 0 ? birth.getFullYear() - 1 : birth.getFullYear();
-      const prevTerm = new Date(prevYear, prevMonth, prevTermInfo.approxDay);
-      daysToTerm = Math.ceil((birth - prevTerm) / (1000 * 60 * 60 * 24));
-    }
-  }
+function calculateDaeunStartAge(birthDate, direction, birthTime = '12:00') {
+  const [year, month, day] = birthDate.split('-').map(Number);
+  const [hour = 12, minute = 0] = birthTime.split(':').map(Number);
+  const birth = new Date(Date.UTC(year, month - 1, day, hour, minute));
+  const adjacentTerms = getAdjacentMonthTerms(year, month, day, hour, minute);
+  const targetTerm = direction === 'forward' ? adjacentTerms.next : adjacentTerms.previous;
+  const diffMs = targetTerm
+    ? Math.abs(targetTerm.time.getTime() - birth.getTime())
+    : 0;
+  const daysToTerm = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
   // 3일 = 1세 환산
   const startAge = Math.round(daysToTerm / 3);
@@ -201,6 +159,8 @@ function calculateDaeunStartAge(birthDate, direction) {
     daysToTerm: daysToTerm,
     direction: direction,
     directionKorean: direction === 'forward' ? '순행' : '역행',
+    targetTerm: targetTerm?.name || null,
+    targetTermTime: targetTerm?.time ? targetTerm.time.toISOString() : null,
   };
 }
 
@@ -522,7 +482,9 @@ function calculateFullFortuneCycles(manseryeokResult, birthDate, gender, current
   const direction = getDaeunDirection(yearStemYinYang, gender);
 
   // 대운 시작 나이 계산
-  const daeunStart = calculateDaeunStartAge(birthDate, direction);
+  const cycleBirthDate = manseryeokResult.corrections?.adjustedDate || birthDate;
+  const cycleBirthTime = manseryeokResult.corrections?.adjustedTime || manseryeokResult.input?.birthTime || '12:00';
+  const daeunStart = calculateDaeunStartAge(cycleBirthDate, direction, cycleBirthTime);
 
   // 월주 정보 추출
   const monthPillar = {
