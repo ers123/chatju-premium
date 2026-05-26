@@ -1129,6 +1129,9 @@ export default function ResultsPage() {
                     }}
                     style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.875rem', boxSizing: 'border-box' as const, marginBottom: '0.75rem' }}
                   />
+                  <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 0.75rem' }}>
+                    {(t.payment as any).paypalVerificationNote || 'PayPal may still ask for payment verification details inside its secure checkout.'}
+                  </p>
 
                   {/* Step 2: Payment options — only show when email is entered */}
                   {paymentEmail.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentEmail) ? (
@@ -1161,11 +1164,14 @@ export default function ResultsPage() {
                       <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
                         {(t.payment as any).orPayWith || 'Or pay with'}
                       </div>
+                      <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 1.6, margin: '0 0 0.75rem' }}>
+                        {(t.payment as any).paypalWalletOnlyNote || 'For this launch test, please use PayPal wallet checkout. Guest card checkout is temporarily hidden while we verify card acceptance.'}
+                      </p>
 
                       {/* PayPal buttons */}
                       <div id="inline-paypal-container" />
                       <Script
-                        src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay`}
+                        src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay&disable-funding=card,credit,paylater&commit=true`}
                         onReady={() => setPaypalSdkReady(true)}
                       />
                     </>

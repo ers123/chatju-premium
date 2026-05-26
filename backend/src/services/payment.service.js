@@ -109,7 +109,8 @@ async function createPayPalPayment(userId, amount, description = PREMIUM_SAJU_PR
         application_context: {
           return_url: `${process.env.FRONTEND_URL}/payment/success`,
           cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
-          brand_name: 'ChatJu Premium',
+          brand_name: 'SoMyung',
+          shipping_preference: 'NO_SHIPPING',
           user_action: 'PAY_NOW'
         }
       },

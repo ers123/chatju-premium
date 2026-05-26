@@ -80,9 +80,22 @@ export default function CookieConsent() {
   if (!cc) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6">
-      <div className="mx-auto max-w-lg rounded-xl bg-white shadow-xl border border-gray-200 p-4 md:p-5">
-        <p className="text-sm text-gray-600 mb-3">
+    <div
+      className="fixed z-50 px-4 md:px-6"
+      style={{
+        left: 0,
+        right: 0,
+        bottom: 'calc(5.5rem + env(safe-area-inset-bottom, 0px))',
+        display: 'flex',
+        justifyContent: 'center',
+        pointerEvents: 'none',
+      }}
+    >
+      <div
+        className="mx-auto max-w-md rounded-xl bg-white shadow-xl border border-gray-200 p-4 md:p-5"
+        style={{ pointerEvents: 'auto', width: 'min(28rem, calc(100vw - 2rem))' }}
+      >
+        <p className="text-sm text-gray-700 mb-3 leading-relaxed">
           {cc.message}{' '}
           <Link href={localizedLegalPath(lang, 'privacy')} className="underline text-gray-800 hover:text-black">
             {cc.learnMore}

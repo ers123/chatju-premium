@@ -293,7 +293,7 @@ function PaymentContent() {
             strategy="afterInteractive"
           />
           <Script
-            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay&enable-funding=venmo`}
+            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay&enable-funding=venmo&disable-funding=card,credit,paylater&commit=true`}
             strategy="afterInteractive"
             onLoad={() => setSdkReady(true)}
           />
@@ -448,10 +448,16 @@ function PaymentContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 style={s.input}
               />
+              <p style={{ ...s.textMuted, margin: '0.75rem 0 0', lineHeight: 1.6 }}>
+                {(t.payment as any).paypalVerificationNote || 'PayPal may still ask for payment verification details inside its secure checkout.'}
+              </p>
             </div>
 
             <div style={{ ...s.card, opacity: email.trim() ? 1 : 0.5, pointerEvents: email.trim() ? 'auto' : 'none' }}>
               <h2 style={s.h2}>{t.payment.paymentMethodTitle}</h2>
+              <p style={{ ...s.textMuted, margin: '-0.25rem 0 0.75rem', lineHeight: 1.6 }}>
+                {(t.payment as any).paypalWalletOnlyNote || 'For this launch test, please use PayPal wallet checkout. Guest card checkout is temporarily hidden while we verify card acceptance.'}
+              </p>
               {isProcessing && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 0' }}>
                   <div style={{ ...s.spinner, width: '2rem', height: '2rem', borderWidth: '3px', marginRight: '0.75rem' }} />
