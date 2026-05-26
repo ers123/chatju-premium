@@ -10,7 +10,7 @@
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
-  language_preference TEXT DEFAULT 'ko' CHECK (language_preference IN ('ko', 'en', 'ja', 'zh')),
+  language_preference TEXT DEFAULT 'ko' CHECK (language_preference IN ('ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th')),
   timezone TEXT DEFAULT 'Asia/Seoul',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -66,7 +66,7 @@ CREATE POLICY "Service role can update payments" ON payments
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS readings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   payment_id UUID REFERENCES payments(id) ON DELETE SET NULL,
 
   -- Birth information
@@ -82,8 +82,8 @@ CREATE TABLE IF NOT EXISTS readings (
   ai_interpretation JSONB NOT NULL,
 
   -- Metadata
-  language TEXT DEFAULT 'ko' CHECK (language IN ('ko', 'en', 'ja', 'zh')),
-  product_type TEXT DEFAULT 'basic' CHECK (product_type IN ('basic', 'deluxe', 'free')),
+  language TEXT DEFAULT 'ko' CHECK (language IN ('ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th')),
+  product_type TEXT DEFAULT 'basic' CHECK (product_type IN ('basic', 'deluxe', 'free', 'premium_saju')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

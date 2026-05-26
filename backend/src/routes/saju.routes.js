@@ -144,12 +144,13 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
 /**
  * POST /saju/calculate
  * Generate premium Saju reading (FULL VERSION)
- * Requires: JWT authentication + completed payment
+ * Requires: completed payment plus either JWT auth or a server-issued payment access token
  */
-router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo, async (req, res) => {
+router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, validateBirthInfo, async (req, res) => {
   try {
     const {
       orderId,
+      paymentAccessToken,
       birthDate,
       birthTime,
       gender,
@@ -165,6 +166,7 @@ router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo,
       parentBirthTime,
       parentRole,   // 'mother' or 'father'
       parentGender, // 'M' or 'F' (overrides role-derived gender if provided)
+      deliveryEmail,
       // Optional twin info
       twinOrder,      // 1 (first born) or 2 (second born)
       twinSiblingName, // sibling's name (optional)
@@ -214,12 +216,19 @@ router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo,
     }
 
     // Get user ID from JWT (set by authMiddleware)
-    const userId = req.user.id;
+    const userId = req.user?.id || null;
+    if (!userId && !paymentAccessToken) {
+      return res.status(401).json({
+        error: 'Payment access token required for guest premium reports',
+        code: 'MISSING_PAYMENT_ACCESS_TOKEN',
+      });
+    }
 
     // Generate reading
     const reading = await sajuService.generateSajuReading({
       userId,
       orderId,
+      paymentAccessToken,
       birthDate,
       birthTime,
       gender,
@@ -234,6 +243,7 @@ router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo,
       parentRole: parentRole || null,
       // Twin info
       twinInfo: twinOrder ? { order: twinOrder, siblingName: twinSiblingName || null } : null,
+      deliveryEmail,
     });
 
     // Return success response
@@ -254,6 +264,13 @@ router.post('/calculate', authMiddleware, sajuPremiumLimiter, validateBirthInfo,
       return res.status(403).json({
         error: 'Payment has not been completed',
         code: 'PAYMENT_INCOMPLETE',
+      });
+    }
+
+    if (error.message && error.message.includes('access token')) {
+      return res.status(401).json({
+        error: 'Invalid or expired payment access token',
+        code: 'INVALID_PAYMENT_ACCESS_TOKEN',
       });
     }
 

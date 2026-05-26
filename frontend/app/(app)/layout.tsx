@@ -170,7 +170,7 @@ export default function RootLayout({
                     "name": "How is the paid version different?",
                     "acceptedAnswer": {
                       "@type": "Answer",
-                      "text": "The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report ($4.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, career aptitude analysis, fortune cycle forecast, monthly fortune, and actionable weekly tasks. For the price of a cup of coffee, you get a complete guide to understanding your child."
+                      "text": "The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report (US$4.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, career aptitude analysis, fortune cycle forecast, monthly fortune, and actionable weekly tasks. For the price of a cup of coffee, you get a complete guide to understanding your child."
                     }
                   }
                 ]

@@ -14,7 +14,7 @@ export default function GitanLandingPage() {
     const url = 'https://somyung.cc/gitan'
     if (navigator.share) {
       try {
-        await navigator.share({ title: '기탄교육 X SoMyung', text: '아이의 타고난 기질로 최적의 학습 방법을 찾아보세요.', url })
+        await navigator.share({ title: '기탄 학습지 추천 예시 | SoMyung', text: '아이의 타고난 기질로 최적의 학습 방법을 찾아보세요.', url })
       } catch { /* cancelled */ }
     } else {
       await navigator.clipboard.writeText(url)
@@ -82,7 +82,7 @@ export default function GitanLandingPage() {
               padding: '6px 14px',
               borderRadius: '100px'
             }}>
-              기탄교육 공식 파트너
+              기탄 학습지 연계 제안
             </span>
           </div>
           <Link href="/saju/input?ref=gitan" style={{
@@ -134,7 +134,7 @@ export default function GitanLandingPage() {
                 fontSize: '15px',
                 fontWeight: 700,
                 color: colors.dark
-              }}>기탄교육</span>
+              }}>기탄 학습지</span>
               <span style={{
                 fontSize: '15px',
                 color: '#D1D5DB'
@@ -154,7 +154,7 @@ export default function GitanLandingPage() {
               fontSize: '14px',
               color: colors.muted
             }}>
-              공식 협업 프로그램
+              제휴 제안 모델
             </span>
           </div>
 
@@ -614,7 +614,7 @@ export default function GitanLandingPage() {
               letterSpacing: '-0.03em',
               marginBottom: '12px'
             }}>
-              기탄교육 학부모님들의 후기
+              학습지 학부모님들의 후기
             </h2>
             <p style={{ fontSize: '16px', color: colors.muted }}>
               먼저 분석 받은 분들의 실제 경험담
@@ -638,7 +638,7 @@ export default function GitanLandingPage() {
                 tag: '관계 개선'
               },
               {
-                quote: '왜 학원을 3개나 보내도 효과가 없었는지 알았어요. 우리 아이는 혼자 조용히 푸는 타입이었어요. 이제 집에서 기탄으로만 해요.',
+                quote: '왜 학원을 3개나 보내도 효과가 없었는지 알았어요. 우리 아이는 혼자 조용히 푸는 타입이었어요. 이제 집에서 학습지 중심으로 해요.',
                 author: '초4 아들 맘 · 이○○',
                 tag: '학습 방향 발견'
               },
@@ -728,7 +728,7 @@ export default function GitanLandingPage() {
             lineHeight: 1.6
           }}>
             아이 학습법으로 고민하는 친구에게 알려주세요!<br />
-            공유받은 분도 기탄 회원 혜택이 적용됩니다.
+            공유받은 분도 제휴 예시 혜택을 확인할 수 있습니다.
           </p>
           <button
             onClick={handleKakaoShare}
@@ -773,7 +773,7 @@ export default function GitanLandingPage() {
               fontWeight: 600,
               marginBottom: '24px'
             }}>
-              기탄교육 회원 특별 혜택
+              기탄 학습지 연계 혜택 예시
             </span>
             <h2 style={{
               fontSize: '40px',
@@ -785,7 +785,7 @@ export default function GitanLandingPage() {
               지금 무료로 시작하세요
             </h2>
             <p style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.6)' }}>
-              기탄교육 회원이라면 프리미엄 분석이 무료
+              제휴 코드가 있다면 프리미엄 분석이 무료
             </p>
           </div>
 
@@ -853,14 +853,14 @@ export default function GitanLandingPage() {
                 padding: '4px 12px',
                 borderRadius: '4px'
               }}>
-                기탄 회원 특별 무료
+                제휴 예시 특별 무료
               </div>
               <h3 style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '8px' }}>프리미엄 리포트</h3>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
                 <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)', textDecoration: 'line-through' }}>$4.99</p>
                 <p style={{ fontSize: '36px', fontWeight: 700, color: '#FFFFFF' }}>무료</p>
               </div>
-              <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '32px' }}>기탄교육 회원 한정 혜택</p>
+              <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '32px' }}>제휴 코드 한정 혜택 예시</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px' }}>
                 {['8섹션 심층 기질 분석', '맞춤 학습 환경 가이드', '부모-자녀 궁합 분석', '월별 운세 + 실천 과제', 'PDF 리포트 + 이메일 발송'].map((item, i) => (
                   <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '16px', color: '#FFFFFF', marginBottom: '16px' }}>
@@ -926,7 +926,7 @@ export default function GitanLandingPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
-              { q: '기탄교육 회원 아닌데 이용할 수 있나요?', a: '네, 누구나 무료 분석은 이용 가능합니다. 다만 기탄교육 회원이시면 프리미엄 분석 50% 할인 혜택이 있어요.' },
+              { q: '기탄교육 회원 아닌데 이용할 수 있나요?', a: '네, 누구나 무료 분석은 이용 가능합니다. 이 페이지의 프리미엄 혜택 문구는 제휴 제안 예시이며, 실제 혜택은 확정된 제휴 코드나 안내가 있을 때 적용됩니다.' },
               { q: '사주, 명리학이 정말 도움이 되나요?', a: '명리학은 수천 년간 축적된 동양의 기질 분류 체계입니다. 저희는 이를 현대적으로 해석해 "아이 이해의 참고 도구"로 활용합니다. 많은 부모님들이 "아이를 이해하는 데 도움이 됐다"고 말씀해 주셨어요.' },
               { q: '아이 생년월일만 알면 되나요?', a: '네, 시간을 모르셔도 70% 정도의 분석이 가능합니다. 부모님 정보도 함께 입력하시면 궁합 분석까지 받으실 수 있어요.' },
               { q: '결과는 어떻게 확인하나요?', a: '입력 즉시 웹에서 확인 가능합니다. 프리미엄 분석은 PDF 다운로드와 이메일 발송을 지원합니다.' },

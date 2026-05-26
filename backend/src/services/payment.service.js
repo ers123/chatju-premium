@@ -4,6 +4,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const axios = require('axios');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
+const { PREMIUM_SAJU_PRODUCT, getProduct, amountsMatch } = require('../config/products');
 
 function toClientPayment(payment) {
   if (!payment) return null;
@@ -61,12 +62,17 @@ async function getPayPalAccessToken() {
 /**
  * Create PayPal payment order
  * @param {string} userId - User UUID
- * @param {number} amount - Payment amount in USD
+ * @param {number} amount - Client display amount. Server product price is authoritative.
  * @param {string} description - Payment description
  * @returns {object} Payment creation result
  */
-async function createPayPalPayment(userId, amount, description = 'Premium Fortune Reading', email = null) {
+async function createPayPalPayment(userId, amount, description = PREMIUM_SAJU_PRODUCT.description, email = null, productType = PREMIUM_SAJU_PRODUCT.id) {
   try {
+    const product = getProduct(productType);
+    if (!product) {
+      throw new Error('Unsupported product type');
+    }
+    const orderDescription = description || product.description;
     const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Get PayPal access token
@@ -79,10 +85,10 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
         intent: 'CAPTURE',
         purchase_units: [{
           reference_id: orderId,
-          description: description,
+          description: orderDescription,
           amount: {
-            currency_code: 'USD',
-            value: amount.toFixed(2)
+            currency_code: product.currency,
+            value: product.amount.toFixed(2)
           }
         }],
         application_context: {
@@ -108,15 +114,19 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
       .insert([{
         user_id: userId,
         order_id: orderId,
-        amount: amount,
-        currency: 'USD',
+        amount: product.amount,
+        currency: product.currency,
         status: 'pending',
         payment_method: 'paypal',
         payment_key: paypalOrder.id,
-        order_name: description,
+        order_name: orderDescription,
         metadata: {
           paypal_order_id: paypalOrder.id,
           email: email,
+          product_type: product.id,
+          expected_amount: product.amount,
+          expected_currency: product.currency,
+          client_amount: amount,
           created_at: new Date().toISOString(),
         }
       }])
@@ -133,7 +143,7 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
 
     console.log('[Payment Service] PayPal payment created:', {
       orderId,
-      amount,
+      amount: product.amount,
       paypalOrderId: paypalOrder.id,
     });
 
@@ -142,6 +152,9 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
       paymentId: payment.id,
       orderId,
       paypalOrderId: paypalOrder.id,
+      productType: product.id,
+      amount: product.amount,
+      currency: product.currency,
       email: email ? email.toLowerCase().trim() : undefined,
     });
 
@@ -149,8 +162,8 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
       success: true,
       orderId: orderId,
       paymentId: payment.id,
-      amount: amount,
-      currency: 'USD',
+      amount: product.amount,
+      currency: product.currency,
       paypalOrderId: paypalOrder.id,
       approvalUrl: approvalLink ? approvalLink.href : null,
       paymentAccessToken,
@@ -169,10 +182,14 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
  */
 async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
   try {
-    verifyAccessToken(paymentAccessToken, {
+    const tokenPayload = verifyAccessToken(paymentAccessToken, {
       purpose: 'payment',
       paypalOrderId,
     });
+    const product = getProduct(tokenPayload.productType || PREMIUM_SAJU_PRODUCT.id);
+    if (!product || !amountsMatch(tokenPayload.amount, product.amount) || tokenPayload.currency !== product.currency) {
+      throw new Error('Payment access token product mismatch');
+    }
 
     // Idempotency: check if payment is already completed
     const { data: existing } = await supabaseAdmin
@@ -188,6 +205,7 @@ async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
         .select('*')
         .eq('payment_key', paypalOrderId)
         .single();
+      assertPaymentMatchesProduct(fullPayment, product.id);
       return { success: true, payment: toClientPayment(fullPayment), alreadyCaptured: true };
     }
 
@@ -211,6 +229,7 @@ async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
     if (captureData.status !== 'COMPLETED') {
       throw new Error(`PayPal capture failed: ${captureData.status}`);
     }
+    assertPayPalCaptureMatchesProduct(captureData, product);
 
     // Fetch existing payment to merge metadata
     const { data: existingPayment } = await supabaseAdmin
@@ -279,6 +298,35 @@ async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
 
     throw error;
   }
+}
+
+function getPayPalCaptureAmount(captureData) {
+  return captureData?.purchase_units?.[0]?.payments?.captures?.[0]?.amount || null;
+}
+
+function assertPayPalCaptureMatchesProduct(captureData, product = PREMIUM_SAJU_PRODUCT) {
+  const capturedAmount = getPayPalCaptureAmount(captureData);
+  if (!capturedAmount) {
+    throw new Error('Missing PayPal captured amount');
+  }
+  if (capturedAmount.currency_code !== product.currency || !amountsMatch(capturedAmount.value, product.amount)) {
+    throw new Error('PayPal captured amount does not match product price');
+  }
+}
+
+function assertPaymentMatchesProduct(payment, productType = PREMIUM_SAJU_PRODUCT.id) {
+  const product = getProduct(productType);
+  if (!product) {
+    throw new Error('Unsupported product type');
+  }
+
+  const metadata = payment?.metadata || {};
+  const metadataProductType = metadata.product_type || product.id;
+  if (metadataProductType !== product.id || payment.currency !== product.currency || !amountsMatch(payment.amount, product.amount)) {
+    throw new Error('Payment amount does not match product price');
+  }
+
+  return true;
 }
 
 /**
@@ -468,6 +516,7 @@ module.exports = {
   handlePayPalWebhook,
 
   // Common
+  assertPaymentMatchesProduct,
   getPaymentByOrderId,
   getPaymentById,
   getPaymentByPaymentKey,

@@ -6,11 +6,13 @@
 // User & Authentication Types
 // ---------------------------------------------
 
+export type SupportedLanguage = 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id' | 'es' | 'pt' | 'fr' | 'th';
+
 export interface User {
   id: string;
   email: string;
   full_name?: string;
-  language_preference?: 'ko' | 'en';
+  language_preference?: SupportedLanguage;
   created_at: string;
   updated_at: string;
 }
@@ -45,7 +47,7 @@ export interface BirthInfo {
   gender: 'male' | 'female';
   isLunar?: boolean; // true for lunar calendar
   timezone?: string; // e.g., 'Asia/Seoul'
-  language?: 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id' | 'es' | 'pt' | 'fr' | 'th';
+  language?: SupportedLanguage;
   // Location for True Solar Time (진태양시) correction
   birthPlace?: string; // City name (e.g., '서울', 'sydney')
   latitude?: number; // Direct latitude (-90 to 90)
@@ -173,13 +175,13 @@ export interface SajuReading {
   id: string;
   readingId?: string;
   reportAccessToken?: string;
-  user_id: string;
+  user_id: string | null;
   order_id: string;
   birth_date: string;
   birth_time?: string;
   gender: 'male' | 'female';
   timezone: string;
-  language: 'ko' | 'en';
+  language: SupportedLanguage;
   manseryeok_result: ManseryeokResult;
   ai_interpretation: AIInterpretation;
   interpretation?: string;
@@ -196,7 +198,7 @@ export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 export interface Payment {
   id: string;
-  user_id: string;
+  user_id: string | null;
   order_id: string;
   amount: number;
   currency: 'KRW' | 'USD';
@@ -209,9 +211,10 @@ export interface Payment {
 }
 
 export interface PayPalPaymentRequest {
-  amount: number;
+  amount?: number;
   description: string; // e.g., "Premium Fortune Reading"
   email?: string; // For receipt and PDF delivery
+  product_type?: 'premium_saju';
 }
 
 export interface PayPalPaymentResponse {
@@ -354,7 +357,7 @@ export interface BirthInfoFormData {
   timeUnknown: boolean;
   gender: 'male' | 'female';
   timezone: string;
-  language: 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id' | 'es' | 'pt' | 'fr' | 'th';
+  language: SupportedLanguage;
   birthPlace?: string;
   isTwin?: boolean;
   twinOrder?: 1 | 2;

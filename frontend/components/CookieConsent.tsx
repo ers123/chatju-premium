@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '../app/lib/i18n/context'
+import { localizedLegalPath } from '../app/lib/i18n/routes'
 
 const CONSENT_KEY = 'somyung-cookie-consent'
 const POLICY_VERSION = '2026-04-15'
@@ -27,7 +28,7 @@ export function resetCookieConsent() {
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false)
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
 
   useEffect(() => {
     const checkVisibility = () => {
@@ -83,7 +84,7 @@ export default function CookieConsent() {
       <div className="mx-auto max-w-lg rounded-xl bg-white shadow-xl border border-gray-200 p-4 md:p-5">
         <p className="text-sm text-gray-600 mb-3">
           {cc.message}{' '}
-          <Link href="/privacy" className="underline text-gray-800 hover:text-black">
+          <Link href={localizedLegalPath(lang, 'privacy')} className="underline text-gray-800 hover:text-black">
             {cc.learnMore}
           </Link>
         </p>

@@ -153,9 +153,11 @@ export function usdToKrw(usd: number): number {
 /**
  * Get payment method display name
  */
-export function getPaymentMethodName(method: string, language: 'ko' | 'en'): string {
+type SupportedLanguage = 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id' | 'es' | 'pt' | 'fr' | 'th';
+
+export function getPaymentMethodName(method: string, language: SupportedLanguage): string {
   const names: Record<string, Record<string, string>> = {
-    paypal: { ko: '페이팔', en: 'PayPal' },
+    paypal: { ko: '페이팔', en: 'PayPal', ja: 'PayPal', zh: 'PayPal', vi: 'PayPal', id: 'PayPal', es: 'PayPal', pt: 'PayPal', fr: 'PayPal', th: 'PayPal' },
   };
 
   return names[method]?.[language] || method;
@@ -164,7 +166,7 @@ export function getPaymentMethodName(method: string, language: 'ko' | 'en'): str
 /**
  * Get available payment methods
  */
-export function getPaymentMethodPriority(_userLanguage: 'ko' | 'en'): string[] {
+export function getPaymentMethodPriority(_userLanguage: SupportedLanguage): string[] {
   return ['paypal'];
 }
 
@@ -175,17 +177,18 @@ export function getPaymentMethodPriority(_userLanguage: 'ko' | 'en'): string[] {
 /**
  * Get browser language preference
  */
-export function getBrowserLanguage(): 'ko' | 'en' {
+export function getBrowserLanguage(): SupportedLanguage {
   if (typeof window === 'undefined') return 'ko';
 
   const lang = navigator.language || 'ko';
-  return lang.startsWith('ko') ? 'ko' : 'en';
+  const prefix = lang.slice(0, 2) as SupportedLanguage;
+  return ['ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th'].includes(prefix) ? prefix : 'en';
 }
 
 /**
  * Get localized text
  */
-export function t(key: string, language: 'ko' | 'en'): string {
+export function t(key: string, language: SupportedLanguage): string {
   const translations: Record<string, Record<string, string>> = {
     // Common
     loading: { ko: '로딩 중...', en: 'Loading...' },
@@ -219,7 +222,7 @@ export function t(key: string, language: 'ko' | 'en'): string {
     pay_now: { ko: '결제하기', en: 'Pay Now' },
   };
 
-  return translations[key]?.[language] || key;
+  return translations[key]?.[language] || translations[key]?.en || key;
 }
 
 // ---------------------------------------------

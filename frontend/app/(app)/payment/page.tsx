@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import { apiClient } from '@/lib/api'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { localizedLegalPath } from '@/app/lib/i18n/routes'
 import type { PromoValidateResponse } from '@/types'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
@@ -65,7 +66,7 @@ const INCLUDED_ICONS = ['🌊', '🌳', '👨‍👩‍👧', '💪', '🔮', '�
 
 function PaymentContent() {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
   useEffect(() => { document.title = t.payment.pageTitle }, [t])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -130,7 +131,7 @@ function PaymentContent() {
             const result = await apiClient.capturePayPalPayment(data.orderID, paymentAccessToken)
             if (result && (result as any).success && (result as any).payment) {
               const payment = (result as any).payment
-              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString(), email }))
+              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, paymentAccessToken, completedAt: new Date().toISOString(), email }))
               sessionStorage.removeItem('pending_order')
               // Go directly to results page to show premium content
               router.push('/saju/results')
@@ -183,7 +184,7 @@ function PaymentContent() {
               const captureResult = await apiClient.capturePayPalPayment(res.paypalOrderId, res.paymentAccessToken)
               if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
                 const payment = (captureResult as any).payment
-                sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString() }))
+                sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, paymentAccessToken: res.paymentAccessToken, completedAt: new Date().toISOString(), email }))
                 sessionStorage.removeItem('pending_order')
                 router.push('/payment/success')
               } else { setError(t.payment.errorCapturePayment) }
@@ -306,8 +307,7 @@ function PaymentContent() {
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#C5A059' }}>$4.99</span>
-                    <span style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'line-through' }}>$9.99</span>
-                    <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#C67B6F', background: 'rgba(198,123,111,0.1)', borderRadius: '4px' }}>{t.payment.discountBadge}</span>
+                    <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#8B8580', background: 'rgba(139,133,128,0.1)', borderRadius: '4px' }}>{t.payment.discountBadge}</span>
                   </div>
                 )}
               </div>
@@ -434,8 +434,8 @@ function PaymentContent() {
           {/* Terms */}
           <p style={{ ...s.textMuted, textAlign: 'center', lineHeight: 1.8, marginTop: '1.5rem' }}>
             {promoResult?.valid ? t.payment.termsPromo : t.payment.termsPaid}{' '}
-            <Link href="/terms" style={{ color: '#C5A059' }}>{t.payment.termsOfService}</Link>,{' '}
-            <Link href="/privacy" style={{ color: '#C5A059' }}>{t.payment.privacyPolicy}</Link>,{' '}
+            <Link href={localizedLegalPath(lang, 'terms')} style={{ color: '#C5A059' }}>{t.payment.termsOfService}</Link>,{' '}
+            <Link href={localizedLegalPath(lang, 'privacy')} style={{ color: '#C5A059' }}>{t.payment.privacyPolicy}</Link>,{' '}
             <Link href="/refund" style={{ color: '#C5A059' }}>{t.payment.refundPolicy}</Link>{t.payment.termsAgree}
             <br />{t.payment.termsWithdrawal}
           </p>

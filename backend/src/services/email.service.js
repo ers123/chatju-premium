@@ -19,6 +19,154 @@ function getResendClient() {
 
 const FROM_EMAIL = 'SoMyung <noreply@somyung.cc>';
 const REPLY_TO = 'support@somyung.cc';
+const FRONTEND_BASE_URL = process.env.FRONTEND_URL || 'https://somyung.cc';
+
+const EMAIL_COPY = {
+  ko: {
+    subject: (name) => `${name}의 사주팔자 프리미엄 리포트 - SoMyung`,
+    title: (name) => `${name}의 사주팔자 리포트`,
+    subtitle: 'SoMyung 프리미엄 분석 결과',
+    chart: '사주 정보',
+    birthDate: '생년월일',
+    gender: '성별',
+    male: '남아',
+    female: '여아',
+    pillars: ['년주', '월주', '일주', '시주'],
+    summary: '리포트 요약',
+    cta: 'PDF 리포트 다운로드',
+    footer: '이 이메일은 SoMyung 프리미엄 리포트 발송용입니다.',
+  },
+  en: {
+    subject: (name) => `${name}'s Premium Saju Report - SoMyung`,
+    title: (name) => `${name}'s Saju Report`,
+    subtitle: 'SoMyung Premium Analysis',
+    chart: 'Birth Chart',
+    birthDate: 'Birth Date',
+    gender: 'Gender',
+    male: 'Boy',
+    female: 'Girl',
+    pillars: ['Year', 'Month', 'Day', 'Hour'],
+    summary: 'Report Summary',
+    cta: 'Download PDF Report',
+    footer: 'This email was sent by SoMyung Premium Report.',
+  },
+  ja: {
+    subject: (name) => `${name}のプレミアム四柱推命レポート - SoMyung`,
+    title: (name) => `${name}の四柱推命レポート`,
+    subtitle: 'SoMyung プレミアム分析結果',
+    chart: '命式情報',
+    birthDate: '生年月日',
+    gender: '性別',
+    male: '男の子',
+    female: '女の子',
+    pillars: ['年柱', '月柱', '日柱', '時柱'],
+    summary: 'レポート要約',
+    cta: 'PDFレポートをダウンロード',
+    footer: 'このメールはSoMyungプレミアムレポート送信用です。',
+  },
+  zh: {
+    subject: (name) => `${name}的高级四柱八字报告 - SoMyung`,
+    title: (name) => `${name}的四柱八字报告`,
+    subtitle: 'SoMyung 高级分析结果',
+    chart: '命盘信息',
+    birthDate: '出生日期',
+    gender: '性别',
+    male: '男孩',
+    female: '女孩',
+    pillars: ['年柱', '月柱', '日柱', '时柱'],
+    summary: '报告摘要',
+    cta: '下载 PDF 报告',
+    footer: '这封邮件用于发送 SoMyung 高级报告。',
+  },
+  vi: {
+    subject: (name) => `Báo cáo Saju cao cấp của ${name} - SoMyung`,
+    title: (name) => `Báo cáo Saju của ${name}`,
+    subtitle: 'Kết quả phân tích cao cấp SoMyung',
+    chart: 'Lá số khai sinh',
+    birthDate: 'Ngày sinh',
+    gender: 'Giới tính',
+    male: 'Bé trai',
+    female: 'Bé gái',
+    pillars: ['Năm', 'Tháng', 'Ngày', 'Giờ'],
+    summary: 'Tóm tắt báo cáo',
+    cta: 'Tải báo cáo PDF',
+    footer: 'Email này được gửi bởi Báo cáo cao cấp SoMyung.',
+  },
+  id: {
+    subject: (name) => `Laporan Saju Premium ${name} - SoMyung`,
+    title: (name) => `Laporan Saju ${name}`,
+    subtitle: 'Hasil Analisis Premium SoMyung',
+    chart: 'Bagan Kelahiran',
+    birthDate: 'Tanggal Lahir',
+    gender: 'Jenis Kelamin',
+    male: 'Anak laki-laki',
+    female: 'Anak perempuan',
+    pillars: ['Tahun', 'Bulan', 'Hari', 'Jam'],
+    summary: 'Ringkasan Laporan',
+    cta: 'Unduh Laporan PDF',
+    footer: 'Email ini dikirim oleh Laporan Premium SoMyung.',
+  },
+  es: {
+    subject: (name) => `Informe Saju Premium de ${name} - SoMyung`,
+    title: (name) => `Informe Saju de ${name}`,
+    subtitle: 'Análisis Premium de SoMyung',
+    chart: 'Carta de nacimiento',
+    birthDate: 'Fecha de nacimiento',
+    gender: 'Género',
+    male: 'Niño',
+    female: 'Niña',
+    pillars: ['Año', 'Mes', 'Día', 'Hora'],
+    summary: 'Resumen del informe',
+    cta: 'Descargar informe PDF',
+    footer: 'Este email fue enviado por el informe Premium de SoMyung.',
+  },
+  pt: {
+    subject: (name) => `Relatório Saju Premium de ${name} - SoMyung`,
+    title: (name) => `Relatório Saju de ${name}`,
+    subtitle: 'Análise Premium SoMyung',
+    chart: 'Mapa de nascimento',
+    birthDate: 'Data de nascimento',
+    gender: 'Gênero',
+    male: 'Menino',
+    female: 'Menina',
+    pillars: ['Ano', 'Mês', 'Dia', 'Hora'],
+    summary: 'Resumo do relatório',
+    cta: 'Baixar relatório PDF',
+    footer: 'Este email foi enviado pelo Relatório Premium SoMyung.',
+  },
+  fr: {
+    subject: (name) => `Rapport Saju Premium de ${name} - SoMyung`,
+    title: (name) => `Rapport Saju de ${name}`,
+    subtitle: 'Analyse Premium SoMyung',
+    chart: 'Thème de naissance',
+    birthDate: 'Date de naissance',
+    gender: 'Genre',
+    male: 'Garçon',
+    female: 'Fille',
+    pillars: ['Année', 'Mois', 'Jour', 'Heure'],
+    summary: 'Résumé du rapport',
+    cta: 'Télécharger le rapport PDF',
+    footer: 'Cet email a été envoyé par le rapport Premium SoMyung.',
+  },
+  th: {
+    subject: (name) => `รายงาน Saju พรีเมียมของ ${name} - SoMyung`,
+    title: (name) => `รายงาน Saju ของ ${name}`,
+    subtitle: 'ผลการวิเคราะห์พรีเมียมจาก SoMyung',
+    chart: 'แผนภูมิวันเกิด',
+    birthDate: 'วันเกิด',
+    gender: 'เพศ',
+    male: 'เด็กชาย',
+    female: 'เด็กหญิง',
+    pillars: ['ปี', 'เดือน', 'วัน', 'เวลา'],
+    summary: 'สรุปรายงาน',
+    cta: 'ดาวน์โหลดรายงาน PDF',
+    footer: 'อีเมลนี้ส่งโดยรายงานพรีเมียมของ SoMyung',
+  },
+};
+
+function getEmailCopy(language) {
+  return EMAIL_COPY[language] || EMAIL_COPY.en;
+}
 
 /**
  * Send a premium report email
@@ -50,12 +198,9 @@ async function sendReportEmail(params) {
   } = params;
 
   const resend = getResendClient();
-  const displayName = childName || '아이';
-  const isKorean = language === 'ko';
-
-  const subject = isKorean
-    ? `${displayName}의 사주팔자 프리미엄 리포트 - SoMyung`
-    : `${displayName}'s Premium Saju Report - SoMyung`;
+  const copy = getEmailCopy(language);
+  const displayName = childName || (language === 'ko' ? '아이' : 'Child');
+  const subject = copy.subject(displayName);
 
   const htmlContent = buildReportEmailHtml({
     displayName,
@@ -64,7 +209,7 @@ async function sendReportEmail(params) {
     aiInterpretation,
     birthDate,
     gender,
-    isKorean,
+    language,
     reportAccessToken,
   });
 
@@ -95,6 +240,7 @@ async function sendReportEmail(params) {
         gender,
         manseryeok,
         aiInterpretation,
+        language,
       });
       if (generatedPdf) {
         emailPayload.attachments = [
@@ -124,25 +270,28 @@ async function sendReportEmail(params) {
 /**
  * Build HTML email template for report delivery
  */
-function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpretation, birthDate, gender, isKorean, reportAccessToken }) {
+function buildReportUrl(readingId, reportAccessToken, language) {
+  const params = new URLSearchParams({ readingId, lang: language || 'en' });
+  if (reportAccessToken) params.set('token', reportAccessToken);
+  return `${FRONTEND_BASE_URL.replace(/\/$/, '')}/report/pdf?${params.toString()}`;
+}
+
+function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpretation, birthDate, gender, language, reportAccessToken }) {
+  const copy = getEmailCopy(language);
   const pillars = manseryeok?.pillars;
-  const genderLabel = isKorean
-    ? (gender === 'male' ? '남아' : '여아')
-    : (gender === 'male' ? 'Boy' : 'Girl');
+  const genderLabel = gender === 'male' ? copy.male : copy.female;
 
   // Extract first section as summary, strip markdown only (한자는 유지)
   const sections = aiInterpretation?.sections || {};
   const summaryText = sections.executiveSummary || sections.preamble || aiInterpretation?.fullText?.substring(0, 500) || '';
   const cleanSummary = summaryText.replace(/[#*_`]/g, '').substring(0, 600);
-  const reportUrl = reportAccessToken
-    ? `https://somyung.cc/reading/${readingId}?token=${encodeURIComponent(reportAccessToken)}`
-    : `https://somyung.cc/reading/${readingId}`;
+  const reportUrl = buildReportUrl(readingId, reportAccessToken, language);
 
   // Table-based email layout for maximum email client compatibility
   const pillarHtml = pillars ? `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 20px 0;">
       <tr>
-        ${['년주', '월주', '일주', '시주'].map((label, i) => {
+        ${copy.pillars.map((label, i) => {
           const keys = ['year', 'month', 'day', 'hour'];
           return `<td align="center" width="25%" style="padding: 4px;">
             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #3D3028; border-radius: 10px;">
@@ -172,27 +321,27 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
           </table>
         </td></tr>
         <tr><td align="center" style="font-size: 22px; font-weight: bold; color: #3D3028; padding: 12px 0 4px;">
-          ${displayName}${isKorean ? '의 사주팔자 리포트' : "'s Saju Report"}
+          ${copy.title(displayName)}
         </td></tr>
         <tr><td align="center" style="font-size: 13px; color: #8B8580; padding: 0 0 28px;">
-          ${isKorean ? 'SoMyung 프리미엄 분석 결과' : 'SoMyung Premium Analysis'}
+          ${copy.subtitle}
         </td></tr>
 
         <!-- Birth Info Card -->
         <tr><td style="background: #FFFFFF; border-radius: 16px; border: 1px solid #EBE5DF; padding: 24px; margin-bottom: 16px;">
           <table cellpadding="0" cellspacing="0" border="0" width="100%">
             <tr><td style="font-size: 16px; font-weight: bold; color: #3D3028; padding-bottom: 16px;">
-              ${isKorean ? '사주 정보' : 'Birth Chart'}
+              ${copy.chart}
             </td></tr>
             <tr><td style="padding: 8px 0; border-bottom: 1px solid #F0EDE9; font-size: 13px; color: #6B5E52;">
               <table width="100%"><tr>
-                <td style="color: #8B8580;">${isKorean ? '생년월일' : 'Birth Date'}</td>
+                <td style="color: #8B8580;">${copy.birthDate}</td>
                 <td align="right" style="font-weight: 600;">${birthDate}</td>
               </tr></table>
             </td></tr>
             <tr><td style="padding: 8px 0; border-bottom: 1px solid #F0EDE9; font-size: 13px; color: #6B5E52;">
               <table width="100%"><tr>
-                <td style="color: #8B8580;">${isKorean ? '성별' : 'Gender'}</td>
+                <td style="color: #8B8580;">${copy.gender}</td>
                 <td align="right" style="font-weight: 600;">${genderLabel}</td>
               </tr></table>
             </td></tr>
@@ -206,7 +355,7 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
         <tr><td style="background: #FFFFFF; border-radius: 16px; border: 1px solid #EBE5DF; padding: 24px;">
           <table cellpadding="0" cellspacing="0" border="0" width="100%">
             <tr><td style="font-size: 16px; font-weight: bold; color: #3D3028; padding-bottom: 12px;">
-              ${isKorean ? '리포트 요약' : 'Report Summary'}
+              ${copy.summary}
             </td></tr>
             <tr><td style="font-size: 14px; color: #6B5E52; line-height: 1.8; padding-bottom: 20px;">
               ${cleanSummary}...
@@ -214,7 +363,7 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
             <tr><td align="center">
               <a href="${reportUrl}"
                  style="display: inline-block; background: #3D3028; color: #C5A059; padding: 14px 36px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 15px;">
-                ${isKorean ? '전체 리포트 보기' : 'View Full Report'}
+                ${copy.cta}
               </a>
             </td></tr>
           </table>
@@ -222,8 +371,8 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
 
         <!-- Footer -->
         <tr><td align="center" style="padding: 28px 0 8px; font-size: 12px; color: #8B8580; line-height: 1.6;">
-          ${isKorean ? '이 이메일은 SoMyung 프리미엄 리포트 발송용입니다.' : 'This email was sent by SoMyung Premium Report.'}
-          <br/>somyung.pages.dev
+          ${copy.footer}
+          <br/>somyung.cc
         </td></tr>
 
       </table>

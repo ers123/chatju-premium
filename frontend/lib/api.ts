@@ -156,12 +156,13 @@ export const apiClient = {
   // ===========================================
 
   /**
-   * Get FULL Saju reading (requires authentication + payment)
+   * Get FULL Saju reading (requires completed payment; guest flow uses paymentAccessToken)
    * Returns: Complete Four Pillars + full AI interpretation
    */
-  getFullReading: async (orderId: string, birthInfo: BirthInfo): Promise<SajuReading> => {
+  getFullReading: async (orderId: string, birthInfo: BirthInfo, paymentAccessToken?: string): Promise<SajuReading> => {
     const response = await api.post<SajuReading>('/saju/calculate', {
       orderId,
+      paymentAccessToken,
       ...birthInfo,
     });
     return response.data;

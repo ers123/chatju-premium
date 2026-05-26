@@ -5,7 +5,8 @@ const { getAIService } = require('./ai.service');
 const { supabaseAdmin, handleSupabaseError } = require('../config/supabase');
 const { calculateFullFortuneCycles } = require('./daeun.service');
 const { calculateMansae } = require('../utils/mansae-wrapper');
-const { createAccessToken } = require('../utils/accessToken');
+const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
+const { assertPaymentMatchesProduct } = require('./payment.service');
 
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
@@ -145,6 +146,7 @@ async function generateSajuReading(params) {
   const {
     userId = null,
     orderId = null,
+    paymentAccessToken = null,
     birthDate,
     birthTime = null,
     gender,
@@ -175,12 +177,24 @@ async function generateSajuReading(params) {
     // Step 1: Verify payment (skip for promo code flow)
     let payment = null;
     if (!skipPaymentCheck) {
-      const { data: paymentData, error: paymentError } = await supabaseAdmin
+      let paymentQuery = supabaseAdmin
         .from('payments')
         .select('*')
-        .eq('order_id', orderId)
-        .eq('user_id', userId)
-        .single();
+        .eq('order_id', orderId);
+
+      if (userId) {
+        paymentQuery = paymentQuery.eq('user_id', userId);
+      } else {
+        const tokenPayload = verifyAccessToken(paymentAccessToken, {
+          purpose: 'payment',
+          orderId,
+        });
+        paymentQuery = paymentQuery
+          .eq('id', tokenPayload.paymentId)
+          .eq('payment_key', tokenPayload.paypalOrderId);
+      }
+
+      const { data: paymentData, error: paymentError } = await paymentQuery.single();
 
       if (paymentError) {
         throw handleSupabaseError(paymentError) || new Error('Payment not found');
@@ -189,8 +203,12 @@ async function generateSajuReading(params) {
       if (paymentData.status !== 'completed') {
         throw new Error(`Payment not completed. Current status: ${paymentData.status}`);
       }
+      assertPaymentMatchesProduct(paymentData);
 
-      payment = paymentData;
+      payment = {
+        ...paymentData,
+        product_type: paymentData.metadata?.product_type || 'premium_saju',
+      };
       console.log('[Saju Service] Payment verified:', payment.product_type);
     } else {
       console.log('[Saju Service] Skipping payment check (promo flow)');

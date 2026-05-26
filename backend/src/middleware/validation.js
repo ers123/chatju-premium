@@ -3,6 +3,7 @@
 
 const { validationError } = require('../utils/responses');
 const xss = require('xss');
+const { PREMIUM_SAJU_PRODUCT, getProduct, isSupportedProduct, amountsMatch } = require('../config/products');
 
 /**
  * Validation middleware to ensure data integrity and security
@@ -78,7 +79,7 @@ function isValidPaymentMethod(method) {
  * Validate product type
  */
 function isValidProductType(type) {
-  return ['basic', 'deluxe'].includes(type);
+  return isSupportedProduct(type);
 }
 
 /**
@@ -267,27 +268,30 @@ function validateBirthInfo(req, res, next) {
  */
 function validatePaymentRequest(req, res, next) {
   const { amount, currency, product_type } = req.body;
+  const productType = product_type || PREMIUM_SAJU_PRODUCT.id;
+  const product = getProduct(productType);
 
-  // Validate amount
-  if (!amount) {
-    return sendValidationError(res, 'amount', 'Amount is required');
+  if (!product) {
+    return sendValidationError(res, 'product_type', 'Invalid product type');
   }
-  if (!isValidAmount(amount)) {
+
+  // Client amount is only a display consistency check. Product price is server-owned.
+  if (amount !== undefined && amount !== null && !isValidAmount(amount)) {
     return sendValidationError(res, 'amount', 'Amount must be a positive number');
+  }
+  if (amount !== undefined && amount !== null && !amountsMatch(amount, product.amount)) {
+    return sendValidationError(res, 'amount', `Amount must match server price ($${product.amount.toFixed(2)} ${product.currency})`);
   }
 
   // Currency is always USD (PayPal only gateway) — ignore client-supplied currency
   // Prevents mismatch where client sends KRW amount but PayPal charges USD
+  if (currency && currency !== product.currency) {
+    return sendValidationError(res, 'currency', `Currency must be ${product.currency}`);
+  }
 
   // Validate product type
   if (product_type && !isValidProductType(product_type)) {
-    return sendValidationError(res, 'product_type', 'Invalid product type (must be basic or deluxe)');
-  }
-
-  // Security: Check amount limits (always USD — max product is $4.99)
-  const maxAmount = 50;
-  if (amount > maxAmount) {
-    return sendValidationError(res, 'amount', `Amount exceeds maximum allowed ($${maxAmount} USD)`);
+    return sendValidationError(res, 'product_type', 'Invalid product type');
   }
 
   next();

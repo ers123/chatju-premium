@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { localizedLegalPath } from '@/app/lib/i18n/routes'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 // UI components (using native elements with inline styles)
 
@@ -56,7 +57,7 @@ const getZodiacInfo = (yearStr: string) => {
 
 export default function InputFormPage() {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
   useEffect(() => { document.title = t.sajuInput.pageTitle }, [t])
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
@@ -1252,7 +1253,7 @@ export default function InputFormPage() {
                       </div>
                       <div style={{ fontSize: '0.875rem', color: '#6B7280', lineHeight: 1.6 }}>
                         {s.privacyAgreementDesc}
-                        <a href="/privacy" style={{ color: '#B8922D', textDecoration: 'underline', marginLeft: '0.25rem' }}>{s.privacyLink}</a>
+                        <Link href={localizedLegalPath(lang, 'privacy')} style={{ color: '#B8922D', textDecoration: 'underline', marginLeft: '0.25rem' }}>{s.privacyLink}</Link>
                       </div>
                     </div>
                   </label>

@@ -285,7 +285,7 @@ export default function ResultsPage() {
             const captureResult = await apiClient.capturePayPalPayment(data.orderID, paymentAccessToken)
             if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
               const payment = (captureResult as any).payment
-              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString(), email: paymentEmail }))
+              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, paymentAccessToken, completedAt: new Date().toISOString(), email: paymentEmail }))
               sessionStorage.removeItem('pending_order')
               setShowPayment(false)
               // Trigger premium report fetch
@@ -448,7 +448,7 @@ export default function ResultsPage() {
             parentGender: input.parentGender,
             // Email for PDF delivery
             deliveryEmail: completed.email,
-            })
+            }, completed.paymentAccessToken)
           } catch {
             reading = await pollForReading(lookup.reportLookupToken)
             if (!reading) {

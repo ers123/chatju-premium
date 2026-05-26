@@ -7,9 +7,9 @@ const logger = require('../utils/logger');
  * Unified AI Service
  *
  * Supports multiple AI providers with ordered fallback chain:
- * - OpenAI GPT-5.2 (Primary) — Best quality Korean, $0.074/report
- * - Anthropic Claude Sonnet 4.6 (Fallback 1) — Comparable quality, $0.081/report
- * - Google Gemini 3 Flash Preview (Fallback 2) — Cost-effective, $0.016/report
+ * - OpenAI GPT-5.4 nano (Primary) — cost-efficient launch default
+ * - Anthropic Claude Sonnet 4.6 (Fallback 1) — high-quality recovery
+ * - Google Gemini 3 Flash Preview (Fallback 2) — existing Google path
  *
  * Configuration via environment variable:
  * AI_PROVIDER=openai|claude|gemini (default: openai)
@@ -18,9 +18,19 @@ const logger = require('../utils/logger');
 // Explicit fallback order — quality-first
 const FALLBACK_ORDER = ['openai', 'claude', 'gemini'];
 
+function envOrDefault(name, fallback) {
+  return process.env[name] || fallback;
+}
+
 class AIService {
   constructor() {
     this.provider = process.env.AI_PROVIDER || 'openai';
+    this.models = {
+      openai: envOrDefault('OPENAI_MODEL', 'gpt-5.4-nano'),
+      openaiFallback: envOrDefault('OPENAI_FALLBACK_MODEL', 'gpt-5.4-mini'),
+      gemini: envOrDefault('GEMINI_MODEL', 'gemini-3-flash-preview'),
+      claude: envOrDefault('CLAUDE_MODEL', 'claude-sonnet-4-6'),
+    };
     this.clients = {};
     this.initializeClients();
   }
@@ -107,7 +117,7 @@ class AIService {
       switch (provider) {
         case 'openai':
           response = await this.generateWithOpenAI(messages, maxTokens, temperature);
-          tokensUsed = response.usage.total_tokens;
+          tokensUsed = response.usage?.total_tokens || 0;
           break;
 
         case 'gemini':
@@ -161,13 +171,33 @@ class AIService {
     }
   }
 
-  /**
-   * Generate with OpenAI (GPT-5.4-mini)
-   * Fastest, best Korean quality, great cost-efficiency
-   */
   async generateWithOpenAI(messages, maxTokens, temperature) {
+    const primaryModel = this.models.openai;
+    const fallbackModel = this.models.openaiFallback;
+
+    try {
+      return await this.generateWithOpenAIModel(primaryModel, messages, maxTokens, temperature);
+    } catch (error) {
+      if (!fallbackModel || fallbackModel === primaryModel) {
+        throw error;
+      }
+
+      logger.warn('OpenAI primary model failed, retrying fallback model', {
+        primaryModel,
+        fallbackModel,
+        error: error.message,
+      });
+
+      return this.generateWithOpenAIModel(fallbackModel, messages, maxTokens, temperature);
+    }
+  }
+
+  /**
+   * Generate with OpenAI Chat Completions.
+   */
+  async generateWithOpenAIModel(model, messages, maxTokens, temperature) {
     const completion = await this.clients.openai.chat.completions.create({
-      model: 'gpt-5.4-mini',
+      model,
       messages,
       max_completion_tokens: maxTokens,
       temperature,
@@ -189,8 +219,8 @@ class AIService {
 
     return {
       content,
-      usage: completion.usage,
-      model: 'gpt-5.4-mini',
+      usage: completion.usage || { total_tokens: 0 },
+      model,
     };
   }
 
@@ -201,7 +231,7 @@ class AIService {
    */
   async generateWithGemini(messages, maxTokens, temperature) {
     const model = this.clients.gemini.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
+      model: this.models.gemini,
       generationConfig: {
         maxOutputTokens: maxTokens,
         temperature,
@@ -220,7 +250,7 @@ class AIService {
     return {
       content: response.text(),
       tokensUsed: response.usageMetadata?.totalTokenCount || 0,
-      model: 'gemini-3-flash-preview',
+      model: this.models.gemini,
     };
   }
 
@@ -240,7 +270,7 @@ class AIService {
       }));
 
     const response = await this.clients.claude.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: this.models.claude,
       max_tokens: maxTokens,
       temperature,
       system: systemMessage,
@@ -250,7 +280,7 @@ class AIService {
     return {
       content: response.content[0].text,
       tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
-      model: 'claude-sonnet-4-6',
+      model: this.models.claude,
     };
   }
 
@@ -299,18 +329,18 @@ class AIService {
   getProviderInfo() {
     const providerDetails = {
       openai: {
-        name: 'OpenAI GPT-5.2',
-        cost: '$1.75/1M input, $14.00/1M output (~$0.074/report)',
-        features: ['Best Korean quality', 'Frontier reasoning', 'Production-ready'],
+        name: `OpenAI ${this.models.openai}`,
+        cost: '$0.20/1M input, $1.25/1M output for GPT-5.4 nano (~$0.014/report)',
+        features: ['Cost-efficient launch default', `Fallback model: ${this.models.openaiFallback}`, 'Production-ready'],
       },
       claude: {
-        name: 'Anthropic Claude Sonnet 4.6',
-        cost: '$3.00/1M input, $15.00/1M output (~$0.081/report)',
+        name: `Anthropic ${this.models.claude}`,
+        cost: '$3.00/1M input, $15.00/1M output (~$0.168/report)',
         features: ['Excellent structured output', 'Strong Korean', 'Great formatting'],
       },
       gemini: {
-        name: 'Google Gemini 3 Flash Preview',
-        cost: '$0.50/1M input, $3.00/1M output (~$0.016/report)',
+        name: `Google ${this.models.gemini}`,
+        cost: '$0.50/1M input, $3.00/1M output for Gemini 3 Flash Preview (~$0.033/report)',
         features: ['Cost-effective', 'Fast', 'Good Korean support'],
       },
     };

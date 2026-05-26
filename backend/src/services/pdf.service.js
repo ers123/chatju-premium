@@ -16,6 +16,11 @@ const FONT_MAP = {
     regular: path.join(FONTS_DIR, 'NotoSansJP-Regular.ttf'),
     bold: path.join(FONTS_DIR, 'NotoSansJP-Bold.ttf'),
   },
+  th: {
+    family: 'NotoSansThaiLooped',
+    regular: path.join(FONTS_DIR, 'NotoSansThaiLooped-Regular.ttf'),
+    bold: path.join(FONTS_DIR, 'NotoSansThaiLooped-Bold.ttf'),
+  },
 };
 
 // ─── i18n labels ────────────────────────────────────────────────────────────
@@ -74,6 +79,90 @@ const LABELS = {
     female: '女',
     premiumReport: '高级四柱八字报告',
     generatedOn: '生成日期',
+    footer: 'SoMyung | somyung.cc',
+  },
+  vi: {
+    pillars: ['Năm', 'Tháng', 'Ngày', 'Giờ'],
+    elements: ['Mộc (木)', 'Hỏa (火)', 'Thổ (土)', 'Kim (金)', 'Thủy (水)'],
+    elementAnalysis: 'Phân tích Ngũ hành',
+    fourPillars: 'Tứ trụ',
+    birthInfo: 'Thông tin cơ bản',
+    birthDate: 'Ngày sinh',
+    gender: 'Giới tính',
+    male: 'Nam',
+    female: 'Nữ',
+    premiumReport: 'Báo cáo Saju cao cấp',
+    generatedOn: 'Ngày tạo',
+    footer: 'SoMyung | somyung.cc',
+  },
+  id: {
+    pillars: ['Tahun', 'Bulan', 'Hari', 'Jam'],
+    elements: ['Kayu (木)', 'Api (火)', 'Tanah (土)', 'Logam (金)', 'Air (水)'],
+    elementAnalysis: 'Analisis Lima Elemen',
+    fourPillars: 'Empat Pilar',
+    birthInfo: 'Informasi Dasar',
+    birthDate: 'Tanggal Lahir',
+    gender: 'Jenis Kelamin',
+    male: 'Laki-laki',
+    female: 'Perempuan',
+    premiumReport: 'Laporan Saju Premium',
+    generatedOn: 'Dibuat pada',
+    footer: 'SoMyung | somyung.cc',
+  },
+  es: {
+    pillars: ['Año', 'Mes', 'Día', 'Hora'],
+    elements: ['Madera (木)', 'Fuego (火)', 'Tierra (土)', 'Metal (金)', 'Agua (水)'],
+    elementAnalysis: 'Análisis de los Cinco Elementos',
+    fourPillars: 'Cuatro Pilares',
+    birthInfo: 'Información básica',
+    birthDate: 'Fecha de nacimiento',
+    gender: 'Género',
+    male: 'Masculino',
+    female: 'Femenino',
+    premiumReport: 'Informe Saju Premium',
+    generatedOn: 'Generado el',
+    footer: 'SoMyung | somyung.cc',
+  },
+  pt: {
+    pillars: ['Ano', 'Mês', 'Dia', 'Hora'],
+    elements: ['Madeira (木)', 'Fogo (火)', 'Terra (土)', 'Metal (金)', 'Água (水)'],
+    elementAnalysis: 'Análise dos Cinco Elementos',
+    fourPillars: 'Quatro Pilares',
+    birthInfo: 'Informações básicas',
+    birthDate: 'Data de nascimento',
+    gender: 'Gênero',
+    male: 'Masculino',
+    female: 'Feminino',
+    premiumReport: 'Relatório Saju Premium',
+    generatedOn: 'Gerado em',
+    footer: 'SoMyung | somyung.cc',
+  },
+  fr: {
+    pillars: ['Année', 'Mois', 'Jour', 'Heure'],
+    elements: ['Bois (木)', 'Feu (火)', 'Terre (土)', 'Métal (金)', 'Eau (水)'],
+    elementAnalysis: 'Analyse des Cinq Éléments',
+    fourPillars: 'Quatre Piliers',
+    birthInfo: 'Informations de base',
+    birthDate: 'Date de naissance',
+    gender: 'Genre',
+    male: 'Masculin',
+    female: 'Féminin',
+    premiumReport: 'Rapport Saju Premium',
+    generatedOn: 'Généré le',
+    footer: 'SoMyung | somyung.cc',
+  },
+  th: {
+    pillars: ['ปี', 'เดือน', 'วัน', 'เวลา'],
+    elements: ['ไม้ (木)', 'ไฟ (火)', 'ดิน (土)', 'โลหะ (金)', 'น้ำ (水)'],
+    elementAnalysis: 'การวิเคราะห์ธาตุทั้งห้า',
+    fourPillars: 'เสาหลักทั้งสี่',
+    birthInfo: 'ข้อมูลพื้นฐาน',
+    birthDate: 'วันเกิด',
+    gender: 'เพศ',
+    male: 'ชาย',
+    female: 'หญิง',
+    premiumReport: 'รายงาน Saju พรีเมียม',
+    generatedOn: 'สร้างเมื่อ',
     footer: 'SoMyung | somyung.cc',
   },
 };
@@ -249,7 +338,7 @@ async function generateReportPDF(params) {
 
       // Register both supported font families so pdfkit can switch cleanly per language.
       const registeredFonts = {};
-      for (const key of ['default', 'ja']) {
+      for (const key of ['default', 'ja', 'th']) {
         const fontFiles = FONT_MAP[key];
         const hasFont = fs.existsSync(fontFiles.regular);
         const hasBoldFont = fs.existsSync(fontFiles.bold);
@@ -274,7 +363,7 @@ async function generateReportPDF(params) {
         };
       }
 
-      const activeFontKey = (language === 'ja' || language === 'zh') ? 'ja' : 'default';
+      const activeFontKey = language === 'th' ? 'th' : (language === 'ja' || language === 'zh') ? 'ja' : 'default';
       const fontRegular = registeredFonts[activeFontKey].regular;
       const fontBold = registeredFonts[activeFontKey].bold;
       const pillarCardFont = registeredFonts.ja.bold || registeredFonts.ja.regular || fontBold;

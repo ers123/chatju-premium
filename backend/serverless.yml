@@ -47,10 +47,15 @@ provider:
   # Environment variables (CRITICAL: Set these in AWS Console or use .env)
   environment:
     NODE_ENV: production
-    AI_PROVIDER: ${env:AI_PROVIDER, 'gemini'} # Default to Gemini (free tier)
+    AI_PROVIDER: ${env:AI_PROVIDER, 'openai'}
 
     # AI Provider API Keys (set at least one)
-    OPENAI_API_KEY: ${env:OPENAI, ''}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    OPENAI: ${env:OPENAI, ''}
+    OPENAI_MODEL: ${env:OPENAI_MODEL, 'gpt-5.4-nano'}
+    OPENAI_FALLBACK_MODEL: ${env:OPENAI_FALLBACK_MODEL, 'gpt-5.4-mini'}
+    GEMINI_MODEL: ${env:GEMINI_MODEL, 'gemini-3-flash-preview'}
+    CLAUDE_MODEL: ${env:CLAUDE_MODEL, 'claude-sonnet-4-6'}
     GEMINI_API_KEY: ${env:GEMINI_API_KEY, ''}
     ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
 
@@ -206,7 +211,7 @@ resources:
 #    - SUPABASE_URL
 #    - SUPABASE_ANON_KEY
 #    - SUPABASE_SERVICE_ROLE_KEY
-#    - At least one AI provider key (GEMINI_API_KEY recommended)
+#    - At least one AI provider key (OPENAI_API_KEY or OPENAI recommended)
 #    - TOSS_SECRET_KEY (for Korean payments)
 #    - PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET (for international payments)
 #

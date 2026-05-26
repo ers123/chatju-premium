@@ -1,5 +1,5 @@
 import TermsContent from '@/components/legal/TermsContent'
 
-export default function TermsPage() {
+export default function Page() {
   return <TermsContent />
 }

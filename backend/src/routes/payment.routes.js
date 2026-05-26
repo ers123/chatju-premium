@@ -32,21 +32,14 @@ router.use(sanitizeStrings);
  * Requires authentication
  *
  * Body:
- * - amount: number (required) - Amount in USD (e.g., 10.00 = $10.00)
+ * - amount: number (optional display check) - Server charges the fixed product price
  * - description: string (optional) - Payment description
  */
 router.post('/paypal/create', paymentCreationLimiter, validatePaymentRequest, async (req, res) => {
   try {
-    const { amount, description, email } = req.body;
+    const { amount, description, email, product_type } = req.body;
     // Use authenticated user ID if available, otherwise use email as identifier
     const userId = req.user?.id || null;
-
-    if (!amount || amount <= 0) {
-      return res.status(400).json({
-        error: 'Invalid amount',
-        code: 'INVALID_AMOUNT',
-      });
-    }
 
     if (!email) {
       return res.status(400).json({
@@ -55,7 +48,7 @@ router.post('/paypal/create', paymentCreationLimiter, validatePaymentRequest, as
       });
     }
 
-    const result = await paymentService.createPayPalPayment(userId, amount, description, email);
+    const result = await paymentService.createPayPalPayment(userId, amount, description, email, product_type);
 
     res.status(200).json(result);
 
