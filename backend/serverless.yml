@@ -22,7 +22,7 @@ frameworkVersion: '3 || 4'
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs20.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'ap-northeast-2'} # Seoul region (Korea)
   memorySize: 1024 # MB - 1024 needed for CJK font rendering in PDF
@@ -105,6 +105,7 @@ functions:
   api:
     handler: index.handler
     description: ChatJu Premium Backend API
+    url: true
     events:
       # HTTP API Gateway - handles all routes
       - httpApi:

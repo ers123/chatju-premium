@@ -11,6 +11,7 @@ const logger = require('./src/utils/logger');
 const { getAIService } = require('./src/services/ai.service');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // CORS 설정 (Environment-aware)
 const allowedOrigins = process.env.NODE_ENV === 'production'

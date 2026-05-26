@@ -6,6 +6,21 @@ const axios = require('axios');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
 const { PREMIUM_SAJU_PRODUCT, getProduct, amountsMatch } = require('../config/products');
 
+function toSafeError(error) {
+  return {
+    message: error.message,
+    code: error.code,
+    status: error.response?.status,
+    paypalDebugId: error.response?.headers?.['paypal-debug-id'],
+    paypalName: error.response?.data?.name,
+    paypalIssue: error.response?.data?.details?.[0]?.issue,
+  };
+}
+
+function logPaymentError(context, error) {
+  console.error(context, toSafeError(error));
+}
+
 function toClientPayment(payment) {
   if (!payment) return null;
   return {
@@ -54,7 +69,7 @@ async function getPayPalAccessToken() {
 
     return tokenResponse.data.access_token;
   } catch (error) {
-    console.error('[Payment Service] Failed to get PayPal access token:', error);
+    logPaymentError('[Payment Service] Failed to get PayPal access token:', error);
     throw new Error('PayPal authentication failed');
   }
 }
@@ -170,7 +185,7 @@ async function createPayPalPayment(userId, amount, description = PREMIUM_SAJU_PR
     };
 
   } catch (error) {
-    console.error('[Payment Service] Create PayPal payment error:', error);
+    logPaymentError('[Payment Service] Create PayPal payment error:', error);
     throw error;
   }
 }
@@ -270,7 +285,7 @@ async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
     };
 
   } catch (error) {
-    console.error('[Payment Service] Capture PayPal payment error:', error);
+    logPaymentError('[Payment Service] Capture PayPal payment error:', error);
 
     if (error.message && error.message.includes('access token')) {
       throw error;
@@ -396,7 +411,7 @@ async function handlePayPalWebhook(webhookData) {
     }
 
   } catch (error) {
-    console.error('[Payment Service] PayPal webhook error:', error);
+    logPaymentError('[Payment Service] PayPal webhook error:', error);
     throw error;
   }
 }

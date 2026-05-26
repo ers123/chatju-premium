@@ -23,6 +23,17 @@ const {
   preventReplayAttack
 } = require('../middleware/webhookVerify');
 
+function toSafeRouteError(error) {
+  return {
+    message: error.message,
+    code: error.code,
+    status: error.response?.status,
+    paypalDebugId: error.response?.headers?.['paypal-debug-id'],
+    paypalName: error.response?.data?.name,
+    paypalIssue: error.response?.data?.details?.[0]?.issue,
+  };
+}
+
 // Apply sanitization to all routes
 router.use(sanitizeStrings);
 
@@ -53,7 +64,7 @@ router.post('/paypal/create', paymentCreationLimiter, validatePaymentRequest, as
     res.status(200).json(result);
 
   } catch (error) {
-    console.error('[Payment Routes] Create PayPal payment error:', error);
+    console.error('[Payment Routes] Create PayPal payment error:', toSafeRouteError(error));
     res.status(500).json({
       error: error.message || 'Failed to create payment',
       code: 'PAYMENT_CREATE_ERROR',
@@ -95,7 +106,7 @@ router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, asy
     res.status(200).json(result);
 
   } catch (error) {
-    console.error('[Payment Routes] Capture PayPal payment error:', error);
+    console.error('[Payment Routes] Capture PayPal payment error:', toSafeRouteError(error));
 
     if (error.message === 'Payment not found') {
       return res.status(404).json({
