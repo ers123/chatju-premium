@@ -12,6 +12,7 @@ import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
 const PRODUCT_AMOUNT = 4.99
+const PAYPAL_SDK_PARAMS = 'currency=USD&components=buttons,googlepay&enable-funding=venmo,card&disable-funding=credit,paylater&commit=true'
 
 const isAuthenticated = () => {
   if (typeof window === 'undefined') return false
@@ -293,7 +294,7 @@ function PaymentContent() {
             strategy="afterInteractive"
           />
           <Script
-            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay&enable-funding=venmo&disable-funding=card,credit,paylater&commit=true`}
+            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&${PAYPAL_SDK_PARAMS}`}
             strategy="afterInteractive"
             onLoad={() => setSdkReady(true)}
           />
@@ -456,7 +457,7 @@ function PaymentContent() {
             <div style={{ ...s.card, opacity: email.trim() ? 1 : 0.5, pointerEvents: email.trim() ? 'auto' : 'none' }}>
               <h2 style={s.h2}>{t.payment.paymentMethodTitle}</h2>
               <p style={{ ...s.textMuted, margin: '-0.25rem 0 0.75rem', lineHeight: 1.6 }}>
-                {(t.payment as any).paypalWalletOnlyNote || 'For this launch test, please use PayPal wallet checkout. Guest card checkout is temporarily hidden while we verify card acceptance.'}
+                {(t.payment as any).paypalCheckoutNote || 'Pay with a PayPal account, debit card, or credit card. Availability may vary by country and PayPal risk checks.'}
               </p>
               {isProcessing && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 0' }}>

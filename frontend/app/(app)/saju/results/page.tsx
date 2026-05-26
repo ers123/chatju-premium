@@ -14,6 +14,7 @@ import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
 const PRODUCT_AMOUNT = 4.99
+const PAYPAL_SDK_PARAMS = 'currency=USD&components=buttons,googlepay&enable-funding=venmo,card&disable-funding=credit,paylater&commit=true'
 
 // Types
 interface FourPillar {
@@ -1165,13 +1166,13 @@ export default function ResultsPage() {
                         {(t.payment as any).orPayWith || 'Or pay with'}
                       </div>
                       <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 1.6, margin: '0 0 0.75rem' }}>
-                        {(t.payment as any).paypalWalletOnlyNote || 'For this launch test, please use PayPal wallet checkout. Guest card checkout is temporarily hidden while we verify card acceptance.'}
+                        {(t.payment as any).paypalCheckoutNote || 'Pay with a PayPal account, debit card, or credit card. Availability may vary by country and PayPal risk checks.'}
                       </p>
 
                       {/* PayPal buttons */}
                       <div id="inline-paypal-container" />
                       <Script
-                        src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay&disable-funding=card,credit,paylater&commit=true`}
+                        src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&${PAYPAL_SDK_PARAMS}`}
                         onReady={() => setPaypalSdkReady(true)}
                       />
                     </>
