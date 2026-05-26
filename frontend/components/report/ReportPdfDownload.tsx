@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import type { Language } from '@/app/lib/i18n/translations'
 import { localizedLegalPath } from '@/app/lib/i18n/routes'
+import { buildApiUrl } from '@/lib/api-url'
 
 type Copy = {
   title: string
@@ -42,8 +43,7 @@ export default function ReportPdfDownload() {
 
   const pdfUrl = useMemo(() => {
     if (!readingId || !token) return ''
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
-    return `${apiUrl}/saju/reading/${encodeURIComponent(readingId)}/pdf?token=${encodeURIComponent(token)}`
+    return buildApiUrl(`/saju/reading/${encodeURIComponent(readingId)}/pdf?token=${encodeURIComponent(token)}`)
   }, [readingId, token])
 
   const download = async () => {

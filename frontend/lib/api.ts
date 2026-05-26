@@ -19,12 +19,11 @@ import type {
   PromoCalculateRequest,
   ReportLookupTokenResponse,
 } from '@/types';
+import { API_BASE_URL } from '@/lib/api-url';
 
 // ---------------------------------------------
 // Configuration
 // ---------------------------------------------
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 // ---------------------------------------------
 // Axios Instance

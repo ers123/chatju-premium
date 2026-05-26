@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
 import { apiClient } from '@/lib/api'
+import { buildApiUrl } from '@/lib/api-url'
 import { useLanguage } from '@/app/lib/i18n/context'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -305,11 +306,10 @@ export default function ResultsPage() {
   }, [paypalSdkReady, showPayment, emailValid])
 
   const pollForReading = async (token: string, maxAttempts = 18) => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise(r => setTimeout(r, 5000))
       try {
-        const res = await fetch(`${API_URL}/saju/reading-check?token=${encodeURIComponent(token)}`)
+        const res = await fetch(buildApiUrl(`/saju/reading-check?token=${encodeURIComponent(token)}`))
         const data = await res.json()
         if (data.status === 'complete' && data.reading) return data.reading
       } catch {}
@@ -356,7 +356,13 @@ export default function ResultsPage() {
           twinOrder: input.twinOrder,
           twinSiblingName: input.twinSiblingName,
         })
-      } catch {
+      } catch (err: any) {
+        if (err?.code === 'PROMO_ALREADY_USED' || err?.statusCode === 409) {
+          setPaymentError(err.error || 'This promo code has already been used with this email.')
+          setPaymentProcessing(false)
+          setPromoValidating(false)
+          return
+        }
         reading = await pollForReading(reportLookupToken)
         if (!reading) {
           sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, reportLookupToken }))
@@ -490,8 +496,7 @@ export default function ResultsPage() {
     const token = reportAccessToken || sessionStorage.getItem('report_access_token')
     if (!readingId || !token) return
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
-      const response = await fetch(`${API_URL}/saju/reading/${readingId}/pdf?token=${encodeURIComponent(token)}`)
+      const response = await fetch(buildApiUrl(`/saju/reading/${readingId}/pdf?token=${encodeURIComponent(token)}`))
       if (!response.ok) throw new Error('PDF download failed')
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
