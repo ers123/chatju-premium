@@ -234,6 +234,7 @@ export default function ResultsPage() {
   const paymentEmailRef = useRef('')
   const [paymentProcessing, setPaymentProcessing] = useState(false)
   const [paymentError, setPaymentError] = useState('')
+  const [paymentErrorCode, setPaymentErrorCode] = useState('')
   const [paypalSdkReady, setPaypalSdkReady] = useState(false)
   const paypalRendered = useRef(false)
   const paymentAccessTokenRef = useRef('')
@@ -266,7 +267,11 @@ export default function ResultsPage() {
     try {
       ;(window as any).paypal.Buttons({
         createOrder: async () => {
-          if (!paymentEmailRef.current.trim()) { setPaymentError('Please enter your email first'); throw new Error('Email required') }
+          if (!paymentEmailRef.current.trim()) {
+            setPaymentErrorCode('PAYMENT_ERROR')
+            setPaymentError('Please enter your email first')
+            throw new Error('Email required')
+          }
           const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email: paymentEmailRef.current })
           if (response.success && response.paypalOrderId && response.paymentAccessToken) {
             paymentAccessTokenRef.current = response.paymentAccessToken
@@ -278,6 +283,7 @@ export default function ResultsPage() {
         onApprove: async (data: { orderID: string }) => {
           setPaymentProcessing(true)
           setPaymentError('')
+          setPaymentErrorCode('')
           try {
             const pendingRaw = sessionStorage.getItem('pending_order')
             const pending = pendingRaw ? JSON.parse(pendingRaw) : null
@@ -292,15 +298,25 @@ export default function ResultsPage() {
               // Trigger premium report fetch
               window.location.reload()
             } else {
+              setPaymentErrorCode('PAYMENT_ERROR')
               setPaymentError('Payment capture failed. Please try again.')
             }
-          } catch { setPaymentError('Payment processing error. Please try again.') }
+          } catch {
+            setPaymentErrorCode('PAYMENT_ERROR')
+            setPaymentError('Payment processing error. Please try again.')
+          }
           finally { setPaymentProcessing(false) }
         },
-        onError: () => setPaymentError('Payment error. Please try again.'),
+        onError: () => {
+          setPaymentErrorCode('PAYMENT_ERROR')
+          setPaymentError('Payment error. Please try again.')
+        },
         onCancel: () => {},
       }).render('#inline-paypal-container')
-    } catch { setPaymentError('Failed to initialize payment.') }
+    } catch {
+      setPaymentErrorCode('PAYMENT_ERROR')
+      setPaymentError('Failed to initialize payment.')
+    }
     }, 100) // 100ms delay for DOM render
     return () => clearTimeout(timer)
   }, [paypalSdkReady, showPayment, emailValid])
@@ -322,9 +338,11 @@ export default function ResultsPage() {
     if (!promoCode.trim() || !paymentEmail.trim()) return
     setPromoValidating(true)
     setPaymentError('')
+    setPaymentErrorCode('')
     try {
       const validation = await apiClient.validatePromoCode(promoCode)
       if (!validation.valid) {
+        setPaymentErrorCode('PROMO_INVALID')
         setPaymentError(validation.error || 'Invalid promo code')
         setPromoValidating(false)
         return
@@ -358,7 +376,8 @@ export default function ResultsPage() {
         })
       } catch (err: any) {
         if (err?.code === 'PROMO_ALREADY_USED' || err?.statusCode === 409) {
-          setPaymentError(err.error || 'This promo code has already been used with this email.')
+          setPaymentErrorCode('PROMO_ALREADY_USED')
+          setPaymentError(t.payment.promoAlreadyUsedMessage || err.error || 'This promo code has already been used with this email.')
           setPaymentProcessing(false)
           setPromoValidating(false)
           return
@@ -366,6 +385,7 @@ export default function ResultsPage() {
         reading = await pollForReading(reportLookupToken)
         if (!reading) {
           sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, reportLookupToken }))
+          setPaymentErrorCode('REPORT_PENDING')
           setPaymentError('Report is still being generated. This page will refresh automatically.')
           setPaymentProcessing(false)
           setPromoValidating(false)
@@ -380,6 +400,7 @@ export default function ResultsPage() {
       setShowPayment(false)
       window.location.reload()
     } catch (err: any) {
+      setPaymentErrorCode('PAYMENT_ERROR')
       setPaymentError(err.error || err.message || 'Error processing promo code')
     } finally {
       setPromoValidating(false)
@@ -1089,7 +1110,14 @@ export default function ResultsPage() {
                     type="email"
                     placeholder="email@example.com"
                     value={paymentEmail}
-                    onChange={(e) => { setPaymentEmail(e.target.value); paymentEmailRef.current = e.target.value }}
+                    onChange={(e) => {
+                      setPaymentEmail(e.target.value)
+                      paymentEmailRef.current = e.target.value
+                      if (paymentErrorCode === 'PROMO_ALREADY_USED') {
+                        setPaymentError('')
+                        setPaymentErrorCode('')
+                      }
+                    }}
                     style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.875rem', boxSizing: 'border-box' as const, marginBottom: '0.75rem' }}
                   />
 
@@ -1102,7 +1130,13 @@ export default function ResultsPage() {
                           type="text"
                           placeholder={t.payment.promoCodePlaceholder || 'Promo code'}
                           value={promoCode}
-                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                          onChange={(e) => {
+                            setPromoCode(e.target.value.toUpperCase())
+                            if (paymentErrorCode === 'PROMO_ALREADY_USED') {
+                              setPaymentError('')
+                              setPaymentErrorCode('')
+                            }
+                          }}
                           style={{ flex: 1, padding: '0.625rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.8125rem' }}
                         />
                         <button
@@ -1152,15 +1186,28 @@ export default function ResultsPage() {
                   )}
 
                   {paymentError && (
-                    <div style={{ textAlign: 'center', padding: '1.5rem 1rem', background: 'rgba(197,160,89,0.08)', borderRadius: '12px', marginTop: '1rem' }}>
-                      <p style={{ color: '#C5A059', fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                        ✉ {paymentEmail}
+                    <div
+                      role="alert"
+                      aria-live="assertive"
+                      style={{
+                        textAlign: 'center',
+                        padding: '1.5rem 1rem',
+                        background: paymentErrorCode === 'PROMO_ALREADY_USED' ? 'rgba(198,123,111,0.14)' : 'rgba(197,160,89,0.08)',
+                        border: paymentErrorCode === 'PROMO_ALREADY_USED' ? '1px solid rgba(198,123,111,0.45)' : '1px solid transparent',
+                        borderRadius: '12px',
+                        marginTop: '1rem'
+                      }}
+                    >
+                      <p style={{ color: paymentErrorCode === 'PROMO_ALREADY_USED' ? '#F0A095' : '#C5A059', fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                        {paymentErrorCode === 'PROMO_ALREADY_USED' ? t.payment.promoAlreadyUsedTitle : `✉ ${paymentEmail}`}
                       </p>
                       <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '0.75rem' }}>
                         {paymentError}
                       </p>
                       <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem' }}>
-                        {lang === 'ko'
+                        {paymentErrorCode === 'PROMO_ALREADY_USED'
+                          ? t.payment.promoAlreadyUsedAction
+                          : lang === 'ko'
                           ? '리포트는 이메일로도 전송됩니다. 창을 닫아도 괜찮습니다.'
                           : lang === 'ja'
                           ? 'レポートはメールでも送信されます。ページを閉じても大丈夫です。'

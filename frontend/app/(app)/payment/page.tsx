@@ -70,6 +70,7 @@ function PaymentContent() {
   useEffect(() => { document.title = t.payment.pageTitle }, [t])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [errorCode, setErrorCode] = useState('')
   const [sdkReady, setSdkReady] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const buttonsRenderedRef = useRef(false)
@@ -91,10 +92,14 @@ function PaymentContent() {
       apiClient.validatePromoCode(promoParam).then((result) => {
         setPromoResult(result)
         if (!result.valid) {
+          setErrorCode('PROMO_INVALID')
           setError(result.error || t.payment.promoInvalid)
           setIsPromoFlow(false)
         }
-      }).catch(() => { setIsPromoFlow(false) })
+      }).catch(() => {
+        setErrorCode('PROMO_INVALID')
+        setIsPromoFlow(false)
+      })
       return
     }
     // No auth required — email collected on payment page
@@ -117,6 +122,7 @@ function PaymentContent() {
             }
             throw new Error(t.payment.errorCreateOrder)
           } catch (err: any) {
+            setErrorCode('PAYMENT_ERROR')
             setError(err.error || t.payment.errorCreateOrderProcess)
             throw err
           }
@@ -209,41 +215,57 @@ function PaymentContent() {
       const result = await apiClient.validatePromoCode(promoCode.trim())
       setPromoResult(result)
       if (result.valid) { setIsPromoFlow(true) }
-      else { setError(result.error || t.payment.promoInvalid) }
-    } catch (err: any) { setError(err.error || t.payment.promoValidateError) }
+      else {
+        setErrorCode('PROMO_INVALID')
+        setError(result.error || t.payment.promoInvalid)
+      }
+    } catch (err: any) {
+      setErrorCode('PROMO_INVALID')
+      setError(err.error || t.payment.promoValidateError)
+    }
     finally { setPromoValidating(false) }
   }
 
   const handlePromoSubmit = async () => {
     if (!email.trim()) { setError(t.payment.emailRequired); return }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError(t.payment.emailInvalid); return }
-    setIsProcessing(true); setError('')
+    setIsProcessing(true); setError(''); setErrorCode('')
     try {
       const sajuInput = sessionStorage.getItem('sajuInput')
       if (!sajuInput) { setError(t.payment.errorNoBirthInfo); setIsProcessing(false); return }
       const birthInfo = JSON.parse(sajuInput)
       const lookup = await apiClient.createReportLookupToken({ email: email.trim(), promoCode: promoCode.trim() })
-      // Fire request — don't await response (API Gateway may timeout at 30s)
-      // Lambda continues running and will send email regardless
-      apiClient.calculateWithPromo({
-        promoCode: promoCode.trim(), email: email.trim(), subjectName: birthInfo.name,
-        birthDate: birthInfo.birthDate, birthTime: birthInfo.birthTime, gender: birthInfo.gender,
-        timezone: birthInfo.timezone, language: birthInfo.language, birthPlace: birthInfo.birthPlace,
-        latitude: birthInfo.latitude, longitude: birthInfo.longitude,
-        parentBirthDate: birthInfo.parentBirthDate, parentBirthTime: birthInfo.parentBirthTime,
-        parentRole: birthInfo.parentRole, twinOrder: birthInfo.twinOrder, twinSiblingName: birthInfo.twinSiblingName,
-      }).catch(() => {}) // Ignore timeout errors — Lambda still runs
+      try {
+        await apiClient.calculateWithPromo({
+          promoCode: promoCode.trim(), email: email.trim(), subjectName: birthInfo.name,
+          birthDate: birthInfo.birthDate, birthTime: birthInfo.birthTime, gender: birthInfo.gender,
+          timezone: birthInfo.timezone, language: birthInfo.language, birthPlace: birthInfo.birthPlace,
+          latitude: birthInfo.latitude, longitude: birthInfo.longitude,
+          parentBirthDate: birthInfo.parentBirthDate, parentBirthTime: birthInfo.parentBirthTime,
+          parentRole: birthInfo.parentRole, twinOrder: birthInfo.twinOrder, twinSiblingName: birthInfo.twinSiblingName,
+        })
+      } catch (err: any) {
+        if (err?.code === 'PROMO_ALREADY_USED' || err?.statusCode === 409) {
+          setErrorCode('PROMO_ALREADY_USED')
+          setError(t.payment.promoAlreadyUsedMessage || err.error || t.payment.promoInvalid)
+          return
+        }
+        // For non-policy errors, keep the existing recovery path: the server may still finish and email the report.
+      }
 
       // Wait a moment for the request to be received by server, then redirect
       await new Promise(r => setTimeout(r, 3000))
       sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', promoCode: promoCode.trim(), email: email.trim(), reportLookupToken: lookup.reportLookupToken, completedAt: new Date().toISOString() }))
       router.push('/payment/success')
-    } catch (err: any) { setError(err.error || t.payment.errorReportGenerate) }
+    } catch (err: any) {
+      setErrorCode('PAYMENT_ERROR')
+      setError(err.error || t.payment.errorReportGenerate)
+    }
     finally { setIsProcessing(false) }
   }
 
   const handlePromoClear = () => {
-    setPromoResult(null); setPromoCode(''); setIsPromoFlow(false); setError('')
+    setPromoResult(null); setPromoCode(''); setIsPromoFlow(false); setError(''); setErrorCode('')
     buttonsRenderedRef.current = false
   }
 
@@ -393,7 +415,21 @@ function PaymentContent() {
                   {t.payment.emailAlsoSent}
                 </p>
               )}
-              {error && <div style={s.error}>{error}</div>}
+              {error && (
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  style={errorCode === 'PROMO_ALREADY_USED' ? { ...s.error, background: 'rgba(198,123,111,0.14)', borderColor: 'rgba(198,123,111,0.45)' } : s.error}
+                >
+                  {errorCode === 'PROMO_ALREADY_USED' && (
+                    <p style={{ margin: '0 0 0.35rem', fontWeight: 700 }}>{t.payment.promoAlreadyUsedTitle}</p>
+                  )}
+                  <p style={{ margin: 0 }}>{error}</p>
+                  {errorCode === 'PROMO_ALREADY_USED' && (
+                    <p style={{ margin: '0.5rem 0 0', color: '#8F574F' }}>{t.payment.promoAlreadyUsedAction}</p>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <>
