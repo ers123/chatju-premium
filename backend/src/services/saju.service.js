@@ -7,6 +7,7 @@ const { calculateFullFortuneCycles } = require('./daeun.service');
 const { calculateMansae } = require('../utils/mansae-wrapper');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
 const { assertPaymentMatchesProduct } = require('./payment.service');
+const { buildMultipleBirthSection } = require('../utils/multiple-birth');
 
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
@@ -28,6 +29,8 @@ async function generateSajuPreview(params) {
     birthDate,
     birthTime = null,
     gender,
+    isLunar = false,
+    isLeapMonth = false,
     timezone = 'Asia/Seoul',
     language = 'ko',
     // Location for solar time correction
@@ -56,6 +59,8 @@ async function generateSajuPreview(params) {
     if (birthPlace) locationOptions.birthPlace = birthPlace;
     if (latitude != null) locationOptions.latitude = latitude;
     if (longitude != null) locationOptions.longitude = longitude;
+    locationOptions.isLunar = isLunar === true;
+    locationOptions.isLeapMonth = isLeapMonth === true;
 
     const childManseryeok = calculateMansae(birthDate, timeToUse, genderKorean, locationOptions);
 
@@ -75,7 +80,7 @@ async function generateSajuPreview(params) {
     // Step 2: Calculate fortune cycles (대운/세운) - Premium feature
     const fortuneCycles = calculateFullFortuneCycles(
       childManseryeok,
-      birthDate,
+      childManseryeok.input?.solarDate || birthDate,
       genderKorean,
       new Date().getFullYear()
     );
@@ -113,6 +118,9 @@ async function generateSajuPreview(params) {
       hasParentAnalysis: !!parentManseryeok,
       metadata: {
         birthDate,
+        solarDate: childManseryeok.input?.solarDate || null,
+        isLunar: isLunar === true,
+        isLeapMonth: isLeapMonth === true,
         birthTime,
         gender,
         language,
@@ -150,6 +158,8 @@ async function generateSajuReading(params) {
     birthDate,
     birthTime = null,
     gender,
+    isLunar = false,
+    isLeapMonth = false,
     timezone = 'Asia/Seoul',
     language = 'ko',
     subjectName = null,
@@ -224,6 +234,8 @@ async function generateSajuReading(params) {
     if (birthPlace) locationOptions.birthPlace = birthPlace;
     if (latitude != null) locationOptions.latitude = latitude;
     if (longitude != null) locationOptions.longitude = longitude;
+    locationOptions.isLunar = isLunar === true;
+    locationOptions.isLeapMonth = isLeapMonth === true;
 
     const manseryeokResult = calculateMansae(birthDate, timeToUse, genderKorean, locationOptions);
 
@@ -246,7 +258,7 @@ async function generateSajuReading(params) {
     // Step 3: Calculate fortune cycles (대운/세운) - Full Premium version
     const fortuneCycles = calculateFullFortuneCycles(
       manseryeokResult,
-      birthDate,
+      manseryeokResult.input?.solarDate || birthDate,
       genderKorean,
       new Date().getFullYear()
     );
@@ -360,6 +372,9 @@ async function generateSajuReading(params) {
       viewUrl: `https://chatju.pages.dev/reading/${reading.id}`,
       metadata: {
         birthDate,
+        solarDate: manseryeokResult.input?.solarDate || null,
+        isLunar: isLunar === true,
+        isLeapMonth: isLeapMonth === true,
         birthTime,
         gender,
         language,
@@ -805,30 +820,7 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
   }
 
   // Build twin context if applicable
-  let twinSection = '';
-  if (twinInfo) {
-    const orderLabel = twinInfo.order === 1 ? '첫째(먼저 태어난 아이)' : '둘째(나중에 태어난 아이)';
-    twinSection = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👶👶 쌍둥이 정보
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**이 아이는 쌍둥이 중 ${orderLabel}입니다.**
-
-**쌍둥이 해석 원칙 (반드시 준수):**
-같은 사주를 가진 쌍둥이도 전혀 다른 성격과 인생을 삽니다.
-이유: 부모가 무의식적으로 두 아이를 다르게 대하기 때문입니다.
-- 먼저 태어난 아이에게 더 큰 기대와 책임감을 부여하는 경향
-- 나중에 태어난 아이에게 더 자유롭거나 편안한 역할을 주는 경향
-- 외모, 체력, 성향의 미세한 차이가 부모의 반응을 다르게 만들고, 그 반응이 다시 아이의 성격을 형성
-
-**이 리포트에서:**
-- 사주 데이터(命)는 동일하나, 이 아이가 ${orderLabel}라는 환경적 맥락(運)을 반영하세요
-- ${twinInfo.order === 1 ? '첫째에게 흔한 패턴: 책임감 과부하, 완벽주의 경향, 동생과의 비교 의식' : '둘째에게 흔한 패턴: 자유로움과 방임의 경계, 관심 경쟁, "나도 보여줄게" 의식'}
-- 부모에게: "같은 아이인데 왜 이렇게 다르지?"라는 의문에 답해주세요
-${twinInfo.siblingName ? `**쌍둥이 형제/자매 이름:** ${twinInfo.siblingName}` : ''}
-`;
-  }
+  const twinSection = buildMultipleBirthSection(twinInfo);
 
   // Language instruction for non-Korean reports
   // Note: for premium reports, the system message (systemMessageBaseEn) already

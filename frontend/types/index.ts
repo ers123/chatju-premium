@@ -46,6 +46,7 @@ export interface BirthInfo {
   birthTime?: string; // HH:MM format (24-hour)
   gender: 'male' | 'female';
   isLunar?: boolean; // true for lunar calendar
+  isLeapMonth?: boolean; // true for lunar leap month
   timezone?: string; // e.g., 'Asia/Seoul'
   language?: SupportedLanguage;
   // Location for True Solar Time (진태양시) correction
@@ -57,6 +58,8 @@ export interface BirthInfo {
   parentBirthTime?: string; // Parent's birth time
   parentRole?: 'mother' | 'father'; // Which parent
   parentGender?: 'M' | 'F'; // Parent's gender
+  parentIsLunar?: boolean; // true if parent's birth date is lunar
+  parentIsLeapMonth?: boolean; // true if parent's lunar month is leap month
   // Twin information
   twinOrder?: 1 | 2; // 1 = first born, 2 = second born
   twinSiblingName?: string; // Twin sibling's name

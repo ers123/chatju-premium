@@ -239,10 +239,14 @@ function PaymentContent() {
         await apiClient.calculateWithPromo({
           promoCode: promoCode.trim(), email: email.trim(), subjectName: birthInfo.name,
           birthDate: birthInfo.birthDate, birthTime: birthInfo.birthTime, gender: birthInfo.gender,
+          isLunar: birthInfo.calendar === 'lunar',
+          isLeapMonth: birthInfo.isLeapMonth === true,
           timezone: birthInfo.timezone, language: birthInfo.language, birthPlace: birthInfo.birthPlace,
           latitude: birthInfo.latitude, longitude: birthInfo.longitude,
           parentBirthDate: birthInfo.parentBirthDate, parentBirthTime: birthInfo.parentBirthTime,
-          parentRole: birthInfo.parentRole, twinOrder: birthInfo.twinOrder, twinSiblingName: birthInfo.twinSiblingName,
+          parentRole: birthInfo.parentRole, parentIsLunar: birthInfo.parentCalendar === 'lunar',
+          parentIsLeapMonth: birthInfo.parentIsLeapMonth === true,
+          twinOrder: birthInfo.twinOrder, twinSiblingName: birthInfo.twinSiblingName,
         })
       } catch (err: any) {
         if (err?.code === 'PROMO_ALREADY_USED' || err?.statusCode === 409) {

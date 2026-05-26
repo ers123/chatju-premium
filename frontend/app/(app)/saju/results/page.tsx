@@ -365,12 +365,15 @@ export default function ResultsPage() {
           birthTime: input.birthTime,
           gender: input.gender,
           isLunar: input.calendar === 'lunar',
+          isLeapMonth: input.isLeapMonth === true,
           language: lang,
           subjectName: input.name,
           birthPlace: input.birthPlace,
           parentBirthDate: input.parentBirthDate,
           parentBirthTime: input.parentBirthTime,
           parentRole: input.parentRole,
+          parentIsLunar: input.parentCalendar === 'lunar',
+          parentIsLeapMonth: input.parentIsLeapMonth === true,
           twinOrder: input.twinOrder,
           twinSiblingName: input.twinSiblingName,
         })
@@ -462,6 +465,7 @@ export default function ResultsPage() {
             birthTime: input.birthTime,
             gender: input.gender,
             isLunar: input.calendar === 'lunar',
+            isLeapMonth: input.isLeapMonth === true,
             language: resolvedLang,
             // Location for solar time correction
             birthPlace: input.birthPlace,
@@ -473,6 +477,8 @@ export default function ResultsPage() {
             parentBirthTime: input.parentBirthTime,
             parentRole: input.parentRole,
             parentGender: input.parentGender,
+            parentIsLunar: input.parentCalendar === 'lunar',
+            parentIsLeapMonth: input.parentIsLeapMonth === true,
             // Email for PDF delivery
             deliveryEmail: completed.email,
             }, completed.paymentAccessToken)
@@ -562,6 +568,7 @@ export default function ResultsPage() {
           birthTime: input.birthTime,
           gender: input.gender,
           isLunar: input.calendar === 'lunar',
+          isLeapMonth: input.isLeapMonth === true,
           language: resolvedLang,
           // Location for solar time correction
           birthPlace: input.birthPlace,
@@ -572,6 +579,8 @@ export default function ResultsPage() {
           parentBirthDate: input.parentBirthDate,
           parentBirthTime: input.parentBirthTime,
           parentRole: input.parentRole,
+          parentIsLunar: input.parentCalendar === 'lunar',
+          parentIsLeapMonth: input.parentIsLeapMonth === true,
         })
 
         const manseryeok = previewData.manseryeok

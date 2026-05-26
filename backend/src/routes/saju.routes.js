@@ -17,14 +17,14 @@ router.use(sanitizeStrings);
 /**
  * Helper: Validate and calculate parent manseryeok
  */
-function calculateParentManseryeok(parentBirthDate, parentBirthTime, parentRole) {
+function calculateParentManseryeok(parentBirthDate, parentBirthTime, parentRole, calendarOptions = {}) {
   if (!parentBirthDate || !parentRole) return null;
 
   try {
     // Parent gender: mother = female, father = male
     const parentGender = parentRole === 'mother' ? '여' : '남';
     const timeToUse = parentBirthTime || '12:00';
-    return calculateMansae(parentBirthDate, timeToUse, parentGender);
+    return calculateMansae(parentBirthDate, timeToUse, parentGender, calendarOptions);
   } catch (error) {
     console.warn('[Saju Route] Parent manseryeok calculation failed:', error.message);
     return null;
@@ -44,6 +44,8 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
       birthDate,
       birthTime,
       gender,
+      isLunar,
+      isLeapMonth,
       timezone,
       language,
       // Location info (optional, for solar time correction)
@@ -54,6 +56,8 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
       parentBirthDate,
       parentBirthTime,
       parentRole, // 'mother' or 'father'
+      parentIsLunar,
+      parentIsLeapMonth,
     } = req.body;
 
     // Validate required fields
@@ -94,7 +98,10 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
     let parentManseryeok = null;
     if (parentBirthDate && parentRole) {
       const normalizedParentDate = parentBirthDate.replace(/\./g, '-');
-      parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole);
+      parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole, {
+        isLunar: parentIsLunar === true,
+        isLeapMonth: parentIsLeapMonth === true,
+      });
     }
 
     // Generate preview (free version with relationship focus)
@@ -102,6 +109,8 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
       birthDate: normalizedBirthDate,
       birthTime,
       gender,
+      isLunar: isLunar === true,
+      isLeapMonth: isLeapMonth === true,
       timezone: timezone || 'Asia/Seoul',
       language: language || 'ko',
       // Location for solar time correction
@@ -154,6 +163,8 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
       birthDate,
       birthTime,
       gender,
+      isLunar,
+      isLeapMonth,
       timezone,
       language,
       subjectName,
@@ -165,6 +176,8 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
       parentBirthDate,
       parentBirthTime,
       parentRole,   // 'mother' or 'father'
+      parentIsLunar,
+      parentIsLeapMonth,
       parentGender, // 'M' or 'F' (overrides role-derived gender if provided)
       deliveryEmail,
       // Optional twin info
@@ -181,8 +194,9 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
     }
 
     // Validate birth date format (YYYY-MM-DD)
+    const normalizedBirthDate = birthDate.replace(/\./g, '-');
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(birthDate)) {
+    if (!dateRegex.test(normalizedBirthDate)) {
       return res.status(400).json({
         error: 'Invalid birthDate format. Use YYYY-MM-DD',
       });
@@ -209,7 +223,10 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
     let parentManseryeok = null;
     if (parentBirthDate && parentRole) {
       const normalizedParentDate = parentBirthDate.replace(/\./g, '-');
-      parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole);
+      parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole, {
+        isLunar: parentIsLunar === true,
+        isLeapMonth: parentIsLeapMonth === true,
+      });
       if (parentManseryeok) {
         console.log('[Saju Route] Parent manseryeok calculated for role:', parentRole);
       }
@@ -229,9 +246,11 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
       userId,
       orderId,
       paymentAccessToken,
-      birthDate,
+      birthDate: normalizedBirthDate,
       birthTime,
       gender,
+      isLunar: isLunar === true,
+      isLeapMonth: isLeapMonth === true,
       timezone: timezone || 'Asia/Seoul',
       language: language || 'ko',
       subjectName,
@@ -302,6 +321,8 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       birthDate,
       birthTime,
       gender,
+      isLunar,
+      isLeapMonth,
       timezone,
       language,
       subjectName,
@@ -311,6 +332,8 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       parentBirthDate,
       parentBirthTime,
       parentRole,
+      parentIsLunar,
+      parentIsLeapMonth,
       parentGender,
       twinOrder,
       twinSiblingName,
@@ -384,7 +407,10 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
     let parentManseryeok = null;
     if (parentBirthDate && parentRole) {
       const normalizedParentDate = parentBirthDate.replace(/\./g, '-');
-      parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole);
+      parentManseryeok = calculateParentManseryeok(normalizedParentDate, parentBirthTime, parentRole, {
+        isLunar: parentIsLunar === true,
+        isLeapMonth: parentIsLeapMonth === true,
+      });
     }
 
     // Step 4: Generate reading first (before consuming promo code)
@@ -395,6 +421,8 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       birthDate: normalizedBirthDate,
       birthTime,
       gender,
+      isLunar: isLunar === true,
+      isLeapMonth: isLeapMonth === true,
       timezone: timezone || 'Asia/Seoul',
       language: language || 'ko',
       subjectName,

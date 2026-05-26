@@ -14,9 +14,11 @@
 const solstice = require('astronomia/solstice');
 const { Planet } = require('astronomia/planetposition');
 const vsop87Bearth = require('astronomia/data/vsop87Bearth').default;
+const KoreanLunarCalendar = require('korean-lunar-calendar');
 
 const earth = new Planet(vsop87Bearth);
 const ipchunCache = new Map();
+const monthTermCache = new Map();
 
 // Heavenly Stems (천간)
 const HEAVENLY_STEMS = ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"];
@@ -363,6 +365,21 @@ const SOLAR_TERMS = [
   { month: 1, day: 6 },   // 소한 - 丑月 start (month index 11)
 ];
 
+const MONTH_TERMS = [
+  { name: '입춘', longitude: 315, monthIndex: 0 },
+  { name: '경칩', longitude: 345, monthIndex: 1 },
+  { name: '청명', longitude: 15, monthIndex: 2 },
+  { name: '입하', longitude: 45, monthIndex: 3 },
+  { name: '망종', longitude: 75, monthIndex: 4 },
+  { name: '소서', longitude: 105, monthIndex: 5 },
+  { name: '입추', longitude: 135, monthIndex: 6 },
+  { name: '백로', longitude: 165, monthIndex: 7 },
+  { name: '한로', longitude: 195, monthIndex: 8 },
+  { name: '입동', longitude: 225, monthIndex: 9 },
+  { name: '대설', longitude: 255, monthIndex: 10 },
+  { name: '소한', longitude: 285, monthIndex: 11 },
+];
+
 /**
  * Get lunar month index (0-11) based on solar terms
  * 0 = 寅月, 1 = 卯月, 2 = 辰月, ... 11 = 丑月
@@ -441,10 +458,64 @@ function getIpchunTime(year) {
   return ipchunCache.get(year);
 }
 
+function getMonthTermsForYear(year) {
+  if (!monthTermCache.has(year)) {
+    monthTermCache.set(
+      year,
+      MONTH_TERMS.map(term => ({
+        ...term,
+        time: calculateSolarLongitudeTime(year, term.longitude),
+      }))
+    );
+  }
+  return monthTermCache.get(year);
+}
+
+function buildKstDate(year, month, day, hour = 12, minute = 0) {
+  return new Date(Date.UTC(year, month - 1, day, hour, minute));
+}
+
+function convertLunarToSolar(year, month, day, isLeapMonth = false) {
+  const calendar = new KoreanLunarCalendar();
+  if (!calendar.setLunarDate(year, month, day, isLeapMonth)) {
+    throw new Error('Invalid lunar birth date');
+  }
+  return calendar.getSolarCalendar();
+}
+
+function convertSolarToLunar(year, month, day) {
+  const calendar = new KoreanLunarCalendar();
+  if (!calendar.setSolarDate(year, month, day)) return null;
+  return calendar.getLunarCalendar();
+}
+
 function getTraditionalYear(year, month, day, hour = 12, minute = 0) {
   if (![year, month, day, hour, minute].every(Number.isFinite)) return year;
-  const kstDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+  const kstDate = buildKstDate(year, month, day, hour, minute);
   return kstDate.getTime() < getIpchunTime(year).getTime() ? year - 1 : year;
+}
+
+function getTraditionalMonthInfo(year, month, day, hour = 12, minute = 0) {
+  if (![year, month, day, hour, minute].every(Number.isFinite)) {
+    return { monthIndex: getLunarMonthIndex(month, day), termName: null, termTime: null };
+  }
+
+  const kstDate = buildKstDate(year, month, day, hour, minute);
+  const terms = [year - 1, year, year + 1]
+    .flatMap(getMonthTermsForYear)
+    .sort((a, b) => a.time.getTime() - b.time.getTime());
+
+  for (let i = terms.length - 1; i >= 0; i--) {
+    if (kstDate.getTime() >= terms[i].time.getTime()) {
+      return {
+        monthIndex: terms[i].monthIndex,
+        termName: terms[i].name,
+        termTime: terms[i].time,
+      };
+    }
+  }
+
+  return { monthIndex: 11, termName: '소한', termTime: null };
 }
 
 /**
@@ -457,9 +528,9 @@ function getTraditionalYear(year, month, day, hour = 12, minute = 0) {
  * @param {number} yearStemIndex - Index of year's heavenly stem (0-9)
  * @param {number} year - Year (needed to determine which year's stem to use)
  */
-function calculateMonthPillar(gMonth, gDay, yearStemIndex, year, isSouthernHemisphere = false) {
-  // Get lunar month index based on solar terms
-  let lunarMonthIndex = getLunarMonthIndex(gMonth, gDay);
+function calculateMonthPillar(gYear, gMonth, gDay, hour, minute, yearStemIndex, isSouthernHemisphere = false) {
+  const monthInfo = getTraditionalMonthInfo(gYear, gMonth, gDay, hour, minute);
+  let lunarMonthIndex = monthInfo.monthIndex;
 
   // Southern Hemisphere: reverse seasonal energy by 6 months
   if (isSouthernHemisphere) {
@@ -468,20 +539,13 @@ function calculateMonthPillar(gMonth, gDay, yearStemIndex, year, isSouthernHemis
   const branch = MONTH_BRANCHES[lunarMonthIndex];
   const branchIndex = EARTHLY_BRANCHES.indexOf(branch);
 
-  // For dates before 입춘, use previous year's stem
-  let effectiveYearStemIndex = yearStemIndex;
-  if (gMonth === 1 || (gMonth === 2 && gDay < 4)) {
-    // Before 입춘, still previous year
-    effectiveYearStemIndex = (yearStemIndex - 1 + 10) % 10;
-  }
-
   // Calculate month stem based on year stem
   // 갑/기년 → 병인월 시작 (stem index 2)
   // 을/경년 → 무인월 시작 (stem index 4)
   // 병/신년 → 경인월 시작 (stem index 6)
   // 정/임년 → 임인월 시작 (stem index 8)
   // 무/계년 → 갑인월 시작 (stem index 0)
-  const yearStemGroup = effectiveYearStemIndex % 5;
+  const yearStemGroup = yearStemIndex % 5;
   const firstMonthStem = [2, 4, 6, 8, 0][yearStemGroup];
   const stemIndex = (firstMonthStem + lunarMonthIndex) % 10;
 
@@ -492,6 +556,8 @@ function calculateMonthPillar(gMonth, gDay, yearStemIndex, year, isSouthernHemis
     branchHanja: EARTHLY_BRANCHES_HANJA[branchIndex],
     element: STEM_ELEMENT[HEAVENLY_STEMS[stemIndex]],
     lunarMonthIndex, // For debugging
+    solarTerm: monthInfo.termName,
+    solarTermTime: monthInfo.termTime ? monthInfo.termTime.toISOString() : null,
   };
 }
 
@@ -591,8 +657,42 @@ function getSouthernHemisphereMonthIndex(lunarMonthIndex) {
  */
 function calculateMansae(birthDate, birthTime, gender, locationOptions = {}) {
   try {
-    const [year, month, day] = birthDate.split('-').map(Number);
+    const normalizedInputDate = birthDate.replace(/[./]/g, '-');
+    const [inputYear, inputMonth, inputDay] = normalizedInputDate.split('-').map(Number);
     const [hour, minute = 0] = birthTime.split(':').map(Number);
+    const isLunar = locationOptions.isLunar === true;
+    const isLeapMonth = locationOptions.isLeapMonth === true;
+    let year = inputYear;
+    let month = inputMonth;
+    let day = inputDay;
+    let lunarData = null;
+
+    if (isLunar && [inputYear, inputMonth, inputDay].every(Number.isFinite)) {
+      const solarDate = convertLunarToSolar(inputYear, inputMonth, inputDay, isLeapMonth);
+      year = solarDate.year;
+      month = solarDate.month;
+      day = solarDate.day;
+      lunarData = {
+        year: inputYear,
+        month: inputMonth,
+        day: inputDay,
+        isLeapMonth,
+      };
+    } else if ([inputYear, inputMonth, inputDay].every(Number.isFinite)) {
+      const lunarDate = convertSolarToLunar(inputYear, inputMonth, inputDay);
+      if (lunarDate) {
+        lunarData = {
+          year: lunarDate.year,
+          month: lunarDate.month,
+          day: lunarDate.day,
+          isLeapMonth: lunarDate.intercalation,
+        };
+      }
+    }
+
+    const solarDate = [year, month, day].every(Number.isFinite)
+      ? `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      : null;
 
     // Step 0: Resolve location and apply True Solar Time correction
     // Pass birth date for Korean historical timezone detection (UTC+8:30 vs UTC+9)
@@ -615,12 +715,11 @@ function calculateMansae(birthDate, birthTime, gender, locationOptions = {}) {
     // Calculate four pillars using corrected time
     const traditionalYear = getTraditionalYear(calcYear, calcMonth, calcDay, calcHour, calcMinute);
     const yearPillar = calculateYearPillar(traditionalYear);
-    const calendarYearPillar = calculateYearPillar(calcYear);
-    const yearStemIndex = HEAVENLY_STEMS.indexOf(calendarYearPillar.stem);
+    const yearStemIndex = HEAVENLY_STEMS.indexOf(yearPillar.stem);
 
     // Month pillar uses solar terms, not Gregorian month
     // For Southern Hemisphere: reverse the seasonal month index
-    const monthPillar = calculateMonthPillar(calcMonth, calcDay, yearStemIndex, calcYear, isSouthernHemisphere);
+    const monthPillar = calculateMonthPillar(calcYear, calcMonth, calcDay, calcHour, calcMinute, yearStemIndex, isSouthernHemisphere);
     const dayPillar = calculateDayPillar(calcYear, calcMonth, calcDay);
     const dayStemIndex = HEAVENLY_STEMS.indexOf(dayPillar.stem);
     // 야자시 (夜子時): 23:00-23:59 uses next day's stem for hour pillar calculation
@@ -736,6 +835,10 @@ function calculateMansae(birthDate, birthTime, gender, locationOptions = {}) {
         birthDate,
         birthTime,
         gender,
+        isLunar,
+        isLeapMonth,
+        solarDate,
+        lunar: lunarData,
       },
       // Solar time & hemisphere correction metadata
       corrections: {
