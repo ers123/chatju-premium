@@ -25,6 +25,7 @@
     "@anthropic-ai/sdk": "^0.52.0 || ^1.0.0",
     "@google/generative-ai": "^0.24.1 || ^1.0.0",
     "@supabase/supabase-js": "^2.39.0",
+    "astronomia": "^4.2.0",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",

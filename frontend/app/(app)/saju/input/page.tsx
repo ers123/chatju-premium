@@ -16,9 +16,14 @@ const CheckIcon = () => (
 )
 
 // Saju Helpers — language-independent data, display names come from translations
-const getZodiacInfo = (yearStr: string) => {
+const getZodiacInfo = (yearStr: string, monthStr?: string, dayStr?: string) => {
   const year = parseInt(yearStr)
   if (isNaN(year) || year < 1900 || year > 2100) return null
+  const month = monthStr ? parseInt(monthStr) : NaN
+  const day = dayStr ? parseInt(dayStr) : NaN
+  const effectiveYear = !isNaN(month) && !isNaN(day) && (month < 2 || (month === 2 && day <= 4))
+    ? year - 1
+    : year
 
   const stems = [
     { key: 'metal', colorCode: '#6B7578' },
@@ -48,8 +53,8 @@ const getZodiacInfo = (yearStr: string) => {
     { key: 'sheep', icon: '🐑' },
   ]
 
-  const stem = stems[year % 10]
-  const branch = branches[year % 12]
+  const stem = stems[effectiveYear % 10]
+  const branch = branches[effectiveYear % 12]
 
   return { stem, branch }
 }
@@ -181,8 +186,8 @@ export default function InputFormPage() {
   const canProceedStep4 = formData.parentRole && formData.parentYear && formData.parentMonth && formData.parentDay
   const canProceedStep5 = (formData.parentUnknownTime || (formData.parentHour && formData.parentMinute)) && formData.privacyAgreed && formData.overseasProcessingAgreed && formData.ageVerified
 
-  const childZodiacInfo = getZodiacInfo(formData.year)
-  const parentZodiacInfo = getZodiacInfo(formData.parentYear)
+  const childZodiacInfo = getZodiacInfo(formData.year, formData.month, formData.day)
+  const parentZodiacInfo = getZodiacInfo(formData.parentYear, formData.parentMonth, formData.parentDay)
 
   const s = t.sajuInput
   const stepTitles = s.steps

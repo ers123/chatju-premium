@@ -29,9 +29,9 @@ describe('Manseryeok Four Pillar Calculations', () => {
       expected: { year: '을묘', month: '계미', day: '정묘', hour: '정미' },
     },
     {
-      desc: '1985-01-10 06:15 남 — 을축년 (갑자년 overlap check)',
+      desc: '1985-01-10 06:15 남 — 갑자년 (입춘 전)',
       date: '1985-01-10', time: '06:15', gender: '남',
-      expected: { year: '을축', month: '정축', day: '기유', hour: '정묘' },
+      expected: { year: '갑자', month: '정축', day: '기유', hour: '정묘' },
     },
     {
       desc: '1990-05-15 10:00 여 — 경오년',
@@ -74,13 +74,35 @@ describe('Manseryeok Four Pillar Calculations', () => {
   // ============================================================
   // Solar term boundary (입춘 around Feb 4)
   // ============================================================
-  test('2000-02-04 09:00 여 — Near 입춘 boundary', () => {
+  test('2000-02-04 09:00 여 — Before 입춘 boundary', () => {
     const result = calculateMansae('2000-02-04', '09:00', '여');
     expect(result.error).toBeUndefined();
-    expect(result.pillars.year.korean).toBe('경진');
+    expect(result.pillars.year.korean).toBe('기묘');
     expect(result.pillars.month.korean).toBe('기축');
     expect(result.pillars.day.korean).toBe('임진');
     expect(result.pillars.hour.korean).toBe('을사');
+  });
+
+  test('2000-02-04 22:00 여 — After 입춘 boundary', () => {
+    const result = calculateMansae('2000-02-04', '22:00', '여');
+    expect(result.error).toBeUndefined();
+    expect(result.pillars.year.korean).toBe('경진');
+  });
+
+  test('1983-01-26 12:00 여 — Before 입춘 should still be 임술년', () => {
+    const result = calculateMansae('1983-01-26', '12:00', '여');
+    expect(result.error).toBeUndefined();
+    expect(result.pillars.year.korean).toBe('임술');
+    expect(result.pillars.year.hanja).toBe('壬戌');
+    expect(result.pillars.year.element).toBe('수 + 토');
+  });
+
+  test('1983-02-05 12:00 여 — After 입춘 should be 계해년', () => {
+    const result = calculateMansae('1983-02-05', '12:00', '여');
+    expect(result.error).toBeUndefined();
+    expect(result.pillars.year.korean).toBe('계해');
+    expect(result.pillars.year.hanja).toBe('癸亥');
+    expect(result.pillars.year.element).toBe('수 + 수');
   });
 
   // ============================================================
@@ -157,9 +179,9 @@ describe('Manseryeok Four Pillar Calculations', () => {
       expected: { year: '경인', month: '임오', day: '신묘', hour: '신묘' },
     },
     {
-      desc: '1970-01-01 00:00 남 — 경술년 (New Year midnight)',
+      desc: '1970-01-01 00:00 남 — 기유년 (입춘 전)',
       date: '1970-01-01', time: '00:00', gender: '남',
-      expected: { year: '경술', month: '병자', day: '신사', hour: '무자' },
+      expected: { year: '기유', month: '병자', day: '신사', hour: '무자' },
     },
     {
       desc: '1995-09-21 16:30 여 — 을해년',

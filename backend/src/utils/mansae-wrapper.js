@@ -11,6 +11,12 @@
  * but Seoul (127°E) is ~28 minutes behind. For accurate 시주 calculation,
  * the birth time must be corrected to true local solar time.
  */
+const solstice = require('astronomia/solstice');
+const { Planet } = require('astronomia/planetposition');
+const vsop87Bearth = require('astronomia/data/vsop87Bearth').default;
+
+const earth = new Planet(vsop87Bearth);
+const ipchunCache = new Map();
 
 // Heavenly Stems (천간)
 const HEAVENLY_STEMS = ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"];
@@ -420,6 +426,27 @@ function calculateYearPillar(year) {
   };
 }
 
+function calculateSolarLongitudeTime(year, longitude) {
+  if (!Number.isFinite(year) || !Number.isFinite(longitude)) return new Date(NaN);
+  const calcYear = longitude >= 270 ? year - 1 : year;
+  const jde = solstice.longitude(calcYear, earth, longitude * Math.PI / 180);
+  const unixMs = (jde - 2440587.5) * 86400000;
+  return new Date(unixMs + 9 * 60 * 60 * 1000);
+}
+
+function getIpchunTime(year) {
+  if (!ipchunCache.has(year)) {
+    ipchunCache.set(year, calculateSolarLongitudeTime(year, 315));
+  }
+  return ipchunCache.get(year);
+}
+
+function getTraditionalYear(year, month, day, hour = 12, minute = 0) {
+  if (![year, month, day, hour, minute].every(Number.isFinite)) return year;
+  const kstDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+  return kstDate.getTime() < getIpchunTime(year).getTime() ? year - 1 : year;
+}
+
 /**
  * Calculate month pillar based on SOLAR TERMS (節氣)
  * The month pillar is determined by which solar term period the date falls into,
@@ -583,10 +610,13 @@ function calculateMansae(birthDate, birthTime, gender, locationOptions = {}) {
     const calcMonth = adjusted.month;
     const calcDay = adjusted.day;
     const calcHour = adjusted.hour;
+    const calcMinute = adjusted.minute;
 
     // Calculate four pillars using corrected time
-    const yearPillar = calculateYearPillar(calcYear);
-    const yearStemIndex = HEAVENLY_STEMS.indexOf(yearPillar.stem);
+    const traditionalYear = getTraditionalYear(calcYear, calcMonth, calcDay, calcHour, calcMinute);
+    const yearPillar = calculateYearPillar(traditionalYear);
+    const calendarYearPillar = calculateYearPillar(calcYear);
+    const yearStemIndex = HEAVENLY_STEMS.indexOf(calendarYearPillar.stem);
 
     // Month pillar uses solar terms, not Gregorian month
     // For Southern Hemisphere: reverse the seasonal month index
