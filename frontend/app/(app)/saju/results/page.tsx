@@ -1060,11 +1060,7 @@ export default function ResultsPage() {
             <div style={{ background: '#F8F6F3', borderRadius: '10px', padding: '1rem', border: '1px solid #EBE5DF' }}>
               <p style={{ color: '#C5A059', fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>✉ {(() => { try { const c = sessionStorage.getItem('completed_payment'); return c ? JSON.parse(c).email : '' } catch { return '' } })()}</p>
               <p style={{ color: '#6B5E52', fontSize: '0.9375rem' }}>
-                {lang === 'ko'
-                  ? '리포트는 위 이메일로도 전송됩니다. 이 페이지를 닫아도 괜찮습니다.'
-                  : lang === 'ja'
-                  ? 'レポートは上記のメールにも送信されます。このページを閉じても大丈夫です。'
-                  : 'Your report will also be sent to this email. Feel free to close this page.'}
+                {t.payment.emailAlsoSent}
               </p>
             </div>
           </section>
@@ -1073,11 +1069,7 @@ export default function ResultsPage() {
             <p style={{ color: '#C67B6F', fontSize: '1rem', marginBottom: '1rem' }}>{premiumError}</p>
             <div style={{ background: '#F8F6F3', borderRadius: '10px', padding: '1rem', border: '1px solid #EBE5DF' }}>
               <p style={{ color: '#6B5E52', fontSize: '0.9375rem' }}>
-                {lang === 'ko'
-                  ? '리포트는 이메일로도 전송됩니다. 잠시 후 새로고침하시거나 이메일을 확인해주세요.'
-                  : lang === 'ja'
-                  ? 'レポートはメールでも送信されます。しばらくしてからページを更新するか、メールをご確認ください。'
-                  : 'Your report will also be delivered by email. Please refresh shortly or check your inbox.'}
+                {t.payment.emailAlsoSent}
               </p>
             </div>
           </section>
@@ -1178,7 +1170,7 @@ export default function ResultsPage() {
                     </>
                   ) : (
                     <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '1rem 0' }}>
-                      Enter your email above to see payment options
+                      {t.payment.emailRequired}
                     </p>
                   )}
 
@@ -1192,11 +1184,7 @@ export default function ResultsPage() {
                         ✉ {paymentEmail}
                       </p>
                       <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9375rem', lineHeight: 1.6 }}>
-                        {lang === 'ko'
-                          ? '리포트가 준비되면 위 이메일로도 전송됩니다.\n이 페이지를 닫아도 괜찮습니다.'
-                          : lang === 'ja'
-                          ? 'レポートは上記のメールにも送信されます。\nこのページを閉じても大丈夫です。'
-                          : 'Your report will also be sent to the email above.\nFeel free to close this page.'}
+                        {t.payment.emailAlsoSent}
                       </p>
                     </div>
                   )}
@@ -1223,11 +1211,7 @@ export default function ResultsPage() {
                       <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem' }}>
                         {paymentErrorCode === 'PROMO_ALREADY_USED'
                           ? t.payment.promoAlreadyUsedAction
-                          : lang === 'ko'
-                          ? '리포트는 이메일로도 전송됩니다. 창을 닫아도 괜찮습니다.'
-                          : lang === 'ja'
-                          ? 'レポートはメールでも送信されます。ページを閉じても大丈夫です。'
-                          : 'Your report will also be delivered by email. You can safely close this page.'}
+                          : t.payment.emailAlsoSent}
                       </p>
                     </div>
                   )}

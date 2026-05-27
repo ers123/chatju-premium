@@ -31,6 +31,54 @@ function calculateParentManseryeok(parentBirthDate, parentBirthTime, parentRole,
   }
 }
 
+function getPreviewMessage(language = 'ko', hasParentAnalysis = false) {
+  const messages = {
+    ko: {
+      withParent: '부모-자녀 관계 미리보기입니다. 프리미엄으로 갈등 해결 가이드를 받아보세요!',
+      withoutParent: '이것은 미리보기입니다. 프리미엄으로 전체 해석을 확인하세요!',
+    },
+    en: {
+      withParent: 'This is a parent-child relationship preview. Upgrade for the full conflict-resolution guide.',
+      withoutParent: 'This is a preview. Upgrade to Premium for the full interpretation.',
+    },
+    ja: {
+      withParent: '親子関係のプレビューです。プレミアムで詳しい関係改善ガイドをご確認ください。',
+      withoutParent: 'これはプレビューです。全体の解釈はプレミアムでご確認ください。',
+    },
+    zh: {
+      withParent: '这是亲子关系预览。升级高级报告可查看完整的沟通与冲突解决指南。',
+      withoutParent: '这是预览。升级高级报告可查看完整解读。',
+    },
+    vi: {
+      withParent: 'Đây là bản xem trước mối quan hệ cha mẹ - con. Nâng cấp Premium để nhận hướng dẫn xử lý xung đột đầy đủ.',
+      withoutParent: 'Đây là bản xem trước. Nâng cấp Premium để xem phần diễn giải đầy đủ.',
+    },
+    id: {
+      withParent: 'Ini adalah pratinjau hubungan orang tua-anak. Upgrade ke Premium untuk panduan penyelesaian konflik lengkap.',
+      withoutParent: 'Ini adalah pratinjau. Upgrade ke Premium untuk interpretasi lengkap.',
+    },
+    es: {
+      withParent: 'Esta es una vista previa de la relación padre-hijo. Actualiza a Premium para ver la guía completa de comunicación y conflictos.',
+      withoutParent: 'Esta es una vista previa. Actualiza a Premium para ver la interpretación completa.',
+    },
+    pt: {
+      withParent: 'Esta é uma prévia da relação entre pais e filho. Faça upgrade para o Premium para ver o guia completo de comunicação e conflitos.',
+      withoutParent: 'Esta é uma prévia. Faça upgrade para o Premium para ver a interpretação completa.',
+    },
+    fr: {
+      withParent: 'Ceci est un aperçu de la relation parent-enfant. Passez à Premium pour obtenir le guide complet de communication et de gestion des conflits.',
+      withoutParent: 'Ceci est un aperçu. Passez à Premium pour consulter l’interprétation complète.',
+    },
+    th: {
+      withParent: 'นี่คือตัวอย่างความสัมพันธ์พ่อแม่-ลูก อัปเกรดเป็น Premium เพื่อดูคู่มือการสื่อสารและการจัดการความขัดแย้งฉบับเต็ม',
+      withoutParent: 'นี่คือตัวอย่าง อัปเกรดเป็น Premium เพื่อดูคำอธิบายฉบับเต็ม',
+    },
+  };
+
+  const copy = messages[language] || messages.en;
+  return hasParentAnalysis ? copy.withParent : copy.withoutParent;
+}
+
 /**
  * POST /saju/preview
  * Generate FREE Saju preview/teaser - NOW WITH RELATIONSHIP ANALYSIS
@@ -127,9 +175,7 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
       ...preview,
       isPaid: false,
       hasParentAnalysis: !!parentManseryeok,
-      message: parentManseryeok
-        ? '부모-자녀 관계 미리보기입니다. 프리미엄으로 갈등 해결 가이드를 받아보세요!'
-        : '이것은 미리보기입니다. 프리미엄으로 전체 해석을 확인하세요!',
+      message: getPreviewMessage(language || 'ko', !!parentManseryeok),
       upgradeUrl: '/payment',
     });
 
