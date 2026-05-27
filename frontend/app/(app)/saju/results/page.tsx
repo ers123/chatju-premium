@@ -228,6 +228,7 @@ export default function ResultsPage() {
   const [readingId, setReadingId] = useState<string | null>(null)
   const [reportAccessToken, setReportAccessToken] = useState<string | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
+  const previewRequestKeyRef = useRef<string | null>(null)
 
   // Inline payment state
   const [showPayment, setShowPayment] = useState(false)
@@ -563,6 +564,10 @@ export default function ResultsPage() {
           }
         }
 
+        const previewRequestKey = `${resolvedLang}:${stored}`
+        if (previewRequestKeyRef.current === previewRequestKey) return
+        previewRequestKeyRef.current = previewRequestKey
+
         // Send both child and parent data for relationship analysis
         const previewData = await apiClient.getPreview({
           birthDate: input.birthDate,
@@ -634,6 +639,7 @@ export default function ResultsPage() {
         setResult(transformedResult)
       } catch (err) {
         console.error('Error fetching results:', err)
+        previewRequestKeyRef.current = null
         setError(sr.errorFetch)
       } finally {
         setIsLoading(false)
