@@ -614,7 +614,7 @@ router.get('/reading/:id/pdf', readLimiter, async (req, res) => {
       language: reading.language || 'ko',
     });
 
-    const filename = `SoMyung_${reading.subject_name || 'Report'}_${reading.birth_date}.pdf`;
+    const filename = 'SoMyung_Report.pdf';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
     res.setHeader('Content-Length', pdfBuffer.length);

@@ -201,6 +201,7 @@ async function sendReportEmail(params) {
   const copy = getEmailCopy(language);
   const displayName = childName || (language === 'ko' ? '아이' : 'Child');
   const subject = copy.subject(displayName);
+  const attachmentFilename = 'SoMyung_Report.pdf';
 
   const htmlContent = buildReportEmailHtml({
     displayName,
@@ -225,7 +226,7 @@ async function sendReportEmail(params) {
   if (pdfBuffer) {
     emailPayload.attachments = [
       {
-        filename: `SoMyung_${displayName}_${birthDate}.pdf`,
+        filename: attachmentFilename,
         content: pdfBuffer,
         content_type: 'application/pdf',
       },
@@ -245,7 +246,7 @@ async function sendReportEmail(params) {
       if (generatedPdf) {
         emailPayload.attachments = [
           {
-            filename: `SoMyung_${displayName}_${birthDate}.pdf`,
+            filename: attachmentFilename,
             content: generatedPdf,
             content_type: 'application/pdf',
           },

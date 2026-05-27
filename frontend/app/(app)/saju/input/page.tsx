@@ -115,9 +115,14 @@ export default function InputFormPage() {
       const childBirthDate = `${formData.year}.${formData.month.padStart(2, '0')}.${formData.day.padStart(2, '0')}`
       const childBirthTime = formData.unknownTime ? '12:00' : `${formData.hour.padStart(2, '0')}:${formData.minute.padStart(2, '0')}`
 
-      // Parent birth info
-      const parentBirthDate = `${formData.parentYear}.${formData.parentMonth.padStart(2, '0')}.${formData.parentDay.padStart(2, '0')}`
-      const parentBirthTime = formData.parentUnknownTime ? '12:00' : `${formData.parentHour.padStart(2, '0')}:${formData.parentMinute.padStart(2, '0')}`
+      // Parent birth info is optional for privacy/data minimization.
+      const hasParentProfile = !!(formData.parentRole && formData.parentYear && formData.parentMonth && formData.parentDay)
+      const parentBirthDate = hasParentProfile
+        ? `${formData.parentYear}.${formData.parentMonth.padStart(2, '0')}.${formData.parentDay.padStart(2, '0')}`
+        : undefined
+      const parentBirthTime = hasParentProfile
+        ? (formData.parentUnknownTime ? '12:00' : `${formData.parentHour.padStart(2, '0')}:${formData.parentMinute.padStart(2, '0')}`)
+        : undefined
 
       // Resolve birth place
       const resolvedBirthPlace = formData.birthPlace === 'other'
@@ -139,12 +144,12 @@ export default function InputFormPage() {
         twinOrder: formData.isTwin && formData.twinOrder ? parseInt(formData.twinOrder) : undefined,
         twinSiblingName: formData.isTwin && formData.twinSiblingName ? formData.twinSiblingName : undefined,
         // Parent
-        parentRole: formData.parentRole,
-        parentName: formData.parentName,
+        parentRole: hasParentProfile ? formData.parentRole : undefined,
+        parentName: hasParentProfile ? formData.parentName : undefined,
         parentBirthDate,
         parentBirthTime,
-        parentCalendar: formData.parentCalendar,
-        parentUnknownTime: formData.parentUnknownTime
+        parentCalendar: hasParentProfile ? formData.parentCalendar : undefined,
+        parentUnknownTime: hasParentProfile ? formData.parentUnknownTime : undefined
       }))
 
       router.push('/saju/results')
@@ -180,11 +185,28 @@ export default function InputFormPage() {
     if (step > 1) setStep(step - 1)
   }
 
+  const clearParentInfo = () => {
+    setFormData(prev => ({
+      ...prev,
+      parentRole: '',
+      parentName: '',
+      parentCalendar: 'solar',
+      parentYear: '',
+      parentMonth: '',
+      parentDay: '',
+      parentHour: '',
+      parentMinute: '',
+      parentUnknownTime: false,
+    }))
+  }
+
   const canProceedStep1 = formData.name && formData.gender
   const canProceedStep2 = formData.year && formData.month && formData.day && formData.calendar
   const canProceedStep3 = formData.unknownTime || (formData.hour && formData.minute)
-  const canProceedStep4 = formData.parentRole && formData.parentYear && formData.parentMonth && formData.parentDay
-  const canProceedStep5 = (formData.parentUnknownTime || (formData.parentHour && formData.parentMinute)) && formData.privacyAgreed && formData.overseasProcessingAgreed && formData.ageVerified
+  const parentDateComplete = !!(formData.parentRole && formData.parentYear && formData.parentMonth && formData.parentDay)
+  const parentTimeComplete = formData.parentUnknownTime || (formData.parentHour && formData.parentMinute)
+  const canProceedStep4 = !formData.parentRole || parentDateComplete
+  const canProceedStep5 = (!parentDateComplete || parentTimeComplete) && formData.privacyAgreed && formData.overseasProcessingAgreed && formData.ageVerified
 
   const childZodiacInfo = getZodiacInfo(formData.year, formData.month, formData.day)
   const parentZodiacInfo = getZodiacInfo(formData.parentYear, formData.parentMonth, formData.parentDay)
@@ -892,8 +914,11 @@ export default function InputFormPage() {
                 {/* Parent Role Selection */}
                 <div style={{ marginBottom: '2rem' }}>
                   <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                    {s.parentRoleQuestion}
+                    {s.parentRoleQuestion} <span style={{ color: '#8B8580', fontWeight: 400 }}>{s.optional}</span>
                   </label>
+                  <p style={{ margin: '-0.25rem 0 1rem', color: '#6B7280', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                    {s.parentOptionalHint}
+                  </p>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <button
                       type="button"
@@ -970,6 +995,25 @@ export default function InputFormPage() {
                       )}
                     </button>
                   </div>
+                  {formData.parentRole && (
+                    <button
+                      type="button"
+                      onClick={clearParentInfo}
+                      style={{
+                        marginTop: '0.75rem',
+                        width: '100%',
+                        padding: '0.75rem',
+                        borderRadius: '0.75rem',
+                        border: '1px solid #D8D1C8',
+                        background: '#FFFFFF',
+                        color: '#6B5E52',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {s.skipParentInfo}
+                    </button>
+                  )}
                 </div>
 
                 {/* Parent Birth Date */}
@@ -1125,63 +1169,65 @@ export default function InputFormPage() {
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
               }}>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                    {s.parentBirthTime(formData.parentRole === 'mother' ? s.mother : s.father)}
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.parentHour && formData.parentMinute
-                      ? `${formData.parentHour.padStart(2, '0')}:${formData.parentMinute.padStart(2, '0')}`
-                      : ''}
-                    onChange={e => {
-                      const [hour, minute] = e.target.value.split(':')
-                      setFormData(prev => ({
-                        ...prev,
-                        parentHour: hour ? String(parseInt(hour)) : '',
-                        parentMinute: minute ? String(parseInt(minute)) : ''
-                      }))
-                    }}
-                    disabled={formData.parentUnknownTime}
-                    style={{
-                      width: '100%',
-                      fontSize: '1.125rem',
+                {parentDateComplete && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
+                      {s.parentBirthTime(formData.parentRole === 'mother' ? s.mother : s.father)}
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.parentHour && formData.parentMinute
+                        ? `${formData.parentHour.padStart(2, '0')}:${formData.parentMinute.padStart(2, '0')}`
+                        : ''}
+                      onChange={e => {
+                        const [hour, minute] = e.target.value.split(':')
+                        setFormData(prev => ({
+                          ...prev,
+                          parentHour: hour ? String(parseInt(hour)) : '',
+                          parentMinute: minute ? String(parseInt(minute)) : ''
+                        }))
+                      }}
+                      disabled={formData.parentUnknownTime}
+                      style={{
+                        width: '100%',
+                        fontSize: '1.125rem',
+                        padding: '1rem',
+                        borderRadius: '0.75rem',
+                        border: '1px solid #E5E7EB',
+                        background: '#F8F6F3',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        opacity: formData.parentUnknownTime ? 0.4 : 1,
+                        marginBottom: '1rem'
+                      }}
+                    />
+
+                    {/* Unknown Time */}
+                    <label style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
                       padding: '1rem',
                       borderRadius: '0.75rem',
-                      border: '1px solid #E5E7EB',
-                      background: '#F8F6F3',
-                      outline: 'none',
+                      border: formData.parentUnknownTime ? '2px solid #B8922D' : '2px solid #E5E7EB',
+                      background: formData.parentUnknownTime ? 'rgba(197, 160, 89, 0.05)' : 'transparent',
                       cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      opacity: formData.parentUnknownTime ? 0.4 : 1,
-                      marginBottom: '1rem'
-                    }}
-                  />
-
-                  {/* Unknown Time */}
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    border: formData.parentUnknownTime ? '2px solid #B8922D' : '2px solid #E5E7EB',
-                    background: formData.parentUnknownTime ? 'rgba(197, 160, 89, 0.05)' : 'transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={formData.parentUnknownTime}
-                      onChange={e => handleUnknownTime(e.target.checked, true)}
-                      style={{ width: '1.25rem', height: '1.25rem', accentColor: '#B8922D' }}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.unknownTime}</div>
-                      <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.unknownTimeDesc}</div>
-                    </div>
-                  </label>
-                </div>
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.parentUnknownTime}
+                        onChange={e => handleUnknownTime(e.target.checked, true)}
+                        style={{ width: '1.25rem', height: '1.25rem', accentColor: '#B8922D' }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.unknownTime}</div>
+                        <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.unknownTimeDesc}</div>
+                      </div>
+                    </label>
+                  </div>
+                )}
 
                 {/* Summary */}
                 <div style={{ padding: '0.75rem 1rem', background: '#F8F6F3', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
@@ -1195,10 +1241,12 @@ export default function InputFormPage() {
                       <span style={{ color: '#6B7280' }}>{s.summaryChildBirth}</span>
                       <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formData.year}.{formData.month}.{formData.day}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#6B7280' }}>{s.summaryParentBirth(formData.parentRole === 'mother' ? s.mother : s.father)}</span>
-                      <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formData.parentYear}.{formData.parentMonth}.{formData.parentDay}</span>
-                    </div>
+                    {parentDateComplete && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#6B7280' }}>{s.summaryParentBirth(formData.parentRole === 'mother' ? s.mother : s.father)}</span>
+                        <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formData.parentYear}.{formData.parentMonth}.{formData.parentDay}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
