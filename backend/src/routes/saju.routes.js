@@ -3,16 +3,36 @@
 
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const sajuService = require('../services/saju.service');
 const authMiddleware = require('../middleware/auth');
 const promoService = require('../services/promo.service');
 const { validateBirthInfo, validateUUIDParam, sanitizeStrings } = require('../middleware/validation');
-const { sajuPreviewLimiter, sajuPremiumLimiter, readLimiter } = require('../middleware/rateLimit');
+const { sajuPreviewLimiter, sajuPremiumLimiter, readLimiter, otpRequestLimiter } = require('../middleware/rateLimit');
+const reportLookupOtp = require('../services/reportLookupOtp.service');
 const { calculateMansae } = require('../utils/mansae-wrapper');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
 
 // Apply sanitization to all routes
 router.use(sanitizeStrings);
+
+/**
+ * Hash a raw claim key with sha256 → hex string.
+ * Always use this function — never log raw claim keys.
+ */
+function hashClaimKey(rawKey) {
+  return crypto.createHash('sha256').update(rawKey).digest('hex');
+}
+
+/**
+ * Validate a client-supplied claimKey: must be hex or base64url, 32–128 chars.
+ * Returns the validated string or null (invalid/absent treated as absent, not an error).
+ */
+const CLAIM_KEY_REGEX = /^[A-Za-z0-9+/=_-]{32,128}$/;
+function validateClaimKey(value) {
+  if (typeof value !== 'string') return null;
+  return CLAIM_KEY_REGEX.test(value) ? value : null;
+}
 
 /**
  * Helper: Validate and calculate parent manseryeok
@@ -29,6 +49,35 @@ function calculateParentManseryeok(parentBirthDate, parentBirthTime, parentRole,
     console.warn('[Saju Route] Parent manseryeok calculation failed:', error.message);
     return null;
   }
+}
+
+/**
+ * Validate and normalize the consent payload (PIPA/GDPR proof of consent).
+ * dataProcessing and guardian consent are mandatory for premium readings.
+ *
+ * @param {Object} consent - { dataProcessing, guardian, marketing, policyVersion, timestamp }
+ * @returns {{ ok: boolean, error?: string, normalized?: Object }}
+ */
+function validateConsent(consent) {
+  if (!consent || typeof consent !== 'object') {
+    return { ok: false, error: 'Consent is required (dataProcessing and guardian consent must be granted)' };
+  }
+  if (consent.dataProcessing !== true || consent.guardian !== true) {
+    return { ok: false, error: 'dataProcessing and guardian consent must both be true' };
+  }
+
+  const parsedTimestamp = consent.timestamp ? new Date(consent.timestamp) : null;
+  return {
+    ok: true,
+    normalized: {
+      dataProcessing: true,
+      guardian: true,
+      marketing: consent.marketing === true,
+      policyVersion: String(consent.policyVersion || '').slice(0, 50),
+      timestamp: parsedTimestamp && !isNaN(parsedTimestamp) ? parsedTimestamp.toISOString() : null,
+      recordedAt: new Date().toISOString(), // server-side timestamp (authoritative)
+    },
+  };
 }
 
 function getPreviewMessage(language = 'ko', hasParentAnalysis = false) {
@@ -91,6 +140,7 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
       // Child info
       birthDate,
       birthTime,
+      unknownTime, // true → birth time unknown, omit hour pillar
       gender,
       isLunar,
       isLeapMonth,
@@ -107,6 +157,8 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
       parentIsLunar,
       parentIsLeapMonth,
     } = req.body;
+
+    const effectiveBirthTime = unknownTime === true ? null : birthTime;
 
     // Validate required fields
     if (!birthDate || !gender) {
@@ -126,9 +178,9 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
     }
 
     // Validate birth time format (HH:MM) if provided
-    if (birthTime) {
+    if (effectiveBirthTime) {
       const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-      if (!timeRegex.test(birthTime)) {
+      if (!timeRegex.test(effectiveBirthTime)) {
         return res.status(400).json({
           error: 'Invalid birthTime format. Use HH:MM (24-hour)',
         });
@@ -155,7 +207,7 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
     // Generate preview (free version with relationship focus)
     const preview = await sajuService.generateSajuPreview({
       birthDate: normalizedBirthDate,
-      birthTime,
+      birthTime: effectiveBirthTime || null,
       gender,
       isLunar: isLunar === true,
       isLeapMonth: isLeapMonth === true,
@@ -208,12 +260,14 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
       paymentAccessToken,
       birthDate,
       birthTime,
+      unknownTime, // true → birth time unknown, omit hour pillar
       gender,
       isLunar,
       isLeapMonth,
       timezone,
       language,
       subjectName,
+      consent, // { dataProcessing, guardian, marketing, policyVersion, timestamp } — REQUIRED
       // Location for solar time correction
       birthPlace,
       latitude,
@@ -229,6 +283,8 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
       // Optional twin info
       twinOrder,      // 1 (first born) or 2 (second born)
       twinSiblingName, // sibling's name (optional)
+      // Per-transaction claim key (raw secret; hashed before storage, never logged)
+      claimKey,
     } = req.body;
 
     // Validate required fields
@@ -238,6 +294,17 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
         required: ['orderId', 'birthDate', 'gender'],
       });
     }
+
+    // PIPA/GDPR: dataProcessing + guardian consent are mandatory for premium readings
+    const consentResult = validateConsent(consent);
+    if (!consentResult.ok) {
+      return res.status(400).json({
+        error: consentResult.error,
+        code: 'CONSENT_REQUIRED',
+      });
+    }
+
+    const effectiveBirthTime = unknownTime === true ? null : birthTime;
 
     // Validate birth date format (YYYY-MM-DD)
     const normalizedBirthDate = birthDate.replace(/\./g, '-');
@@ -249,9 +316,9 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
     }
 
     // Validate birth time format (HH:MM) if provided
-    if (birthTime) {
+    if (effectiveBirthTime) {
       const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-      if (!timeRegex.test(birthTime)) {
+      if (!timeRegex.test(effectiveBirthTime)) {
         return res.status(400).json({
           error: 'Invalid birthTime format. Use HH:MM (24-hour)',
         });
@@ -287,13 +354,18 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
       });
     }
 
+    // Hash claim key if provided (raw key must never be logged or stored)
+    const validatedClaimKey = validateClaimKey(claimKey);
+    const claimKeyHash = validatedClaimKey ? hashClaimKey(validatedClaimKey) : null;
+
     // Generate reading
     const reading = await sajuService.generateSajuReading({
       userId,
       orderId,
       paymentAccessToken,
       birthDate: normalizedBirthDate,
-      birthTime,
+      birthTime: effectiveBirthTime || null,
+      consent: consentResult.normalized,
       gender,
       isLunar: isLunar === true,
       isLeapMonth: isLeapMonth === true,
@@ -309,6 +381,7 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
       // Twin info
       twinInfo: twinOrder ? { order: twinOrder, siblingName: twinSiblingName || null } : null,
       deliveryEmail,
+      claimKeyHash,
     });
 
     // Return success response
@@ -366,12 +439,14 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       email,
       birthDate,
       birthTime,
+      unknownTime, // true → birth time unknown, omit hour pillar
       gender,
       isLunar,
       isLeapMonth,
       timezone,
       language,
       subjectName,
+      consent, // optional in promo flow (stored when provided)
       birthPlace,
       latitude,
       longitude,
@@ -383,6 +458,8 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       parentGender,
       twinOrder,
       twinSiblingName,
+      // Per-transaction claim key (raw secret; hashed before storage, never logged)
+      claimKey,
     } = req.body;
 
     // Validate required fields
@@ -411,10 +488,26 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       });
     }
 
+    const effectiveBirthTime = unknownTime === true ? null : birthTime;
+
+    // Consent is optional in the promo flow (legacy partner integrations),
+    // but when supplied it must be valid and is stored with the reading.
+    let normalizedConsent = null;
+    if (consent !== undefined && consent !== null) {
+      const consentResult = validateConsent(consent);
+      if (!consentResult.ok) {
+        return res.status(400).json({
+          error: consentResult.error,
+          code: 'CONSENT_REQUIRED',
+        });
+      }
+      normalizedConsent = consentResult.normalized;
+    }
+
     // Validate birth time if provided
-    if (birthTime) {
+    if (effectiveBirthTime) {
       const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-      if (!timeRegex.test(birthTime)) {
+      if (!timeRegex.test(effectiveBirthTime)) {
         return res.status(400).json({
           error: 'Invalid birthTime format. Use HH:MM (24-hour)',
         });
@@ -459,13 +552,18 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       });
     }
 
+    // Hash claim key if provided (raw key must never be logged or stored)
+    const validatedClaimKeyPromo = validateClaimKey(claimKey);
+    const claimKeyHashPromo = validatedClaimKeyPromo ? hashClaimKey(validatedClaimKeyPromo) : null;
+
     // Step 4: Generate reading first (before consuming promo code)
     // If AI generation fails, the promo code stays available for retry
     const reading = await sajuService.generateSajuReading({
       userId: null,
       orderId: null,
       birthDate: normalizedBirthDate,
-      birthTime,
+      birthTime: effectiveBirthTime || null,
+      consent: normalizedConsent,
       gender,
       isLunar: isLunar === true,
       isLeapMonth: isLeapMonth === true,
@@ -481,6 +579,7 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       promoCodeId: promoResult.promoCode.id,
       deliveryEmail: email,
       skipPaymentCheck: true,
+      claimKeyHash: claimKeyHashPromo,
     });
 
     // Step 5: Reading succeeded — now consume the promo code
@@ -518,27 +617,153 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
   }
 });
 
+// ── Report lookup: emailed-OTP possession check ──────────────────────────
+// Flow: POST /report-lookup-otp (send code to email) → POST /report-lookup-token
+// (exchange email+otp+scope for a short-lived report lookup token).
+
+const LOOKUP_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidLookupEmail(email) {
+  return typeof email === 'string'
+    && email.length <= 254
+    && LOOKUP_EMAIL_REGEX.test(email)
+    && !/[\r\n]/.test(email);
+}
+
+/**
+ * Verify the caller-supplied (email, orderId|promoCode) tuple actually maps to
+ * a reading/payment owned by that email. Returns { owned, promoCodeId }.
+ * Never throws — failures count as "not owned".
+ */
+async function verifyLookupOwnership(email, orderId, promoCode) {
+  const { supabaseAdmin } = require('../config/supabase');
+  const normalizedEmail = email.toLowerCase().trim();
+
+  try {
+    if (orderId) {
+      const { data: payment } = await supabaseAdmin
+        .from('payments')
+        .select('id, metadata')
+        .eq('order_id', orderId)
+        .maybeSingle();
+
+      if (!payment) return { owned: false };
+
+      // Payment metadata stores the buyer email at order creation — covers the
+      // Lambda-timeout case where the reading row doesn't exist yet.
+      const paymentEmail = (payment.metadata?.email || '').toLowerCase().trim();
+      if (paymentEmail && paymentEmail === normalizedEmail) {
+        return { owned: true };
+      }
+
+      const { count } = await supabaseAdmin
+        .from('readings')
+        .select('id', { count: 'exact', head: true })
+        .eq('payment_id', payment.id)
+        .eq('delivery_email', normalizedEmail);
+      return { owned: (count || 0) > 0 };
+    }
+
+    if (promoCode) {
+      // Direct code→id lookup (NOT validatePromoCode: expired/maxed codes must
+      // still allow looking up readings that were legitimately generated).
+      const { data: promo } = await supabaseAdmin
+        .from('promo_codes')
+        .select('id')
+        .eq('code', String(promoCode).toUpperCase().trim())
+        .maybeSingle();
+      if (!promo) return { owned: false };
+
+      const { count } = await supabaseAdmin
+        .from('readings')
+        .select('id', { count: 'exact', head: true })
+        .eq('promo_code_id', promo.id)
+        .eq('delivery_email', normalizedEmail);
+      return { owned: (count || 0) > 0, promoCodeId: promo.id };
+    }
+  } catch (err) {
+    console.error('[Saju Route] Lookup ownership check error:', err.message);
+  }
+  return { owned: false };
+}
+
+/**
+ * POST /saju/report-lookup-otp
+ * Step 1 of report lookup: send a 6-digit OTP to the claimed email, but ONLY if
+ * a matching reading/payment exists for that email+scope (so we never email
+ * strangers). Response is always generic — does not leak whether a match exists.
+ * Body: { email, orderId?, promoCode?, language? }
+ */
+router.post('/report-lookup-otp', otpRequestLimiter, async (req, res) => {
+  const genericResponse = { success: true, otpRequired: true };
+  try {
+    const { email, orderId, promoCode, language } = req.body;
+
+    if (!isValidLookupEmail(email)) {
+      return res.status(400).json({ error: 'Valid email required', code: 'INVALID_EMAIL' });
+    }
+    if (!orderId && !promoCode) {
+      return res.status(400).json({ error: 'orderId or promoCode required', code: 'MISSING_LOOKUP_SCOPE' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const ownership = await verifyLookupOwnership(normalizedEmail, orderId, promoCode);
+
+    if (ownership.owned) {
+      const code = await reportLookupOtp.createOtp(normalizedEmail);
+      try {
+        const emailService = require('../services/email.service');
+        await emailService.sendReportLookupOtp(normalizedEmail, code, language || 'en');
+      } catch (sendErr) {
+        // Still return the generic response — error details must not leak existence
+        console.error('[Saju Route] OTP email send failed:', sendErr.message);
+      }
+    }
+
+    return res.status(200).json(genericResponse);
+  } catch (error) {
+    console.error('[Saju Route] Report lookup OTP error:', error);
+    return res.status(200).json(genericResponse);
+  }
+});
+
+/**
+ * POST /saju/report-lookup-token
+ * Step 2 of report lookup: exchange a verified OTP for a short-lived lookup token.
+ * Requires proof of email possession (OTP) AND re-verifies that the requested
+ * scope (orderId/promoCode) belongs to that email — the OTP alone must not be
+ * exchangeable for someone else's order.
+ * Body: { email, otp, orderId?, promoCode? }
+ */
 router.post('/report-lookup-token', readLimiter, async (req, res) => {
   try {
-    const { email, orderId, promoCode } = req.body;
-    if (!email || (!orderId && !promoCode)) {
+    const { email, otp, orderId, promoCode } = req.body;
+    if (!isValidLookupEmail(email) || (!orderId && !promoCode)) {
       return res.status(400).json({ error: 'Email and orderId or promoCode required', code: 'MISSING_LOOKUP_SCOPE' });
+    }
+    if (!otp) {
+      return res.status(400).json({ error: 'Verification code required', code: 'MISSING_OTP' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const otpValid = await reportLookupOtp.verifyOtp(normalizedEmail, otp);
+    if (!otpValid) {
+      // Generic rejection: bad code, expired, and too-many-attempts all look identical
+      return res.status(400).json({ error: 'Invalid or expired verification code', code: 'INVALID_OTP' });
+    }
+
+    const ownership = await verifyLookupOwnership(normalizedEmail, orderId, promoCode);
+    if (!ownership.owned) {
+      return res.status(400).json({ error: 'Invalid or expired verification code', code: 'INVALID_OTP' });
     }
 
     const claims = {
       purpose: 'report_lookup',
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       orderId: orderId || undefined,
-      promoCodeId: undefined,
+      promoCodeId: ownership.promoCodeId || undefined,
     };
-
-    if (promoCode) {
-      const promoResult = await promoService.validatePromoCode(promoCode);
-      if (!promoResult.valid) {
-        return res.status(400).json({ error: promoResult.error, code: 'INVALID_PROMO' });
-      }
-      claims.promoCodeId = promoResult.promoCode.id;
-    }
 
     const reportLookupToken = createAccessToken(claims, 2 * 60 * 60);
     return res.status(200).json({ success: true, reportLookupToken });
@@ -550,17 +775,54 @@ router.post('/report-lookup-token', readLimiter, async (req, res) => {
 
 /**
  * GET /saju/reading-check
- * Poll for a completed reading by email (used after API Gateway timeout)
- * The Lambda continues running after timeout and saves to DB — this endpoint checks if it's done.
+ * Poll for a completed reading (used after API Gateway timeout).
+ * The Lambda continues running after timeout and saves to DB — this endpoint checks if done.
+ *
+ * Two auth branches (mutually exclusive; claim takes priority when both present):
+ *   ?claim=<rawClaimKey>  — possession of the random secret is the authz (in-flow, no OTP)
+ *   ?token=<accessToken>  — existing signed token branch (unchanged, back-compat)
  */
 router.get('/reading-check', readLimiter, async (req, res) => {
   try {
-    const { token } = req.query;
+    const { token, claim } = req.query;
+    const { supabaseAdmin } = require('../config/supabase');
+
+    // ── Branch A: claim key (in-flow polling, no OTP required) ──────────────
+    if (claim) {
+      const validClaim = validateClaimKey(claim);
+      if (!validClaim) {
+        // Invalid format — treat as pending (no information leak)
+        return res.status(200).json({ status: 'pending' });
+      }
+
+      const claimHash = hashClaimKey(validClaim);
+      const { data: reading, error } = await supabaseAdmin
+        .from('readings')
+        .select('*')
+        .eq('claim_key_hash', claimHash)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !reading) {
+        return res.status(200).json({ status: 'pending' });
+      }
+
+      // Mint a report-scoped access token so the caller can use all downstream APIs
+      const reportAccessToken = createAccessToken({
+        purpose: 'report',
+        readingId: reading.id,
+        email: reading.delivery_email || undefined,
+      }, 24 * 60 * 60);
+
+      return res.status(200).json({ status: 'complete', reading: { ...reading, reportAccessToken } });
+    }
+
+    // ── Branch B: existing signed-token branch (unchanged) ──────────────────
     if (!token) {
       return res.status(401).json({ error: 'Report access token required', code: 'MISSING_REPORT_ACCESS_TOKEN' });
     }
 
-    const { supabaseAdmin } = require('../config/supabase');
     let tokenPayload;
     try {
       tokenPayload = verifyAccessToken(token, { purpose: 'report' });

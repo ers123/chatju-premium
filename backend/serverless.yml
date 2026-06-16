@@ -69,6 +69,12 @@ provider:
     TOSS_CLIENT_KEY: ${env:TOSS_CLIENT_KEY, ''}
     PAYPAL_CLIENT_ID: ${env:PAYPAL_CLIENT_ID, ''}
     PAYPAL_CLIENT_SECRET: ${env:PAYPAL_CLIENT_SECRET, ''}
+    # Live vs sandbox base URL (e.g. https://api-m.paypal.com). Without this the
+    # backend may default to the wrong PayPal environment.
+    PAYPAL_API_BASE_URL: ${env:PAYPAL_API_BASE_URL, ''}
+    # Webhook ID from PayPal Developer Dashboard. Empty = webhooks rejected
+    # (fail-closed); the synchronous capture flow is unaffected. Set post-launch.
+    PAYPAL_WEBHOOK_ID: ${env:PAYPAL_WEBHOOK_ID, ''}
     STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY, ''}
     STRIPE_PUBLISHABLE_KEY: ${env:STRIPE_PUBLISHABLE_KEY, ''}
 
@@ -82,6 +88,10 @@ provider:
 
     # Signed report/payment access tokens
     ACCESS_TOKEN_SECRET: ${env:ACCESS_TOKEN_SECRET, ''}
+
+    # Admin allowlist (comma-separated Supabase user IDs). Empty = admin routes
+    # deny everyone (safe default). Set to your user ID to use the admin panel.
+    ADMIN_USER_IDS: ${env:ADMIN_USER_IDS, ''}
 
     # CORS Configuration (production only allows production domain)
     CORS_ORIGIN: https://somyung.cc

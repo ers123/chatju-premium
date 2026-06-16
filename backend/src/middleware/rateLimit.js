@@ -160,6 +160,23 @@ const readLimiter = rateLimit({
 });
 
 /**
+ * Report-lookup OTP request limit — prevent email bombing / OTP brute force
+ * 5 OTP requests per 15 minutes per IP
+ */
+const otpRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: {
+    success: false,
+    error: 'Too many verification code requests, please try again later.',
+    code: 'OTP_RATE_LIMIT_EXCEEDED',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
  * Create custom rate limiter with specific options
  * @param {Object} options - Rate limit options
  * @returns {Function} Rate limit middleware
@@ -189,5 +206,6 @@ module.exports = {
   paymentConfirmLimiter,
   webhookLimiter,
   readLimiter,
+  otpRequestLimiter,
   createRateLimiter,
 };

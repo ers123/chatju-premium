@@ -73,7 +73,9 @@ async function hasEmailUsedPromo(promoCodeId, email) {
 
   if (error) {
     console.error('[Promo Service] hasEmailUsedPromo error:', error);
-    return false; // Fail open — let them try
+    // FAIL CLOSED: on DB error we cannot prove the email hasn't used the code,
+    // so block the redemption instead of giving away free readings.
+    return true;
   }
 
   return count > 0;
@@ -110,19 +112,15 @@ async function usePromoCode({ promoCodeId, email, childName, childBirthDate, rea
       throw handleSupabaseError(usageError) || new Error('Failed to record promo usage');
     }
 
-    // Increment used_count
+    // Increment used_count atomically via RPC (single UPDATE ... SET used_count = used_count + 1)
     const { error: updateError } = await supabaseAdmin
       .rpc('increment_promo_used_count', { promo_id: promoCodeId });
 
-    // Fallback if RPC doesn't exist — use direct update
     if (updateError) {
-      console.warn('[Promo Service] RPC not found, using direct update');
-      await supabaseAdmin
-        .from('promo_codes')
-        .update({ used_count: supabaseAdmin.rpc ? undefined : 0 })
-        .eq('id', promoCodeId);
-
-      // Manual increment via raw SQL is not available, so use select + update
+      // TODO: ensure increment_promo_used_count RPC exists in Supabase — fallback is racy
+      // (read-then-write can lose increments under concurrent redemptions).
+      // SQL: see migrations/003_security_otp_consent.sql
+      console.warn('[Promo Service] increment_promo_used_count RPC failed, using racy read-then-write fallback:', updateError.message);
       const { data: promo } = await supabaseAdmin
         .from('promo_codes')
         .select('used_count')

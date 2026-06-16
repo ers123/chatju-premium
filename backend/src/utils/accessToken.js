@@ -2,18 +2,34 @@ const crypto = require('crypto');
 
 const DEFAULT_TTL_SECONDS = 30 * 60;
 
-function getSecret() {
-  const secret =
-    process.env.ACCESS_TOKEN_SECRET ||
-    process.env.SUPABASE_SERVICE_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.PAYPAL_CLIENT_SECRET;
+// Clearly-marked development-only fallback. NEVER used in production.
+const DEV_FALLBACK_SECRET = 'dev-only-insecure-access-token-secret';
 
-  if (!secret) {
+// Fail closed at startup: a dedicated signing secret is mandatory in production.
+// (Reusing SUPABASE_SERVICE_KEY / PAYPAL_CLIENT_SECRET as signing keys is forbidden —
+// leaking either would let attackers forge report/payment access tokens.)
+if (!process.env.ACCESS_TOKEN_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('ACCESS_TOKEN_SECRET must be set in production (dedicated secret, do not reuse other credentials)');
+}
+
+let warnedDevFallback = false;
+
+function getSecret() {
+  const secret = process.env.ACCESS_TOKEN_SECRET;
+
+  if (secret) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
     throw new Error('ACCESS_TOKEN_SECRET is not configured');
   }
 
-  return secret;
+  if (!warnedDevFallback) {
+    console.warn('[accessToken] WARNING: ACCESS_TOKEN_SECRET not set — using insecure dev fallback secret (non-production only)');
+    warnedDevFallback = true;
+  }
+  return DEV_FALLBACK_SECRET;
 }
 
 function base64url(input) {

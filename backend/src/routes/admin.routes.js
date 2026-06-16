@@ -4,6 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
+const { requireAdmin } = authMiddleware;
 const { getAIService } = require('../services/ai.service');
 const logger = require('../utils/logger');
 
@@ -15,11 +16,8 @@ const aiService = getAIService();
  * Get current AI provider information
  * Requires: JWT authentication (admin only)
  */
-router.get('/ai-provider', authMiddleware, async (req, res) => {
+router.get('/ai-provider', authMiddleware, requireAdmin, async (req, res) => {
   try {
-    // TODO: Add admin role check here
-    // For now, any authenticated user can access (add proper admin check in production)
-
     const providerInfo = aiService.getProviderInfo();
 
     logger.info('Admin: AI provider info requested', {
@@ -52,11 +50,8 @@ router.get('/ai-provider', authMiddleware, async (req, res) => {
  * Requires: JWT authentication (admin only)
  * Body: { provider: 'openai' | 'gemini' | 'claude' }
  */
-router.post('/ai-provider', authMiddleware, async (req, res) => {
+router.post('/ai-provider', authMiddleware, requireAdmin, async (req, res) => {
   try {
-    // TODO: Add admin role check here
-    // For now, any authenticated user can access (add proper admin check in production)
-
     const { provider } = req.body;
 
     // Validate provider
@@ -125,9 +120,8 @@ router.post('/ai-provider', authMiddleware, async (req, res) => {
  * Get basic usage statistics
  * Requires: JWT authentication (admin only)
  */
-router.get('/stats', authMiddleware, async (req, res) => {
+router.get('/stats', authMiddleware, requireAdmin, async (req, res) => {
   try {
-    // TODO: Add admin role check here
     // TODO: Implement actual statistics from database
 
     logger.info('Admin: Stats requested', {

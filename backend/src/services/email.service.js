@@ -383,6 +383,109 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
 </html>`;
 }
 
+// ── Report lookup OTP email ──────────────────────────────────────────────
+
+const OTP_EMAIL_COPY = {
+  ko: {
+    subject: 'SoMyung 리포트 조회 인증번호',
+    title: '리포트 조회 인증번호',
+    body: '아래 인증번호를 입력하면 리포트를 조회할 수 있습니다. 인증번호는 10분간 유효합니다.',
+    ignore: '본인이 요청하지 않았다면 이 이메일을 무시하세요.',
+  },
+  en: {
+    subject: 'Your SoMyung report verification code',
+    title: 'Report Verification Code',
+    body: 'Enter the code below to access your report. The code expires in 10 minutes.',
+    ignore: 'If you did not request this, you can safely ignore this email.',
+  },
+  ja: {
+    subject: 'SoMyung レポート確認コード',
+    title: 'レポート確認コード',
+    body: '以下のコードを入力するとレポートを確認できます。コードの有効期限は10分です。',
+    ignore: '心当たりがない場合は、このメールを無視してください。',
+  },
+};
+
+function getOtpEmailCopy(language) {
+  return OTP_EMAIL_COPY[language] || OTP_EMAIL_COPY.en;
+}
+
+/**
+ * Send a report-lookup OTP email.
+ *
+ * @param {string} email - Recipient (validated: standard format, no whitespace/CRLF)
+ * @param {string} code - 6-digit numeric OTP
+ * @param {string} [lang] - Language code (ko/en/ja supported, falls back to en)
+ */
+async function sendReportLookupOtp(email, code, lang = 'en') {
+  // Guard against header injection / malformed recipients.
+  // The regex forbids all whitespace (including CR/LF) in the address.
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (typeof email !== 'string' || !emailRegex.test(email) || /[\r\n]/.test(email)) {
+    throw new Error('Invalid recipient email');
+  }
+  if (!/^\d{6}$/.test(String(code))) {
+    throw new Error('Invalid OTP code format');
+  }
+
+  const resend = getResendClient();
+  const copy = getOtpEmailCopy(lang);
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #FAF8F6; font-family: -apple-system, 'Noto Sans KR', 'Malgun Gothic', sans-serif;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #FAF8F6;">
+    <tr><td align="center" style="padding: 24px 16px;">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 480px;">
+        <tr><td align="center" style="padding: 32px 0 8px;">
+          <table cellpadding="0" cellspacing="0" border="0" width="52" height="52" style="border-radius: 50%; background: #3D3028;">
+            <tr><td align="center" valign="middle" style="color: #C5A059; font-size: 22px;">☯</td></tr>
+          </table>
+        </td></tr>
+        <tr><td align="center" style="font-size: 20px; font-weight: bold; color: #3D3028; padding: 12px 0 16px;">
+          ${copy.title}
+        </td></tr>
+        <tr><td style="background: #FFFFFF; border-radius: 16px; border: 1px solid #EBE5DF; padding: 24px;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr><td align="center" style="font-size: 14px; color: #6B5E52; line-height: 1.7; padding-bottom: 16px;">
+              ${copy.body}
+            </td></tr>
+            <tr><td align="center" style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #3D3028; padding: 8px 0 16px;">
+              ${code}
+            </td></tr>
+            <tr><td align="center" style="font-size: 12px; color: #8B8580;">
+              ${copy.ignore}
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td align="center" style="padding: 24px 0 8px; font-size: 12px; color: #8B8580;">
+          somyung.cc
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: [email],
+    reply_to: REPLY_TO,
+    subject: copy.subject,
+    html,
+  });
+
+  if (error) {
+    logger.error('[Email Service] OTP email Resend API error:', error);
+    throw new Error(`OTP email send failed: ${error.message}`);
+  }
+
+  logger.info('[Email Service] OTP email sent:', { emailId: data?.id });
+  return data;
+}
+
 module.exports = {
   sendReportEmail,
+  sendReportLookupOtp,
 };

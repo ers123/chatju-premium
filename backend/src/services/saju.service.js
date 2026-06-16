@@ -53,14 +53,18 @@ async function generateSajuPreview(params) {
     // Convert gender format (male/female → 남/여)
     const genderKorean = gender === 'male' ? '남' : '여';
 
-    // Calculate with time or without
-    const timeToUse = birthTime || '12:00'; // Default to noon if no time
+    // Calculate with time or without. When birth time is unknown we still use a
+    // noon anchor for date-boundary math, but the hour pillar is OMITTED (not fabricated).
+    const hourUnknown = !birthTime;
+    const timeToUse = birthTime || '12:00';
     const locationOptions = {};
     if (birthPlace) locationOptions.birthPlace = birthPlace;
     if (latitude != null) locationOptions.latitude = latitude;
     if (longitude != null) locationOptions.longitude = longitude;
     locationOptions.isLunar = isLunar === true;
     locationOptions.isLeapMonth = isLeapMonth === true;
+    locationOptions.timezone = timezone; // IANA tz (or UTC offset) of the birth wall-clock
+    locationOptions.hourUnknown = hourUnknown;
 
     const childManseryeok = calculateMansae(birthDate, timeToUse, genderKorean, locationOptions);
 
@@ -175,6 +179,10 @@ async function generateSajuReading(params) {
     promoCodeId = null,
     deliveryEmail = null,
     skipPaymentCheck = false,
+    // PIPA/GDPR proof of consent (normalized by route layer)
+    consent = null,
+    // Per-transaction claim key hash (sha256 of raw client secret) — never store raw key
+    claimKeyHash = null,
   } = params;
 
   try {
@@ -228,14 +236,19 @@ async function generateSajuReading(params) {
     // Convert gender format (male/female → 남/여)
     const genderKorean = gender === 'male' ? '남' : '여';
 
-    // Calculate with time or without — with solar time correction
-    const timeToUse = birthTime || '12:00'; // Default to noon if no time
+    // Calculate with time or without — with solar time correction. When birth time
+    // is unknown we still use a noon anchor for date-boundary math, but the hour
+    // pillar is OMITTED (not fabricated).
+    const hourUnknown = !birthTime;
+    const timeToUse = birthTime || '12:00';
     const locationOptions = {};
     if (birthPlace) locationOptions.birthPlace = birthPlace;
     if (latitude != null) locationOptions.latitude = latitude;
     if (longitude != null) locationOptions.longitude = longitude;
     locationOptions.isLunar = isLunar === true;
     locationOptions.isLeapMonth = isLeapMonth === true;
+    locationOptions.timezone = timezone; // IANA tz (or UTC offset) of the birth wall-clock
+    locationOptions.hourUnknown = hourUnknown;
 
     const manseryeokResult = calculateMansae(birthDate, timeToUse, genderKorean, locationOptions);
 
@@ -252,7 +265,7 @@ async function generateSajuReading(params) {
       year: manseryeokResult.pillars.year.korean,
       month: manseryeokResult.pillars.month.korean,
       day: manseryeokResult.pillars.day.korean,
-      hour: manseryeokResult.pillars.hour.korean,
+      hour: manseryeokResult.pillars.hour?.korean || '(unknown)',
     });
 
     // Step 3: Calculate fortune cycles (대운/세운) - Full Premium version
@@ -306,12 +319,42 @@ async function generateSajuReading(params) {
     if (payment) readingRow.payment_id = payment.id;
     if (promoCodeId) readingRow.promo_code_id = promoCodeId;
     if (deliveryEmail) readingRow.delivery_email = deliveryEmail.toLowerCase().trim();
+    // PIPA/GDPR proof of consent — stored with the reading row
+    if (consent) readingRow.consent = consent;
+    // Per-transaction claim key hash — possession of raw secret authorizes in-flow polling
+    if (claimKeyHash) readingRow.claim_key_hash = claimKeyHash;
 
-    const { data: reading, error: insertError } = await supabaseAdmin
+    let { data: reading, error: insertError } = await supabaseAdmin
       .from('readings')
       .insert([readingRow])
       .select()
       .single();
+
+    // Fallback: if the readings.consent column doesn't exist yet (migration not run),
+    // embed consent inside the saju_data JSONB so proof of consent is never dropped.
+    // TODO: run migrations/003_security_otp_consent.sql, then this fallback is dead code.
+    if (insertError && consent && /consent/i.test(insertError.message || '')) {
+      console.warn('[Saju Service] readings.consent column missing — embedding consent in saju_data. Run migrations/003_security_otp_consent.sql');
+      const fallbackRow = { ...readingRow, saju_data: { ...completeReadingData, _consent: consent } };
+      delete fallbackRow.consent;
+      ({ data: reading, error: insertError } = await supabaseAdmin
+        .from('readings')
+        .insert([fallbackRow])
+        .select()
+        .single());
+    }
+
+    // Fallback: if claim_key_hash column doesn't exist yet (migration 004 not run), drop it and retry.
+    if (insertError && claimKeyHash && /claim_key_hash/i.test(insertError.message || '')) {
+      console.warn('[Saju Service] readings.claim_key_hash column missing — dropping field and retrying. Run migrations/004_claim_key.sql');
+      const fallbackRow = { ...readingRow };
+      delete fallbackRow.claim_key_hash;
+      ({ data: reading, error: insertError } = await supabaseAdmin
+        .from('readings')
+        .insert([fallbackRow])
+        .select()
+        .single());
+    }
 
     if (insertError) {
       console.error('[Saju Service] Failed to store reading:', insertError);
@@ -498,7 +541,7 @@ async function generateAIPreview(childManseryeok, parentManseryeok = null, paren
   }
 
   const timeDisclaimer = childTimeUnknown
-    ? '\n**참고: 아이의 출생 시간을 모르므로 시주(時柱)는 정오(12시) 기준입니다.**\n'
+    ? '\n**참고: 아이의 출생 시간을 모르므로 시주(時柱)는 제외하고 년/월/일 세 기둥만으로 분석합니다.**\n'
     : '';
 
   // Language names for preview prompt (premium uses langNameMap defined later)
@@ -514,7 +557,7 @@ ${timeDisclaimer}${languageInstruction}
 - 년주(年柱): ${childPillars.year.korean} (${childPillars.year.element})
 - 월주(月柱): ${childPillars.month.korean} (${childPillars.month.element})
 - 일주(日柱): ${childPillars.day.korean} (${childPillars.day.element}) - 일간(日干) 중심
-- 시주(時柱): ${childPillars.hour.korean} (${childPillars.hour.element})
+- 시주(時柱): ${childPillars.hour?.korean ? `${childPillars.hour.korean} (${childPillars.hour.element})` : '출생 시간 미상 — 시주 제외'}
 
 **아이 오행 분포:**
 ${Object.entries(childElements).map(([elem, count]) => `- ${elem}: ${count}개`).join('\n')}
@@ -755,7 +798,7 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
   const dominantElementRemedies = elementRemedies[childDominant] || {};
 
   const timeDisclaimer = childTimeUnknown
-    ? '\n**참고: 출생 시간 미상으로 시주는 정오(12시) 기준이며, 실제와 다를 수 있습니다. 시주가 달라지면 일부 해석이 변할 수 있습니다.**\n'
+    ? '\n**참고: 출생 시간 미상으로 시주(時柱)는 제외하고 년/월/일 세 기둥(6자)만으로 분석합니다. 시주를 임의로 추정하지 마세요.**\n'
     : '';
 
   // Calculate child's current age for age-appropriate guidance
@@ -915,7 +958,7 @@ ${languageInstruction}
 | 년주 | ${childPillars.year.korean[0]} | ${childPillars.year.korean[1]} | ${childPillars.year.hanja || ''} | ${childPillars.year.element} |
 | 월주 | ${childPillars.month.korean[0]} | ${childPillars.month.korean[1]} | ${childPillars.month.hanja || ''} | ${childPillars.month.element} |
 | 일주 | ${childPillars.day.korean[0]} | ${childPillars.day.korean[1]} | ${childPillars.day.hanja || ''} | ${childPillars.day.element} |
-| 시주 | ${childPillars.hour.korean[0]} | ${childPillars.hour.korean[1]} | ${childPillars.hour.hanja || ''} | ${childPillars.hour.element} |
+${childPillars.hour?.korean ? `| 시주 | ${childPillars.hour.korean[0]} | ${childPillars.hour.korean[1]} | ${childPillars.hour.hanja || ''} | ${childPillars.hour.element} |` : '| 시주 | (출생 시간 미상 — 제외) | — | — | — |'}
 
 **일간(日干):** ${dayStem}${childPillars.day.hanja ? '(' + childPillars.day.hanja[0] + ')' : ''} — ${dayMasterDesc}
 **일간 상세 프로필:** ${dayStem}${childPillars.day.hanja ? '(' + childPillars.day.hanja[0] + ')' : ''} = ${deepProfile.nature}, 이미지: ${deepProfile.image}, 계절: ${deepProfile.season}
@@ -925,7 +968,7 @@ ${languageInstruction}
 **일주 강약:** ${strengthLabel} — ${strengthDesc}
 **현재 나이:** ${childAge}세 (한국 나이) — ${ageGroup}
 
-**오행 분포 (총 8자 중):**
+**오행 분포 (총 ${childPillars.hour?.korean ? 8 : 6}자 중):**
 - 목(木): ${childElements['목']}개 ${childElements['목'] >= 3 ? '▶ 강함' : childElements['목'] === 0 ? '▶ 없음!' : ''}
 - 화(火): ${childElements['화']}개 ${childElements['화'] >= 3 ? '▶ 강함' : childElements['화'] === 0 ? '▶ 없음!' : ''}
 - 토(土): ${childElements['토']}개 ${childElements['토'] >= 3 ? '▶ 강함' : childElements['토'] === 0 ? '▶ 없음!' : ''}
