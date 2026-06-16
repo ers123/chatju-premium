@@ -20,6 +20,11 @@ service: chatju-premium-backend
 # Framework version constraint
 frameworkVersion: '3 || 4'
 
+# Load backend/.env into ${env:*} resolution. Framework-native dotenv is used
+# instead of relying on serverless-dotenv-plugin, whose values are populated
+# too late for v3 variable resolution (SUPABASE_URL/ANON_KEY would error).
+useDotenv: true
+
 provider:
   name: aws
   runtime: nodejs20.x
@@ -62,7 +67,12 @@ provider:
     # Supabase Configuration
     SUPABASE_URL: ${env:SUPABASE_URL}
     SUPABASE_ANON_KEY: ${env:SUPABASE_ANON_KEY}
+    # Code reads SUPABASE_SERVICE_KEY; also expose the *_ROLE_KEY alias.
+    SUPABASE_SERVICE_KEY: ${env:SUPABASE_SERVICE_KEY, ''}
     SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_KEY, ''}
+
+    # Frontend origin (used for links/CORS in app code)
+    FRONTEND_URL: ${env:FRONTEND_URL, ''}
 
     # Payment Gateway API Keys (optional - using Paddle)
     TOSS_SECRET_KEY: ${env:TOSS_SECRET_KEY, ''}
@@ -131,7 +141,8 @@ functions:
 # Plugins
 # ============================================
 plugins:
-  - serverless-dotenv-plugin # Load .env file
+  # .env is loaded via top-level `useDotenv: true` (Framework-native), so the
+  # serverless-dotenv-plugin is intentionally not listed (it conflicts with it).
   - serverless-offline # For local testing: serverless offline
 
 # ============================================
