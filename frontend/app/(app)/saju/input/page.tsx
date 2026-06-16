@@ -8,6 +8,17 @@ import { localizedLegalPath } from '@/app/lib/i18n/routes'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 // UI components (using native elements with inline styles)
 
+// Consent policy version recorded with required agreements
+const POLICY_VERSION = '2026-06-12'
+
+// Birth date bounds: today (no future births) back to 18 years ago
+const getTodayStr = () => new Date().toISOString().split('T')[0]
+const getMinBirthDateStr = () => {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - 18)
+  return d.toISOString().split('T')[0]
+}
+
 // Check icon
 const CheckIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
@@ -85,7 +96,6 @@ export default function InputFormPage() {
     twinSiblingName: '',
     // Parent info
     parentRole: '', // 'mother' | 'father'
-    parentName: '',
     parentCalendar: 'solar',
     parentYear: '',
     parentMonth: '',
@@ -100,20 +110,36 @@ export default function InputFormPage() {
     marketingAgreed: false
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [dateError, setDateError] = useState('')
+
+  const todayStr = getTodayStr()
+  const minBirthDateStr = getMinBirthDateStr()
+  const invalidDateMsg = (t as any).input?.invalidDate
+    || (t.sajuInput as any).invalidDate
+    || 'Birth date cannot be in the future.'
 
   const totalSteps = 5
   const progress = (step / totalSteps) * 100
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Reject future birth dates (JS guard in addition to the input's max attribute)
+    const isoBirthDate = `${formData.year}-${formData.month.padStart(2, '0')}-${formData.day.padStart(2, '0')}`
+    if (isoBirthDate > todayStr) {
+      setDateError(invalidDateMsg)
+      setStep(2)
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
       await new Promise(resolve => setTimeout(resolve, 2000))
 
-      // Child birth info
+      // Child birth info — when birth time is unknown, send the flag instead of substituting noon
       const childBirthDate = `${formData.year}.${formData.month.padStart(2, '0')}.${formData.day.padStart(2, '0')}`
-      const childBirthTime = formData.unknownTime ? '12:00' : `${formData.hour.padStart(2, '0')}:${formData.minute.padStart(2, '0')}`
+      const childBirthTime = formData.unknownTime ? undefined : `${formData.hour.padStart(2, '0')}:${formData.minute.padStart(2, '0')}`
 
       // Parent birth info is optional for privacy/data minimization.
       const hasParentProfile = !!(formData.parentRole && formData.parentYear && formData.parentMonth && formData.parentDay)
@@ -145,11 +171,18 @@ export default function InputFormPage() {
         twinSiblingName: formData.isTwin && formData.twinSiblingName ? formData.twinSiblingName : undefined,
         // Parent
         parentRole: hasParentProfile ? formData.parentRole : undefined,
-        parentName: hasParentProfile ? formData.parentName : undefined,
         parentBirthDate,
         parentBirthTime,
         parentCalendar: hasParentProfile ? formData.parentCalendar : undefined,
-        parentUnknownTime: hasParentProfile ? formData.parentUnknownTime : undefined
+        parentUnknownTime: hasParentProfile ? formData.parentUnknownTime : undefined,
+        // Consent record (transmitted with /saju/calculate)
+        consent: {
+          dataProcessing: formData.privacyAgreed && formData.overseasProcessingAgreed,
+          guardian: formData.ageVerified,
+          marketing: formData.marketingAgreed,
+          policyVersion: POLICY_VERSION,
+          timestamp: new Date().toISOString()
+        }
       }))
 
       router.push('/saju/results')
@@ -171,8 +204,8 @@ export default function InputFormPage() {
       setFormData(prev => ({
         ...prev,
         unknownTime: checked,
-        hour: checked ? '12' : '',
-        minute: checked ? '00' : ''
+        hour: '',
+        minute: ''
       }))
     }
   }
@@ -189,7 +222,6 @@ export default function InputFormPage() {
     setFormData(prev => ({
       ...prev,
       parentRole: '',
-      parentName: '',
       parentCalendar: 'solar',
       parentYear: '',
       parentMonth: '',
@@ -201,7 +233,7 @@ export default function InputFormPage() {
   }
 
   const canProceedStep1 = formData.name && formData.gender
-  const canProceedStep2 = formData.year && formData.month && formData.day && formData.calendar
+  const canProceedStep2 = formData.year && formData.month && formData.day && formData.calendar && !dateError
   const canProceedStep3 = formData.unknownTime || (formData.hour && formData.minute)
   const parentDateComplete = !!(formData.parentRole && formData.parentYear && formData.parentMonth && formData.parentDay)
   const parentTimeComplete = formData.parentUnknownTime || (formData.parentHour && formData.parentMinute)
@@ -356,10 +388,11 @@ export default function InputFormPage() {
               }}>
                 {/* Name */}
                 <div style={{ marginBottom: '2rem' }}>
-                  <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
+                  <label htmlFor="child-name" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
                     {s.childName}
                   </label>
                   <input
+                    id="child-name"
                     type="text"
                     placeholder={s.childNamePlaceholder}
                     value={formData.name}
@@ -527,16 +560,19 @@ export default function InputFormPage() {
 
                 {/* Birth Date */}
                 <div>
-                  <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
+                  <label htmlFor="child-birth-date" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
                     {s.birthDate}
                   </label>
                   <input
+                    id="child-birth-date"
                     type="date"
                     value={formData.year && formData.month && formData.day
                       ? `${formData.year}-${formData.month.padStart(2, '0')}-${formData.day.padStart(2, '0')}`
                       : ''}
                     onChange={e => {
-                      const [year, month, day] = e.target.value.split('-')
+                      const value = e.target.value
+                      setDateError(value && value > todayStr ? invalidDateMsg : '')
+                      const [year, month, day] = value.split('-')
                       setFormData(prev => ({
                         ...prev,
                         year: year || '',
@@ -544,20 +580,27 @@ export default function InputFormPage() {
                         day: day ? String(parseInt(day)) : ''
                       }))
                     }}
-                    min="1995-01-01"
-                    max="2025-12-31"
+                    min={minBirthDateStr}
+                    max={todayStr}
+                    aria-invalid={!!dateError}
+                    aria-describedby={dateError ? 'child-birth-date-error' : undefined}
                     style={{
                       width: '100%',
                       fontSize: '1.125rem',
                       padding: '1rem',
                       borderRadius: '0.75rem',
-                      border: '1px solid #E5E7EB',
+                      border: dateError ? '1px solid #A85544' : '1px solid #E5E7EB',
                       background: '#F8F6F3',
                       outline: 'none',
                       cursor: 'pointer',
                       fontFamily: 'inherit'
                     }}
                   />
+                  {dateError && (
+                    <p id="child-birth-date-error" role="alert" style={{ fontSize: '0.8125rem', color: '#A85544', marginTop: '0.5rem', fontWeight: 600 }}>
+                      {dateError}
+                    </p>
+                  )}
                   <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.5rem' }}>
                     {s.birthDateHint}
                   </p>
@@ -647,10 +690,11 @@ export default function InputFormPage() {
               }}>
                 {/* Time Input */}
                 <div>
-                  <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
+                  <label htmlFor="child-birth-time" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
                     {s.childBirthTime}
                   </label>
                   <input
+                    id="child-birth-time"
                     type="time"
                     value={formData.hour && formData.minute
                       ? `${formData.hour.padStart(2, '0')}:${formData.minute.padStart(2, '0')}`
@@ -717,10 +761,11 @@ export default function InputFormPage() {
                 border: '1px solid #F3F4F6',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
               }}>
-                <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
+                <label htmlFor="birth-place" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
                   {s.birthPlace} <span style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 400 }}>{s.optional}</span>
                 </label>
                 <select
+                  id="birth-place"
                   value={formData.birthPlace}
                   onChange={e => setFormData(prev => ({ ...prev, birthPlace: e.target.value, birthPlaceCustom: '' }))}
                   style={{
@@ -742,7 +787,9 @@ export default function InputFormPage() {
                 </select>
                 {formData.birthPlace === 'other' && (
                   <input
+                    id="birth-place-custom"
                     type="text"
+                    aria-label={s.birthPlaceCustom}
                     placeholder={s.birthPlaceCustom}
                     value={formData.birthPlaceCustom}
                     onChange={e => setFormData(prev => ({ ...prev, birthPlaceCustom: e.target.value }))}
@@ -840,7 +887,9 @@ export default function InputFormPage() {
                       </button>
                     </div>
                     <input
+                      id="twin-sibling-name"
                       type="text"
+                      aria-label={s.twinSiblingNamePlaceholder}
                       placeholder={s.twinSiblingNamePlaceholder}
                       value={formData.twinSiblingName}
                       onChange={e => setFormData(prev => ({ ...prev, twinSiblingName: e.target.value }))}
@@ -1054,10 +1103,11 @@ export default function InputFormPage() {
 
                     {/* Parent Birth Date */}
                     <div>
-                      <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
+                      <label htmlFor="parent-birth-date" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
                         {s.parentBirthDate(formData.parentRole === 'mother' ? s.mother : s.father)}
                       </label>
                       <input
+                        id="parent-birth-date"
                         type="date"
                         value={formData.parentYear && formData.parentMonth && formData.parentDay
                           ? `${formData.parentYear}-${formData.parentMonth.padStart(2, '0')}-${formData.parentDay.padStart(2, '0')}`
@@ -1171,10 +1221,11 @@ export default function InputFormPage() {
               }}>
                 {parentDateComplete && (
                   <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
+                    <label htmlFor="parent-birth-time" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
                       {s.parentBirthTime(formData.parentRole === 'mother' ? s.mother : s.father)}
                     </label>
                     <input
+                      id="parent-birth-time"
                       type="time"
                       value={formData.parentHour && formData.parentMinute
                         ? `${formData.parentHour.padStart(2, '0')}:${formData.parentMinute.padStart(2, '0')}`

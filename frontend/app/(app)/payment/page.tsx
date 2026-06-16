@@ -4,15 +4,14 @@ import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
-import { apiClient } from '@/lib/api'
+import { apiClient, generateClaimKey } from '@/lib/api'
+import { getPremiumPricing, buildPayPalSdkParams } from '@/lib/pricing'
 import { useLanguage } from '@/app/lib/i18n/context'
 import { localizedLegalPath } from '@/app/lib/i18n/routes'
 import type { PromoValidateResponse } from '@/types'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
-const PRODUCT_AMOUNT = 4.99
-const PAYPAL_SDK_PARAMS = 'currency=USD&components=buttons,googlepay&enable-funding=venmo,card&disable-funding=credit,paylater&commit=true'
 
 const isAuthenticated = () => {
   if (typeof window === 'undefined') return false
@@ -69,6 +68,9 @@ function PaymentContent() {
   const router = useRouter()
   const { lang, t } = useLanguage()
   useEffect(() => { document.title = t.payment.pageTitle }, [t])
+  // Pricing is per-locale; null means paid checkout is unavailable (ko: free tier + promo only)
+  const pricing = getPremiumPricing(lang)
+  const paypalSdkParams = pricing ? buildPayPalSdkParams(pricing.currency) : ''
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [errorCode, setErrorCode] = useState('')
@@ -109,16 +111,17 @@ function PaymentContent() {
 
   useEffect(() => {
     if (!sdkReady || isLoading || !window.paypal || buttonsRenderedRef.current) return
-    if (promoResult?.valid) return
+    if (promoResult?.valid || !pricing) return
     buttonsRenderedRef.current = true
     try {
       window.paypal.Buttons({
         createOrder: async () => {
           try {
-            const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email })
+            const orderPayload = { amount: pricing.amount, currency: pricing.currency, description: 'Premium Saju Reading', email }
+            const response = await apiClient.createPayPalPayment(orderPayload)
             if (response.success && response.paypalOrderId && response.paymentAccessToken) {
               paymentAccessTokenRef.current = response.paymentAccessToken
-              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken, amount: PRODUCT_AMOUNT }))
+              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken, amount: pricing.amount, currency: pricing.currency }))
               return response.paypalOrderId
             }
             throw new Error(t.payment.errorCreateOrder)
@@ -154,7 +157,7 @@ function PaymentContent() {
 
   // Google Pay button
   useEffect(() => {
-    if (!sdkReady || isLoading || !window.paypal?.Googlepay || promoResult?.valid) return
+    if (!sdkReady || isLoading || !window.paypal?.Googlepay || promoResult?.valid || !pricing) return
     const gpContainer = document.getElementById('googlepay-container')
     if (!gpContainer || gpContainer.children.length > 0) return
 
@@ -172,14 +175,15 @@ function PaymentContent() {
         const btn = paymentsClient.createButton({
           onClick: async () => {
             try {
-              const res = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email })
-              if (!res.success || !res.paypalOrderId || !res.paymentAccessToken) throw new Error('Order creation failed')
-              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, paymentAccessToken: res.paymentAccessToken, amount: PRODUCT_AMOUNT }))
+              const orderPayload = { amount: pricing.amount, currency: pricing.currency, description: 'Premium Saju Reading', email }
+              const res = await apiClient.createPayPalPayment(orderPayload)
+              if (!res.success || !res.paypalOrderId || !res.paymentAccessToken) throw new Error(t.payment.errorCreateOrder)
+              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, paymentAccessToken: res.paymentAccessToken, amount: pricing.amount, currency: pricing.currency }))
 
               const paymentDataRequest = {
                 apiVersion: 2, apiVersionMinor: 0,
                 allowedPaymentMethods: gpConfig.allowedPaymentMethods,
-                transactionInfo: { totalPriceStatus: 'FINAL', totalPrice: String(PRODUCT_AMOUNT), currencyCode: 'USD', countryCode: 'US' },
+                transactionInfo: { totalPriceStatus: 'FINAL', totalPrice: String(pricing.amount), currencyCode: pricing.currency, countryCode: 'US' },
                 merchantInfo: gpConfig.merchantInfo,
               }
               const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest)
@@ -235,11 +239,16 @@ function PaymentContent() {
       const sajuInput = sessionStorage.getItem('sajuInput')
       if (!sajuInput) { setError(t.payment.errorNoBirthInfo); setIsProcessing(false); return }
       const birthInfo = JSON.parse(sajuInput)
-      const lookup = await apiClient.createReportLookupToken({ email: email.trim(), promoCode: promoCode.trim() })
+
+      // Generate a random claim key — passed to backend at calculation time so the
+      // reading is tagged with sha256(claimKey). Enables polling without OTP.
+      const claimKey = generateClaimKey()
+
       try {
-        await apiClient.calculateWithPromo({
+        const promoPayload = {
           promoCode: promoCode.trim(), email: email.trim(), subjectName: birthInfo.name,
           birthDate: birthInfo.birthDate, birthTime: birthInfo.birthTime, gender: birthInfo.gender,
+          unknownTime: birthInfo.unknownTime === true,
           isLunar: birthInfo.calendar === 'lunar',
           isLeapMonth: birthInfo.isLeapMonth === true,
           timezone: birthInfo.timezone, language: birthInfo.language, birthPlace: birthInfo.birthPlace,
@@ -248,19 +257,25 @@ function PaymentContent() {
           parentRole: birthInfo.parentRole, parentIsLunar: birthInfo.parentCalendar === 'lunar',
           parentIsLeapMonth: birthInfo.parentIsLeapMonth === true,
           twinOrder: birthInfo.twinOrder, twinSiblingName: birthInfo.twinSiblingName,
-        })
+          consent: birthInfo.consent,
+          claimKey,
+        }
+        await apiClient.calculateWithPromo(promoPayload)
       } catch (err: any) {
         if (err?.code === 'PROMO_ALREADY_USED' || err?.statusCode === 409) {
           setErrorCode('PROMO_ALREADY_USED')
           setError(t.payment.promoAlreadyUsedMessage || err.error || t.payment.promoInvalid)
           return
         }
-        // For non-policy errors, keep the existing recovery path: the server may still finish and email the report.
+        // For non-policy errors, keep the existing recovery path:
+        // the server may still finish and email the report;
+        // results page will poll by claimKey on reload.
       }
 
-      // Wait a moment for the request to be received by server, then redirect
+      // Wait a moment for the request to be received by server, then redirect.
+      // Store claimKey so results page can poll without OTP.
       await new Promise(r => setTimeout(r, 3000))
-      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', promoCode: promoCode.trim(), email: email.trim(), reportLookupToken: lookup.reportLookupToken, completedAt: new Date().toISOString() }))
+      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', promoCode: promoCode.trim(), email: email.trim(), claimKey, completedAt: new Date().toISOString() }))
       router.push('/payment/success')
     } catch (err: any) {
       setErrorCode('PAYMENT_ERROR')
@@ -287,14 +302,14 @@ function PaymentContent() {
 
   return (
     <>
-      {!isPromoFlow && (
+      {!isPromoFlow && pricing && (
         <>
           <Script
             src="https://pay.google.com/gp/p/js/pay.js"
             strategy="afterInteractive"
           />
           <Script
-            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&${PAYPAL_SDK_PARAMS}`}
+            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&${paypalSdkParams}`}
             strategy="afterInteractive"
             onLoad={() => setSdkReady(true)}
           />
@@ -328,13 +343,17 @@ function PaymentContent() {
                 {promoResult?.valid ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#5A7A66' }}>{t.payment.free}</span>
-                    <span style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'line-through' }}>$4.99</span>
+                    {pricing && (
+                      <span style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'line-through' }}>{t.pricing.premium.price}</span>
+                    )}
                     <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#5A7A66', background: 'rgba(90,122,102,0.1)', borderRadius: '4px' }}>{t.payment.promoAppliedBadge}</span>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#C5A059' }}>$4.99</span>
-                    <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#8B8580', background: 'rgba(139,133,128,0.1)', borderRadius: '4px' }}>{t.payment.discountBadge}</span>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#C5A059' }}>{t.pricing.premium.price}</span>
+                    {pricing && (
+                      <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#8B8580', background: 'rgba(139,133,128,0.1)', borderRadius: '4px' }}>{t.payment.discountBadge}</span>
+                    )}
                   </div>
                 )}
               </div>
@@ -436,6 +455,15 @@ function PaymentContent() {
                 </div>
               )}
             </div>
+          ) : !pricing ? (
+            /* Korea: no PayPal checkout — free tier + promo code only */
+            <div style={s.card}>
+              <h2 style={s.h2}>{(t.payment as any).krUnavailable || '한국에서는 카드 결제를 아직 지원하지 않습니다.'}</h2>
+              <p style={{ ...s.text, marginBottom: 0 }}>
+                {(t.payment as any).krUseFreeOrPromo || '무료 미리보기를 이용하시거나, 위의 프로모션 코드를 입력해 프리미엄 리포트를 받아보세요.'}
+              </p>
+              {error && <div style={s.error}>{error}</div>}
+            </div>
           ) : (
             <>
             {/* Email collection for receipt */}
@@ -502,10 +530,11 @@ function PaymentContent() {
 }
 
 function LoadingFallback() {
+  const { t } = useLanguage()
   return (
     <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={s.center}>
-        <p style={s.textMuted}>Loading...</p>
+        <p style={s.textMuted}>{t.payment.loading}</p>
       </div>
     </div>
   )

@@ -162,7 +162,7 @@ export default function RootLayout({
                     "name": "Is my personal information safe?",
                     "acceptedAnswer": {
                       "@type": "Answer",
-                      "text": "Birth date information is used solely for analysis. We don't collect personal identification data such as name or phone number. Free analysis requires no signup, and all data is encrypted during transmission."
+                      "text": "We collect only the birth information needed to generate your report, and — for paid reports — an email address and a name (or nickname) you choose to label the report. Free previews are not stored in our database. All data is encrypted in transit, and you can request deletion at any time. See our Privacy Policy at somyung.cc/privacy for details."
                     }
                   },
                   {

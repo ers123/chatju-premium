@@ -157,12 +157,15 @@ export const apiClient = {
   /**
    * Get FULL Saju reading (requires completed payment; guest flow uses paymentAccessToken)
    * Returns: Complete Four Pillars + full AI interpretation
+   * @param claimKey - Raw claim key generated client-side; backend stores sha256(claimKey).
+   *   Allows in-flow polling via reading-check?claim= without OTP.
    */
-  getFullReading: async (orderId: string, birthInfo: BirthInfo, paymentAccessToken?: string): Promise<SajuReading> => {
+  getFullReading: async (orderId: string, birthInfo: BirthInfo, paymentAccessToken?: string, claimKey?: string): Promise<SajuReading> => {
     const response = await api.post<SajuReading>('/saju/calculate', {
       orderId,
       paymentAccessToken,
       ...birthInfo,
+      ...(claimKey ? { claimKey } : {}),
     });
     return response.data;
   },
@@ -240,8 +243,10 @@ export const apiClient = {
 
   /**
    * Generate reading with promo code (no authentication required)
+   * Accepts an optional claimKey (raw secret) so the backend tags the reading with
+   * sha256(claimKey), enabling in-flow polling via reading-check?claim= without OTP.
    */
-  calculateWithPromo: async (data: PromoCalculateRequest): Promise<SajuReading> => {
+  calculateWithPromo: async (data: PromoCalculateRequest & { claimKey?: string }): Promise<SajuReading> => {
     const response = await api.post<SajuReading>('/saju/calculate-promo', data);
     return response.data;
   },
@@ -279,6 +284,47 @@ export const apiClient = {
     return response.data;
   },
 };
+
+// ---------------------------------------------
+// Claim Key Utilities (in-flow polling without OTP)
+// ---------------------------------------------
+
+/**
+ * Generate a cryptographically random 64-char hex claim key.
+ * The raw key is given to the server at calculation time and stored as sha256(key).
+ * Possession of the raw key later authorises reading-check polling (no OTP needed).
+ */
+export function generateClaimKey(): string {
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    const buf = new Uint8Array(32);
+    window.crypto.getRandomValues(buf);
+    return Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  // SSR / Node fallback: concatenate two UUIDs (128 bits → still fine for a secret)
+  return crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+}
+
+/**
+ * Poll GET /saju/reading-check?claim=<rawClaimKey> until the reading is ready.
+ * Returns the reading object on success, or null after maxAttempts.
+ */
+export async function pollForReadingByClaim(
+  claimKey: string,
+  { maxAttempts = 12, intervalMs = 5000 }: { maxAttempts?: number; intervalMs?: number } = {}
+): Promise<Record<string, unknown> | null> {
+  const { buildApiUrl } = await import('@/lib/api-url');
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, intervalMs));
+    try {
+      const res = await fetch(buildApiUrl(`/saju/reading-check?claim=${encodeURIComponent(claimKey)}`));
+      const data = await res.json();
+      if (data.status === 'complete' && data.reading) return data.reading;
+    } catch {
+      // transient network error — keep polling
+    }
+  }
+  return null;
+}
 
 // ---------------------------------------------
 // Utility Functions

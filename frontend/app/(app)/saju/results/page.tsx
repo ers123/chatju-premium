@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
-import { apiClient } from '@/lib/api'
+import { apiClient, generateClaimKey, pollForReadingByClaim } from '@/lib/api'
 import { buildApiUrl } from '@/lib/api-url'
+import { getPremiumPricing, buildPayPalSdkParams } from '@/lib/pricing'
 import { useLanguage } from '@/app/lib/i18n/context'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -13,8 +14,6 @@ import ShareableResultCard from '@/components/saju/ShareableResultCard'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
-const PRODUCT_AMOUNT = 4.99
-const PAYPAL_SDK_PARAMS = 'currency=USD&components=buttons,googlepay&enable-funding=venmo,card&disable-funding=credit,paylater&commit=true'
 
 // Types
 interface FourPillar {
@@ -216,6 +215,9 @@ export default function ResultsPage() {
   const { t, lang } = useLanguage()
   useEffect(() => { document.title = t.sajuResults.pageTitle }, [t])
   const sr = t.sajuResults
+  // Per-locale chargeable pricing; null = no PayPal checkout (ko: free tier + promo only)
+  const pricing = getPremiumPricing(lang)
+  const paypalSdkParams = pricing ? buildPayPalSdkParams(pricing.currency) : ''
   const [result, setResult] = useState<SajuResult | null>(null)
   const [inputData, setInputData] = useState<{ name: string; birthDate: string; birthTime: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -258,7 +260,7 @@ export default function ResultsPage() {
 
   // Render PayPal buttons when SDK is ready, panel is open, and email is valid (container div exists)
   useEffect(() => {
-    if (!paypalSdkReady || !showPayment || !emailValid || paypalRendered.current) return
+    if (!pricing || !paypalSdkReady || !showPayment || !emailValid || paypalRendered.current) return
     if (typeof window === 'undefined' || !(window as any).paypal) return
     // Small delay to ensure DOM is rendered after email validation shows the container
     const timer = setTimeout(() => {
@@ -271,16 +273,17 @@ export default function ResultsPage() {
         createOrder: async () => {
           if (!paymentEmailRef.current.trim()) {
             setPaymentErrorCode('PAYMENT_ERROR')
-            setPaymentError('Please enter your email first')
+            setPaymentError(t.payment.emailRequired)
             throw new Error('Email required')
           }
-          const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email: paymentEmailRef.current })
+          const orderPayload = { amount: pricing.amount, currency: pricing.currency, description: 'Premium Saju Reading', email: paymentEmailRef.current }
+          const response = await apiClient.createPayPalPayment(orderPayload)
           if (response.success && response.paypalOrderId && response.paymentAccessToken) {
             paymentAccessTokenRef.current = response.paymentAccessToken
-            sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken }))
+            sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken, amount: pricing.amount, currency: pricing.currency }))
             return response.paypalOrderId
           }
-          throw new Error('Order creation failed')
+          throw new Error(t.payment.errorCreateOrder)
         },
         onApprove: async (data: { orderID: string }) => {
           setPaymentProcessing(true)
@@ -301,23 +304,23 @@ export default function ResultsPage() {
               window.location.reload()
             } else {
               setPaymentErrorCode('PAYMENT_ERROR')
-              setPaymentError('Payment capture failed. Please try again.')
+              setPaymentError((t.payment as any).captureFailed || t.payment.errorCapturePayment)
             }
           } catch {
             setPaymentErrorCode('PAYMENT_ERROR')
-            setPaymentError('Payment processing error. Please try again.')
+            setPaymentError((t.payment as any).genericError || t.payment.errorProcessPayment)
           }
           finally { setPaymentProcessing(false) }
         },
         onError: () => {
           setPaymentErrorCode('PAYMENT_ERROR')
-          setPaymentError('Payment error. Please try again.')
+          setPaymentError((t.payment as any).genericError || t.payment.errorPaymentGeneral)
         },
         onCancel: () => {},
       }).render('#inline-paypal-container')
     } catch {
       setPaymentErrorCode('PAYMENT_ERROR')
-      setPaymentError('Failed to initialize payment.')
+      setPaymentError((t.payment as any).initFailed || t.payment.errorPaymentInit)
     }
     }, 100) // 100ms delay for DOM render
     return () => clearTimeout(timer)
@@ -345,7 +348,7 @@ export default function ResultsPage() {
       const validation = await apiClient.validatePromoCode(promoCode)
       if (!validation.valid) {
         setPaymentErrorCode('PROMO_INVALID')
-        setPaymentError(validation.error || 'Invalid promo code')
+        setPaymentError(validation.error || (t.payment as any).invalidPromo || t.payment.promoInvalid)
         setPromoValidating(false)
         return
       }
@@ -354,18 +357,21 @@ export default function ResultsPage() {
       const stored = sessionStorage.getItem('sajuInput')
       if (!stored) return
       const input = JSON.parse(stored)
-      const lookup = await apiClient.createReportLookupToken({ email: paymentEmail, promoCode })
-      const reportLookupToken = lookup.reportLookupToken
+
+      // Generate a random claim key — passed to backend so it can tag the reading.
+      // If generation times out, we poll with this key instead of an OTP-gated token.
+      const claimKey = generateClaimKey()
 
       let reading = null
       try {
         // Try the direct call — may timeout at 30s via API Gateway
-        reading = await apiClient.calculateWithPromo({
+        const promoPayload = {
           promoCode,
           email: paymentEmail,
           birthDate: input.birthDate,
           birthTime: input.birthTime,
           gender: input.gender,
+          unknownTime: input.unknownTime === true,
           isLunar: input.calendar === 'lunar',
           isLeapMonth: input.isLeapMonth === true,
           language: lang,
@@ -378,20 +384,24 @@ export default function ResultsPage() {
           parentIsLeapMonth: input.parentIsLeapMonth === true,
           twinOrder: input.twinOrder,
           twinSiblingName: input.twinSiblingName,
-        })
+          consent: input.consent,
+          claimKey,
+        }
+        reading = await apiClient.calculateWithPromo(promoPayload)
       } catch (err: any) {
         if (err?.code === 'PROMO_ALREADY_USED' || err?.statusCode === 409) {
           setPaymentErrorCode('PROMO_ALREADY_USED')
-          setPaymentError(t.payment.promoAlreadyUsedMessage || err.error || 'This promo code has already been used with this email.')
+          setPaymentError(t.payment.promoAlreadyUsedMessage || err.error || t.payment.promoInvalid)
           setPaymentProcessing(false)
           setPromoValidating(false)
           return
         }
-        reading = await pollForReading(reportLookupToken)
+        // Timeout or transient error — poll by claim key (no OTP required)
+        reading = await pollForReadingByClaim(claimKey)
         if (!reading) {
-          sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, reportLookupToken }))
+          sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, claimKey }))
           setPaymentErrorCode('REPORT_PENDING')
-          setPaymentError('Report is still being generated. This page will refresh automatically.')
+          setPaymentError((t.payment as any).reportPending || sr.premiumGeneratingDesc)
           setPaymentProcessing(false)
           setPromoValidating(false)
           setTimeout(() => window.location.reload(), 10000)
@@ -401,12 +411,12 @@ export default function ResultsPage() {
 
       // Store and reload to show premium
       sessionStorage.setItem('promo_reading', JSON.stringify(reading))
-      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, reportLookupToken }))
+      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, claimKey }))
       setShowPayment(false)
       window.location.reload()
     } catch (err: any) {
       setPaymentErrorCode('PAYMENT_ERROR')
-      setPaymentError(err.error || err.message || 'Error processing promo code')
+      setPaymentError(err.error || err.message || (t.payment as any).genericError || t.payment.errorPaymentGeneral)
     } finally {
       setPromoValidating(false)
       setPaymentProcessing(false)
@@ -436,13 +446,14 @@ export default function ResultsPage() {
           r = JSON.parse(promoReadingRaw)
           sessionStorage.removeItem('promo_reading') // One-time use
         } else if (completed.orderId === 'promo') {
-          if (!completed.reportLookupToken) {
-            setPremiumError('Report generation is still in progress. Please check your email shortly.')
+          // Poll by claim key (no OTP required — possession of key is authz)
+          if (!completed.claimKey) {
+            setPremiumError((t.payment as any).reportPending || sr.premiumGeneratingDesc)
             return
           }
-          r = await pollForReading(completed.reportLookupToken)
+          r = await pollForReadingByClaim(completed.claimKey)
           if (!r) {
-            setPremiumError('Report generation is still in progress. Please refresh this page in a moment.')
+            setPremiumError((t.payment as any).reportPending || sr.premiumGeneratingDesc)
             return
           }
         } else {
@@ -459,35 +470,48 @@ export default function ResultsPage() {
             }
           }
 
-          const lookup = await apiClient.createReportLookupToken({ email: completed.email, orderId: completed.orderId })
+          // Use stored claim key for in-flow polling; generate and persist a new one if absent.
+          // Persisting ensures the same key is reused if the page reloads before the reading is ready.
+          // (Back-compat: completed_payment stored before this fix won't have claimKey.)
+          let paidClaimKey = completed.claimKey
+          if (!paidClaimKey) {
+            paidClaimKey = generateClaimKey()
+            // Persist so reloads reuse the same key
+            sessionStorage.setItem('completed_payment', JSON.stringify({ ...completed, claimKey: paidClaimKey }))
+          }
           let reading
           try {
-            reading = await apiClient.getFullReading(completed.orderId, {
-            birthDate: input.birthDate,
-            birthTime: input.birthTime,
-            gender: input.gender,
-            isLunar: input.calendar === 'lunar',
-            isLeapMonth: input.isLeapMonth === true,
-            language: resolvedLang,
-            // Location for solar time correction
-            birthPlace: input.birthPlace,
-            // Twin info
-            twinOrder: input.twinOrder,
-            twinSiblingName: input.twinSiblingName,
-            // Parent data
-            parentBirthDate: input.parentBirthDate,
-            parentBirthTime: input.parentBirthTime,
-            parentRole: input.parentRole,
-            parentGender: input.parentGender,
-            parentIsLunar: input.parentCalendar === 'lunar',
-            parentIsLeapMonth: input.parentIsLeapMonth === true,
-            // Email for PDF delivery
-            deliveryEmail: completed.email,
-            }, completed.paymentAccessToken)
+            const calculatePayload = {
+              birthDate: input.birthDate,
+              birthTime: input.birthTime,
+              gender: input.gender,
+              unknownTime: input.unknownTime === true,
+              isLunar: input.calendar === 'lunar',
+              isLeapMonth: input.isLeapMonth === true,
+              language: resolvedLang,
+              // Location for solar time correction
+              birthPlace: input.birthPlace,
+              // Twin info
+              twinOrder: input.twinOrder,
+              twinSiblingName: input.twinSiblingName,
+              // Parent data
+              parentBirthDate: input.parentBirthDate,
+              parentBirthTime: input.parentBirthTime,
+              parentRole: input.parentRole,
+              parentGender: input.parentGender,
+              parentIsLunar: input.parentCalendar === 'lunar',
+              parentIsLeapMonth: input.parentIsLeapMonth === true,
+              // Email for PDF delivery
+              deliveryEmail: completed.email,
+              // Consent record collected on the input form
+              consent: input.consent,
+            }
+            reading = await apiClient.getFullReading(completed.orderId, calculatePayload, completed.paymentAccessToken, paidClaimKey)
           } catch {
-            reading = await pollForReading(lookup.reportLookupToken)
+            // Timeout — poll by claim key (no OTP required)
+            reading = await pollForReadingByClaim(paidClaimKey)
             if (!reading) {
-              setPremiumError('Report generation is still in progress. Please refresh this page in a moment.')
+              setPremiumError((t.payment as any).reportPending || sr.premiumGeneratingDesc)
               return
             }
           }
@@ -569,10 +593,11 @@ export default function ResultsPage() {
         previewRequestKeyRef.current = previewRequestKey
 
         // Send both child and parent data for relationship analysis
-        const previewData = await apiClient.getPreview({
+        const previewPayload = {
           birthDate: input.birthDate,
           birthTime: input.birthTime,
           gender: input.gender,
+          unknownTime: input.unknownTime === true,
           isLunar: input.calendar === 'lunar',
           isLeapMonth: input.isLeapMonth === true,
           language: resolvedLang,
@@ -587,7 +612,8 @@ export default function ResultsPage() {
           parentRole: input.parentRole,
           parentIsLunar: input.parentCalendar === 'lunar',
           parentIsLeapMonth: input.parentIsLeapMonth === true,
-        })
+        }
+        const previewData = await apiClient.getPreview(previewPayload)
 
         const manseryeok = previewData.manseryeok
         const transformedResult: SajuResult = {
@@ -1159,20 +1185,34 @@ export default function ResultsPage() {
                         </button>
                       </div>
 
-                      {/* Divider */}
-                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
-                        {(t.payment as any).orPayWith || 'Or pay with'}
-                      </div>
-                      <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 1.6, margin: '0 0 0.75rem' }}>
-                        {(t.payment as any).paypalCheckoutNote || 'Pay with a PayPal account, debit card, or credit card. Availability may vary by country and PayPal risk checks.'}
-                      </p>
+                      {pricing ? (
+                        <>
+                          {/* Divider */}
+                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
+                            {(t.payment as any).orPayWith || 'Or pay with'}
+                          </div>
+                          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 1.6, margin: '0 0 0.75rem' }}>
+                            {(t.payment as any).paypalCheckoutNote || 'Pay with a PayPal account, debit card, or credit card. Availability may vary by country and PayPal risk checks.'}
+                          </p>
 
-                      {/* PayPal buttons */}
-                      <div id="inline-paypal-container" />
-                      <Script
-                        src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&${PAYPAL_SDK_PARAMS}`}
-                        onReady={() => setPaypalSdkReady(true)}
-                      />
+                          {/* PayPal buttons */}
+                          <div id="inline-paypal-container" />
+                          <Script
+                            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&${paypalSdkParams}`}
+                            onReady={() => setPaypalSdkReady(true)}
+                          />
+                        </>
+                      ) : (
+                        /* Korea: no PayPal checkout — free tier + promo code only */
+                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', textAlign: 'center' }}>
+                          <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, margin: '0 0 0.35rem' }}>
+                            {(t.payment as any).krUnavailable || '한국에서는 카드 결제를 아직 지원하지 않습니다.'}
+                          </p>
+                          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
+                            {(t.payment as any).krUseFreeOrPromo || '무료 미리보기를 이용하시거나, 위의 프로모션 코드를 입력해 프리미엄 리포트를 받아보세요.'}
+                          </p>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '1rem 0' }}>
