@@ -250,6 +250,65 @@ describe('Manseryeok Four Pillar Calculations', () => {
   });
 
   // ============================================================
+  // Foreign timezone births — YEAR/MONTH solar-term comparison must happen
+  // in absolute (UTC) time, not by treating the local wall-clock as KST.
+  // Reference: 입춘 2024 = Feb 4 17:27 KST = Feb 4 08:27 UTC.
+  // ============================================================
+  describe('Foreign timezone births (solar-term frame correction)', () => {
+    test('New York 2024-02-04 05:00 local (EST = UTC 10:00, after 입춘) → 갑진년/병인월', () => {
+      const result = calculateMansae('2024-02-04', '05:00', '남', { timezone: 'America/New_York' });
+      expect(result.error).toBeUndefined();
+      expect(result.pillars.year.korean).toBe('갑진'); // NOT 계묘 (naive-KST bug)
+      expect(result.pillars.month.korean).toBe('병인'); // NOT 을축
+      // Day/hour pillars come from the birth LOCAL clock
+      expect(result.pillars.day.korean).toBe('무술');
+      expect(result.pillars.hour.korean).toBe('을묘');
+    });
+
+    test('New York via birthPlace lookup also lands after 입춘 → 갑진년/병인월', () => {
+      const result = calculateMansae('2024-02-04', '05:00', '남', { birthPlace: 'new york' });
+      expect(result.error).toBeUndefined();
+      expect(result.pillars.year.korean).toBe('갑진');
+      expect(result.pillars.month.korean).toBe('병인');
+    });
+
+    test('London 2024-02-04 09:00 GMT (UTC 09:00 > 입춘 08:27 UTC) → 갑진년/병인월', () => {
+      const result = calculateMansae('2024-02-04', '09:00', '여', { timezone: 'Europe/London' });
+      expect(result.error).toBeUndefined();
+      expect(result.pillars.year.korean).toBe('갑진'); // naive-KST would say 계묘 (09:00 < 17:27 KST)
+      expect(result.pillars.month.korean).toBe('병인');
+    });
+
+    test('Korean default (no timezone / Asia/Seoul) is unchanged near the boundary', () => {
+      const noTz = calculateMansae('2024-02-04', '05:00', '남');
+      const seoulTz = calculateMansae('2024-02-04', '05:00', '남', { timezone: 'Asia/Seoul' });
+      for (const result of [noTz, seoulTz]) {
+        expect(result.error).toBeUndefined();
+        expect(result.pillars.year.korean).toBe('계묘'); // before 입춘 17:27 KST
+        expect(result.pillars.month.korean).toBe('을축');
+      }
+    });
+  });
+
+  // ============================================================
+  // Unknown birth time — hour pillar omitted, never fabricated from noon
+  // ============================================================
+  describe('Unknown birth time (hourUnknown)', () => {
+    test('omits hour pillar and counts 6 element characters', () => {
+      const result = calculateMansae('2024-07-15', '12:00', '남', { hourUnknown: true });
+      expect(result.error).toBeUndefined();
+      expect(result.hourUnknown).toBe(true);
+      expect(result.pillars.hour).toBeNull();
+      expect(result.input.birthTime).toBeNull();
+      const totalElements = Object.values(result.elements).reduce((a, b) => a + b, 0);
+      expect(totalElements).toBe(6); // 3 pillars × 2 characters
+      // Year/month/day pillars still computed normally
+      expect(result.pillars.year.korean).toBe('갑진');
+      expect(result.pillars.day.korean).toBe('경진');
+    });
+  });
+
+  // ============================================================
   // Error handling
   // ============================================================
   describe('Error handling', () => {
