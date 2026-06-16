@@ -247,12 +247,22 @@ function generateDaeunInterpretation(pillar, stemTenGod, branchTenGod, dayMaster
   const elementRelation = analyzeElementRelation(dayMasterElement, pillar.stemElement, pillar.branchElement);
 
   return {
-    keywords: [stemInterp.keyword, branchInterp.keyword],
+    keywords: uniqueNonEmpty([stemInterp.keyword, branchInterp.keyword]),
     stemDescription: stemInterp.description,
-    branchDescription: branchInterp.description,
-    elementAnalysis: elementRelation,
+    // Collapse when stem and branch ten-gods are identical (e.g. 비견/비견),
+    // otherwise the report shows the same sentence twice.
+    branchDescription: branchInterp.description === stemInterp.description ? '' : branchInterp.description,
+    elementAnalysis: uniqueNonEmpty(elementRelation),
     overall: generateOverallDaeunSummary(stemTenGod, branchTenGod, pillar),
   };
+}
+
+/**
+ * De-duplicate an array, dropping empty/falsy entries while preserving order.
+ * Used so identical stem/branch ten-god values don't render twice.
+ */
+function uniqueNonEmpty(arr) {
+  return [...new Set((arr || []).filter(Boolean))];
 }
 
 /**
@@ -378,7 +388,7 @@ function getSeunKeywords(stemTenGod, branchTenGod) {
     정인: '지원, 귀인, 보호',
   };
 
-  return [keywords[stemTenGod] || '', keywords[branchTenGod] || ''];
+  return uniqueNonEmpty([keywords[stemTenGod], keywords[branchTenGod]]);
 }
 
 /**
@@ -398,7 +408,7 @@ function getSeunAdvice(stemTenGod, branchTenGod) {
     정인: '주변의 도움에 감사하고 관계를 소중히 하세요.',
   };
 
-  return [advices[stemTenGod] || '', advices[branchTenGod] || ''];
+  return uniqueNonEmpty([advices[stemTenGod], advices[branchTenGod]]);
 }
 
 /**
