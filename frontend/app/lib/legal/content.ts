@@ -104,7 +104,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       {
         title: '9. 개인정보보호책임자 및 문의',
         body: [
-          '개인정보보호책임자(CPO): [성명 — TODO: 운영자 지정 필요] (privacy@somyung.cc)',
+          '개인정보보호책임자(CPO): 이요한 (privacy@somyung.cc)',
           '개인정보 관련 문의: support@somyung.cc',
           '사업자: 하모니온 / 대표: 이요한',
         ],
@@ -192,7 +192,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       {
         title: '9. Privacy Officer and Contact',
         body: [
-          'Chief Privacy Officer (CPO, 개인정보보호책임자): [NAME — TODO: to be designated by the operator] (privacy@somyung.cc)',
+          'Chief Privacy Officer (CPO, 개인정보보호책임자): Yohan Lee (privacy@somyung.cc)',
           'Privacy contact: support@somyung.cc',
           'Operator: HarmonyOn / Representative: Yohan Lee',
         ],
@@ -213,7 +213,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       { title: '6. セキュリティ', bullets: ['レポートとPDFには期限付きサーバートークンが必要です。', '決済確定にはPayPal注文IDとサーバー発行トークンを確認します。', '分析スクリプトはCookie同意後のみ読み込まれます。'] },
       { title: '7. 権利行使', body: ['開示、訂正、削除、処理停止、同意撤回は support@somyung.cc へご連絡ください。法令上必要な決済記録は保持される場合があります。'], bullets: ['データポータビリティ（GDPR第20条）: ご提供いただいたデータを構造化され、一般的に利用され、機械可読な形式で受け取ることを請求できます。', '自動化された意思決定（GDPR第22条）: レポートは入力された出生情報に基づきAIが自動生成するプロファイリングです。情報提供、自己省察、エンターテインメント目的でのみ提供され、法的効果やそれに準ずる重大な影響はなく、お客様やお子様に関する決定には使用されません。この処理への異議申立てや人による確認を希望される場合は support@somyung.cc までご連絡ください。'] },
       { title: '8. カリフォルニア州居住者の権利（CCPA/CPRA）', body: ['当社はカリフォルニア州消費者プライバシー法（CCPA）に定義される個人情報の販売・共有を行いません。「私の個人情報を販売または共有しないでください」: 当社は販売を行いません。カリフォルニア州居住者は support@somyung.cc に連絡して、知る権利、削除権、訂正権、差別を受けない権利を行使できます。'] },
-      { title: '9. 個人情報保護責任者・連絡先', body: ['個人情報保護責任者（CPO）: [氏名 — TODO: 運営者が指定] (privacy@somyung.cc)', 'プライバシー窓口: support@somyung.cc', '運営者: HarmonyOn / 代表: Yohan Lee'] },
+      { title: '9. 個人情報保護責任者・連絡先', body: ['個人情報保護責任者（CPO）: Yohan Lee (privacy@somyung.cc)', 'プライバシー窓口: support@somyung.cc', '運営者: HarmonyOn / 代表: Yohan Lee'] },
     ],
   },
   zh: {
@@ -230,7 +230,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       { title: '6. 安全措施', bullets: ['报告和PDF需要服务器签发的限时令牌。', '支付确认需要PayPal订单ID和服务器签发的支付令牌。', '分析脚本仅在Cookie同意后加载。'] },
       { title: '7. 您的权利', body: ['您可以通过 support@somyung.cc 请求访问、更正、删除、限制处理或撤回同意。依法必须保存的支付/交易记录可能无法立即删除。'], bullets: ['数据可携权（GDPR 第20条）：您可以要求以结构化、通用、机器可读的格式获取您提供的数据。', '自动化决策（GDPR 第22条）：报告由AI根据您输入的出生信息自动生成，属于AI生成的画像分析，仅用于信息参考、自我反思和娱乐目的，不产生法律效力或类似重大影响，也不用于对您或孩子做出任何决定。如需对该处理提出异议或要求人工审查，请联系 support@somyung.cc。'] },
       { title: '8. 加州居民权利（CCPA/CPRA）', body: ['我们不出售或共享《加州消费者隐私法》定义的个人信息。"请勿出售或共享我的个人信息"：我们不出售个人信息。加州居民可联系 support@somyung.cc 行使知情权、删除权、更正权及不受歧视的权利。'] },
-      { title: '9. 个人信息保护负责人与联系方式', body: ['个人信息保护负责人（CPO）: [姓名 — TODO: 由运营方指定] (privacy@somyung.cc)', '隐私联系邮箱: support@somyung.cc', '运营方: HarmonyOn / 代表: Yohan Lee'] },
+      { title: '9. 个人信息保护负责人与联系方式', body: ['个人信息保护负责人（CPO）: Yohan Lee (privacy@somyung.cc)', '隐私联系邮箱: support@somyung.cc', '运营方: HarmonyOn / 代表: Yohan Lee'] },
     ],
   },
   vi: {
@@ -247,7 +247,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       { title: '6. Bảo mật', bullets: ['Báo cáo và PDF cần token có thời hạn do máy chủ cấp.', 'Xác nhận thanh toán cần PayPal order ID và token thanh toán do máy chủ cấp.', 'Script phân tích chỉ tải sau khi đồng ý cookie.'] },
       { title: '7. Quyền của bạn', body: ['Bạn có thể yêu cầu truy cập, sửa, xóa, hạn chế xử lý hoặc rút đồng ý qua support@somyung.cc. Một số hồ sơ thanh toán/giao dịch có thể phải được giữ theo luật.'], bullets: ['Quyền di chuyển dữ liệu (Điều 20 GDPR): bạn có thể yêu cầu bản sao dữ liệu bạn cung cấp ở định dạng có cấu trúc, thông dụng và máy đọc được.', 'Quyết định tự động (Điều 22 GDPR): báo cáo được AI tạo tự động dựa trên thông tin sinh bạn cung cấp. Đây là hồ sơ phân tích do AI tạo, chỉ phục vụ mục đích tham khảo, tự suy ngẫm và giải trí; không có hiệu lực pháp lý hay ảnh hưởng trọng yếu tương tự và không được dùng để đưa ra quyết định về bạn hoặc con bạn. Bạn có thể phản đối việc xử lý này hoặc yêu cầu con người xem xét qua support@somyung.cc.'] },
       { title: '8. Quyền của cư dân California (CCPA/CPRA)', body: ['Chúng tôi không bán hoặc chia sẻ thông tin cá nhân theo định nghĩa của Đạo luật Quyền riêng tư Người tiêu dùng California. "Không bán hoặc chia sẻ thông tin cá nhân của tôi": chúng tôi không bán. Cư dân California có thể liên hệ support@somyung.cc để thực hiện quyền được biết, xóa, sửa và không bị phân biệt đối xử.'] },
-      { title: '9. Cán bộ bảo vệ dữ liệu và liên hệ', body: ['Cán bộ bảo vệ thông tin cá nhân (CPO): [Họ tên — TODO: do đơn vị vận hành chỉ định] (privacy@somyung.cc)', 'Liên hệ quyền riêng tư: support@somyung.cc', 'Đơn vị vận hành: HarmonyOn / Đại diện: Yohan Lee'] },
+      { title: '9. Cán bộ bảo vệ dữ liệu và liên hệ', body: ['Cán bộ bảo vệ thông tin cá nhân (CPO): Yohan Lee (privacy@somyung.cc)', 'Liên hệ quyền riêng tư: support@somyung.cc', 'Đơn vị vận hành: HarmonyOn / Đại diện: Yohan Lee'] },
     ],
   },
   id: {
@@ -264,7 +264,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       { title: '6. Keamanan', bullets: ['Laporan dan PDF memerlukan token terbatas waktu dari server.', 'Konfirmasi pembayaran memerlukan PayPal order ID dan token pembayaran dari server.', 'Script analitik hanya dimuat setelah persetujuan cookie.'] },
       { title: '7. Hak Anda', body: ['Anda dapat meminta akses, koreksi, penghapusan, pembatasan pemrosesan, atau penarikan persetujuan melalui support@somyung.cc. Sebagian catatan pembayaran/transaksi mungkin wajib disimpan oleh hukum.'], bullets: ['Portabilitas data (Pasal 20 GDPR): Anda dapat meminta salinan data yang Anda berikan dalam format terstruktur, umum digunakan, dan dapat dibaca mesin.', 'Pengambilan keputusan otomatis (Pasal 22 GDPR): laporan dibuat secara otomatis oleh AI berdasarkan informasi kelahiran yang Anda berikan. Ini adalah profil yang dihasilkan AI untuk tujuan informasi, refleksi diri, dan hiburan saja; tidak menimbulkan akibat hukum atau dampak signifikan serupa dan tidak digunakan untuk membuat keputusan tentang Anda atau anak Anda. Anda dapat menolak pemrosesan ini atau meminta peninjauan oleh manusia melalui support@somyung.cc.'] },
       { title: '8. Hak Penduduk California (CCPA/CPRA)', body: ['Kami tidak menjual atau membagikan informasi pribadi sebagaimana didefinisikan oleh California Consumer Privacy Act. "Jangan Jual atau Bagikan Informasi Pribadi Saya": kami tidak menjual. Penduduk California dapat menghubungi support@somyung.cc untuk menggunakan hak mengetahui, menghapus, mengoreksi, dan bebas dari diskriminasi.'] },
-      { title: '9. Petugas Perlindungan Data dan Kontak', body: ['Petugas perlindungan data pribadi (CPO): [Nama — TODO: ditetapkan oleh operator] (privacy@somyung.cc)', 'Kontak privasi: support@somyung.cc', 'Operator: HarmonyOn / Perwakilan: Yohan Lee'] },
+      { title: '9. Petugas Perlindungan Data dan Kontak', body: ['Petugas perlindungan data pribadi (CPO): Yohan Lee (privacy@somyung.cc)', 'Kontak privasi: support@somyung.cc', 'Operator: HarmonyOn / Perwakilan: Yohan Lee'] },
     ],
   },
   es: {
@@ -281,7 +281,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       { title: '6. Seguridad', bullets: ['Informes y PDF requieren un token temporal emitido por el servidor.', 'La captura de pago requiere PayPal order ID y token de pago del servidor.', 'Los scripts analíticos cargan solo tras consentimiento de cookies.'] },
       { title: '7. Sus Derechos', body: ['Puede solicitar acceso, rectificación, eliminación, limitación o retirar consentimiento escribiendo a support@somyung.cc. Algunos registros de pago/transacción pueden conservarse por obligación legal.'], bullets: ['Portabilidad de datos (art. 20 RGPD): puede solicitar una copia de los datos que proporcionó en un formato estructurado, de uso común y lectura mecánica.', 'Decisiones automatizadas (art. 22 RGPD): los informes se generan automáticamente mediante IA a partir de la información de nacimiento que usted proporciona. Se trata de un perfil generado por IA con fines informativos, de autorreflexión y entretenimiento únicamente; no produce efectos jurídicos ni impactos significativos similares y no se usa para tomar decisiones sobre usted o su hijo. Puede oponerse a este tratamiento o pedir una revisión humana en support@somyung.cc.'] },
       { title: '8. Derechos de Residentes de California (CCPA/CPRA)', body: ['No vendemos ni compartimos información personal según la definición de la Ley de Privacidad del Consumidor de California. "No vender ni compartir mi información personal": no vendemos. Los residentes de California pueden contactar support@somyung.cc para ejercer sus derechos de acceso, eliminación, corrección y no discriminación.'] },
-      { title: '9. Responsable de Privacidad y Contacto', body: ['Responsable de protección de datos (CPO): [Nombre — TODO: a designar por el operador] (privacy@somyung.cc)', 'Contacto de privacidad: support@somyung.cc', 'Operador: HarmonyOn / Representante: Yohan Lee'] },
+      { title: '9. Responsable de Privacidad y Contacto', body: ['Responsable de protección de datos (CPO): Yohan Lee (privacy@somyung.cc)', 'Contacto de privacidad: support@somyung.cc', 'Operador: HarmonyOn / Representante: Yohan Lee'] },
     ],
   },
   pt: {
@@ -298,7 +298,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       { title: '6. Segurança', bullets: ['Relatórios e PDFs exigem token temporário emitido pelo servidor.', 'Captura de pagamento exige PayPal order ID e token de pagamento do servidor.', 'Scripts analíticos carregam apenas após consentimento de cookies.'] },
       { title: '7. Seus Direitos', body: ['Você pode solicitar acesso, correção, exclusão, restrição ou retirar consentimento pelo email support@somyung.cc. Alguns registros de pagamento/transação podem ser retidos por obrigação legal.'], bullets: ['Portabilidade de dados (art. 20 do RGPD): você pode solicitar uma cópia dos dados fornecidos em formato estruturado, de uso comum e legível por máquina.', 'Decisões automatizadas (art. 22 do RGPD): os relatórios são gerados automaticamente por IA com base nas informações de nascimento fornecidas. Trata-se de um perfil gerado por IA apenas para fins informativos, de autorreflexão e entretenimento; não produz efeitos jurídicos nem impactos significativos semelhantes e não é usado para tomar decisões sobre você ou seu filho. Você pode se opor a esse tratamento ou pedir revisão humana em support@somyung.cc.'] },
       { title: '8. Direitos de Residentes da Califórnia (CCPA/CPRA)', body: ['Não vendemos nem compartilhamos informações pessoais conforme definido pela Lei de Privacidade do Consumidor da Califórnia. "Não vender nem compartilhar minhas informações pessoais": não vendemos. Residentes da Califórnia podem contatar support@somyung.cc para exercer os direitos de acesso, exclusão, correção e não discriminação.'] },
-      { title: '9. Encarregado de Privacidade e Contato', body: ['Encarregado de proteção de dados (CPO): [Nome — TODO: a designar pelo operador] (privacy@somyung.cc)', 'Contato de privacidade: support@somyung.cc', 'Operador: HarmonyOn / Representante: Yohan Lee'] },
+      { title: '9. Encarregado de Privacidade e Contato', body: ['Encarregado de proteção de dados (CPO): Yohan Lee (privacy@somyung.cc)', 'Contato de privacidade: support@somyung.cc', 'Operador: HarmonyOn / Representante: Yohan Lee'] },
     ],
   },
   fr: {
@@ -315,7 +315,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       { title: '6. Sécurité', bullets: ['Les rapports et PDF nécessitent un token temporaire émis par le serveur.', 'La capture de paiement nécessite le PayPal order ID et un token de paiement serveur.', 'Les scripts analytiques chargent seulement après consentement cookies.'] },
       { title: '7. Vos Droits', body: ['Vous pouvez demander accès, rectification, suppression, limitation ou retrait du consentement via support@somyung.cc. Certains enregistrements de paiement/transaction peuvent être conservés légalement.'], bullets: ['Portabilité des données (art. 20 RGPD) : vous pouvez demander une copie des données fournies dans un format structuré, couramment utilisé et lisible par machine.', 'Décisions automatisées (art. 22 RGPD) : les rapports sont générés automatiquement par IA à partir des informations de naissance fournies. Il s’agit d’un profilage généré par IA, fourni uniquement à des fins d’information, d’introspection et de divertissement ; il ne produit aucun effet juridique ni impact significatif similaire et n’est pas utilisé pour prendre des décisions vous concernant ou concernant votre enfant. Vous pouvez vous opposer à ce traitement ou demander un examen humain à support@somyung.cc.'] },
       { title: '8. Droits des Résidents de Californie (CCPA/CPRA)', body: ['Nous ne vendons ni ne partageons d’informations personnelles au sens du California Consumer Privacy Act. « Ne pas vendre ni partager mes informations personnelles » : nous ne vendons pas. Les résidents de Californie peuvent contacter support@somyung.cc pour exercer leurs droits d’accès, de suppression, de rectification et de non-discrimination.'] },
-      { title: '9. Responsable de la Protection des Données et Contact', body: ['Responsable de la protection des données (CPO) : [Nom — TODO : à désigner par l’opérateur] (privacy@somyung.cc)', 'Contact confidentialité: support@somyung.cc', 'Opérateur: HarmonyOn / Représentant: Yohan Lee'] },
+      { title: '9. Responsable de la Protection des Données et Contact', body: ['Responsable de la protection des données (CPO) : Yohan Lee (privacy@somyung.cc)', 'Contact confidentialité: support@somyung.cc', 'Opérateur: HarmonyOn / Représentant: Yohan Lee'] },
     ],
   },
   th: {
@@ -332,7 +332,7 @@ const privacyContent: Record<SupportedLegalLanguage, LegalPageContent> = {
       { title: '6. ความปลอดภัย', bullets: ['รายงานและ PDF ต้องใช้ token แบบจำกัดเวลาจากเซิร์ฟเวอร์', 'การยืนยันการชำระเงินต้องใช้ PayPal order ID และ token การชำระเงินจากเซิร์ฟเวอร์', 'สคริปต์วิเคราะห์โหลดหลังจากยินยอมคุกกี้เท่านั้น'] },
       { title: '7. สิทธิของคุณ', body: ['คุณสามารถขอเข้าถึง แก้ไข ลบ จำกัดการประมวลผล หรือถอนความยินยอมได้ที่ support@somyung.cc ข้อมูลธุรกรรมบางรายการอาจต้องเก็บตามกฎหมาย'], bullets: ['สิทธิในการโอนย้ายข้อมูล (มาตรา 20 GDPR): คุณสามารถขอสำเนาข้อมูลที่คุณให้ไว้ในรูปแบบที่มีโครงสร้าง ใช้กันทั่วไป และอ่านได้ด้วยเครื่อง', 'การตัดสินใจอัตโนมัติ (มาตรา 22 GDPR): รายงานถูกสร้างโดย AI โดยอัตโนมัติจากข้อมูลการเกิดที่คุณให้ เป็นการวิเคราะห์โปรไฟล์ที่สร้างโดย AI เพื่อวัตถุประสงค์ด้านข้อมูล การไตร่ตรองตนเอง และความบันเทิงเท่านั้น ไม่มีผลทางกฎหมายหรือผลกระทบสำคัญในลักษณะเดียวกัน และไม่ถูกใช้ตัดสินใจเกี่ยวกับคุณหรือบุตรหลาน คุณสามารถคัดค้านการประมวลผลนี้หรือขอให้มีการตรวจสอบโดยมนุษย์ได้ที่ support@somyung.cc'] },
       { title: '8. สิทธิของผู้พำนักในแคลิฟอร์เนีย (CCPA/CPRA)', body: ['เราไม่ขายหรือแบ่งปันข้อมูลส่วนบุคคลตามนิยามของกฎหมาย California Consumer Privacy Act "อย่าขายหรือแบ่งปันข้อมูลส่วนบุคคลของฉัน": เราไม่ขายข้อมูล ผู้พำนักในแคลิฟอร์เนียสามารถติดต่อ support@somyung.cc เพื่อใช้สิทธิรับรู้ ลบ แก้ไข และไม่ถูกเลือกปฏิบัติ'] },
-      { title: '9. ผู้รับผิดชอบด้านการคุ้มครองข้อมูลและการติดต่อ', body: ['ผู้รับผิดชอบด้านการคุ้มครองข้อมูลส่วนบุคคล (CPO): [ชื่อ — TODO: ผู้ดำเนินการกำหนด] (privacy@somyung.cc)', 'ติดต่อเรื่องความเป็นส่วนตัว: support@somyung.cc', 'ผู้ดำเนินการ: HarmonyOn / ตัวแทน: Yohan Lee'] },
+      { title: '9. ผู้รับผิดชอบด้านการคุ้มครองข้อมูลและการติดต่อ', body: ['ผู้รับผิดชอบด้านการคุ้มครองข้อมูลส่วนบุคคล (CPO): Yohan Lee (privacy@somyung.cc)', 'ติดต่อเรื่องความเป็นส่วนตัว: support@somyung.cc', 'ผู้ดำเนินการ: HarmonyOn / ตัวแทน: Yohan Lee'] },
     ],
   },
 }
