@@ -29,7 +29,7 @@ interface SajuResult {
     년주: FourPillar
     월주: FourPillar
     일주: FourPillar
-    시주: FourPillar
+    시주?: FourPillar // absent when birth time is unknown
   }
   dayMaster: string
   ohaengBalance: Record<string, number>
@@ -148,13 +148,15 @@ function translateBranch(korean: string, lang: string): string {
 
 // Four Pillars Display Component
 function FourPillarsDisplay({ pillars, t, lang }: { pillars: SajuResult['fourPillars']; t: { pillarYear: string; pillarMonth: string; pillarDay: string; pillarHour: string }; lang: string }) {
-  const pillarOrder = ['시주', '일주', '월주', '년주'] as const
+  // 시주 is absent when birth time is unknown — drop it so the grid doesn't crash.
+  const pillarOrder = (['시주', '일주', '월주', '년주'] as const).filter((key) => pillars[key])
   const pillarLabels = { 년주: t.pillarYear, 월주: t.pillarMonth, 일주: t.pillarDay, 시주: t.pillarHour }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${pillarOrder.length}, 1fr)`, gap: '0.5rem' }}>
       {pillarOrder.map((key) => {
         const pillar = pillars[key]
+        if (!pillar) return null
         return (
           <div key={key} style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.75rem', marginBottom: '0.5rem', color: '#8B8580' }}>{pillarLabels[key]}</div>
@@ -636,12 +638,18 @@ export default function ResultsPage() {
               천간오행: manseryeok.pillars.day.element.split(' + ')[0] || '',
               지지오행: manseryeok.pillars.day.element.split(' + ')[1] || '',
             },
-            시주: {
-              천간: manseryeok.pillars.hour.heavenlyStem,
-              지지: manseryeok.pillars.hour.earthlyBranch,
-              천간오행: manseryeok.pillars.hour.element.split(' + ')[0] || '',
-              지지오행: manseryeok.pillars.hour.element.split(' + ')[1] || '',
-            },
+            // 시주 is omitted by the backend when birth time is unknown; only
+            // include it when the hour pillar is present (else this used to crash).
+            ...(manseryeok.pillars.hour
+              ? {
+                  시주: {
+                    천간: manseryeok.pillars.hour.heavenlyStem,
+                    지지: manseryeok.pillars.hour.earthlyBranch,
+                    천간오행: manseryeok.pillars.hour.element.split(' + ')[0] || '',
+                    지지오행: manseryeok.pillars.hour.element.split(' + ')[1] || '',
+                  },
+                }
+              : {}),
           },
           dayMaster: manseryeok.dayMaster,
           ohaengBalance: {
@@ -666,7 +674,14 @@ export default function ResultsPage() {
       } catch (err) {
         console.error('Error fetching results:', err)
         previewRequestKeyRef.current = null
-        setError(sr.errorFetch)
+        // Surface the free-preview rate-limit (429) with its real message +
+        // upgrade hint instead of a misleading generic "network error".
+        const e = err as { code?: string; statusCode?: number; error?: string }
+        if (e?.code === 'PREVIEW_LIMIT_EXCEEDED' || e?.statusCode === 429) {
+          setError(sr.errorPreviewLimit || e?.error || sr.errorFetch)
+        } else {
+          setError(sr.errorFetch)
+        }
       } finally {
         setIsLoading(false)
       }
