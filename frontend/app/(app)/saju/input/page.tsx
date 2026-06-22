@@ -107,6 +107,7 @@ export default function InputFormPage() {
     privacyAgreed: false,
     overseasProcessingAgreed: false,
     ageVerified: false,
+    guardianConfirmed: false,
     marketingAgreed: false
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -178,7 +179,10 @@ export default function InputFormPage() {
         // Consent record (transmitted with /saju/calculate)
         consent: {
           dataProcessing: formData.privacyAgreed && formData.overseasProcessingAgreed,
-          guardian: formData.ageVerified,
+          // Legal-representative consent for the child (PIPA/COPPA/GDPR basis).
+          // Distinct from the user's own 14+ age attestation (userAge14).
+          guardian: formData.guardianConfirmed,
+          userAge14: formData.ageVerified,
           marketing: formData.marketingAgreed,
           policyVersion: POLICY_VERSION,
           timestamp: new Date().toISOString()
@@ -238,7 +242,7 @@ export default function InputFormPage() {
   const parentDateComplete = !!(formData.parentRole && formData.parentYear && formData.parentMonth && formData.parentDay)
   const parentTimeComplete = formData.parentUnknownTime || (formData.parentHour && formData.parentMinute)
   const canProceedStep4 = !formData.parentRole || parentDateComplete
-  const canProceedStep5 = (!parentDateComplete || parentTimeComplete) && formData.privacyAgreed && formData.overseasProcessingAgreed && formData.ageVerified
+  const canProceedStep5 = (!parentDateComplete || parentTimeComplete) && formData.privacyAgreed && formData.overseasProcessingAgreed && formData.ageVerified && formData.guardianConfirmed
 
   const childZodiacInfo = getZodiacInfo(formData.year, formData.month, formData.day)
   const parentZodiacInfo = getZodiacInfo(formData.parentYear, formData.parentMonth, formData.parentDay)
@@ -1329,6 +1333,34 @@ export default function InputFormPage() {
                       </div>
                       <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>
                         {s.ageVerificationDesc}
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* Guardian Confirmation (legal-representative consent for the child) */}
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.75rem',
+                    padding: '0.75rem',
+                    borderRadius: '0.75rem',
+                    border: formData.guardianConfirmed ? '2px solid #5A7A66' : '2px solid #E5E7EB',
+                    background: formData.guardianConfirmed ? 'rgba(74, 99, 84, 0.05)' : 'transparent',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.guardianConfirmed}
+                      onChange={e => setFormData(prev => ({ ...prev, guardianConfirmed: e.target.checked }))}
+                      style={{ width: '1.25rem', height: '1.25rem', accentColor: '#5A7A66', marginTop: '0.125rem' }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#1A3D2E' }}>
+                        {s.guardianConfirmation} <span style={{ color: '#A85544' }}>*</span>
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: '#6B7280', lineHeight: 1.6 }}>
+                        {s.guardianConfirmationDesc}
                       </div>
                     </div>
                   </label>

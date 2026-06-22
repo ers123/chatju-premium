@@ -52,13 +52,23 @@ function calculateParentManseryeok(parentBirthDate, parentBirthTime, parentRole,
 }
 
 /**
+ * Best-effort client IP for proof-of-consent (Lambda behind API Gateway).
+ */
+function getClientIp(req) {
+  const fwd = req.headers['x-forwarded-for'];
+  if (typeof fwd === 'string' && fwd.length) return fwd.split(',')[0].trim().slice(0, 64);
+  return (req.ip || '').slice(0, 64) || null;
+}
+
+/**
  * Validate and normalize the consent payload (PIPA/GDPR proof of consent).
- * dataProcessing and guardian consent are mandatory for premium readings.
+ * dataProcessing and guardian (legal-representative) consent are mandatory.
  *
- * @param {Object} consent - { dataProcessing, guardian, marketing, policyVersion, timestamp }
+ * @param {Object} consent - { dataProcessing, guardian, userAge14, marketing, policyVersion, timestamp }
+ * @param {Object} [meta]  - { ip, language } captured server-side for the consent record
  * @returns {{ ok: boolean, error?: string, normalized?: Object }}
  */
-function validateConsent(consent) {
+function validateConsent(consent, meta = {}) {
   if (!consent || typeof consent !== 'object') {
     return { ok: false, error: 'Consent is required (dataProcessing and guardian consent must be granted)' };
   }
@@ -71,9 +81,12 @@ function validateConsent(consent) {
     ok: true,
     normalized: {
       dataProcessing: true,
-      guardian: true,
+      guardian: true, // legal-representative consent for the child
+      userAge14: consent.userAge14 === true, // user's own 14+ attestation (distinct)
       marketing: consent.marketing === true,
       policyVersion: String(consent.policyVersion || '').slice(0, 50),
+      language: meta.language ? String(meta.language).slice(0, 10) : null,
+      ip: meta.ip || null,
       timestamp: parsedTimestamp && !isNaN(parsedTimestamp) ? parsedTimestamp.toISOString() : null,
       recordedAt: new Date().toISOString(), // server-side timestamp (authoritative)
     },
@@ -296,7 +309,7 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
     }
 
     // PIPA/GDPR: dataProcessing + guardian consent are mandatory for premium readings
-    const consentResult = validateConsent(consent);
+    const consentResult = validateConsent(consent, { ip: getClientIp(req), language });
     if (!consentResult.ok) {
       return res.status(400).json({
         error: consentResult.error,
@@ -446,7 +459,7 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       timezone,
       language,
       subjectName,
-      consent, // optional in promo flow (stored when provided)
+      consent, // { dataProcessing, guardian, ... } — REQUIRED (same child PII as paid flow)
       birthPlace,
       latitude,
       longitude,
@@ -490,19 +503,16 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
 
     const effectiveBirthTime = unknownTime === true ? null : birthTime;
 
-    // Consent is optional in the promo flow (legacy partner integrations),
-    // but when supplied it must be valid and is stored with the reading.
-    let normalizedConsent = null;
-    if (consent !== undefined && consent !== null) {
-      const consentResult = validateConsent(consent);
-      if (!consentResult.ok) {
-        return res.status(400).json({
-          error: consentResult.error,
-          code: 'CONSENT_REQUIRED',
-        });
-      }
-      normalizedConsent = consentResult.normalized;
+    // PIPA/GDPR: the promo flow stores the same child PII as the paid flow, so
+    // dataProcessing + guardian consent are mandatory here too (no longer optional).
+    const consentResult = validateConsent(consent, { ip: getClientIp(req), language });
+    if (!consentResult.ok) {
+      return res.status(400).json({
+        error: consentResult.error,
+        code: 'CONSENT_REQUIRED',
+      });
     }
+    const normalizedConsent = consentResult.normalized;
 
     // Validate birth time if provided
     if (effectiveBirthTime) {
