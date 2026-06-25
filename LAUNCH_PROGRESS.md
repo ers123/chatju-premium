@@ -50,7 +50,7 @@
 
 ### Engineering (small)
 - [x] **End-to-end browser run verified (2026-06-26)**: input (소명이/남/2018-05-05 09:30) → free preview (4 pillars 을사·정유·병진·무술, ohaeng chart, AI text) → guardian consent box renders → promo TEST2026 → premium report renders fully (PDF 저장 button, 양육 scripts §1-5, 최적 공부시간 cards). KR PayPal gating message live. Report+PDF previously API-verified (200/%PDF, 19,810-char ai_interpretation).
-- [ ] **Minor copy bug (new, found 2026-06-26):** premium report body leaks English structure labels into Korean text — `[Most common misreading]`, `[What helps most]`. AI prompt should localize these section labels. Cosmetic; report is otherwise high-quality Korean.
+- [x] **Fixed 2026-06-26:** premium report leaked English structure labels (`[Phrases to avoid]` etc.) into Korean text. Prompt now specifies the localized bold labels and forbids English/brackets in output. Live-verified: fresh report shows 가장 흔한 오해/피해야 할 말/효과적인 말 — zero English labels or brackets remaining.
 - [ ] Minor: page `<title>` is English while body is Korean on funnel pages (SSR `lang` mismatch) — cosmetic/SEO.
 
 ### Legal (lawyer required — NOT code)
