@@ -1,6 +1,6 @@
 # SoMyung — Launch Readiness Progress
 
-> Branch: `codex/somyung-launch-ready` · Last updated: **2026-06-25**
+> Branch: `codex/somyung-launch-ready` · Last updated: **2026-06-26**
 > Live: backend on AWS Lambda (`*.lambda-url.ap-northeast-2.on.aws`), frontend on Cloudflare Pages (somyung.cc).
 
 ---
@@ -15,7 +15,7 @@
 | Guardian consent (the central minor-data fix) | ✅ Fixed + live-verified |
 | UX criticals (DOB, PPP pricing, KR gating, i18n errors) | ✅ Fixed |
 | Production wiring (Lambda env, Pages branch, API URL) | ✅ Fixed (incl. localhost-build regression) |
-| Full premium report **render** eyeball-check | ⏳ Not yet verified end-to-end in browser |
+| Full premium report **render** eyeball-check | ✅ Verified in browser (2026-06-26) — preview + promo premium report both render cleanly |
 | Lawyer review (SCC, ToS, disclaimers) | ⏳ Required before scaling EU/US |
 
 **Bottom line:** engineering blockers are closed and deployed. Remaining items are (1) one clean end-to-end browser run to see a report+PDF render, and (2) non-code legal review.
@@ -49,7 +49,8 @@
 ## Remaining before public launch
 
 ### Engineering (small)
-- [ ] **One clean end-to-end browser run** from a fresh IP: input → free preview → promo (TEST2026) → premium report → PDF, eyeballing the actual report render. (Previously blocked by self-inflicted preview rate-limit, 10/hr/IP.)
+- [x] **End-to-end browser run verified (2026-06-26)**: input (소명이/남/2018-05-05 09:30) → free preview (4 pillars 을사·정유·병진·무술, ohaeng chart, AI text) → guardian consent box renders → promo TEST2026 → premium report renders fully (PDF 저장 button, 양육 scripts §1-5, 최적 공부시간 cards). KR PayPal gating message live. Report+PDF previously API-verified (200/%PDF, 19,810-char ai_interpretation).
+- [ ] **Minor copy bug (new, found 2026-06-26):** premium report body leaks English structure labels into Korean text — `[Most common misreading]`, `[What helps most]`. AI prompt should localize these section labels. Cosmetic; report is otherwise high-quality Korean.
 - [ ] Minor: page `<title>` is English while body is Korean on funnel pages (SSR `lang` mismatch) — cosmetic/SEO.
 
 ### Legal (lawyer required — NOT code)
