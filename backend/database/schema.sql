@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS payments (
   user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- 전자상거래법: 5yr retention
   order_id TEXT UNIQUE NOT NULL,
   amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
-  currency TEXT DEFAULT 'USD' CHECK (currency IN ('USD', 'KRW', 'EUR', 'CNY')),
+  currency TEXT DEFAULT 'USD' CHECK (currency IN ('USD', 'KRW', 'EUR', 'CNY', 'JPY', 'THB')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
   payment_method TEXT DEFAULT 'paypal',
   payment_key TEXT,
