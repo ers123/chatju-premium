@@ -215,9 +215,11 @@ export interface Payment {
 
 export interface PayPalPaymentRequest {
   amount?: number;
+  currency?: string; // Display-consistency check; server price is authoritative
   description: string; // e.g., "Premium Fortune Reading"
   email?: string; // For receipt and PDF delivery
-  product_type?: 'premium_saju';
+  /** Server catalog id (backend products.js); selects a fixed-price product */
+  product_type?: string;
 }
 
 export interface PayPalPaymentResponse {

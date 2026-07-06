@@ -221,7 +221,9 @@ async function generateSajuReading(params) {
       if (paymentData.status !== 'completed') {
         throw new Error(`Payment not completed. Current status: ${paymentData.status}`);
       }
-      assertPaymentMatchesProduct(paymentData);
+      // Validate against the product this payment was created for (multi-currency
+      // catalog) — defaulting to premium_saju would reject every non-USD payment.
+      assertPaymentMatchesProduct(paymentData, paymentData.metadata?.product_type);
 
       payment = {
         ...paymentData,
@@ -370,11 +372,15 @@ async function generateSajuReading(params) {
       orderId: orderId || undefined,
     }, 24 * 60 * 60);
 
-    // Step 6: Fire-and-forget email delivery (if deliveryEmail provided)
+    // Step 6: Email delivery (if deliveryEmail provided). Awaited: on Lambda,
+    // un-awaited work after the response is sent runs in a frozen execution
+    // environment and may never complete — the email is a paid deliverable, so
+    // it must finish (or be recorded as failed) before we return. An email
+    // failure still must not fail the reading itself; email_status tracks it.
     if (deliveryEmail) {
       try {
         const emailService = require('./email.service');
-        emailService.sendReportEmail({
+        await emailService.sendReportEmail({
           email: deliveryEmail,
           childName: subjectName,
           readingId: reading.id,
@@ -384,23 +390,22 @@ async function generateSajuReading(params) {
           gender,
           language,
           reportAccessToken,
-        })
-          .then(async () => {
-            await supabaseAdmin
-              .from('readings')
-              .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
-              .eq('id', reading.id);
-            console.log('[Saju Service] Report email sent to:', require('../utils/logger').maskEmail(deliveryEmail));
-          })
-          .catch(async (emailErr) => {
-            console.error('[Saju Service] Email delivery failed:', emailErr.message);
-            await supabaseAdmin
-              .from('readings')
-              .update({ email_status: 'failed' })
-              .eq('id', reading.id);
-          });
+        });
+        await supabaseAdmin
+          .from('readings')
+          .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
+          .eq('id', reading.id);
+        console.log('[Saju Service] Report email sent to:', require('../utils/logger').maskEmail(deliveryEmail));
       } catch (emailErr) {
         console.error('[Saju Service] Email delivery failed:', emailErr.message);
+        try {
+          await supabaseAdmin
+            .from('readings')
+            .update({ email_status: 'failed' })
+            .eq('id', reading.id);
+        } catch (statusErr) {
+          console.error('[Saju Service] Failed to record email_status:', statusErr.message);
+        }
       }
     }
 
@@ -1318,6 +1323,16 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
     const totalDuration = Date.now() - totalStart;
     console.log(`[Saju Service] Call 1/2 (sections 1-5) complete: ${call1Duration}ms, ${result1.content.length} chars, ${result1.tokensUsed} tokens`);
     console.log(`[Saju Service] Call 2/2 (sections 6-9) complete: ${call2Duration}ms, ${result2.content.length} chars, ${result2.tokensUsed} tokens`);
+
+    // Each half must carry real section content. A paid reading must never be
+    // saved (and emailed) with a blank or truncated half — fail here so the
+    // reading is not persisted and the client's retry/polling path applies.
+    const MIN_HALF_LENGTH = 200;
+    if (result1.content.trim().length < MIN_HALF_LENGTH || result2.content.trim().length < MIN_HALF_LENGTH) {
+      throw new Error(
+        `AI returned too-short premium content (call1=${result1.content.trim().length} chars, call2=${result2.content.trim().length} chars, min=${MIN_HALF_LENGTH})`
+      );
+    }
 
     // Combine results
     const interpretationText = result1.content + '\n\n' + result2.content;

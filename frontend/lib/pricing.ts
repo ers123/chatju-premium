@@ -18,19 +18,21 @@ export interface PremiumPricing {
   currency: 'USD' | 'JPY' | 'EUR' | 'THB'
   /** Human-readable price string; must match t.pricing.premium.price */
   display: string
+  /** Server catalog id (backend/src/config/products.js) — the charged product */
+  productType: string
 }
 
 const PRICING_BY_LANG: Record<SupportedLanguage, PremiumPricing | null> = {
   ko: null, // Korea: free tier + promo only (PayPal cannot charge KRW)
-  en: { amount: 4.99, currency: 'USD', display: 'US$4.99' },
-  ja: { amount: 490, currency: 'JPY', display: '¥490' },
-  zh: { amount: 4.99, currency: 'USD', display: 'US$4.99' }, // CNY unsupported for receiving
-  vi: { amount: 4.99, currency: 'USD', display: 'US$4.99' }, // VND unsupported
-  id: { amount: 4.99, currency: 'USD', display: 'US$4.99' }, // IDR unsupported
-  es: { amount: 3.49, currency: 'EUR', display: '€3.49' },
-  pt: { amount: 3.49, currency: 'EUR', display: '€3.49' }, // BRL deferred (no guest checkout)
-  fr: { amount: 3.99, currency: 'EUR', display: '€3.99' },
-  th: { amount: 89, currency: 'THB', display: '฿89' },
+  en: { amount: 4.99, currency: 'USD', display: 'US$4.99', productType: 'premium_saju' },
+  ja: { amount: 490, currency: 'JPY', display: '¥490', productType: 'premium_saju_jpy' },
+  zh: { amount: 4.99, currency: 'USD', display: 'US$4.99', productType: 'premium_saju' }, // CNY unsupported for receiving
+  vi: { amount: 4.99, currency: 'USD', display: 'US$4.99', productType: 'premium_saju' }, // VND unsupported
+  id: { amount: 4.99, currency: 'USD', display: 'US$4.99', productType: 'premium_saju' }, // IDR unsupported
+  es: { amount: 3.49, currency: 'EUR', display: '€3.49', productType: 'premium_saju_eur_349' },
+  pt: { amount: 3.49, currency: 'EUR', display: '€3.49', productType: 'premium_saju_eur_349' }, // BRL deferred (no guest checkout)
+  fr: { amount: 3.99, currency: 'EUR', display: '€3.99', productType: 'premium_saju_eur_399' },
+  th: { amount: 89, currency: 'THB', display: '฿89', productType: 'premium_saju_thb' },
 }
 
 /**

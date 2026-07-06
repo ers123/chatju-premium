@@ -108,6 +108,14 @@ async function usePromoCode({ promoCodeId, email, childName, childBirthDate, rea
       .single();
 
     if (usageError) {
+      // Unique index uq_promo_usage_code_email (migration 005): a concurrent
+      // request already redeemed this code for this email. Surface as a typed
+      // error so the route can return 409 instead of a generic 500.
+      if (usageError.code === '23505') {
+        const dupErr = new Error('Promo code already used by this email');
+        dupErr.code = 'PROMO_ALREADY_USED';
+        throw dupErr;
+      }
       console.error('[Promo Service] Failed to record usage:', usageError);
       throw handleSupabaseError(usageError) || new Error('Failed to record promo usage');
     }
@@ -137,7 +145,7 @@ async function usePromoCode({ promoCodeId, email, childName, childBirthDate, rea
 
     console.log('[Promo Service] Promo usage recorded:', {
       promoCodeId,
-      email,
+      email: require('../utils/logger').maskEmail(email),
       readingId,
     });
 

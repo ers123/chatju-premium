@@ -278,7 +278,7 @@ export default function ResultsPage() {
             setPaymentError(t.payment.emailRequired)
             throw new Error('Email required')
           }
-          const orderPayload = { amount: pricing.amount, currency: pricing.currency, description: 'Premium Saju Reading', email: paymentEmailRef.current }
+          const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email: paymentEmailRef.current }
           const response = await apiClient.createPayPalPayment(orderPayload)
           if (response.success && response.paypalOrderId && response.paymentAccessToken) {
             paymentAccessTokenRef.current = response.paymentAccessToken
@@ -299,7 +299,7 @@ export default function ResultsPage() {
             const captureResult = await apiClient.capturePayPalPayment(data.orderID, paymentAccessToken)
             if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
               const payment = (captureResult as any).payment
-              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, paymentAccessToken, completedAt: new Date().toISOString(), email: paymentEmail }))
+              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, amount: payment.amount, currency: payment.currency, paymentAccessToken, completedAt: new Date().toISOString(), email: paymentEmail }))
               sessionStorage.removeItem('pending_order')
               setShowPayment(false)
               // Trigger premium report fetch
@@ -308,9 +308,15 @@ export default function ResultsPage() {
               setPaymentErrorCode('PAYMENT_ERROR')
               setPaymentError((t.payment as any).captureFailed || t.payment.errorCapturePayment)
             }
-          } catch {
-            setPaymentErrorCode('PAYMENT_ERROR')
-            setPaymentError((t.payment as any).genericError || t.payment.errorProcessPayment)
+          } catch (err: any) {
+            if (err?.code === 'RATE_LIMITED' || err?.statusCode === 429) {
+              // Rate limited, not failed — show the server's specific message
+              setPaymentErrorCode('RATE_LIMITED')
+              setPaymentError(err?.error || (t.payment as any).genericError || t.payment.errorProcessPayment)
+            } else {
+              setPaymentErrorCode('PAYMENT_ERROR')
+              setPaymentError((t.payment as any).genericError || t.payment.errorProcessPayment)
+            }
           }
           finally { setPaymentProcessing(false) }
         },
@@ -329,12 +335,16 @@ export default function ResultsPage() {
   }, [paypalSdkReady, showPayment, emailValid])
 
   const pollForReading = async (token: string, maxAttempts = 18) => {
+    let consecutiveErrors = 0
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise(r => setTimeout(r, 5000))
       try {
         const res = await fetch(buildApiUrl(`/saju/reading-check?token=${encodeURIComponent(token)}`))
         const data = await res.json()
         if (data.status === 'complete' && data.reading) return data.reading
+        // status 'error' = backend fault (not "still generating") — bail after a streak
+        consecutiveErrors = data.status === 'error' ? consecutiveErrors + 1 : 0
+        if (consecutiveErrors >= 3) return null
       } catch {}
     }
     return null
@@ -394,6 +404,15 @@ export default function ResultsPage() {
         if (err?.code === 'PROMO_ALREADY_USED' || err?.statusCode === 409) {
           setPaymentErrorCode('PROMO_ALREADY_USED')
           setPaymentError(t.payment.promoAlreadyUsedMessage || err.error || t.payment.promoInvalid)
+          setPaymentProcessing(false)
+          setPromoValidating(false)
+          return
+        }
+        if (err?.code === 'RATE_LIMITED' || err?.statusCode === 429) {
+          // Request was rejected before generation started — polling would
+          // just spin for 60s and end in a misleading "report pending".
+          setPaymentErrorCode('RATE_LIMITED')
+          setPaymentError(err?.error || (t.payment as any).genericError || t.payment.errorPaymentGeneral)
           setPaymentProcessing(false)
           setPromoValidating(false)
           return

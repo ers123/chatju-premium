@@ -613,6 +613,14 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
   } catch (error) {
     console.error('[Saju Route] Promo calculate error:', error);
 
+    // Lost the redemption race to a concurrent request (unique index 23505).
+    if (error.code === 'PROMO_ALREADY_USED') {
+      return res.status(409).json({
+        error: '이미 이 프로모 코드를 사용하셨습니다.',
+        code: 'PROMO_ALREADY_USED',
+      });
+    }
+
     if (error.message.includes('Manseryeok calculation failed')) {
       return res.status(500).json({
         error: 'Failed to calculate Four Pillars. Please check birth data.',
@@ -814,6 +822,13 @@ router.get('/reading-check', readLimiter, async (req, res) => {
         .limit(1)
         .single();
 
+      // PGRST116 = no rows yet (genuinely pending). Anything else is a real
+      // backend fault — log it and return 503 so monitoring can see it
+      // (pollers parse the JSON status and just keep polling).
+      if (error && error.code !== 'PGRST116') {
+        console.error('[Saju Route] reading-check claim query failed:', error);
+        return res.status(503).json({ status: 'error', code: 'READING_CHECK_FAILED' });
+      }
       if (error || !reading) {
         return res.status(200).json({ status: 'pending' });
       }
@@ -848,11 +863,15 @@ router.get('/reading-check', readLimiter, async (req, res) => {
       }
       query = query.eq('id', tokenPayload.readingId);
     } else if (tokenPayload.orderId) {
-      const { data: payment } = await supabaseAdmin
+      const { data: payment, error: paymentError } = await supabaseAdmin
         .from('payments')
         .select('id')
         .eq('order_id', tokenPayload.orderId)
         .single();
+      if (paymentError && paymentError.code !== 'PGRST116') {
+        console.error('[Saju Route] reading-check payment lookup failed:', paymentError);
+        return res.status(503).json({ status: 'error', code: 'READING_CHECK_FAILED' });
+      }
       if (!payment) return res.status(200).json({ status: 'pending' });
       query = query.eq('payment_id', payment.id);
     } else {
@@ -866,6 +885,10 @@ router.get('/reading-check', readLimiter, async (req, res) => {
       .limit(1)
       .single();
 
+    if (error && error.code !== 'PGRST116') {
+      console.error('[Saju Route] reading-check token query failed:', error);
+      return res.status(503).json({ status: 'error', code: 'READING_CHECK_FAILED' });
+    }
     if (error || !reading) {
       return res.status(200).json({ status: 'pending' });
     }
@@ -885,7 +908,9 @@ router.get('/reading-check', readLimiter, async (req, res) => {
     if (error.message && error.message.includes('access token')) {
       return res.status(401).json({ error: 'Invalid or expired report access token', code: 'INVALID_REPORT_ACCESS_TOKEN' });
     }
-    return res.status(200).json({ status: 'pending' });
+    // Real fault, not "still generating" — 503 so it shows up in monitoring
+    // instead of masquerading as pending forever.
+    return res.status(503).json({ status: 'error', code: 'READING_CHECK_FAILED' });
   }
 });
 

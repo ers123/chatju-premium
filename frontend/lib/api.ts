@@ -72,6 +72,16 @@ api.interceptors.response.use(
         statusCode: error.response.status,
       };
 
+      // Rate limited: normalize the code and surface Retry-After (seconds) so
+      // callers can show a "wait and retry" state instead of a generic failure.
+      if (error.response.status === 429) {
+        apiError.code = 'RATE_LIMITED';
+        const retryAfter = Number(error.response.headers?.['retry-after']);
+        if (Number.isFinite(retryAfter) && retryAfter > 0) {
+          (apiError as ApiError & { retryAfterSeconds?: number }).retryAfterSeconds = retryAfter;
+        }
+      }
+
       // Handle authentication errors
       if (error.response.status === 401) {
         // Clear token and redirect to signin
@@ -313,12 +323,18 @@ export async function pollForReadingByClaim(
   { maxAttempts = 12, intervalMs = 5000 }: { maxAttempts?: number; intervalMs?: number } = {}
 ): Promise<Record<string, unknown> | null> {
   const { buildApiUrl } = await import('@/lib/api-url');
+  let consecutiveErrors = 0;
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise(r => setTimeout(r, intervalMs));
     try {
       const res = await fetch(buildApiUrl(`/saju/reading-check?claim=${encodeURIComponent(claimKey)}`));
       const data = await res.json();
       if (data.status === 'complete' && data.reading) return data.reading;
+      // Backend signals a real fault (503 READING_CHECK_FAILED) as status
+      // 'error' — distinct from 'pending'. Give up early after a streak so
+      // the user sees the failure path instead of a 60-90s dead wait.
+      consecutiveErrors = data.status === 'error' ? consecutiveErrors + 1 : 0;
+      if (consecutiveErrors >= 3) return null;
     } catch {
       // transient network error — keep polling
     }

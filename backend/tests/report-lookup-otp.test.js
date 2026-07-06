@@ -52,7 +52,8 @@ function mockCreateQuery(table) {
     single() {
       const r = exec();
       const row = (r.data && r.data[0]) || null;
-      return Promise.resolve({ data: row, error: row ? null : { message: 'not found' } });
+      // Mirror real PostgREST: empty .single() → PGRST116 ("no rows returned")
+      return Promise.resolve({ data: row, error: row ? null : { code: 'PGRST116', message: 'not found' } });
     },
     then(resolve, reject) { return Promise.resolve(exec()).then(resolve, reject); },
   };

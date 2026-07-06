@@ -3,7 +3,7 @@
 
 const { validationError } = require('../utils/responses');
 const xss = require('xss');
-const { PREMIUM_SAJU_PRODUCT, getProduct, isSupportedProduct, amountsMatch } = require('../config/products');
+const { PREMIUM_SAJU_PRODUCT, getProduct, isSupportedProduct, amountsMatch, resolveProductByPricing } = require('../config/products');
 
 /**
  * Validation middleware to ensure data integrity and security
@@ -182,9 +182,24 @@ function validateBirthInfo(req, res, next) {
     birthDate, birthTime, gender, language, timezone,
     // Optional location fields for solar time correction
     birthPlace, latitude, longitude,
+    // Optional name fields (flow into AI prompts — bound their length)
+    subjectName, twinSiblingName,
     // Optional parent fields
     parentBirthDate, parentBirthTime, parentRole, parentGender,
   } = req.body;
+
+  // Validate names (optional). Names are embedded in AI prompts, so an
+  // unbounded string is a prompt-injection surface and a token-cost lever.
+  if (subjectName !== undefined && subjectName !== null && subjectName !== '') {
+    if (typeof subjectName !== 'string' || subjectName.length > 40) {
+      return sendValidationError(res, 'subjectName', 'Name must be a string (max 40 chars)');
+    }
+  }
+  if (twinSiblingName !== undefined && twinSiblingName !== null && twinSiblingName !== '') {
+    if (typeof twinSiblingName !== 'string' || twinSiblingName.length > 40) {
+      return sendValidationError(res, 'twinSiblingName', 'Name must be a string (max 40 chars)');
+    }
+  }
 
   // Validate birth date (required)
   if (!birthDate) {
@@ -268,11 +283,24 @@ function validateBirthInfo(req, res, next) {
  */
 function validatePaymentRequest(req, res, next) {
   const { amount, currency, product_type } = req.body;
-  const productType = product_type || PREMIUM_SAJU_PRODUCT.id;
-  const product = getProduct(productType);
 
-  if (!product) {
-    return sendValidationError(res, 'product_type', 'Invalid product type');
+  // Resolve the product server-side. Preferred: explicit product_type.
+  // Back-compat: clients that only send (currency, amount) are matched against
+  // the fixed catalog — an unknown pair is rejected, so the client can select
+  // a product but never invent a price.
+  let product = null;
+  if (product_type) {
+    product = getProduct(product_type);
+    if (!product) {
+      return sendValidationError(res, 'product_type', 'Invalid product type');
+    }
+  } else if (currency) {
+    product = resolveProductByPricing(currency, amount);
+    if (!product) {
+      return sendValidationError(res, 'currency', 'No product matches the given currency and amount');
+    }
+  } else {
+    product = getProduct(PREMIUM_SAJU_PRODUCT.id);
   }
 
   // Client amount is only a display consistency check. Product price is server-owned.
@@ -280,19 +308,14 @@ function validatePaymentRequest(req, res, next) {
     return sendValidationError(res, 'amount', 'Amount must be a positive number');
   }
   if (amount !== undefined && amount !== null && !amountsMatch(amount, product.amount)) {
-    return sendValidationError(res, 'amount', `Amount must match server price ($${product.amount.toFixed(2)} ${product.currency})`);
+    return sendValidationError(res, 'amount', `Amount must match server price (${product.amount} ${product.currency})`);
   }
-
-  // Currency is always USD (PayPal only gateway) — ignore client-supplied currency
-  // Prevents mismatch where client sends KRW amount but PayPal charges USD
   if (currency && currency !== product.currency) {
     return sendValidationError(res, 'currency', `Currency must be ${product.currency}`);
   }
 
-  // Validate product type
-  if (product_type && !isValidProductType(product_type)) {
-    return sendValidationError(res, 'product_type', 'Invalid product type');
-  }
+  // Pass the resolved product on so the route charges exactly this catalog entry
+  req.body.product_type = product.id;
 
   next();
 }

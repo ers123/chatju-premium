@@ -4,7 +4,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const axios = require('axios');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
-const { PREMIUM_SAJU_PRODUCT, getProduct, amountsMatch } = require('../config/products');
+const { PREMIUM_SAJU_PRODUCT, getProduct, amountsMatch, formatPayPalAmount } = require('../config/products');
 
 function toSafeError(error) {
   return {
@@ -103,7 +103,8 @@ async function createPayPalPayment(userId, amount, description = PREMIUM_SAJU_PR
           description: orderDescription,
           amount: {
             currency_code: product.currency,
-            value: product.amount.toFixed(2)
+            // JPY (zero-decimal): PayPal rejects "490.00" — must be "490"
+            value: formatPayPalAmount(product)
           }
         }],
         application_context: {
@@ -362,7 +363,7 @@ async function handlePayPalWebhook(webhookData) {
         // Order approved but not captured yet
         return { success: true, message: 'Order approved' };
 
-      case 'PAYMENT.CAPTURE.COMPLETED':
+      case 'PAYMENT.CAPTURE.COMPLETED': {
         // Payment already captured via frontend — just ensure DB status is up to date
         const orderId = resource.supplementary_data?.related_ids?.order_id;
         if (orderId) {
@@ -388,9 +389,10 @@ async function handlePayPalWebhook(webhookData) {
           }
         }
         return { success: true, message: 'Payment captured' };
+      }
 
       case 'PAYMENT.CAPTURE.DENIED':
-      case 'PAYMENT.CAPTURE.REFUNDED':
+      case 'PAYMENT.CAPTURE.REFUNDED': {
         // Update payment as failed/refunded
         const failedOrderId = resource.supplementary_data?.related_ids?.order_id;
         if (failedOrderId) {
@@ -406,6 +408,7 @@ async function handlePayPalWebhook(webhookData) {
             .eq('payment_key', failedOrderId);
         }
         return { success: true, message: 'Payment status updated' };
+      }
 
       default:
         return { success: true, message: 'Event ignored' };

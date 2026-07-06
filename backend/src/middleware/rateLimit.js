@@ -160,6 +160,24 @@ const readLimiter = rateLimit({
 });
 
 /**
+ * Free chat fortune limit — /fortuneTell hits a paid AI provider per call,
+ * so the general 100/15min limit alone allows unbounded spend from rotating IPs.
+ * 15 requests per hour per IP.
+ */
+const fortuneTellLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 15,
+  message: {
+    success: false,
+    error: 'Free fortune limit reached. Please try again in an hour.',
+    code: 'FORTUNE_LIMIT_EXCEEDED',
+    retryAfter: '1 hour'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
  * Report-lookup OTP request limit — prevent email bombing / OTP brute force
  * 5 OTP requests per 15 minutes per IP
  */
@@ -202,6 +220,7 @@ module.exports = {
   authLimiter,
   sajuPreviewLimiter,
   sajuPremiumLimiter,
+  fortuneTellLimiter,
   paymentCreationLimiter,
   paymentConfirmLimiter,
   webhookLimiter,

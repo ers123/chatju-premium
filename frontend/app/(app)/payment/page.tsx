@@ -117,7 +117,7 @@ function PaymentContent() {
       window.paypal.Buttons({
         createOrder: async () => {
           try {
-            const orderPayload = { amount: pricing.amount, currency: pricing.currency, description: 'Premium Saju Reading', email }
+            const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email }
             const response = await apiClient.createPayPalPayment(orderPayload)
             if (response.success && response.paypalOrderId && response.paymentAccessToken) {
               paymentAccessTokenRef.current = response.paymentAccessToken
@@ -141,7 +141,7 @@ function PaymentContent() {
             const result = await apiClient.capturePayPalPayment(data.orderID, paymentAccessToken)
             if (result && (result as any).success && (result as any).payment) {
               const payment = (result as any).payment
-              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, paymentAccessToken, completedAt: new Date().toISOString(), email }))
+              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, amount: payment.amount, currency: payment.currency, paymentAccessToken, completedAt: new Date().toISOString(), email }))
               sessionStorage.removeItem('pending_order')
               // Go directly to results page to show premium content
               router.push('/saju/results')
@@ -175,7 +175,7 @@ function PaymentContent() {
         const btn = paymentsClient.createButton({
           onClick: async () => {
             try {
-              const orderPayload = { amount: pricing.amount, currency: pricing.currency, description: 'Premium Saju Reading', email }
+              const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email }
               const res = await apiClient.createPayPalPayment(orderPayload)
               if (!res.success || !res.paypalOrderId || !res.paymentAccessToken) throw new Error(t.payment.errorCreateOrder)
               sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, paymentAccessToken: res.paymentAccessToken, amount: pricing.amount, currency: pricing.currency }))
@@ -195,7 +195,7 @@ function PaymentContent() {
               const captureResult = await apiClient.capturePayPalPayment(res.paypalOrderId, res.paymentAccessToken)
               if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
                 const payment = (captureResult as any).payment
-                sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, paymentAccessToken: res.paymentAccessToken, completedAt: new Date().toISOString(), email }))
+                sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, amount: payment.amount, currency: payment.currency, paymentAccessToken: res.paymentAccessToken, completedAt: new Date().toISOString(), email }))
                 sessionStorage.removeItem('pending_order')
                 router.push('/payment/success')
               } else { setError(t.payment.errorCapturePayment) }

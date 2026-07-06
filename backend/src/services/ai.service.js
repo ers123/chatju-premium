@@ -18,6 +18,10 @@ const logger = require('../utils/logger');
 // Explicit fallback order — quality-first
 const FALLBACK_ORDER = ['openai', 'claude', 'gemini'];
 
+// Per-call upstream timeout. Premium generation legitimately takes 40-50s
+// total within the 60s Lambda budget, so this only cuts truly stalled calls.
+const AI_CALL_TIMEOUT_MS = parseInt(process.env.AI_CALL_TIMEOUT_MS || '45000', 10);
+
 function envOrDefault(name, fallback) {
   return process.env[name] || fallback;
 }
@@ -45,6 +49,12 @@ class AIService {
       const { OpenAI } = require('openai');
       this.clients.openai = new OpenAI({
         apiKey: openaiKey,
+        // Lambda budget is 60s (serverless.yml). The SDK default is 600s with
+        // 2 retries — a stalled upstream would eat the whole Lambda without
+        // ever triggering the provider fallback chain. Fail fast instead;
+        // retries are handled by the model/provider fallback, not the SDK.
+        timeout: AI_CALL_TIMEOUT_MS,
+        maxRetries: 0,
       });
       logger.info('OpenAI client initialized');
     }
@@ -61,6 +71,8 @@ class AIService {
       const Anthropic = require('@anthropic-ai/sdk');
       this.clients.claude = new Anthropic({
         apiKey: process.env.ANTHROPIC_API_KEY,
+        timeout: AI_CALL_TIMEOUT_MS,
+        maxRetries: 0,
       });
       logger.info('Claude client initialized', { provider: 'claude' });
     }
@@ -132,6 +144,13 @@ class AIService {
 
         default:
           throw new Error(`Unknown AI provider: ${provider}`);
+      }
+
+      // Empty output from any provider (refusal, truncation, safety block) is a
+      // failure, not a result — throw so the fallback chain below tries the next
+      // provider instead of propagating '' into a saved reading.
+      if (!response.content || !response.content.trim()) {
+        throw new Error(`Provider '${provider}' returned empty content`);
       }
 
       logger.info('Fortune generated successfully', {
@@ -209,12 +228,15 @@ class AIService {
     if (!content && message.refusal) {
       logger.warn('OpenAI refusal:', message.refusal);
     }
-    if (!content) {
+    if (!content.trim()) {
+      // Throw instead of returning '' so the model fallback (primary → mini)
+      // and the provider fallback chain treat this as a failed attempt.
       logger.warn('OpenAI returned empty content', {
         finishReason: completion.choices[0].finish_reason,
         refusal: message.refusal,
         usage: completion.usage,
       });
+      throw new Error(`OpenAI returned empty content (finish_reason=${completion.choices[0].finish_reason})`);
     }
 
     return {
@@ -236,7 +258,7 @@ class AIService {
         maxOutputTokens: maxTokens,
         temperature,
       },
-    });
+    }, { timeout: AI_CALL_TIMEOUT_MS });
 
     // Convert OpenAI message format to Gemini format
     const geminiMessages = this.convertToGeminiFormat(messages);

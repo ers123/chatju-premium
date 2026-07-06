@@ -45,7 +45,7 @@ async function authMiddleware(req, res, next) {
       return res.status(401).json({
         error: 'Invalid or expired token',
         code: 'INVALID_TOKEN',
-        details: error.message,
+        ...(process.env.NODE_ENV !== 'production' && { details: error.message }),
       });
     }
 
@@ -76,7 +76,7 @@ async function authMiddleware(req, res, next) {
     return res.status(500).json({
       error: 'Authentication error',
       code: 'AUTH_ERROR',
-      details: error.message,
+      ...(process.env.NODE_ENV !== 'production' && { details: error.message }),
     });
   }
 }
