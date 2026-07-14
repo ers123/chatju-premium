@@ -16,10 +16,13 @@ export function getJsonLdForLang(lang: Language) {
         "@type": "Organization",
         "@id": BASE_URL,
         "name": "SoMyung",
+        "legalName": "HarmonyOn",
         "url": BASE_URL,
         "email": "support@somyung.cc",
         "address": {
           "@type": "PostalAddress",
+          "streetAddress": "197 Seoun-ro, 106-dong 804-ho, Seocho-gu",
+          "addressRegion": "Seoul",
           "addressLocality": "Seoul",
           "addressCountry": "KR"
         },
