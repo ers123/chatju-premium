@@ -177,15 +177,20 @@ custom:
     httpPort: 3000
     host: 0.0.0.0
 
-  # API Gateway throttling (prevent abuse)
-  apiGatewayThrottling:
-    maxRequestsPerSecond: 100
-    maxConcurrentRequests: 50
-
 # ============================================
 # Resources (CloudFormation)
 # ============================================
 resources:
+  # Extend Serverless's generated HTTP API $default stage with actual
+  # API Gateway throttling. The former custom.apiGatewayThrottling key was inert.
+  extensions:
+    HttpApiStage:
+      Properties:
+        DefaultRouteSettings:
+          DetailedMetricsEnabled: false
+          ThrottlingBurstLimit: 20
+          ThrottlingRateLimit: 10
+
   Resources:
     # CloudWatch Log Group (30 day retention)
     ApiLogGroup:
