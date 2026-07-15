@@ -125,6 +125,9 @@ functions:
   api:
     handler: index.handler
     description: ChatJu Premium Backend API
+    # Cap public Function URL scale while preserving headroom above the
+    # observed 30-day peak concurrency of 2.
+    reservedConcurrency: 5
     url: true
     events:
       # HTTP API Gateway - handles all routes
