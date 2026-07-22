@@ -137,6 +137,8 @@ describe('premium report presentation contract', () => {
     expect(adaptMarkdownToPresentation({ fullText: providerDisclaimer, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
     const slashDisclaimer = buildProviderMarkdown().replace('이 리포트는 관찰과 대화를 위한 참고 언어입니다.', '이 리포트는 건강 진단/운명 확정이 아닙니다. 관찰과 대화를 위한 참고 언어입니다.');
     expect(adaptMarkdownToPresentation({ fullText: slashDisclaimer, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+    const connectiveDisclaimer = buildProviderMarkdown().replace('이 리포트는 관찰과 대화를 위한 참고 언어입니다.', '이 리포트는 건강 진단이나 운명 확정이 아니라 관찰과 대화를 위한 참고 언어입니다.');
+    expect(adaptMarkdownToPresentation({ fullText: connectiveDisclaimer, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
     expect(adaptMarkdownToPresentation({ fullText: `${buildProviderMarkdown()}\n건강 진단이 필요합니다.`, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatusReason).toBe('unsafe_claim');
   });
 
@@ -157,6 +159,25 @@ describe('premium report presentation contract', () => {
       .replace('### 세부를 연결하는 힘', '1) **[세부를 연결하는 힘]**')
       .replace('### 깊이 묻는 힘', '2) **[깊이 묻는 힘]**')
       .replace('### 조율하는 힘', '3) **[조율하는 힘]**');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+  });
+
+  test('accepts provider monthly cards after an intro paragraph', () => {
+    const text = buildProviderMarkdown()
+      .replace('### 8월', '대운과 세운은 관찰의 참고선으로만 읽어 주세요.\n\n- **8월**')
+      .replace('### 9월', '- **9월**')
+      .replace('### 10월', '- **10월**')
+      .replace('### 11월', '- **11월**');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+  });
+
+  test('ignores trailing provider parent-focus card after monthly cards', () => {
+    const text = buildProviderMarkdown()
+      .replace('### 8월', '대운과 세운은 관찰의 참고선으로만 읽어 주세요.\n\n- **8월**')
+      .replace('### 9월', '- **9월**')
+      .replace('### 10월', '- **10월**')
+      .replace('### 11월', '- **11월**')
+      .replace('# 7. 7일 양육 실험', '- **부모가 이 시기에 집중할 양육 포인트(운영 톤)**\n- **인식:** 기준 설명이 먼저입니다.\n- **실행:** 결론과 다음 행동을 짧게 정합니다.\n\n# 7. 7일 양육 실험');
     expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
   });
 
@@ -184,8 +205,12 @@ describe('premium report presentation contract', () => {
     expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
     const oneLine = buildProviderMarkdown().replace('- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.', '- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.\n- **한 줄 요약:** 오늘의 관찰을 한 문장으로 정리합니다.');
     expect(adaptMarkdownToPresentation({ fullText: oneLine, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+    const spaced = buildProviderMarkdown().replace('- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.', '- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.\n- **요약 한 문장:** 오늘의 관찰을 한 문장으로 정리합니다.');
+    expect(adaptMarkdownToPresentation({ fullText: spaced, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
     const parenthesized = buildProviderMarkdown().replace('- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.', '- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.\n- **요약(한 문장):** 오늘의 관찰을 한 문장으로 정리합니다.');
     expect(adaptMarkdownToPresentation({ fullText: parenthesized, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+    const providerSummary = buildProviderMarkdown().replace('- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.', '- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.\n- **이 리포트의 핵심 요약(한 문장):** 오늘의 관찰을 한 문장으로 정리합니다.');
+    expect(adaptMarkdownToPresentation({ fullText: providerSummary, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
   });
 
   test('named stable fallback reasons', () => {
