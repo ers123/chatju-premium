@@ -8,6 +8,7 @@ const { calculateMansae } = require('../utils/mansae-wrapper');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
 const { assertPaymentMatchesProduct } = require('./payment.service');
 const { buildMultipleBirthSection } = require('../utils/multiple-birth');
+const { adaptMarkdownToPresentation, mergePresentationResult } = require('./report-presentation');
 
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
@@ -293,7 +294,8 @@ async function generateSajuReading(params) {
       payment ? payment.product_type : 'premium_saju',
       birthTime === null, // indicate if time is unknown
       fortuneCycles,
-      twinInfo
+      twinInfo,
+      subjectName
     );
 
     console.log('[Saju Service] AI interpretation generated');
@@ -707,7 +709,7 @@ function getParentChildRelation(parentElement, childElement) {
  * @param {boolean} childTimeUnknown - Whether child's birth time is unknown
  * @returns {Promise<Object>} AI interpretation with relationship focus
  */
-async function generateAIInterpretation(childManseryeok, parentManseryeok = null, parentRole = null, language = 'ko', productType = 'basic', childTimeUnknown = false, fortuneCycles = null, twinInfo = null) {
+async function generateAIInterpretation(childManseryeok, parentManseryeok = null, parentRole = null, language = 'ko', productType = 'basic', childTimeUnknown = false, fortuneCycles = null, twinInfo = null, childName = '아이') {
   const { pillars: childPillars, elements: rawElements } = childManseryeok;
 
   // Normalize element keys to Korean (mansae-wrapper returns English keys)
@@ -1068,7 +1070,7 @@ ${monthlyFortuneData}`;
 - 약점으로 오해받는 상황: ... (구체적 장면)
 - 이 강점이 빛나는 환경: ...
 - 키워줄 활동 1가지: ... (이 나이에 바로 시작 가능한 것)
-- 진로 방향 힌트: (1문장)
+- 진로 방향 힌트: 확정이 아닌 흥미·활동을 탐색하는 참고 문장 1개
 
 따뜻한 서사로 감싸되, 구체적 행동으로 마무리.
 
@@ -1123,19 +1125,21 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
 
 이 섹션은 스크린샷으로 공유할 수 있을 만큼 간결해야 합니다. 장식 없이 핵심만.
 
-모든 레이블/볼드 제목은 리포트 언어로 작성. 포맷:
+모든 레이블/볼드 제목은 **리포트 언어로 작성하거나 번역**하세요. 한국어 리포트에서는 아래 한국어 예시를 그대로 사용하고, 다른 언어 리포트에서는 같은 의미를 해당 언어로 번역합니다. 포맷:
 
-- [5 things to remember about this child] — 번호 리스트
-- [3 phrases to stop using] — 각각 왜 역효과인지 1문장
-- [3 phrases to start using] — 각각 왜 효과적인지 1문장
-- [3 de-escalation steps when emotions rise] — 즉시/5분 후/안정 후
+- [이 아이에게 기억할 5가지] — 번호 리스트
+- [멈출 말 3가지] — 각각 왜 역효과인지 1문장
+- [시작할 말 3가지] — 각각 왜 효과적인지 1문장
+- [감정이 높아질 때 3단계] — 즉시/5분 후/안정 후
 
 ## 9. 생활 속 밸런스 (참고 사항)
 
 ⚠️ **이 섹션은 참고 사항입니다. 건강 진단이나 방위 풍수가 아닙니다.**
 ⚠️ **아래 데이터의 한국어(목, 화, 토, 금, 수, 나무, 불, 흙, 쇠, 물 등)는 리포트 언어로 번역하세요. 한국어 그대로 출력 금지.**
 
-부족한 오행(${childWeak} = Wood/Fire/Earth/Metal/Water 중 해당) 보완법:
+부족한 오행(${childWeak} = Wood/Fire/Earth/Metal/Water 중 해당)을 위한 선택적 참고 아이디어(치료·처방·운명 확정이 아님):
+- **핵심 한 문장:** 이 리포트에서 오늘 기억할 문장
+- **마무리:** 관찰과 대화를 위한 마무리 문장
 - **색상:** ${weakElementRemedies.colors || '정보 없음'} — 옷, 학용품, 방 소품에서 활용
 - **음식:** ${weakElementRemedies.foods || '정보 없음'} — 식탁에서 자연스럽게
 - **활동:** ${weakElementRemedies.activities || '정보 없음'} — 왜 이 활동이 이 기질에 좋은지 1문장
@@ -1232,6 +1236,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
   // Call 1 system message: sections 1-5 structure guidance
   const call1SectionsKo = `
 **이번 요청은 9개 섹션 리포트 중 섹션 1~5를 작성하는 것입니다.**
+각 라벨은 반드시 굵은 Markdown 형식의 라벨과 콜론으로 쓰고, 값을 생략하거나 합치지 마세요.
 - 섹션 1: 한눈에 보기 (Executive Summary) — 서사 3문장 + 구조화 불릿
 - 섹션 2: 이 아이는 ~이 아닙니다 — 오해 정면 반박, 펀치력
 - 섹션 3: 행동 시그니처 — 일상 장면 + 패턴 분석
@@ -1259,6 +1264,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
   // Call 2 system message: sections 6-9 structure guidance
   const call2SectionsKo = `
 **이번 요청은 9개 섹션 리포트 중 섹션 6~9를 작성하는 것입니다.**
+각 라벨은 반드시 굵은 Markdown 형식의 라벨과 콜론으로 쓰고, 값을 생략하거나 합치지 마세요.
 **참고: 섹션 1~5(한눈에 보기, 오해 반박, 행동 시그니처, 상황별 플레이북, 숨겨진 강점)는 이미 작성 완료되었습니다. 섹션 6부터 이어서 작성하세요.**
 
 - 섹션 6: 이 시기의 흐름 — 대운/세운 기반 월별 테이블, 운영적 톤
@@ -1336,6 +1342,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
     // Combine results
     const interpretationText = result1.content + '\n\n' + result2.content;
+    const generatedAt = new Date().toISOString();
     const totalTokens = (result1.tokensUsed || 0) + (result2.tokensUsed || 0);
 
     console.log('[Saju Service] Premium report generated (2-call split):', {
@@ -1347,14 +1354,23 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
       hasParentData: !!parentManseryeok,
     });
 
-    return {
+    const parsedSections = parsePremiumSections(interpretationText);
+    const presentationResult = adaptMarkdownToPresentation({
       fullText: interpretationText,
-      sections: parsePremiumSections(interpretationText),
+      manseryeok: childManseryeok,
+      fortuneCycles,
+      childName,
+      generatedAt,
+      language,
+    });
+    return mergePresentationResult({
+      fullText: interpretationText,
+      sections: parsedSections,
       metadata: {
         provider: result1.provider,
         model: result1.model,
         tokens: totalTokens,
-        generatedAt: new Date().toISOString(),
+        generatedAt,
         reportType: 'relationship_focused',
         hasParentAnalysis: !!parentManseryeok,
         splitCalls: {
@@ -1363,7 +1379,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
           totalDuration,
         },
       },
-    };
+    }, presentationResult);
 
   } catch (error) {
     console.error('[Saju Service] Error generating premium report:', error);

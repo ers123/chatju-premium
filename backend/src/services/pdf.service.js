@@ -3,6 +3,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { parseNumberedSections, normalizePresentation } = require('./report-presentation');
 
 const FONTS_DIR = path.join(__dirname, '../../assets/fonts');
 const FONT_MAP = {
@@ -312,8 +313,10 @@ function parseInline(text) {
  * Generate a premium report PDF
  */
 async function generateReportPDF(params) {
-  const { childName, birthDate, gender, manseryeok, aiInterpretation, language } = params;
+  const { childName, birthDate, gender, manseryeok, aiInterpretation, language, generatedAt } = params;
   const labels = getLabels(language || 'ko');
+  const reportDate = generatedAt ? new Date(generatedAt) : new Date();
+  const reportDateLabel = reportDate.toISOString().split('T')[0];
 
   const PDFDocument = require('pdfkit');
 
@@ -328,6 +331,7 @@ async function generateReportPDF(params) {
           Author: 'SoMyung (somyung.cc)',
           Subject: labels.premiumReport,
           Creator: 'SoMyung PDF Engine',
+          CreationDate: reportDate,
         },
       });
 
@@ -455,7 +459,137 @@ async function generateReportPDF(params) {
         doc.moveDown(0.5);
       }
 
+      // ─── Structured reference-report renderer ───────────────────────
+      // This is intentionally small: production Markdown remains supported,
+      // while a caller with a validated presentation contract gets semantic
+      // cards instead of fragile text-pattern guesses.
+      function writePresentationCard(title, rows, accent = COLORS.gold) {
+        const rowText = rows.map((row) => `${row.label ? `${row.label}  ` : ''}${row.text}`).join('\n\n');
+        doc.font(fontRegular).fontSize(9.5);
+        const bodyHeight = doc.heightOfString(rowText, { width: CONTENT_W - 36, lineGap: 4 });
+        const height = Math.max(74, bodyHeight + 44);
+        ensureSpace(height + 12);
+        const y = doc.y;
+        doc.roundedRect(MARGIN_L, y, CONTENT_W, height, 8).fill('#F5F1EA');
+        doc.rect(MARGIN_L, y, 5, height).fill(accent);
+        doc.font(fontBold).fontSize(10).fillColor(COLORS.darkText)
+          .text(title, MARGIN_L + 18, y + 12, { width: CONTENT_W - 36 });
+        let rowY = y + 31;
+        for (const row of rows) {
+          doc.font(fontBold).fontSize(8.5).fillColor(accent).text(row.label || '', MARGIN_L + 18, rowY, { width: 105 });
+          doc.font(fontRegular).fontSize(9.5).fillColor(COLORS.bodyText)
+            .text(row.text, MARGIN_L + 112, rowY, { width: CONTENT_W - 130, lineGap: 4 });
+          rowY = doc.y + 7;
+        }
+        doc.y = y + height + 12;
+      }
 
+      function writeStructuredBlock(block) {
+        const type = block.type || 'text';
+        if (type === 'text' || type === 'note') {
+          writePresentationCard(block.title || (type === 'note' ? '읽는 방법' : '오늘의 관찰'), [{ text: block.text || '' }], type === 'note' ? ELEMENT_COLORS.water : COLORS.gold);
+          return;
+        }
+        if (type === 'insight') {
+          writePresentationCard(block.title || '기질을 행동으로 번역하기', [
+            { label: '보이는 근거', text: block.basis || '' },
+            { label: '관찰할 모습', text: block.behavior || '' },
+            { label: '오늘의 대응', text: block.action || '' },
+          ], ELEMENT_COLORS.wood);
+          return;
+        }
+        if (type === 'translator') {
+          writePresentationCard(block.title || '오해를 번역해 보기', [
+            { label: '겉으로는', text: block.looksLike || '' },
+            { label: '실제로는', text: block.actual || '' },
+            { label: '더 나은 말', text: block.response || '' },
+          ], ELEMENT_COLORS.fire);
+          return;
+        }
+        if (type === 'script') {
+          writePresentationCard(block.title || '대화 스크립트', [
+            { label: '이전', text: block.before || '' },
+            { label: '이후', text: block.after || '' },
+            { label: '기대 신호', text: block.signal || '' },
+          ], ELEMENT_COLORS.water);
+          return;
+        }
+        if (type === 'timeline') {
+          writePresentationCard(block.title || '이번 시기의 참고 흐름', (block.items || []).map((item) => ({ label: item.label, text: item.text })), ELEMENT_COLORS.earth);
+          return;
+        }
+        if (type === 'checklist') {
+          writePresentationCard(block.title || '7일의 작은 실험', (block.items || []).map((item) => ({ label: item.label, text: `□ ${item.text}` })), ELEMENT_COLORS.wood);
+          return;
+        }
+        if (type === 'parenting-card') {
+          writePresentationCard(block.title || '곁에 두는 양육 카드', [
+            { label: '멈출 말', text: block.stop || '' },
+            { label: '시작할 말', text: block.start || '' },
+            { label: '감정이 높을 때', text: block.steps || '' },
+          ], COLORS.gold);
+          return;
+        }
+        if (type === 'close') {
+          writePresentationCard(block.title || '마무리', [{ text: block.text || '' }], COLORS.headerBg);
+          return;
+        }
+        writePresentationCard(block.title || '참고', [{ text: block.text || '' }]);
+      }
+
+      function renderStructuredPresentation(presentation) {
+        const cover = presentation.cover;
+        // Cover has no report body: the first analytical content starts on page two.
+        doc.rect(0, 0, PAGE_W, PAGE_H).fill(COLORS.headerBg);
+        doc.font(fontBold).fontSize(30).fillColor(COLORS.gold)
+          .text('SoMyung', MARGIN_L, 105, { width: CONTENT_W, align: 'center' });
+        doc.font(fontRegular).fontSize(12).fillColor('#DDD4C8')
+          .text(cover.kicker || '아이의 기질을 오늘의 양육 언어로', MARGIN_L, 158, { width: CONTENT_W, align: 'center' });
+        doc.font(fontBold).fontSize(25).fillColor('#FFFFFF')
+          .text(cover.title || labels.premiumReport, MARGIN_L, 248, { width: CONTENT_W, align: 'center', lineGap: 8 });
+        doc.font(fontRegular).fontSize(12).fillColor('#DDD4C8')
+          .text(cover.child || childName || '', MARGIN_L, 340, { width: CONTENT_W, align: 'center' });
+        doc.font(fontRegular).fontSize(10).fillColor('#BFB7AD')
+          .text(cover.date || `${labels.generatedOn}: ${reportDateLabel}`, MARGIN_L, 375, { width: CONTENT_W, align: 'center' });
+        doc.font(fontRegular).fontSize(9).fillColor('#BFB7AD')
+          .text('기질은 예측이 아니라, 아이를 이해하기 위한 참고 지도입니다.', MARGIN_L, 675, { width: CONTENT_W, align: 'center' });
+
+        doc.addPage();
+        doc.y = 82;
+        doc.font(fontBold).fontSize(21).fillColor(COLORS.darkText)
+          .text(presentation.opening.title || '부모를 위한 30초 요약', MARGIN_L, doc.y, { width: CONTENT_W });
+        doc.moveDown(0.8);
+        for (const item of presentation.opening.items || []) {
+          writePresentationCard(item.title, [{ text: item.text }], item.accent || COLORS.gold);
+        }
+        if (presentation.opening.note) writeStructuredBlock({ type: 'note', text: presentation.opening.note });
+
+        for (const section of presentation.sections) {
+          if (section.startOnNewPage) {
+            doc.addPage();
+            doc.y = 68;
+          } else {
+            // The contract can explicitly keep a short final section with the
+            // preceding card. It still moves to a new page if it cannot fit.
+            ensureSpace(320);
+            doc.moveDown(0.6);
+          }
+          doc.font(fontRegular).fontSize(10).fillColor(COLORS.gold)
+            .text(`0${section.number}`, MARGIN_L, doc.y, { width: CONTENT_W });
+          doc.font(fontBold).fontSize(20).fillColor(COLORS.darkText)
+            .text(section.title, MARGIN_L, doc.y + 18, { width: CONTENT_W });
+          doc.y += 56;
+          for (const block of section.blocks) writeStructuredBlock(block);
+        }
+      }
+
+
+      const presentation = aiInterpretation?.presentationStatus === 'ready'
+        ? normalizePresentation(aiInterpretation.presentation)
+        : null;
+      if (presentation) {
+        renderStructuredPresentation(presentation);
+      } else {
       // ═════════════════════════════════════════════════════════════════
       // COVER PAGE
       // ═════════════════════════════════════════════════════════════════
@@ -483,7 +617,7 @@ async function generateReportPDF(params) {
         MARGIN_L, infoY + 18
       );
       doc.text(
-        `${labels.generatedOn}: ${new Date().toISOString().split('T')[0]}`,
+        `${labels.generatedOn}: ${reportDateLabel}`,
         MARGIN_L, infoY + 36
       );
 
@@ -590,24 +724,11 @@ async function generateReportPDF(params) {
       let sections = [];
 
       if (fullText) {
-        // Split on ## N. headers
-        const sectionRegex = /^##\s+\d+\.\s+/m;
-        const parts = fullText.split(sectionRegex);
-        const headerMatches = [...fullText.matchAll(/^(##\s+\d+\.\s+.+)$/gm)];
-
-        // First part before any ## header (skip if empty)
-        if (parts[0] && parts[0].trim()) {
-          sections.push({ title: null, content: parts[0].trim() });
+        const firstHeaderIndex = fullText.search(/^#{1,4}\s*\d+\.\s+/m);
+        if (firstHeaderIndex > 0 && fullText.slice(0, firstHeaderIndex).trim()) {
+          sections.push({ title: null, content: fullText.slice(0, firstHeaderIndex).trim() });
         }
-
-        // Matched sections
-        headerMatches.forEach((match, idx) => {
-          const title = match[1].replace(/^##\s+\d+\.\s+/, '').trim();
-          const content = (parts[idx + 1] || '').trim();
-          if (content) {
-            sections.push({ title, content });
-          }
-        });
+        sections.push(...parseNumberedSections(fullText).map(({ title, content }) => ({ title, content })));
       }
 
       // Fallback to sections object if fullText parsing yields nothing
@@ -693,6 +814,7 @@ async function generateReportPDF(params) {
         // Extra space after each major section
         doc.moveDown(0.6);
       }
+      }
 
 
       // ═════════════════════════════════════════════════════════════════
@@ -715,7 +837,7 @@ async function generateReportPDF(params) {
 
         // Use low-level _fragment to avoid page creation side effects
         doc.font(fontRegular).fontSize(7).fillColor(COLORS.subtleText);
-        const footerText = `☯ ${labels.footer}`;
+        const footerText = `☯ ${labels.footer}  |  ${i + 1} / ${contentPageCount}`;
         const textWidth = doc.widthOfString(footerText);
         const footerX = MARGIN_L + (CONTENT_W - textWidth) / 2;
         doc.text(footerText, footerX, FOOTER_Y + 2, { lineBreak: false });
@@ -730,4 +852,6 @@ async function generateReportPDF(params) {
 
 module.exports = {
   generateReportPDF,
+  parseNumberedSections,
+  normalizePresentation,
 };

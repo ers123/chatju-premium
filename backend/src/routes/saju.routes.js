@@ -955,6 +955,7 @@ router.get('/reading/:id/pdf', readLimiter, async (req, res) => {
       manseryeok: reading.saju_data,
       aiInterpretation: reading.ai_interpretation,
       language: reading.language || 'ko',
+      generatedAt: reading.ai_interpretation?.metadata?.generatedAt || reading.created_at,
     });
 
     const filename = 'SoMyung_Report.pdf';

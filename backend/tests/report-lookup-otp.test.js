@@ -77,6 +77,10 @@ jest.mock('../src/services/saju.service', () => ({
   generateSajuReading: jest.fn(),
 }));
 
+jest.mock('../src/services/pdf.service', () => ({
+  generateReportPDF: jest.fn(async () => Buffer.from('%PDF-mock')),
+}));
+
 // Rate limiters are module-level singletons shared across every buildApp() in
 // this file; their per-IP counters would otherwise leak between tests (all
 // supertest requests originate from 127.0.0.1), throttling later tests and
@@ -107,6 +111,7 @@ process.env.ACCESS_TOKEN_SECRET = 'test-secret';
 const emailService = require('../src/services/email.service');
 const { verifyAccessToken } = require('../src/utils/accessToken');
 const sajuRoutes = require('../src/routes/saju.routes');
+const pdfService = require('../src/services/pdf.service');
 
 function buildApp() {
   const app = express();
@@ -339,5 +344,19 @@ describe('Consent enforcement on /saju/calculate', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('CONSENT_REQUIRED');
+  });
+});
+
+describe('Completed report PDF contract', () => {
+  test('passes explicit fallback interpretation to the renderer without polishing it', async () => {
+    const readingId = '11111111-1111-4111-8111-111111111111';
+    const aiInterpretation = { fullText: '# 1. legacy', sections: { 1: 'legacy' }, metadata: { provider: 'fixture' }, presentationStatus: 'fallback', presentationStatusReason: 'partial_required_labels' };
+    db.readings = [{ id: readingId, status: 'complete', subject_name: '민서', birth_date: '2015-11-12', gender: 'female', language: 'ko', saju_data: {}, ai_interpretation: aiInterpretation }];
+    const { createAccessToken } = require('../src/utils/accessToken');
+    const token = createAccessToken({ purpose: 'report', readingId });
+    const res = await request(buildApp()).get(`/saju/reading/${readingId}/pdf`).query({ token });
+    expect(res.status).toBe(200);
+    expect(pdfService.generateReportPDF).toHaveBeenCalledWith(expect.objectContaining({ aiInterpretation }));
+    expect(pdfService.generateReportPDF.mock.calls.at(-1)[0].aiInterpretation).toEqual(aiInterpretation);
   });
 });
