@@ -182,7 +182,7 @@ function parseTitledGroups(content, expectedCount, labels) {
     }
     return groups;
   }
-  const cardMatches = [...String(content).matchAll(/^\s*[-*]\s*\*\*\[?([^*\]\n:]+)\]?\*\*\s*$/gm)];
+  const cardMatches = [...String(content).matchAll(/^\s*(?:[-*]|\d+[.)])\s*\*\*\[?([^*\]\n:]+)\]?\*\*\s*$/gm)];
   if (cardMatches.length !== expectedCount || String(content).slice(0, cardMatches[0]?.index || 0).trim()) return null;
   const groups = [];
   for (let index = 0; index < cardMatches.length; index += 1) {
@@ -207,7 +207,7 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
   }
   if (/things to remember|de-escalation steps|before\/after/i.test(fullText)) return { presentationStatus: 'fallback', presentationStatusReason: 'localization_leak' };
   const unsafeScanText = fullText
-    .replace(/건강\s*진단이나\s*운명\s*확정이\s*아닙니다/gi, '')
+    .replace(/건강\s*진단\s*(?:이나|\/)\s*(?:운명\s*확정|방위\s*풍수)[이가]\s*아닙니다/gi, '')
     .replace(/의학적\s*진단이나\s*치료가\s*아닙니다/gi, '')
     .replace(/치료나\s*처방이\s*아닙니다/gi, '');
   if (/(건강\s*(?:문제|위험|악화|회복|치료|진단|처방)|질병|치료|처방|신장|폐|대장|심장|방위|풍수|재물|연애|반드시 성공|확정(?:됩니다|이다)|직업으로 확정|진로가 정해)/i.test(unsafeScanText)) return { presentationStatus: 'fallback', presentationStatusReason: 'unsafe_claim' };
@@ -240,9 +240,9 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
     const s8b = parseLabelGroups(sections[7].content, ['멈출 말 3가지']);
     const s8c = parseLabelGroups(sections[7].content, ['시작할 말 3가지']);
     const s8d = parseLabelGroups(sections[7].content, ['감정이 높아질 때 3단계']);
-    const s9 = parseLabelGroups(sections[8].content, ['색상', '음식', '활동', '핵심 한 문장', '마무리', '요약']);
+    const s9 = parseLabelGroups(sections[8].content, ['색상', '음식', '활동', '핵심 한 문장', '마무리', '요약', '한 줄 요약', '요약(한 문장)']);
     const complete = (groups, labels) => groups.length > 0 && groups.every((g) => !g.__invalidLabel && labels.every((l) => isNonEmptyString(g[l])));
-    const listGroup = (content, heading, count) => { const m = String(content).match(new RegExp(`(?:\\*\\*|\\[)${heading}(?:\\*\\*|\\])[^\\n]*\\n([\\s\\S]*?)(?=\\n\\s*(?:[-*]\\s*)?\\[|\\n\\s*\\*\\*|$)`)); if (m) { const values = m[1].split(/\n/).map((x) => x.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '').trim()).filter((x) => x && !/^-{2,}$/.test(x)); return values.length === count ? values : null; } const repeated = [...String(content).matchAll(new RegExp(`(?:\\*\\*)?${heading}(?:\\*\\*)?\\s*[:：]\s*([^\\n]+)`, 'g'))].map((x) => x[1].trim()); return repeated.length === count ? repeated : null; };
+    const listGroup = (content, heading, count) => { const m = String(content).match(new RegExp(`(?:\\*\\*|\\[)${heading}(?:\\*\\*|\\])[^\\n]*\\n([\\s\\S]*?)(?=\\n\\s*(?:[-*]\\s*)?(?:\\*\\*)?\\[|\\n\\s*\\*\\*|$)`)); if (m) { const values = m[1].split(/\n/).map((x) => x.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '').trim()).filter((x) => x && !/^-{2,}$/.test(x)); return values.length === count ? values : null; } const repeated = [...String(content).matchAll(new RegExp(`(?:\\*\\*)?${heading}(?:\\*\\*)?\\s*[:：]\s*([^\\n]+)`, 'g'))].map((x) => x[1].trim()); return repeated.length === count ? repeated : null; };
     const memory = listGroup(sections[7].content, '이 아이에게 기억할 5가지', 5); const stop = listGroup(sections[7].content, '멈출 말 3가지', 3); const start = listGroup(sections[7].content, '시작할 말 3가지', 3); const steps = listGroup(sections[7].content, '감정이 높아질 때 3단계', 3);
     if (!complete(s1, ['가장 흔한 오해','가장 도움이 되는 것','피해야 할 말','효과적인 말','이번 달 양육 포커스']) || !complete(s2, ['오해','실제','더 나은 반응']) || s2.length < 4 || s2.length > 6 || !complete(s3, ['관찰되는 행동','내면의 논리','악화 조건','개선 조건']) || s3.length < 5 || s3.length > 7 || !complete(s4, ['부모가 흔히 하는 말','왜 역효과인지','더 나은 스크립트','개선 신호']) || s4.length !== 6 || !complete(s5, ['약점으로 오해받는 상황','이 강점이 빛나는 환경','키워줄 활동 1가지','진로 방향 힌트']) || s5.length !== 3 || !complete(s6, ['압력 포인트','주시할 행동 변화','도움이 되는 것','피해야 할 것']) || s6.length !== 4 || !complete(s7, ['부모 행동 변화','예상되는 아이 반응','성공 신호']) || s7.length !== 3 || !memory || memory.length !== 5 || !stop || stop.length !== 3 || !start || start.length !== 3 || !steps || steps.length !== 3 || !complete(s9, ['색상','음식','활동','핵심 한 문장','마무리']) || s9.length !== 1) return { presentationStatus: 'fallback', presentationStatusReason: 'partial_required_labels' };
     const semanticBodies = [...s2, ...s3, ...s4, ...s5, ...s6].flatMap((g) => Object.values(g));
