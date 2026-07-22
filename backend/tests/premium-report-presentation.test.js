@@ -124,6 +124,45 @@ describe('premium report presentation contract', () => {
     expect(runtimeResult.presentationStatus).toBe('ready');
     expect(normalizeAdapterPresentation(runtimeResult.presentation).sections).toHaveLength(9);
   });
+
+  test('allows non-medical healthy parenting phrasing', () => {
+    const text = buildProviderMarkdown().replace('아이가 선택지를 고릅니다.', '아이가 건강한 거리두기를 배우며 선택지를 고릅니다.');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+  });
+
+  test('allows safety disclaimer while rejecting affirmative medical claims', () => {
+    const disclaimer = buildProviderMarkdown().replace('이 리포트는 관찰과 대화를 위한 참고 언어입니다.', '이 리포트는 건강 진단이나 운명 확정이 아닙니다. 관찰과 대화를 위한 참고 언어입니다.');
+    expect(adaptMarkdownToPresentation({ fullText: disclaimer, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+    expect(adaptMarkdownToPresentation({ fullText: `${buildProviderMarkdown()}\n건강 진단이 필요합니다.`, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatusReason).toBe('unsafe_claim');
+  });
+
+  test('accepts provider bullet-card section titles and bracket list headings', () => {
+    const text = buildProviderMarkdown()
+      .replace('### 세부를 연결하는 힘', '- **[세부를 연결하는 힘]**')
+      .replace('### 깊이 묻는 힘', '- **[깊이 묻는 힘]**')
+      .replace('### 조율하는 힘', '- **[조율하는 힘]**')
+      .replace('[이 아이에게 기억할 5가지]', '- [이 아이에게 기억할 5가지]')
+      .replace('[멈출 말 3가지]', '- [멈출 말 3가지]')
+      .replace('[시작할 말 3가지]', '- [시작할 말 3가지]')
+      .replace('[감정이 높아질 때 3단계]', '- [감정이 높아질 때 3단계]');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+  });
+
+  test('unknown standalone labels keep provider drift on fallback', () => {
+    const text = buildProviderMarkdown().replace('- **이번 달 양육 포커스:**', '- **임의 레이블:** 허용되지 않는 드리프트\n- **이번 달 양육 포커스:**');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatusReason).toBe('partial_required_labels');
+  });
+
+  test('allows natural colon-containing continuation lines', () => {
+    const text = buildProviderMarkdown().replace('아이가 선택지를 고릅니다.', '아이가 선택지를 고릅니다.\n예를 들어: 숙제 전 10분 예고처럼 짧게 붙여 주세요.');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+  });
+
+  test('allows optional closing summary label', () => {
+    const text = buildProviderMarkdown().replace('- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.', '- **마무리:** 이 리포트는 관찰과 대화를 위한 참고 언어입니다.\n- **요약:** 오늘의 관찰을 한 문장으로 정리합니다.');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatus).toBe('ready');
+  });
+
   test('named stable fallback reasons', () => {
     expect(adaptMarkdownToPresentation({ fullText: '# 2. x\na\n# 1. y\nb', manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('missing_or_reordered_sections');
     expect(adaptMarkdownToPresentation({ fullText: `${buildProviderMarkdown()}\n건강 치료가 확정됩니다.`, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('unsafe_claim');
