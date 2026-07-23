@@ -9,6 +9,22 @@ export type PremiumBlock =
   | { type: 'parenting-card'; title: string; stop: string; start: string; steps: string }
 
 export interface PremiumPresentation {
+  locale?: string
+  ui?: {
+    compass?: string
+    basis?: string
+    behavior?: string
+    action?: string
+    looksLike?: string
+    actual?: string
+    response?: string
+    before?: string
+    after?: string
+    signal?: string
+    stop?: string
+    start?: string
+    steps?: string
+  }
   cover: {
     kicker: string
     title: string
@@ -103,7 +119,23 @@ function EditorialRows({
   )
 }
 
-function EditorialBlock({ block }: { block: PremiumBlock }) {
+const defaultUiLabels = {
+  compass: '30 second compass',
+  basis: '계산된 근거',
+  behavior: '관찰할 신호',
+  action: '부모 행동',
+  looksLike: '겉으로는',
+  actual: '실제로는',
+  response: '바꿀 말',
+  before: '기존 말',
+  after: '바꿀 말',
+  signal: '좋아지는 신호',
+  stop: '멈출 말',
+  start: '시작할 말',
+  steps: '감정이 높을 때',
+}
+
+function EditorialBlock({ block, ui }: { block: PremiumBlock; ui: typeof defaultUiLabels }) {
   if (block.type === 'text' || block.type === 'note' || block.type === 'close') {
     return (
       <section className={styles.block} style={{ '--block-accent': blockAccent[block.type] } as React.CSSProperties}>
@@ -115,33 +147,33 @@ function EditorialBlock({ block }: { block: PremiumBlock }) {
 
   if (block.type === 'insight') {
     return <EditorialRows type={block.type} title={block.title} rows={[
-      { label: '계산된 근거', text: block.basis },
-      { label: '관찰할 신호', text: block.behavior },
-      { label: '부모 행동', text: block.action },
+      { label: ui.basis, text: block.basis },
+      { label: ui.behavior, text: block.behavior },
+      { label: ui.action, text: block.action },
     ]} />
   }
 
   if (block.type === 'translator') {
     return <EditorialRows type={block.type} title={block.title} rows={[
-      { label: '겉으로는', text: block.looksLike },
-      { label: '실제로는', text: block.actual },
-      { label: '바꿀 말', text: block.response },
+      { label: ui.looksLike, text: block.looksLike },
+      { label: ui.actual, text: block.actual },
+      { label: ui.response, text: block.response },
     ]} />
   }
 
   if (block.type === 'script') {
     return <EditorialRows type={block.type} title={block.title} rows={[
-      { label: '기존 말', text: block.before },
-      { label: '바꿀 말', text: block.after },
-      { label: '좋아지는 신호', text: block.signal },
+      { label: ui.before, text: block.before },
+      { label: ui.after, text: block.after },
+      { label: ui.signal, text: block.signal },
     ]} />
   }
 
   if (block.type === 'parenting-card') {
     return <EditorialRows type={block.type} title={block.title} rows={[
-      { label: '멈출 말', text: block.stop },
-      { label: '시작할 말', text: block.start },
-      { label: '감정이 높을 때', text: block.steps },
+      { label: ui.stop, text: block.stop },
+      { label: ui.start, text: block.start },
+      { label: ui.steps, text: block.steps },
     ]} />
   }
 
@@ -164,6 +196,7 @@ function EditorialBlock({ block }: { block: PremiumBlock }) {
 
 export default function PremiumEditorialReport({ presentation }: { presentation: PremiumPresentation }) {
   const safePresentation = sanitizePresentationForDisplay(presentation)
+  const ui = { ...defaultUiLabels, ...(safePresentation.ui || {}) }
   return (
     <article className={styles.report} data-premium-presentation="ready">
       <header className={styles.masthead}>
@@ -179,7 +212,7 @@ export default function PremiumEditorialReport({ presentation }: { presentation:
 
       <section className={styles.compass}>
         <div className={styles.compassHeader}>
-          <p className={styles.eyebrow}>30 second compass</p>
+          <p className={styles.eyebrow}>{ui.compass}</p>
           <h2 className={styles.compassTitle}>{safePresentation.opening.title}</h2>
         </div>
         <div className={styles.compassGrid}>
@@ -201,7 +234,7 @@ export default function PremiumEditorialReport({ presentation }: { presentation:
           </header>
           <div className={styles.blocks}>
             {section.blocks.map((block, index) => (
-              <EditorialBlock block={block} key={`${block.type}-${block.title}-${index}`} />
+              <EditorialBlock block={block} ui={ui} key={`${block.type}-${block.title}-${index}`} />
             ))}
           </div>
         </section>

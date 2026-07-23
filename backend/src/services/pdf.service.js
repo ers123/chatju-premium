@@ -480,6 +480,20 @@ async function generateReportPDF(params) {
       const CARD_INNER_W = CONTENT_W - (CARD.outerPad * 2);
       const CARD_BODY_W = CARD_INNER_W - CARD.labelWidth - CARD.columnGap;
       let activeSection = null;
+      let activePresentationUi = {
+        basis: '보이는 근거',
+        behavior: '관찰할 모습',
+        action: '오늘의 대응',
+        looksLike: '겉으로는',
+        actual: '실제로는',
+        response: '더 나은 말',
+        before: '이전',
+        after: '이후',
+        signal: '기대 신호',
+        stop: '멈출 말',
+        start: '시작할 말',
+        steps: '감정이 높을 때',
+      };
 
       function textHeight(text, font, fontSize, width, lineGap = 0) {
         doc.font(font).fontSize(fontSize);
@@ -661,6 +675,7 @@ async function generateReportPDF(params) {
       }
 
       function writeStructuredBlock(block) {
+        const ui = activePresentationUi;
         const type = block.type || 'text';
         if (type === 'text' || type === 'note') {
           writePresentationCard(block.title || (type === 'note' ? '읽는 방법' : '오늘의 관찰'), [{ text: block.text || '' }], type === 'note' ? ELEMENT_COLORS.water : COLORS.gold);
@@ -668,25 +683,25 @@ async function generateReportPDF(params) {
         }
         if (type === 'insight') {
           writePresentationCard(block.title || '기질을 행동으로 번역하기', [
-            { label: '보이는 근거', text: block.basis || '' },
-            { label: '관찰할 모습', text: block.behavior || '' },
-            { label: '오늘의 대응', text: block.action || '' },
+            { label: ui.basis, text: block.basis || '' },
+            { label: ui.behavior, text: block.behavior || '' },
+            { label: ui.action, text: block.action || '' },
           ], ELEMENT_COLORS.wood);
           return;
         }
         if (type === 'translator') {
           writePresentationCard(block.title || '오해를 번역해 보기', [
-            { label: '겉으로는', text: block.looksLike || '' },
-            { label: '실제로는', text: block.actual || '' },
-            { label: '더 나은 말', text: block.response || '' },
+            { label: ui.looksLike, text: block.looksLike || '' },
+            { label: ui.actual, text: block.actual || '' },
+            { label: ui.response, text: block.response || '' },
           ], ELEMENT_COLORS.fire);
           return;
         }
         if (type === 'script') {
           writePresentationCard(block.title || '대화 스크립트', [
-            { label: '이전', text: block.before || '' },
-            { label: '이후', text: block.after || '' },
-            { label: '기대 신호', text: block.signal || '' },
+            { label: ui.before, text: block.before || '' },
+            { label: ui.after, text: block.after || '' },
+            { label: ui.signal, text: block.signal || '' },
           ], ELEMENT_COLORS.water);
           return;
         }
@@ -700,9 +715,9 @@ async function generateReportPDF(params) {
         }
         if (type === 'parenting-card') {
           writePresentationCard(block.title || '곁에 두는 양육 카드', [
-            { label: '멈출 말', text: block.stop || '' },
-            { label: '시작할 말', text: block.start || '' },
-            { label: '감정이 높을 때', text: block.steps || '' },
+            { label: ui.stop, text: block.stop || '' },
+            { label: ui.start, text: block.start || '' },
+            { label: ui.steps, text: block.steps || '' },
           ], COLORS.gold);
           return;
         }
@@ -778,6 +793,7 @@ async function generateReportPDF(params) {
       }
 
       function renderStructuredPresentation(presentation) {
+        activePresentationUi = { ...activePresentationUi, ...(presentation.ui || {}) };
         const cover = presentation.cover;
         // Cover has no report body: the first analytical content starts on page two.
         doc.rect(0, 0, PAGE_W, PAGE_H).fill(COLORS.headerBg);

@@ -8,7 +8,7 @@ const { calculateMansae } = require('../utils/mansae-wrapper');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
 const { assertPaymentMatchesProduct } = require('./payment.service');
 const { buildMultipleBirthSection } = require('../utils/multiple-birth');
-const { adaptMarkdownToPresentation, mergePresentationResult } = require('./report-presentation');
+const { adaptMarkdownToPresentation, mergePresentationResult, getPremiumPresentationLocale } = require('./report-presentation');
 
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
@@ -871,12 +871,29 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
 
   // Build twin context if applicable
   const twinSection = buildMultipleBirthSection(twinInfo);
+  const premiumLocale = getPremiumPresentationLocale(language);
+  const langNameMap = { ko: 'Korean', en: 'English', ja: 'Japanese', zh: 'Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
+  const outputLangName = langNameMap[language] || 'English';
+  const premiumLabels = premiumLocale.labels;
+  const exactLabelContract = `
+**Premium structured label contract**
+Use these exact labels in ${outputLangName}. Do not substitute synonyms. Do not leave any label in Korean unless the report language is Korean.
+- Section 1 labels: ${premiumLabels.s1.map((x) => `**${x}:**`).join(' / ')}
+- Section 2 labels: ${premiumLabels.s2.map((x) => `**${x}:**`).join(' / ')}
+- Section 3 labels: ${premiumLabels.s3.map((x) => `**${x}:**`).join(' / ')}
+- Section 4 labels: ${premiumLabels.s4.map((x) => `**${x}:**`).join(' / ')}
+- Section 5 labels: ${premiumLabels.s5.map((x) => `**${x}:**`).join(' / ')}
+- Section 6 labels: ${premiumLabels.s6.map((x) => `**${x}:**`).join(' / ')}
+- Section 7 labels: ${premiumLabels.s7.map((x) => `**${x}:**`).join(' / ')}
+- Section 8 headings: ${premiumLabels.s8.map((x) => `[${x}]`).join(' / ')}
+- Section 9 labels: ${premiumLabels.s9.map((x) => `**${x}:**`).join(' / ')}
+`;
 
   // Language instruction for non-Korean reports
   // Note: for premium reports, the system message (systemMessageBaseEn) already
   // includes the output language instruction. This is kept as a user-prompt
   // reinforcement for the data context sections.
-  const languageInstruction = language !== 'ko' ? `\n**Reminder: Write ALL output in ${langNameMap[language] || 'English'}. Translate Korean terms from the data below into ${langNameMap[language] || 'English'}. Show Chinese characters in parentheses. No Korean text in the output.**\n` : '';
+  const languageInstruction = language !== 'ko' ? `\n**Reminder: Write ALL output in ${outputLangName}. Translate Korean terms from the data below into ${outputLangName}. Show Chinese characters in parentheses. No Korean text in the output.**\n` : '';
 
   // Build solar time correction context for AI
   let correctionNote = '';
@@ -1194,9 +1211,6 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
 
   // English version (for all non-ko locales — prompting in English produces
   // dramatically better output quality than Korean prompt + translate instruction)
-  const langNameMap = { en: 'English', ja: 'Japanese', zh: 'Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
-  const outputLangName = langNameMap[language] || 'English';
-
   const systemMessageBaseEn = `You are a child temperament interpretation specialist. You combine the temperament analysis framework of East Asian philosophy (Myeongri/Four Pillars) with modern developmental psychology, helping parents understand their child's behavioral patterns and providing actionable parenting strategies.
 
 You are NOT a fortune-teller. You are a personalized parenting interpretation expert.
@@ -1259,7 +1273,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
 **IMPORTANT: The Four Pillars table, Five Elements distribution, and fortune cycle summary are attached separately before the report. Do NOT repeat this data as tables in the body. Jump straight into interpretation and narrative.**`;
 
-  const call1SystemMessage = `${systemMessageBase}\n${language === 'ko' ? call1SectionsKo : call1SectionsEn}`;
+  const call1SystemMessage = `${systemMessageBase}\n${exactLabelContract}\n${language === 'ko' ? call1SectionsKo : call1SectionsEn}`;
 
   // Call 2 system message: sections 6-9 structure guidance
   const call2SectionsKo = `
@@ -1289,7 +1303,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
 **IMPORTANT: The Four Pillars table and Five Elements summary are attached separately. Do NOT repeat them as tables in the body. Jump straight into interpretation and narrative.**`;
 
-  const call2SystemMessage = `${systemMessageBase}\n${language === 'ko' ? call2SectionsKo : call2SectionsEn}`;
+  const call2SystemMessage = `${systemMessageBase}\n${exactLabelContract}\n${language === 'ko' ? call2SectionsKo : call2SectionsEn}`;
 
   // Premium reports: split into 2 calls of ~5000 tokens each
   // Total budget stays the same (~10000 tokens)

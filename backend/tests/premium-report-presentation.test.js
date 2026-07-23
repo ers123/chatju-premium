@@ -3,7 +3,7 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { generateReportPDF, parseNumberedSections, normalizePresentation } = require('../src/services/pdf.service');
-const { hasRepeatedContent, adaptMarkdownToPresentation, normalizePresentation: normalizeAdapterPresentation, mergePresentationResult } = require('../src/services/report-presentation');
+const { hasRepeatedContent, adaptMarkdownToPresentation, normalizePresentation: normalizeAdapterPresentation, mergePresentationResult, getPremiumPresentationLocale } = require('../src/services/report-presentation');
 const { presentation, fixtureMansae, fixtureBasis, createReferenceParams } = require('./generate-reference-premium-report');
 const { buildProviderMarkdown } = require('./generate-runtime-ready-report');
 
@@ -27,6 +27,20 @@ function collectPresentationTextValues(value, values = []) {
 
 function hasRawMarkdownTokens(value) {
   return typeof value === 'string' ? RAW_MARKDOWN_RE.test(value) : false;
+}
+
+function localizedProviderMarkdown(language) {
+  if (language === 'ko') return buildProviderMarkdown();
+  const source = getPremiumPresentationLocale('ko').labels;
+  const target = getPremiumPresentationLocale(language).labels;
+  let text = buildProviderMarkdown();
+  const targetGroups = [target.s1, target.s2, target.s3, target.s4, target.s5, target.s6, target.s7, target.s8, target.s9];
+  const sourceGroups = [source.s1, source.s2, source.s3, source.s4, source.s5, source.s6, source.s7, source.s8, source.s9];
+  sourceGroups
+    .flatMap((group, groupIndex) => group.map((fromLabel, labelIndex) => ({ fromLabel, toLabel: targetGroups[groupIndex][labelIndex] })))
+    .sort((a, b) => b.fromLabel.length - a.fromLabel.length)
+    .forEach(({ fromLabel, toLabel }) => { text = text.split(fromLabel).join(toLabel); });
+  return text;
 }
 
 describe('premium report presentation contract', () => {
@@ -133,9 +147,9 @@ describe('premium report presentation contract', () => {
     expect(hasRepeatedContent([a.replace('을 ', '를 '), a])).toBe(true);
   });
 
-  test('strict Markdown adapter falls back for partial content and unsupported locale', () => {
+  test('strict Markdown adapter falls back for partial content and structurally empty localized content', () => {
     expect(adaptMarkdownToPresentation({ fullText: '# 1. 하나\n짧은 내용', manseryeok: fixtureMansae, language: 'ko' })).toEqual(expect.objectContaining({ presentationStatus: 'fallback', presentationStatusReason: 'missing_or_reordered_sections' }));
-    expect(adaptMarkdownToPresentation({ fullText: '# 1. one', manseryeok: fixtureMansae, language: 'en' })).toEqual(expect.objectContaining({ presentationStatus: 'fallback', presentationStatusReason: 'unsupported_locale' }));
+    expect(adaptMarkdownToPresentation({ fullText: '# 1. one', manseryeok: fixtureMansae, language: 'en' })).toEqual(expect.objectContaining({ presentationStatus: 'fallback', presentationStatusReason: 'missing_or_reordered_sections' }));
   });
 
   test('adapter never trusts fabricated insight basis', () => {
@@ -162,6 +176,21 @@ describe('premium report presentation contract', () => {
   test('realistic provider-style Korean Markdown reaches ready without candidatePresentation', () => {
     const runtimeResult = adaptMarkdownToPresentation({ fullText: buildProviderMarkdown(), manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' });
     expect(runtimeResult.presentationStatus).toBe('ready');
+    expect(normalizeAdapterPresentation(runtimeResult.presentation).sections).toHaveLength(9);
+  });
+
+  test.each(['ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th'])('localized provider labels reach ready for %s', (language) => {
+    const runtimeResult = adaptMarkdownToPresentation({
+      fullText: localizedProviderMarkdown(language),
+      manseryeok: fixtureMansae,
+      fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] },
+      childName: language === 'ko' ? '민서' : 'Minseo',
+      generatedAt: '2026-07-22T00:00:00.000Z',
+      language,
+    });
+    expect(runtimeResult.presentationStatus).toBe('ready');
+    expect(runtimeResult.presentation.locale).toBe(language);
+    expect(runtimeResult.presentation.ui.basis).toBe(getPremiumPresentationLocale(language).ui.basis.normalize('NFKC'));
     expect(normalizeAdapterPresentation(runtimeResult.presentation).sections).toHaveLength(9);
   });
 
@@ -259,7 +288,7 @@ describe('premium report presentation contract', () => {
     expect(adaptMarkdownToPresentation({ fullText: `${buildProviderMarkdown()}\n[5 things to remember]`, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('localization_leak');
     expect(adaptMarkdownToPresentation({ fullText: buildProviderMarkdown(), manseryeok: { pillars: {}, elements: {} }, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('insufficient_calculated_basis');
     expect(adaptMarkdownToPresentation({ fullText: buildProviderMarkdown(), manseryeok: fixtureMansae, fortuneCycles: { daeunList: [], seunList: [] } }).presentationStatusReason).toBe('insufficient_calculated_basis');
-    expect(adaptMarkdownToPresentation({ fullText: buildProviderMarkdown(), manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] }, language: 'en' }).presentationStatusReason).toBe('unsupported_locale');
+    expect(adaptMarkdownToPresentation({ fullText: buildProviderMarkdown(), manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] }, language: 'en' }).presentationStatusReason).toBe('partial_required_labels');
   });
 
   test('semantic duplicate field returns duplicate_content', () => {
