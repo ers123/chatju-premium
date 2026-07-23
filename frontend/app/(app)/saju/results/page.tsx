@@ -12,6 +12,10 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ShareableResultCard from '@/components/saju/ShareableResultCard'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
+import PremiumEditorialReport, {
+  hasReadyPresentation,
+  type PremiumReportData,
+} from '@/components/saju/PremiumEditorialReport'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
 
@@ -224,7 +228,7 @@ export default function ResultsPage() {
   const [inputData, setInputData] = useState<{ name: string; birthDate: string; birthTime: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const [premiumReport, setPremiumReport] = useState<Record<string, string> | null>(null)
+  const [premiumReport, setPremiumReport] = useState<PremiumReportData | null>(null)
   const [corrections, setCorrections] = useState<{ applied: boolean; note: string; adjustedTime?: string | null; isSouthernHemisphere?: boolean } | null>(null)
   const [dstWarning, setDstWarning] = useState(false)
   const [premiumLoading, setPremiumLoading] = useState(false)
@@ -547,11 +551,12 @@ export default function ResultsPage() {
           sessionStorage.setItem('report_access_token', r.reportAccessToken)
         }
 
-        // Backend returns aiInterpretation: { fullText, sections, metadata }
+        // Preserve the full structured presentation so web and PDF share the
+        // same ready-path content model. Markdown remains an explicit fallback.
         if (r.aiInterpretation?.fullText) {
-          setPremiumReport({ fullText: r.aiInterpretation.fullText, ...(r.aiInterpretation.sections || {}) })
+          setPremiumReport(r.aiInterpretation as PremiumReportData)
         } else if (r.premiumSections) {
-          setPremiumReport(r.premiumSections)
+          setPremiumReport({ sections: r.premiumSections })
         } else if (r.interpretation) {
           setPremiumReport({ fullText: r.interpretation })
         }
@@ -1051,36 +1056,33 @@ export default function ResultsPage() {
         {/* PREMIUM: Report or Locked CTA */}
         {premiumReport ? (
           <>
-            {/* Premium Report Header */}
-            <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '12px', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, right: 0, width: '10rem', height: '10rem', background: 'rgba(184,146,45,0.1)', borderRadius: '50%', filter: 'blur(48px)' }} />
-              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 1rem', borderRadius: '6px', background: 'rgba(184,146,45,0.2)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 700, marginBottom: '1rem' }}>
-                  <CheckIcon /> {sr.premiumComplete}
+            {hasReadyPresentation(premiumReport) ? (
+              <PremiumEditorialReport presentation={premiumReport.presentation} />
+            ) : (
+              <section style={{ background: '#FBF9F4', border: '1px solid #D8CFC0', borderRadius: 0, padding: 'clamp(1.5rem, 4vw, 3rem)', marginBottom: '2rem' }}>
+                <div style={{ borderBottom: '3px solid #A47C3F', paddingBottom: '1rem', marginBottom: '1.5rem', color: '#24352F' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#60776C', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    <CheckIcon /> {sr.premiumComplete}
+                  </div>
+                  <h2 style={{ margin: '0.75rem 0 0', fontSize: '1.75rem', fontWeight: 700, fontFamily: "'Nanum Myeongjo', serif" }}>{sr.premiumTitle}</h2>
                 </div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif' }}>{sr.premiumTitle}</h2>
-              </div>
-            </section>
-
-            {/* Premium Report — rendered as markdown */}
-            <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
-              <div style={{ color: '#4B4035', maxWidth: 'none' }}>
+                <div style={{ color: '#30332F', maxWidth: 'none' }}>
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
                     h2: ({ children }) => (
-                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginTop: '2.5rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #EBE5DF' }}>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: "'Nanum Myeongjo', serif", color: '#24352F', marginTop: '2.5rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #D8CFC0' }}>
                         {children}
                       </h2>
                     ),
                     h3: ({ children }) => (
-                      <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1A3D2E', marginTop: '1.5rem', marginBottom: '0.75rem' }}>{children}</h3>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#24352F', marginTop: '1.5rem', marginBottom: '0.75rem' }}>{children}</h3>
                     ),
                     p: ({ children }) => (
-                      <p style={{ marginBottom: '1rem', lineHeight: 1.7, color: '#4B4035' }}>{children}</p>
+                      <p style={{ marginBottom: '1rem', lineHeight: 1.75, color: '#30332F' }}>{children}</p>
                     ),
                     strong: ({ children }) => (
-                      <strong style={{ fontWeight: 600, color: '#1A3D2E' }}>{children}</strong>
+                      <strong style={{ fontWeight: 600, color: '#24352F' }}>{children}</strong>
                     ),
                     ul: ({ children }) => (
                       <ul style={{ marginBottom: '1rem', marginLeft: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>{children}</ul>
@@ -1089,31 +1091,31 @@ export default function ResultsPage() {
                       <ol style={{ marginBottom: '1rem', marginLeft: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', listStyleType: 'decimal', listStylePosition: 'inside' }}>{children}</ol>
                     ),
                     li: ({ children }) => (
-                      <li style={{ lineHeight: 1.7, color: '#4B4035' }}>{children}</li>
+                      <li style={{ lineHeight: 1.75, color: '#30332F' }}>{children}</li>
                     ),
                     hr: () => (
-                      <hr style={{ margin: '2rem 0', borderColor: '#EBE5DF' }} />
+                      <hr style={{ margin: '2rem 0', borderColor: '#D8CFC0' }} />
                     ),
                     table: ({ children }) => (
                       <div style={{ overflowX: 'auto', marginBottom: '1rem' }}>
-                        <table style={{ width: '100%', fontSize: '0.875rem', borderCollapse: 'collapse', borderColor: '#EBE5DF' }}>{children}</table>
+                        <table style={{ width: '100%', fontSize: '0.875rem', borderCollapse: 'collapse', borderColor: '#D8CFC0' }}>{children}</table>
                       </div>
                     ),
                     th: ({ children }) => (
-                      <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#1A3D2E', borderBottom: '2px solid #EBE5DF', backgroundColor: '#FAF8F5' }}>{children}</th>
+                      <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#24352F', borderBottom: '2px solid #D8CFC0', backgroundColor: '#F5F0E7' }}>{children}</th>
                     ),
                     td: ({ children }) => (
-                      <td style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #F3F0ED' }}>{children}</td>
+                      <td style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #E7E0D5' }}>{children}</td>
                     ),
                   }}
                 >
-                  {premiumReport.fullText || Object.entries(premiumReport)
-                    .filter(([key]) => key !== 'metadata')
+                  {premiumReport.fullText || Object.entries(premiumReport.sections || {})
                     .map(([, value]) => value)
                     .join('\n\n')}
                 </ReactMarkdown>
               </div>
             </section>
+            )}
           </>
         ) : premiumLoading ? (
           <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '2rem 1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>

@@ -9,6 +9,26 @@ const { buildProviderMarkdown } = require('./generate-runtime-ready-report');
 
 const markdown = Array.from({ length: 9 }, (_, index) => `## ${index + 1}. 섹션 ${index + 1}\n내용 ${index + 1}`).join('\n\n');
 
+const RAW_MARKDOWN_RE = /(\*\*|__|`|^\s*#{1,6}\s+|^\s*(?:[-*]|\d+[.)])\s+)/m;
+
+function collectPresentationTextValues(value, values = []) {
+  if (typeof value === 'string') {
+    values.push(value);
+    return values;
+  }
+  if (!value || typeof value !== 'object') return values;
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectPresentationTextValues(item, values));
+    return values;
+  }
+  Object.values(value).forEach((item) => collectPresentationTextValues(item, values));
+  return values;
+}
+
+function hasRawMarkdownTokens(value) {
+  return typeof value === 'string' ? RAW_MARKDOWN_RE.test(value) : false;
+}
+
 describe('premium report presentation contract', () => {
   test('keeps nine ordered sections and strips each major heading from its body', () => {
     const sections = parseNumberedSections(markdown);
@@ -67,7 +87,7 @@ describe('premium report presentation contract', () => {
     expect(fixtureBasis).toContain('목2·화1·토3·금0·수2');
   });
 
-  test('renders every major fixture heading and calculated basis exactly once in ten pages', async () => {
+  test('renders every major fixture heading and calculated basis exactly once in eleven pages', async () => {
     const tmpPdf = path.join(os.tmpdir(), `somyung-presentation-${process.pid}.pdf`);
     const pdf = await generateReportPDF(createReferenceParams());
     fs.writeFileSync(tmpPdf, pdf);
@@ -81,7 +101,27 @@ describe('premium report presentation contract', () => {
     expect(text).not.toContain('5 things to remember about this child');
     expect(presentation.sections[8].startOnNewPage).toBe(false);
     const info = execFileSync('pdfinfo', [tmpPdf], { encoding: 'utf8' });
-    expect(info).toMatch(/Pages:\s+10/);
+    expect(info).toMatch(/Pages:\s+11/);
+  });
+
+  test('splits an unusually long editorial row across pages without losing its ending', async () => {
+    const stressed = structuredClone(presentation);
+    stressed.sections[0].blocks[0].action = `**${Array.from(
+      { length: 120 },
+      (_, index) => `${index + 1}번째 관찰 문장을 차분히 기록하고 다음 행동을 한 가지로 좁혀 주세요.`,
+    ).join(' ')}**`;
+    const tmpPdf = path.join(os.tmpdir(), `somyung-presentation-stress-${process.pid}.pdf`);
+    fs.writeFileSync(tmpPdf, await generateReportPDF({
+      ...createReferenceParams(),
+      aiInterpretation: { presentationStatus: 'ready', presentation: stressed },
+    }));
+    const text = execFileSync('pdftotext', ['-layout', tmpPdf, '-'], { encoding: 'utf8' });
+    const info = execFileSync('pdfinfo', [tmpPdf], { encoding: 'utf8' });
+    const pages = Number(info.match(/Pages:\s+(\d+)/)?.[1] || 0);
+    expect(pages).toBeGreaterThan(11);
+    expect(text).toContain('1번째 관찰 문장');
+    expect(text).toContain('120번째 관찰 문장');
+    expect(text).not.toContain('**');
   });
 
   test('repetition guard rejects duplicate bodies but permits shared Korean vocabulary', () => {
@@ -255,5 +295,42 @@ describe('premium report presentation contract', () => {
   test('missing month heading returns partial_required_labels', () => {
     const text = buildProviderMarkdown().replace('### 10월', '');
     expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('partial_required_labels');
+  });
+
+  test('ignores orphan bold headings and preserves semantic field continuity', () => {
+    const text = buildProviderMarkdown().replace(
+      '자극을 정리할 시간이 필요한 신호일 수 있습니다.',
+      '자극을 정리할 시간이 필요한 신호일 수 있습니다.\n- **단독 소제목**',
+    );
+    const result = adaptMarkdownToPresentation({
+      fullText: text,
+      manseryeok: fixtureMansae,
+      fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] },
+      childName: '민서',
+      generatedAt: '2026-07-22T00:00:00.000Z',
+    });
+    expect(result.presentationStatus).toBe('ready');
+    const presentation = normalizeAdapterPresentation(result.presentation);
+    const firstTranslation = presentation.sections[1].blocks[0];
+    expect(firstTranslation.actual).toContain('자극을 정리할 시간이 필요한 신호일 수 있습니다.');
+    expect(firstTranslation.actual).not.toContain('단독 소제목');
+    expect(collectPresentationTextValues(presentation).some((value) => value.includes('단독 소제목'))).toBe(false);
+  });
+
+  test('normalizes inline bold in timeline/action/parenting fields for ready-path output', () => {
+    const text = buildProviderMarkdown()
+      .replace('전날 순서를 보여 줍니다.', '**전날 순서를 보여 줍니다.**')
+      .replace('아이가 선택지를 고릅니다.', '**아이가 선택지를 고릅니다.**')
+      .replace('5분 안에 손이 움직입니다.', '**5분 안에 손이 움직입니다.**');
+    const result = adaptMarkdownToPresentation({
+      fullText: text,
+      manseryeok: fixtureMansae,
+      fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] },
+      childName: '민서',
+      generatedAt: '2026-07-22T00:00:00.000Z',
+    });
+    expect(result.presentationStatus).toBe('ready');
+    const presentation = normalizeAdapterPresentation(result.presentation);
+    expect(collectPresentationTextValues(presentation).every((value) => !hasRawMarkdownTokens(value))).toBe(true);
   });
 });

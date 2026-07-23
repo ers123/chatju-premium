@@ -3,7 +3,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { parseNumberedSections, normalizePresentation } = require('./report-presentation');
+const { parseNumberedSections, normalizePresentation, sanitizePresentation } = require('./report-presentation');
 
 const FONTS_DIR = path.join(__dirname, '../../assets/fonts');
 const FONT_MAP = {
@@ -174,23 +174,26 @@ function getLabels(language) {
 
 // ─── Color palette ──────────────────────────────────────────────────────────
 const COLORS = {
-  headerBg: '#2D3A35',
-  gold: '#C5A059',
-  darkText: '#2D3A35',
-  bodyText: '#4A4440',
-  lightText: '#8B8580',
-  subtleText: '#B0A9A2',
-  divider: '#EBE5DF',
-  pillarBg: '#2D3A35',
-  pageBg: '#FDFCFA',
+  headerBg: '#24352F',
+  gold: '#A47C3F',
+  darkText: '#24352F',
+  bodyText: '#30332F',
+  lightText: '#6D6A64',
+  subtleText: '#918A80',
+  divider: '#D8CFC0',
+  pillarBg: '#24352F',
+  pageBg: '#F5F0E7',
+  surface: '#FBF9F4',
+  sage: '#60776C',
+  oxide: '#92594E',
 };
 
 const ELEMENT_COLORS = {
-  wood: '#5A7A66',
-  fire: '#A85544',
-  earth: '#B8922D',
-  metal: '#6B7578',
-  water: '#556B7E',
+  wood: '#60776C',
+  fire: '#92594E',
+  earth: '#A47C3F',
+  metal: '#6F7774',
+  water: '#526977',
 };
 
 // ─── Markdown parser ────────────────────────────────────────────────────────
@@ -459,29 +462,202 @@ async function generateReportPDF(params) {
         doc.moveDown(0.5);
       }
 
-      // ─── Structured reference-report renderer ───────────────────────
-      // This is intentionally small: production Markdown remains supported,
-      // while a caller with a validated presentation contract gets semantic
-      // cards instead of fragile text-pattern guesses.
-      function writePresentationCard(title, rows, accent = COLORS.gold) {
-        const rowText = rows.map((row) => `${row.label ? `${row.label}  ` : ''}${row.text}`).join('\n\n');
-        doc.font(fontRegular).fontSize(9.5);
-        const bodyHeight = doc.heightOfString(rowText, { width: CONTENT_W - 36, lineGap: 4 });
-        const height = Math.max(74, bodyHeight + 44);
-        ensureSpace(height + 12);
-        const y = doc.y;
-        doc.roundedRect(MARGIN_L, y, CONTENT_W, height, 8).fill('#F5F1EA');
-        doc.rect(MARGIN_L, y, 5, height).fill(accent);
-        doc.font(fontBold).fontSize(10).fillColor(COLORS.darkText)
-          .text(title, MARGIN_L + 18, y + 12, { width: CONTENT_W - 36 });
-        let rowY = y + 31;
-        for (const row of rows) {
-          doc.font(fontBold).fontSize(8.5).fillColor(accent).text(row.label || '', MARGIN_L + 18, rowY, { width: 105 });
-          doc.font(fontRegular).fontSize(9.5).fillColor(COLORS.bodyText)
-            .text(row.text, MARGIN_L + 112, rowY, { width: CONTENT_W - 130, lineGap: 4 });
-          rowY = doc.y + 7;
+      // ─── Structured editorial renderer ──────────────────────────────
+      // The ready path uses square, measured blocks. Every value is measured
+      // with the exact width/font used for drawing, and long content is split
+      // at row or word boundaries before a frame is painted.
+      const CARD = {
+        outerPad: 16,
+        titleGap: 11,
+        rowGap: 8,
+        labelWidth: 106,
+        columnGap: 12,
+        bodyFontSize: 9.5,
+        labelFontSize: 8.5,
+        titleFontSize: 10.5,
+        lineGap: 4,
+      };
+      const CARD_INNER_W = CONTENT_W - (CARD.outerPad * 2);
+      const CARD_BODY_W = CARD_INNER_W - CARD.labelWidth - CARD.columnGap;
+      let activeSection = null;
+
+      function textHeight(text, font, fontSize, width, lineGap = 0) {
+        doc.font(font).fontSize(fontSize);
+        return doc.heightOfString(String(text || ''), { width, lineGap });
+      }
+
+      function measurePresentationRow(row) {
+        const hasLabel = Boolean(row.label);
+        const bodyWidth = hasLabel ? CARD_BODY_W : CARD_INNER_W;
+        const labelHeight = hasLabel
+          ? textHeight(row.label, fontBold, CARD.labelFontSize, CARD.labelWidth, 1)
+          : 0;
+        const bodyHeight = textHeight(row.text, fontRegular, CARD.bodyFontSize, bodyWidth, CARD.lineGap);
+        return Math.max(labelHeight, bodyHeight) + CARD.rowGap;
+      }
+
+      function splitTextToHeight(text, width, maxHeight) {
+        const value = String(text || '').trim();
+        if (!value) return ['', ''];
+        if (textHeight(value, fontRegular, CARD.bodyFontSize, width, CARD.lineGap) <= maxHeight) {
+          return [value, ''];
         }
+
+        const words = value.split(/\s+/);
+        let low = 1;
+        let high = words.length;
+        let best = 0;
+        while (low <= high) {
+          const mid = Math.floor((low + high) / 2);
+          const candidate = words.slice(0, mid).join(' ');
+          if (textHeight(candidate, fontRegular, CARD.bodyFontSize, width, CARD.lineGap) <= maxHeight) {
+            best = mid;
+            low = mid + 1;
+          } else {
+            high = mid - 1;
+          }
+        }
+
+        if (best > 0) return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+
+        let charLow = 1;
+        let charHigh = value.length;
+        let charBest = 1;
+        while (charLow <= charHigh) {
+          const mid = Math.floor((charLow + charHigh) / 2);
+          if (textHeight(value.slice(0, mid), fontRegular, CARD.bodyFontSize, width, CARD.lineGap) <= maxHeight) {
+            charBest = mid;
+            charLow = mid + 1;
+          } else {
+            charHigh = mid - 1;
+          }
+        }
+        return [value.slice(0, charBest), value.slice(charBest).trim()];
+      }
+
+      function writeSectionContinuation() {
+        if (!activeSection) {
+          doc.y = 68;
+          return;
+        }
+        doc.y = 58;
+        doc.font(fontRegular).fontSize(8.5).fillColor(COLORS.gold)
+          .text(`${String(activeSection.number).padStart(2, '0')} · 계속`, MARGIN_L, doc.y, { width: CONTENT_W });
+        doc.font(fontBold).fontSize(13).fillColor(COLORS.darkText)
+          .text(activeSection.title, MARGIN_L, doc.y + 14, { width: CONTENT_W });
+        doc.y += 42;
+      }
+
+      function drawPresentationFrame(title, rows, accent, continued) {
+        const titleHeight = textHeight(
+          continued ? `${title} · 계속` : title,
+          fontBold,
+          CARD.titleFontSize,
+          CARD_INNER_W,
+          1
+        );
+        const rowsHeight = rows.reduce((sum, row) => sum + measurePresentationRow(row), 0);
+        const height = CARD.outerPad + titleHeight + CARD.titleGap + rowsHeight + (CARD.outerPad - CARD.rowGap);
+        const y = doc.y;
+
+        doc.save();
+        doc.rect(MARGIN_L, y, CONTENT_W, height).fill(COLORS.surface);
+        doc.rect(MARGIN_L, y, CONTENT_W, height)
+          .lineWidth(0.55).strokeColor(COLORS.divider).stroke();
+        doc.rect(MARGIN_L, y, CONTENT_W, 3).fill(accent);
+        doc.restore();
+
+        doc.font(fontBold).fontSize(CARD.titleFontSize).fillColor(COLORS.darkText)
+          .text(continued ? `${title} · 계속` : title, MARGIN_L + CARD.outerPad, y + CARD.outerPad, {
+            width: CARD_INNER_W,
+            lineGap: 1,
+          });
+        let rowY = y + CARD.outerPad + titleHeight + CARD.titleGap;
+        rows.forEach((row, index) => {
+          const hasLabel = Boolean(row.label);
+          const bodyX = hasLabel
+            ? MARGIN_L + CARD.outerPad + CARD.labelWidth + CARD.columnGap
+            : MARGIN_L + CARD.outerPad;
+          const bodyWidth = hasLabel ? CARD_BODY_W : CARD_INNER_W;
+          const rowHeight = measurePresentationRow(row);
+
+          if (index > 0) {
+            doc.moveTo(MARGIN_L + CARD.outerPad, rowY - 4)
+              .lineTo(MARGIN_L + CONTENT_W - CARD.outerPad, rowY - 4)
+              .lineWidth(0.35).strokeColor(COLORS.divider).stroke();
+          }
+          if (hasLabel) {
+            doc.font(fontBold).fontSize(CARD.labelFontSize).fillColor(accent)
+              .text(row.label, MARGIN_L + CARD.outerPad, rowY, {
+                width: CARD.labelWidth,
+                lineGap: 1,
+              });
+          }
+          doc.font(fontRegular).fontSize(CARD.bodyFontSize).fillColor(COLORS.bodyText)
+            .text(row.text, bodyX, rowY, { width: bodyWidth, lineGap: CARD.lineGap });
+          rowY += rowHeight;
+        });
+
         doc.y = y + height + 12;
+      }
+
+      function writePresentationCard(title, rows, accent = COLORS.gold) {
+        const pending = rows.map((row) => ({
+          label: String(row.label || ''),
+          text: String(row.text || ''),
+        }));
+        let continued = false;
+
+        while (pending.length > 0) {
+          const titleText = continued ? `${title} · 계속` : title;
+          const titleHeight = textHeight(titleText, fontBold, CARD.titleFontSize, CARD_INNER_W, 1);
+          const fixedHeight = CARD.outerPad + titleHeight + CARD.titleGap + (CARD.outerPad - CARD.rowGap);
+          const minimumRowHeight = Math.min(56, measurePresentationRow(pending[0]));
+
+          if (doc.y + fixedHeight + minimumRowHeight > FOOTER_Y) {
+            doc.addPage();
+            writeSectionContinuation();
+          }
+
+          const availableRowsHeight = FOOTER_Y - doc.y - fixedHeight - 12;
+          const pageRows = [];
+          let usedHeight = 0;
+
+          while (pending.length > 0) {
+            const row = pending[0];
+            const rowHeight = measurePresentationRow(row);
+            if (usedHeight + rowHeight <= availableRowsHeight) {
+              pageRows.push(row);
+              usedHeight += rowHeight;
+              pending.shift();
+              continue;
+            }
+
+            if (pageRows.length === 0) {
+              const hasLabel = Boolean(row.label);
+              const bodyWidth = hasLabel ? CARD_BODY_W : CARD_INNER_W;
+              const labelHeight = hasLabel
+                ? textHeight(row.label, fontBold, CARD.labelFontSize, CARD.labelWidth, 1)
+                : 0;
+              const maxBodyHeight = Math.max(24, availableRowsHeight - CARD.rowGap);
+              const [head, rest] = splitTextToHeight(row.text, bodyWidth, Math.max(maxBodyHeight, labelHeight));
+              pageRows.push({ label: row.label, text: head });
+              pending.shift();
+              if (rest) pending.unshift({
+                label: row.label ? `${row.label} · 계속` : '',
+                text: rest,
+              });
+            }
+            break;
+          }
+
+          drawPresentationFrame(title, pageRows, accent, continued);
+          continued = pending.length > 0;
+          if (continued) {
+            doc.addPage();
+            writeSectionContinuation();
+          }
+        }
       }
 
       function writeStructuredBlock(block) {
@@ -537,6 +713,70 @@ async function generateReportPDF(params) {
         writePresentationCard(block.title || '참고', [{ text: block.text || '' }]);
       }
 
+      function renderCalculatedProfilePage() {
+        const pillars = manseryeok?.pillars;
+        const elements = manseryeok?.elements;
+        if (!pillars && !elements) return;
+
+        doc.addPage();
+        doc.y = 68;
+        doc.font(fontRegular).fontSize(9).fillColor(COLORS.gold)
+          .text('CALCULATED PROFILE', MARGIN_L, doc.y, { width: CONTENT_W });
+        doc.font(fontBold).fontSize(21).fillColor(COLORS.darkText)
+          .text('아이의 기질 지도', MARGIN_L, doc.y + 18, { width: CONTENT_W });
+        doc.y += 66;
+
+        if (pillars) {
+          const pillarKeys = ['year', 'month', 'day', 'hour'];
+          const pillarW = CONTENT_W / 4;
+          const y = doc.y;
+          pillarKeys.forEach((key, index) => {
+            const x = MARGIN_L + (pillarW * index);
+            const pillar = pillars[key];
+            doc.rect(x, y, pillarW, 25).fill(COLORS.headerBg);
+            doc.rect(x, y + 25, pillarW, 66).fill(COLORS.surface);
+            doc.rect(x, y, pillarW, 91).lineWidth(0.5).strokeColor(COLORS.divider).stroke();
+            doc.font(fontBold).fontSize(8).fillColor('#F5F0E7')
+              .text(labels.pillars[index], x, y + 8, { width: pillarW, align: 'center' });
+            doc.font(pillarCardFont).fontSize(20).fillColor(COLORS.darkText)
+              .text(pillar?.hanja || pillar?.korean || '-', x, y + 37, { width: pillarW, align: 'center' });
+            doc.font(fontRegular).fontSize(8).fillColor(COLORS.lightText)
+              .text(pillar?.element || pillar?.오행 || '', x, y + 67, { width: pillarW, align: 'center' });
+          });
+          doc.y = y + 112;
+        }
+
+        if (elements) {
+          doc.font(fontBold).fontSize(11).fillColor(COLORS.darkText)
+            .text('오행 분포', MARGIN_L, doc.y, { width: CONTENT_W });
+          doc.y += 25;
+          const keys = ['wood', 'fire', 'earth', 'metal', 'water'];
+          const colors = keys.map((key) => ELEMENT_COLORS[key]);
+          const total = keys.reduce((sum, key) => sum + Number(elements[key] || 0), 0) || 1;
+          keys.forEach((key, index) => {
+            const y = doc.y;
+            const value = Number(elements[key] || 0);
+            const pct = Math.round((value / total) * 100);
+            doc.font(fontBold).fontSize(8.5).fillColor(COLORS.bodyText)
+              .text(labels.elements[index], MARGIN_L, y + 2, { width: 76 });
+            doc.rect(MARGIN_L + 82, y, 295, 13).fill('#E5DED2');
+            doc.rect(MARGIN_L + 82, y, Math.max(3, 295 * (value / total)), 13).fill(colors[index]);
+            doc.font(fontRegular).fontSize(8).fillColor(COLORS.lightText)
+              .text(`${value} · ${pct}%`, MARGIN_L + 390, y + 1, { width: 90, align: 'right' });
+            doc.y += 23;
+          });
+        }
+
+        doc.y += 12;
+        writePresentationCard('계산된 사실을 읽는 방법', [{
+          label: '계산값',
+          text: '위 표는 입력한 생년월일시를 기준으로 계산한 사주 네 기둥과 오행 분포입니다.',
+        }, {
+          label: '해석 범위',
+          text: '뒤의 내용은 이 계산값을 부모가 관찰할 수 있는 행동과 대화 언어로 번역한 참고 가설이며, 아이의 발달이나 미래를 확정하지 않습니다.',
+        }], COLORS.sage);
+      }
+
       function renderStructuredPresentation(presentation) {
         const cover = presentation.cover;
         // Cover has no report body: the first analytical content starts on page two.
@@ -563,8 +803,10 @@ async function generateReportPDF(params) {
           writePresentationCard(item.title, [{ text: item.text }], item.accent || COLORS.gold);
         }
         if (presentation.opening.note) writeStructuredBlock({ type: 'note', text: presentation.opening.note });
+        renderCalculatedProfilePage();
 
         for (const section of presentation.sections) {
+          activeSection = { number: section.number, title: section.title };
           if (section.startOnNewPage) {
             doc.addPage();
             doc.y = 68;
@@ -575,7 +817,7 @@ async function generateReportPDF(params) {
             doc.moveDown(0.6);
           }
           doc.font(fontRegular).fontSize(10).fillColor(COLORS.gold)
-            .text(`0${section.number}`, MARGIN_L, doc.y, { width: CONTENT_W });
+            .text(String(section.number).padStart(2, '0'), MARGIN_L, doc.y, { width: CONTENT_W });
           doc.font(fontBold).fontSize(20).fillColor(COLORS.darkText)
             .text(section.title, MARGIN_L, doc.y + 18, { width: CONTENT_W });
           doc.y += 56;
@@ -585,7 +827,7 @@ async function generateReportPDF(params) {
 
 
       const presentation = aiInterpretation?.presentationStatus === 'ready'
-        ? normalizePresentation(aiInterpretation.presentation)
+        ? sanitizePresentation(normalizePresentation(aiInterpretation.presentation))
         : null;
       if (presentation) {
         renderStructuredPresentation(presentation);

@@ -121,6 +121,29 @@ function normalizedBody(value) {
     .trim();
 }
 
+function sanitizePresentationText(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .replace(/`/g, '')
+    .replace(/\*\*|__/g, '')
+    .replace(/^\s*#{1,6}\s+/gm, '')
+    .replace(/^\s*(?:[-*]|\d+[.)])\s+/gm, '')
+    .replace(/^\s*\[\s*([^\]\n]+)\s*\]\s*$/gm, '$1')
+    .trim();
+}
+
+function sanitizePresentation(presentation) {
+  if (presentation === null || presentation === undefined) return presentation;
+  if (Array.isArray(presentation)) return presentation.map((value) => sanitizePresentation(value));
+  if (typeof presentation === 'string') return sanitizePresentationText(presentation);
+  if (typeof presentation !== 'object') return presentation;
+  const sanitized = {};
+  Object.entries(presentation).forEach(([key, value]) => {
+    sanitized[key] = sanitizePresentation(value);
+  });
+  return sanitized;
+}
+
 function trigramSet(value) {
   const text = normalizedBody(value);
   if (text.length < 40) return null;
@@ -137,6 +160,14 @@ function hasRepeatedContent(values) {
   return false;
 }
 
+function isStandaloneMarkdownHeading(line) {
+  const cleaned = String(line || '').trim()
+    .replace(/^\s*(?:[-*]\s*)?(?:\d+[.)]\s*)?/, '')
+    .trim();
+  if (!cleaned || /[:：]/.test(cleaned)) return false;
+  return /^(\*\*.+\*\*|\[.+\]|\*\*\[.+\]\*\*)$/.test(cleaned);
+}
+
 function parseLabelGroups(content, labels) {
   const wanted = new Set(labels);
   const groups = [];
@@ -145,19 +176,28 @@ function parseLabelGroups(content, labels) {
   const lines = String(content || '').split(/\r?\n/);
   lines.forEach((line) => {
     const match = line.match(/^\s*(?:[-*]\s*)?(?:\*\*([^*]+?)\s*[:：]\*\*|\*\*([^*]+?)\*\*\s*[:：]|([^:*\n]+?)\s*[:：])\s*(.*)$/);
-    const looksLikeStandaloneLabel = /^\s*(?:[-*]\s*)?\*\*[^*]+?(?:[:：]\*\*|\*\*\s*[:：])/.test(line);
+    const looksLikeStandaloneLabel = isStandaloneMarkdownHeading(line);
+    const looksLikeUnknownLabeledHeading = /^\s*(?:[-*]\s*)?\*\*[^*]+?(?:[:：]\*\*|\*\*\s*[:：])/.test(line);
     const appendContinuation = () => {
       const continuation = line.trim().replace(/^\s*(?:[-*]|\d+[.)])\s*/, '');
       if (lastLabel && continuation && !/^#{1,6}\s+/.test(continuation) && !/^-{2,}$/.test(continuation)) current[lastLabel] = [current[lastLabel], continuation].filter(Boolean).join(' ');
     };
     if (!match) {
+      if (looksLikeStandaloneLabel) {
+        lastLabel = null;
+        return;
+      }
       appendContinuation();
       return;
     }
     const label = (match[1] || match[2] || match[3] || '').trim();
     if (!wanted.has(label)) {
-      if (looksLikeStandaloneLabel) {
+      if (looksLikeUnknownLabeledHeading) {
         current.__invalidLabel = label;
+        lastLabel = null;
+        return;
+      }
+      if (looksLikeStandaloneLabel) {
         lastLabel = null;
         return;
       }
@@ -182,7 +222,7 @@ function parseTitledGroups(content, expectedCount, labels) {
     }
     return groups;
   }
-  const cardMatches = [...String(content).matchAll(/^\s*(?:[-*]|\d+[.)])\s*\*\*\[?([^*\]\n:]+)\]?\*\*\s*$/gm)];
+  const cardMatches = [...String(content).matchAll(/^\s*(?:[-*]|\d+[.)])\s*(?:\*\*)?\[?([^*\]\n:]+)\]?(?:\*\*)?\s*$/gm)];
   if (cardMatches.length !== expectedCount) return null;
   const groups = [];
   for (let index = 0; index < cardMatches.length; index += 1) {
@@ -266,7 +306,7 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
         { number: 9, title: sections[8].title, startOnNewPage: false, blocks: [text('선택적 참고 아이디어', `${s9[0].색상} / ${s9[0].음식} / ${s9[0].활동}`), { type: 'close', title: '방법과 한계', text: `${s9[0]['핵심 한 문장']} ${s9[0]['마무리']}` }] },
       ],
     };
-    return { presentationStatus: 'ready', presentation: normalizePresentation(presentation) };
+    return { presentationStatus: 'ready', presentation: sanitizePresentation(normalizePresentation(presentation)) };
   } catch (error) {
     return { presentationStatus: 'fallback', presentationStatusReason: 'invalid_presentation_contract', diagnostic: error.message };
   }
@@ -278,6 +318,7 @@ module.exports = {
   parseNumberedSections,
   normalizePresentation,
   normalizedBody,
+  sanitizePresentation,
   hasRepeatedContent,
   adaptMarkdownToPresentation,
   mergePresentationResult,
