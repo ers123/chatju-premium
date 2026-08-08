@@ -875,9 +875,18 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
 
   // 교재 기반 명리 근거 — 계산된 원국에 실제로 해당하는 조각만 결정론적으로 선별한다.
   // 지식은 한국어로 주입되고 출력 언어는 아래 language 지시가 결정하므로 전 언어에 적용된다.
+  // 언어 허용 목록: 지식은 한국어로 주입되는데, 한국어와 가까운 표기 체계를 쓰는
+  // 언어(특히 일본어)에서는 모델이 주입된 한국어를 그대로 출력에 섞어 쓴다.
+  // 측정 결과 일본어 리포트의 한글 비율이 5.4%(미주입) → 56.1%(주입)로 치솟았다.
+  // 검증된 언어만 켜고, 나머지는 언어별로 검증한 뒤 하나씩 추가한다.
+  const KNOWLEDGE_LANGUAGES = new Set(
+    (process.env.SAJU_KNOWLEDGE_LANGUAGES || 'ko').split(',').map((x) => x.trim()).filter(Boolean)
+  );
+
   let knowledgeContext = '';
   try {
     if (process.env.SAJU_KNOWLEDGE_DISABLED === '1') throw new Error('disabled by SAJU_KNOWLEDGE_DISABLED');
+    if (!KNOWLEDGE_LANGUAGES.has(language)) throw new Error(`knowledge not enabled for language=${language}`);
     const knowledge = buildKnowledgeContext({
       childManseryeok,
       parentManseryeok,
