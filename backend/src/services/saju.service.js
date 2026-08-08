@@ -9,6 +9,7 @@ const { createAccessToken, verifyAccessToken } = require('../utils/accessToken')
 const { assertPaymentMatchesProduct } = require('./payment.service');
 const { buildMultipleBirthSection } = require('../utils/multiple-birth');
 const { adaptMarkdownToPresentation, mergePresentationResult, getPremiumPresentationLocale } = require('./report-presentation');
+const { buildKnowledgeContext } = require('./saju-knowledge');
 
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
@@ -871,13 +872,37 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
 
   // Build twin context if applicable
   const twinSection = buildMultipleBirthSection(twinInfo);
+
+  // 교재 기반 명리 근거 — 계산된 원국에 실제로 해당하는 조각만 결정론적으로 선별한다.
+  // 지식은 한국어로 주입되고 출력 언어는 아래 language 지시가 결정하므로 전 언어에 적용된다.
+  let knowledgeContext = '';
+  try {
+    if (process.env.SAJU_KNOWLEDGE_DISABLED === '1') throw new Error('disabled by SAJU_KNOWLEDGE_DISABLED');
+    const knowledge = buildKnowledgeContext({
+      childManseryeok,
+      parentManseryeok,
+      parentRole,
+      childAge,
+    });
+    knowledgeContext = knowledge.text;
+    console.log('[Saju Service] Knowledge context selected:', {
+      chars: knowledgeContext.length,
+      ...knowledge.selected,
+    });
+  } catch (err) {
+    // 지식 주입 실패가 리포트 생성 자체를 막아서는 안 된다
+    console.error('[Saju Service] Knowledge context build failed, continuing without it:', err.message);
+  }
   const premiumLocale = getPremiumPresentationLocale(language);
   const langNameMap = { ko: 'Korean', en: 'English', ja: 'Japanese', zh: 'Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
   const outputLangName = langNameMap[language] || 'English';
   const premiumLabels = premiumLocale.labels;
   const exactLabelContract = `
 **Premium structured label contract**
-Use these exact labels in ${outputLangName}. Do not substitute synonyms. Do not leave any label in Korean unless the report language is Korean.
+Use these exact labels in ${outputLangName}. Copy each label character-for-character as written below.
+Do not substitute synonyms, do not shorten or expand a label, and do not append parentheticals or qualifiers to a label (write "Core sentence:" — never "Core sentence (today to remember):").
+Do not leave any label in Korean unless the report language is Korean.
+An automated parser reads these labels; any deviation discards the entire structured report.
 - Section 1 labels: ${premiumLabels.s1.map((x) => `**${x}:**`).join(' / ')}
 - Section 2 labels: ${premiumLabels.s2.map((x) => `**${x}:**`).join(' / ')}
 - Section 3 labels: ${premiumLabels.s3.map((x) => `**${x}:**`).join(' / ')}
@@ -1003,7 +1028,8 @@ ${childPillars.hour?.korean ? `| 시주 | ${childPillars.hour.korean[0]} | ${chi
 ${childSecond && childSecondTraits ? `**부 기질:** ${childSecond} (${childSecondTraits.name}) — ${childSecondTraits.traits}` : ''}
 **부족 오행:** ${childWeak} (${elementTraits[childWeak].name}) — ${elementTraits[childWeak].stress}에 취약
 ${parentSection}
-${twinSection}`;
+${twinSection}
+${knowledgeContext}`;
 
   // fortuneDataContext — used by Call 2 ONLY (fortune cycles)
   const fortuneDataContext = `${fortuneCyclesSection}
@@ -1263,6 +1289,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
   const call1SectionsEn = `
 **This request is for Sections 1-5 of a 9-section report.**
+Write every label as a bold Markdown label followed by a colon, copied verbatim from the label contract. Do not omit, merge, reword, or append parentheticals to a label.
 - Section 1: At a Glance (Executive Summary) — 3-sentence narrative + structured bullets
 - Section 2: This Child Is NOT... — directly confront common misconceptions, punchy tone
 - Section 3: Behavioral Signatures — everyday scenes + pattern analysis
@@ -1292,6 +1319,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
   const call2SectionsEn = `
 **This request is for Sections 6-9 of a 9-section report.**
+Write every label as a bold Markdown label followed by a colon, copied verbatim from the label contract. Do not omit, merge, reword, or append parentheticals to a label.
 **Note: Sections 1-5 (At a Glance, Misconceptions, Behavioral Signatures, Situational Playbook, Hidden Strengths) are already written. Continue from Section 6.**
 
 - Section 6: The Current Flow — monthly table based on major/annual fortune cycles, operational tone
