@@ -908,10 +908,7 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
   const premiumLabels = premiumLocale.labels;
   const exactLabelContract = `
 **Premium structured label contract**
-Use these exact labels in ${outputLangName}. Copy each label character-for-character as written below.
-Do not substitute synonyms, do not shorten or expand a label, and do not append parentheticals or qualifiers to a label (write "Core sentence:" — never "Core sentence (today to remember):").
-Do not leave any label in Korean unless the report language is Korean.
-An automated parser reads these labels; any deviation discards the entire structured report.
+Use these exact labels in ${outputLangName}. Do not substitute synonyms. Do not leave any label in Korean unless the report language is Korean.
 - Section 1 labels: ${premiumLabels.s1.map((x) => `**${x}:**`).join(' / ')}
 - Section 2 labels: ${premiumLabels.s2.map((x) => `**${x}:**`).join(' / ')}
 - Section 3 labels: ${premiumLabels.s3.map((x) => `**${x}:**`).join(' / ')}
@@ -1298,7 +1295,6 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
   const call1SectionsEn = `
 **This request is for Sections 1-5 of a 9-section report.**
-Write every label as a bold Markdown label followed by a colon, copied verbatim from the label contract. Do not omit, merge, reword, or append parentheticals to a label.
 - Section 1: At a Glance (Executive Summary) — 3-sentence narrative + structured bullets
 - Section 2: This Child Is NOT... — directly confront common misconceptions, punchy tone
 - Section 3: Behavioral Signatures — everyday scenes + pattern analysis
@@ -1328,7 +1324,6 @@ Write every label as a bold Markdown label followed by a colon, copied verbatim 
 
   const call2SectionsEn = `
 **This request is for Sections 6-9 of a 9-section report.**
-Write every label as a bold Markdown label followed by a colon, copied verbatim from the label contract. Do not omit, merge, reword, or append parentheticals to a label.
 **Note: Sections 1-5 (At a Glance, Misconceptions, Behavioral Signatures, Situational Playbook, Hidden Strengths) are already written. Continue from Section 6.**
 
 - Section 6: The Current Flow — monthly table based on major/annual fortune cycles, operational tone
