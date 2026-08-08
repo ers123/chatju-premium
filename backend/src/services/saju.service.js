@@ -821,6 +821,16 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
     : childAge <= 19 ? '고등학생(17~19세)'
     : '성인';
 
+  // 비한국어 지시문에서 쓰는 영어 연령 구간 라벨. 한국어 ageGroup을 그대로 끼워 넣으면
+  // 모델이 그 한국어를 출력에 옮겨 쓰는 일이 생긴다.
+  const ageGroupEn = childAge <= 3 ? 'infant/toddler (0-3)'
+    : childAge <= 7 ? 'preschool (4-7)'
+    : childAge <= 10 ? 'lower elementary (8-10)'
+    : childAge <= 13 ? 'upper elementary (11-13)'
+    : childAge <= 16 ? 'middle school (14-16)'
+    : childAge <= 19 ? 'high school (17-19)'
+    : 'adult';
+
   // Build parent section using 육친 framework — ENHANCED
   let parentSection = '';
   let parentDominant = null;
@@ -1058,7 +1068,7 @@ ${monthlyFortuneData}`;
 - 계절 에너지: ${weakElementRemedies.season || '정보 없음'}이 가장 보완이 필요한 시기`;
 
   // ── Call 1: Sections 1-5 (Executive summary, misconceptions, behavioral, playbook, strengths) ──
-  const call1SectionInstructions = `
+  const call1SectionInstructionsKo = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 개인화된 양육 리포트 (섹션 1~5)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1136,7 +1146,7 @@ ${monthlyFortuneData}`;
 </execution_order>`;
 
   // ── Call 2: Sections 6-9 (Timeline, experiment, co-parent, lifestyle) ──
-  const call2SectionInstructions = `
+  const call2SectionInstructionsKo = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 개인화된 양육 리포트 (섹션 6~9)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1206,6 +1216,178 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
 2단계: 해당 섹션들에 대해 데이터 기반 분석
 3단계: 출력 형식에 맞춰 마크다운으로 렌더
 </execution_order>`;
+
+  // ── 비한국어 섹션 지시문 ────────────────────────────────────────────────
+  // 한국어 지시문을 전 언어에 쓰던 것이 다국어 품질 문제의 근원이었다. 한국어 라벨
+  // 예시를 주고 "리포트 언어로 번역해 쓰라"고 하면, 일본어는 번역 대신 한국어를 그대로
+  // 옮겨 적고(실측 한글 비율 최대 29.5%), 영어는 매번 새로 번역해 계약과 어긋나는
+  // 의역을 만든다("What parents often say" → "Parent's common words").
+  //
+  // 해결책은 번역을 시키지 않는 것이다. premiumLabels는 이미 출력 언어의 정확한 계약
+  // 라벨을 갖고 있으므로, 그 문자열을 지시문에 그대로 끼워 넣어 쓸 라벨을 못 박는다.
+  const L = premiumLabels;
+  const bullet = (label) => `- **${label}:**`;
+
+  const call1SectionInstructionsEn = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 Personalized parenting report (Sections 1-5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Use the "## N." heading format. Write the section titles naturally in ${outputLangName}, but follow each section's structure exactly.**
+
+**Every bold label below is already written in ${outputLangName}. Reproduce each label exactly as printed here — do not translate it again, do not reword it, do not add parentheses or extra words to it. Write the report body in ${outputLangName}.**
+
+## 1. At a Glance
+
+Open with three warm sentences introducing this child's core temperament through a natural image, then connect it immediately to everyday behavior.
+
+Then these five items, in this order:
+
+${bullet(L.s1[0])} one sentence, a concrete situation
+${bullet(L.s1[1])} one sentence, actionable
+${bullet(L.s1[2])} exactly 3 items as a numbered list under this single label, each with its reason
+${bullet(L.s1[3])} exactly 3 items as a numbered list under this single label, each with why it works
+${bullet(L.s1[4])} one sentence
+
+## 2. This Child Is NOT...
+
+Write 4 to 6 items that confront a common parental misreading head-on. Each item:
+
+${bullet(L.s2[0])} "..." what the parent actually thinks
+${bullet(L.s2[1])} what is really happening inside, concretely
+${bullet(L.s2[2])} "..." something the parent can say or do
+
+Short and direct. No ornament. This section lives on its punch.
+
+## 3. Behavioral Signatures
+
+Write 5 to 7 high-probability behavior patterns for a child in ${ageGroupEn}, age ${childAge}.
+Start each with a 2-3 sentence everyday scene at home (homework, mornings, meals, screens, friends), then:
+
+${bullet(L.s3[0])} ...
+${bullet(L.s3[1])} ...
+${bullet(L.s3[2])} ...
+${bullet(L.s3[3])} ...
+
+## 4. Situational Playbook
+
+Cover all six of these situations, in order. All six are required — do not merge, skip, or shorten the list:
+1) refusing or delaying homework
+2) silence or delayed response
+3) hurt from a friendship
+4) transitioning off screens/games
+5) after-school emotional overload
+6) when the parent pushes too hard
+
+Give each of the six its own subheading, then these four labels:
+
+${bullet(L.s4[0])} "..."
+${bullet(L.s4[1])} how it lands for this particular temperament
+${bullet(L.s4[2])} "..."
+${bullet(L.s4[3])} evidence that this is working
+
+This section is the heart of the report. The scripts must sound like real speech.
+
+## 5. Hidden Strengths
+
+Exactly 3 strengths. Introduce each one with a numbered list item holding only the strength's short bold name — like "1) **<strength name>**" — on its own line, with no colon and no other text on that line. The parser identifies each strength card by that line. Then, underneath it:
+
+${bullet(L.s5[0])} a concrete scene
+${bullet(L.s5[1])} ...
+${bullet(L.s5[2])} something startable at this age
+${bullet(L.s5[3])} one exploratory sentence about interests and activities — never a fixed career claim
+
+Wrap each in warm narrative but land on concrete behavior.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Throughout: insight and action always travel together. No insight-only paragraph.
+- Never write upsell language such as "we'll analyze this further next time." This report must stand as a complete work.
+- Let Section 5 end naturally, but do not write a conclusion for the whole report — the second half continues.
+
+<execution_order>
+Step 1: parse the input data (Four Pillars, Five Element distribution)
+Step 2: analyze the assigned sections from that data
+Step 3: render as markdown in the required format
+</execution_order>`;
+
+  const call2SectionInstructionsEn = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 Personalized parenting report (Sections 6-9)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Use the "## N." heading format. Write the section titles naturally in ${outputLangName}, but follow each section's structure exactly.**
+
+**Every bold label and bracketed heading below is already written in ${outputLangName}. Reproduce each one exactly as printed here — do not translate it again, do not reword it, do not add parentheses or extra words to it. Write the report body in ${outputLangName}.**
+
+## 6. The Current Flow
+
+${fortuneCycles ? `Center this on the current 10-year cycle (${fortuneCycles.currentDaeun?.pillar?.hanja || fortuneCycles.currentDaeun?.pillar?.korean || '?'}) and this year's cycle (${fortuneCycles.currentSeun?.pillar?.hanja || fortuneCycles.currentSeun?.pillar?.korean || '?'}).
+- Explain the 10-year cycle in plain language: a shift of environmental backdrop, a stage set — not destiny.
+- What this period means for this child, in an operational tone, never mystical.
+- What the parent should focus on during it.` : `Describe the main flow of the child's current stage (${ageGroupEn}) and the changes just ahead.`}
+
+Then cover the four months from month ${new Date().getMonth() + 1} through month ${new Date().getMonth() + 4}.
+Write each month as its own subheading and print the month's pillar in Chinese characters (e.g. 甲午, 乙未).
+Under each month, these four items:
+
+${bullet(L.s6[0])} ...
+${bullet(L.s6[1])} ...
+${bullet(L.s6[2])} ...
+${bullet(L.s6[3])} ...
+
+One to two concrete sentences each.
+
+## 7. 7-Day Parenting Experiment
+
+Exactly 3 small changes. For each:
+
+${bullet(L.s7[0])} concrete, startable this evening
+${bullet(L.s7[1])} cover days 1-2, then 3-4, then 5-7 as one continuous sentence on this same line — never as sub-bullets or nested bold labels
+${bullet(L.s7[2])} evidence that it is working
+
+Under these three labels, write plain prose only. Do not introduce any additional bold label followed by a colon anywhere inside this section.
+
+Keep them light enough to start without pressure — "five minutes a day" is the right scale.
+
+## 8. Parenting Card to Share
+
+This section must be concise enough to screenshot. Essentials only, no ornament.
+Write these four bracketed headings exactly as printed. **Each heading must be a bullet list item beginning with "- " — never a markdown heading, so never start these lines with "#".** Follow each heading with its numbered list:
+
+- [${L.s8[0]}] — exactly 5 numbered items
+- [${L.s8[1]}] — exactly 3 items, each with one sentence on why it backfires
+- [${L.s8[2]}] — exactly 3 items, each with one sentence on why it works
+- [${L.s8[3]}] — exactly 3 items: immediately / after five minutes / once calm
+
+## 9. Everyday Balance (reference)
+
+⚠️ **This section is reference only. It is not a medical assessment and not geomancy.**
+⚠️ **Translate every element name into ${outputLangName}. Never print the Korean element names.**
+
+Offer optional, everyday ideas supporting the element this child has least of — never treatment, prescription, or fixed fate. Use these labels exactly:
+
+${bullet(L.s9[0])} clothing, school supplies, room accents
+${bullet(L.s9[1])} easy to bring to the table
+${bullet(L.s9[2])} plus one sentence on why it suits this temperament
+${bullet(L.s9[3])} the one sentence to remember from this report today
+${bullet(L.s9[4])} a closing line for observation and conversation
+
+End with a complete, warm message that settles the parent's heart.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Throughout: insight and action always travel together. No insight-only paragraph.
+- Never write upsell language. This report must stand as a complete work.
+
+<execution_order>
+Step 1: parse the input data (Four Pillars, Five Elements, fortune cycles, balance data)
+Step 2: analyze the assigned sections from that data
+Step 3: render as markdown in the required format
+</execution_order>`;
+
+  const call1SectionInstructions = language === 'ko' ? call1SectionInstructionsKo : call1SectionInstructionsEn;
+  const call2SectionInstructions = language === 'ko' ? call2SectionInstructionsKo : call2SectionInstructionsEn;
 
   // Shared system message base — v2 prompt redesign
   // Korean version (for ko locale)
