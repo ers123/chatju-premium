@@ -195,6 +195,9 @@ async function sendReportEmail(params) {
     language = 'ko',
     reportAccessToken,
     pdfBuffer,
+    // Caller ran out of time budget: send the email body (which carries a PDF
+    // download link) rather than spend seconds rendering an attachment.
+    skipPdf = false,
   } = params;
 
   const resend = getResendClient();
@@ -231,6 +234,8 @@ async function sendReportEmail(params) {
         content_type: 'application/pdf',
       },
     ];
+  } else if (skipPdf) {
+    logger.warn('[Email Service] Skipping PDF attachment (caller out of time budget); email links to the PDF instead');
   } else {
     // Try to generate PDF
     try {

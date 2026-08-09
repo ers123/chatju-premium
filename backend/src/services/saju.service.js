@@ -14,6 +14,11 @@ const { buildKnowledgeContext } = require('./saju-knowledge');
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
 
+// Lambda timeout is 60s (serverless.yml). Past this much elapsed time the
+// report email is sent without its PDF attachment, so a slow AI call costs the
+// attachment rather than the whole delivery.
+const EMAIL_PDF_BUDGET_MS = Number(process.env.EMAIL_PDF_BUDGET_MS || 40000);
+
 /**
  * Generate FREE Saju preview/teaser (no authentication required)
  * Returns: Basic Four Pillars + truncated AI interpretation
@@ -186,6 +191,10 @@ async function generateSajuReading(params) {
     // Per-transaction claim key hash (sha256 of raw client secret) — never store raw key
     claimKeyHash = null,
   } = params;
+
+  // Wall clock for this invocation. Used to decide whether there is still
+  // budget to render the PDF attachment before the Lambda's 60s hard stop.
+  const invocationStart = Date.now();
 
   try {
     console.log('[Saju Service] Starting reading generation:', {
@@ -383,6 +392,15 @@ async function generateSajuReading(params) {
     if (deliveryEmail) {
       try {
         const emailService = require('./email.service');
+        // Rendering the CJK PDF attachment costs seconds. If AI generation
+        // already ate most of the 60s budget, drop the attachment rather than
+        // risk the Lambda being killed mid-send — the email body carries a
+        // download link, so an email without the attachment still delivers.
+        const elapsedMs = Date.now() - invocationStart;
+        const skipPdf = elapsedMs > EMAIL_PDF_BUDGET_MS;
+        if (skipPdf) {
+          console.warn(`[Saju Service] ${elapsedMs}ms elapsed — sending report email without PDF attachment to stay inside the Lambda budget`);
+        }
         await emailService.sendReportEmail({
           email: deliveryEmail,
           childName: subjectName,
@@ -393,6 +411,7 @@ async function generateSajuReading(params) {
           gender,
           language,
           reportAccessToken,
+          skipPdf,
         });
         await supabaseAdmin
           .from('readings')

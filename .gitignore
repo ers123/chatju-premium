@@ -6,9 +6,12 @@ yarn-error.log*
 package-lock.json
 
 # Environment variables (IMPORTANT - Never commit secrets!)
+# Cover every .env variant (.env.staging held live service keys and was NOT
+# matched by the previous patterns), then allow example templates back in.
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
 backend/.env
 backend/.env.local
 
