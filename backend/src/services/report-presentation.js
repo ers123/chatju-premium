@@ -600,10 +600,16 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
     return { presentationStatus: 'fallback', presentationStatusReason: 'missing_or_reordered_sections' };
   }
   if (language === 'ko' && /things to remember|de-escalation steps|before\/after/i.test(fullText)) return { presentationStatus: 'fallback', presentationStatusReason: 'localization_leak' };
+  // The section 9 disclaimer names the very things it disclaims — "진단이나 운명을
+  // 확정하는 처방이 아니라…" — so a literal keyword scan reads the safety notice as
+  // the unsafe claim. Enumerating each phrasing was losing to the model's wording
+  // variety, so drop any Korean sentence that negates itself: if a sentence carries
+  // a trigger word *and* a negation, it is denying the claim, not making it.
   const unsafeScanText = fullText
-    .replace(/건강\s*진단\s*(?:이나|\/)\s*(?:운명\s*확정|방위\s*풍수)[이가]\s*아(?:닙니다|니라)/gi, '')
-    .replace(/의학적\s*진단이나\s*치료가\s*아닙니다/gi, '')
-    .replace(/치료나\s*처방이\s*아닙니다/gi, '');
+    .split(/(?<=[.!?。\n])/)
+    .filter((sentence) => !(/(진단|처방|치료|확정|방위|풍수|재물)/.test(sentence)
+      && /(아니라|아닙니다|아니며|아니고|아닌|않습니다|않아요)/.test(sentence)))
+    .join('');
   if (/(건강\s*(?:문제|위험|악화|회복|치료|진단|처방)|질병|치료|처방|신장|폐|대장|심장|방위|풍수|재물|연애|반드시 성공|확정(?:됩니다|이다)|직업으로 확정|진로가 정해)/i.test(unsafeScanText)) return { presentationStatus: 'fallback', presentationStatusReason: 'unsafe_claim' };
   if (language === 'ko' && /산출\s*근거\s*[:：]|계산된\s*사주/i.test(fullText)) return { presentationStatus: 'fallback', presentationStatusReason: 'unsafe_claim' };
   const order = ['year', 'month', 'day', 'hour'];
