@@ -682,11 +682,16 @@ async function generateReportPDF(params) {
           return;
         }
         if (type === 'insight') {
-          writePresentationCard(block.title || '기질을 행동으로 번역하기', [
-            { label: ui.basis, text: block.basis || '' },
-            { label: ui.behavior, text: block.behavior || '' },
-            { label: ui.action, text: block.action || '' },
-          ], ELEMENT_COLORS.wood);
+          // A block may carry its own rows when the generic basis/behavior/action
+          // labels would misdescribe its content (section 5's strength cards).
+          const rows = Array.isArray(block.rows) && block.rows.length
+            ? block.rows.filter((r) => r && r.label && r.text).map((r) => ({ label: r.label, text: r.text }))
+            : [
+              { label: ui.basis, text: block.basis || '' },
+              { label: ui.behavior, text: block.behavior || '' },
+              { label: ui.action, text: block.action || '' },
+            ];
+          writePresentationCard(block.title || '기질을 행동으로 번역하기', rows, ELEMENT_COLORS.wood);
           return;
         }
         if (type === 'translator') {

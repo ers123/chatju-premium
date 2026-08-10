@@ -662,7 +662,18 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
         { number: 2, title: sections[1].title, blocks: s2.map((g, i) => ({ type: 'translator', title: generated.scene(i), looksLike: g[label.s2[0]], actual: g[label.s2[1]], response: g[label.s2[2]] })) },
         { number: 3, title: sections[2].title, blocks: s3.map((g, i) => ({ type: 'insight', title: generated.signature(i), basis: `${generated.inferencePrefix}: ${g[label.s3[1]]}`, behavior: g[label.s3[0]], action: `${g[label.s3[3]]} ${label.s3[2]}: ${g[label.s3[2]]}` })) },
         { number: 4, title: sections[3].title, blocks: s4.map((g, i) => ({ type: 'script', title: generated.script(i), before: `${g[label.s4[0]]} (${g[label.s4[1]]})`, after: g[label.s4[2]], signal: g[label.s4[3]] })) },
-        { number: 5, title: sections[4].title, blocks: s5.map((g, i) => ({ type: 'insight', title: titled5[i].title, basis: `${generated.referencePrefix}: ${g[label.s5[1]]}`, behavior: g[label.s5[0]], action: `${g[label.s5[2]]} / ${generated.careerHint}: ${g[label.s5[3]]}` })) },
+        // Section 5 carries four fields into a three-slot insight block, so the card
+        // was labelling an environment description as "계산된 근거" and gluing the
+        // activity and the career hint together with a slash. basis/behavior/action
+        // stay populated for any renderer that expects them; `rows` gives the PDF the
+        // real labels and a fourth line. (The web renderer keeps its current shape —
+        // it cannot be redeployed right now, see the Pages branch note.)
+        { number: 5, title: sections[4].title, blocks: s5.map((g, i) => ({ type: 'insight', title: titled5[i].title, basis: `${generated.referencePrefix}: ${g[label.s5[1]]}`, behavior: g[label.s5[0]], action: `${g[label.s5[2]]} / ${generated.careerHint}: ${g[label.s5[3]]}`, rows: [
+          { label: label.s5[0], text: g[label.s5[0]] },
+          { label: label.s5[1], text: g[label.s5[1]] },
+          { label: label.s5[2], text: g[label.s5[2]] },
+          { label: label.s5[3], text: g[label.s5[3]] },
+        ] })) },
         { number: 6, title: sections[5].title, blocks: [{ type: 'timeline', title: generated.flow, items: s6.map((g, i) => ({ label: titled6[i].title, text: `${g[label.s6[0]]} ${g[label.s6[1]]} ${g[label.s6[2]]} ${generated.avoid}: ${g[label.s6[3]]}` })) }, text(generated.readingMethod, generated.readingMethodText)] },
         { number: 7, title: sections[6].title, blocks: [{ type: 'checklist', title: generated.smallExperiment, items: s7.map((g, i) => ({ label: generated.day(i), text: `${g[label.s7[0]]} / ${generated.reaction}: ${g[label.s7[1]]} / ${generated.success}: ${g[label.s7[2]]}` })) }] },
         { number: 8, title: sections[7].title, blocks: [{ type: 'checklist', title: generated.remember, items: memory.map((v, i) => ({ label: `${i + 1}`, text: v })) }, { type: 'parenting-card', title: generated.card, stop: stop.join(' '), start: start.join(' '), steps: steps.join(' ') }] },
