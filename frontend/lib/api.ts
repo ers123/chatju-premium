@@ -226,16 +226,19 @@ export const apiClient = {
   /**
    * Get payment by order ID
    */
+  // Backend route is GET /payment/:orderId (payment.routes.js) — not /payment/order/:id.
   getPaymentByOrderId: async (orderId: string): Promise<Payment> => {
-    const response = await api.get<Payment>(`/payment/order/${orderId}`);
+    const response = await api.get<Payment>(`/payment/${orderId}`);
     return response.data;
   },
 
   /**
    * Get all payments for current user (requires authentication)
    */
+  // Backend route is GET /payment/history/me. Calling /payment/history would fall
+  // through to GET /payment/:orderId with orderId="history" and be rejected.
   getUserPayments: async (): Promise<Payment[]> => {
-    const response = await api.get<Payment[]>('/payment/history');
+    const response = await api.get<Payment[]>('/payment/history/me');
     return response.data;
   },
 
