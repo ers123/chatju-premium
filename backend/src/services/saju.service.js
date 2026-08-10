@@ -1630,6 +1630,22 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
     let presentationResult = adapt(interpretationText);
 
+    // Korean bleeding into a non-Korean report. The prompt and the injected
+    // knowledge are both written in Korean, and while every locale normally comes
+    // back at or below 0.01% Hangul, Thai was measured once at 13% — whole
+    // paragraphs of the report body in Korean. That ships to the reader even on the
+    // fallback path, so treat it like a format failure and try again.
+    const HANGUL_LIMIT = Number(process.env.SAJU_HANGUL_LIMIT || 0.005);
+    const hangulRatio = (text) => {
+      const t = String(text || '');
+      if (!t.length) return 0;
+      return ((t.match(/[가-힣]/g) || []).length) / t.length;
+    };
+    const contamination = language === 'ko' ? 0 : hangulRatio(interpretationText);
+    if (contamination > HANGUL_LIMIT) {
+      console.warn(`[Saju Service] Korean contamination ${(contamination * 100).toFixed(1)}% in ${language} report`);
+    }
+
     // A format miss costs the reader the whole editorial layout, so it is worth one
     // more attempt. Only shape problems are retried: unsafe_claim is the safety
     // filter doing its job, and re-rolling until a safety check passes would be
@@ -1640,12 +1656,13 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
       'partial_required_labels',
       'localization_leak',
     ]);
+    const shapeFailed = presentationResult.presentationStatus !== 'ready'
+      && RETRYABLE_FALLBACKS.has(presentationResult.presentationStatusReason);
     if (
-      presentationResult.presentationStatus !== 'ready'
-      && RETRYABLE_FALLBACKS.has(presentationResult.presentationStatusReason)
+      (shapeFailed || contamination > HANGUL_LIMIT)
       && process.env.SAJU_PRESENTATION_RETRY_DISABLED !== '1'
     ) {
-      const firstReason = presentationResult.presentationStatusReason;
+      const firstReason = shapeFailed ? presentationResult.presentationStatusReason : `korean_contamination_${(contamination * 100).toFixed(1)}%`;
       console.warn(`[Saju Service] Presentation fallback (${firstReason}) — retrying generation once`);
       try {
         // Lower temperature on the retry: the first pass already produced usable
@@ -1655,12 +1672,18 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
         if (retry1.content.trim().length >= MIN_HALF_LENGTH && retry2.content.trim().length >= MIN_HALF_LENGTH) {
           const retryPresentation = adapt(retryText);
           totalTokens += (retry1.tokensUsed || 0) + (retry2.tokensUsed || 0);
-          if (retryPresentation.presentationStatus === 'ready') {
-            console.log('[Saju Service] Retry succeeded — presentation ready');
+          const retryContamination = language === 'ko' ? 0 : hangulRatio(retryText);
+          // Both axes matter, so rank on both rather than on readiness alone: a
+          // ready-but-Korean-contaminated report is not an improvement on a clean one.
+          const score = (ready, contam) => (ready ? 2 : 0) + (contam <= HANGUL_LIMIT ? 1 : 0);
+          const firstScore = score(presentationResult.presentationStatus === 'ready', contamination);
+          const retryScore = score(retryPresentation.presentationStatus === 'ready', retryContamination);
+          if (retryScore > firstScore || (retryScore === firstScore && retryContamination < contamination)) {
+            console.log(`[Saju Service] Retry accepted — status=${retryPresentation.presentationStatus} hangul=${(retryContamination * 100).toFixed(2)}%`);
             interpretationText = retryText;
             presentationResult = retryPresentation;
           } else {
-            console.warn(`[Saju Service] Retry still ${retryPresentation.presentationStatusReason} — keeping first result`);
+            console.warn(`[Saju Service] Retry not better (status=${retryPresentation.presentationStatus}, hangul=${(retryContamination * 100).toFixed(2)}%) — keeping first result`);
           }
         } else {
           console.warn('[Saju Service] Retry returned too-short content — keeping first result');

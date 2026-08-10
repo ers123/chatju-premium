@@ -339,7 +339,24 @@ function validateCoverAndOpening(presentation) {
 function parseNumberedSections(fullText) {
   if (!fullText || !fullText.trim()) return [];
 
-  const matches = [...fullText.matchAll(/^#{1,4}\s*(\d+)\.\s*(.+?)\s*$/gm)];
+  const all = [...fullText.matchAll(/^#{1,4}\s*(\d+)\.\s*(.+?)\s*$/gm)];
+
+  // Any heading level is accepted, because providers reach for "#", "##" and "###"
+  // interchangeably — but that also catches numbered *sub*headings. Section 6 lists
+  // the coming months, and a provider writing "### 8. Mes de agosto" underneath it
+  // would otherwise register as section 8, yielding 1,2,3,4,5,6,8,9,10,11,7,8,9 and
+  // discarding an otherwise complete report.
+  //
+  // Keep only the headings that continue the expected 1,2,3,… run. Interlopers are
+  // skipped and stay inside their parent section's content, where they belong.
+  const matches = [];
+  let expected = 1;
+  for (const match of all) {
+    if (Number(match[1]) !== expected) continue;
+    matches.push(match);
+    expected += 1;
+  }
+
   return matches.map((match, index) => {
     const contentStart = match.index + match[0].length;
     const contentEnd = index + 1 < matches.length ? matches[index + 1].index : fullText.length;
@@ -493,7 +510,10 @@ function parseLabelGroups(content, labels) {
   let lastLabel = null;
   const lines = splitInlineLabels(content, labels).split(/\r?\n/);
   lines.forEach((line) => {
-    const match = line.match(/^\s*(?:[-*]\s*)?(?:\*\*([^*]+?)\s*[:：]\*\*|\*\*([^*]+?)\*\*\s*[:：]|([^:*\n]+?)\s*[:：])\s*(.*)$/);
+    // A numbered marker introduces a group just as often as a bullet does
+    // ("1) **Parent behavior change:** …"). Without it the first label of each
+    // group is missed and every group collapses into one.
+    const match = line.match(/^\s*(?:(?:[-*]|\d+[.)])\s*)?(?:\*\*([^*]+?)\s*[:：]\*\*|\*\*([^*]+?)\*\*\s*[:：]|([^:*\n]+?)\s*[:：])\s*(.*)$/);
     const looksLikeStandaloneLabel = isStandaloneMarkdownHeading(line);
     const looksLikeUnknownLabeledHeading = /^\s*(?:[-*]\s*)?\*\*[^*]+?(?:[:：]\*\*|\*\*\s*[:：])/.test(line);
     const appendContinuation = () => {
