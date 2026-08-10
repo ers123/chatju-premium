@@ -431,12 +431,51 @@ function isStandaloneMarkdownHeading(line) {
   return /^(\*\*.+\*\*|\[.+\]|\*\*\[.+\]\*\*)$/.test(cleaned);
 }
 
+const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Put every known label at the start of its own line.
+ *
+ * The group parser is line-oriented, but providers regularly emit a whole group
+ * as one paragraph ("1つ目は、**A:** … **B:** … **C:** …") or lead a label with
+ * prose. Both shapes carry all the required content and only differ in where the
+ * newlines fall, so rather than discard the report we normalise the line breaks
+ * first. Lines whose labels already sit at the start are returned untouched, which
+ * keeps this a no-op for well-formed output.
+ */
+function splitInlineLabels(content, labels) {
+  const known = labels.filter(isNonEmptyString);
+  if (!known.length) return content;
+  // Longest first so "Color" cannot pre-empt a longer label starting with it.
+  const alt = [...known].sort((a, b) => b.length - a.length).map(escapeRe).join('|');
+  const labelRe = new RegExp(`\\*\\*(?:${alt})\\s*[:：]\\*\\*|\\*\\*(?:${alt})\\*\\*\\s*[:：]`, 'g');
+
+  return String(content || '').split(/\r?\n/).map((line) => {
+    const hits = [...line.matchAll(labelRe)];
+    if (!hits.length) return line;
+    // Already well-formed: a single label sitting at the start (after an optional
+    // bullet or list marker) is exactly what the parser expects.
+    const prefix = line.slice(0, hits[0].index);
+    const prefixIsMarkerOnly = /^\s*(?:[-*]|\d+[.)])?\s*$/.test(prefix);
+    if (hits.length === 1 && prefixIsMarkerOnly) return line;
+
+    const pieces = [];
+    if (!prefixIsMarkerOnly) pieces.push(prefix.trimEnd());
+    for (let i = 0; i < hits.length; i += 1) {
+      const start = hits[i].index;
+      const end = i + 1 < hits.length ? hits[i + 1].index : line.length;
+      pieces.push(line.slice(start, end).trimEnd());
+    }
+    return pieces.filter((p) => p.trim()).join('\n');
+  }).join('\n');
+}
+
 function parseLabelGroups(content, labels) {
   const wanted = new Set(labels);
   const groups = [];
   let current = {};
   let lastLabel = null;
-  const lines = String(content || '').split(/\r?\n/);
+  const lines = splitInlineLabels(content, labels).split(/\r?\n/);
   lines.forEach((line) => {
     const match = line.match(/^\s*(?:[-*]\s*)?(?:\*\*([^*]+?)\s*[:：]\*\*|\*\*([^*]+?)\*\*\s*[:：]|([^:*\n]+?)\s*[:：])\s*(.*)$/);
     const looksLikeStandaloneLabel = isStandaloneMarkdownHeading(line);
@@ -485,7 +524,12 @@ function parseTitledGroups(content, expectedCount, labels) {
     }
     return groups;
   }
-  const cardMatches = [...String(content).matchAll(/^\s*(?:[-*]|\d+[.)])\s*(?:\*\*)?\[?([^*\]\n:]+)\]?(?:\*\*)?\s*$/gm)];
+  // A horizontal rule ("---", "***") satisfies the card-title shape, so a trailing
+  // separator would inflate the count past expectedCount and discard the report.
+  // listGroup already drops these; do the same here.
+  const isSeparator = (s) => /^[-*_\s]+$/.test(String(s));
+  const cardMatches = [...String(content).matchAll(/^\s*(?:[-*]|\d+[.)])\s*(?:\*\*)?\[?([^*\]\n:]+)\]?(?:\*\*)?\s*$/gm)]
+    .filter((m) => !isSeparator(m[1]));
   if (cardMatches.length !== expectedCount) return null;
   const groups = [];
   for (let index = 0; index < cardMatches.length; index += 1) {

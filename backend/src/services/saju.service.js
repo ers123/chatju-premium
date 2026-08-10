@@ -1554,22 +1554,28 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
     const call2Start = Date.now();
     console.log('[Saju Service] Call 2/2: Generating sections 6-9...');
 
-    const [result1, result2] = await Promise.all([
+    // Whether a report satisfies the structured contract is partly a matter of luck:
+    // the same prompt and chart can land on ready one run and fallback the next,
+    // purely on where the model puts its line breaks. Keep the two calls callable
+    // more than once so a format miss can be retried instead of shipped.
+    const runBothCalls = (temperature) => Promise.all([
       aiService.generateFortune([
         { role: 'system', content: call1SystemMessage },
         { role: 'user', content: coreDataContext + call1SectionInstructions },
       ], {
         maxTokens: halfTokens,
-        temperature: 0.7,
+        temperature,
       }),
       aiService.generateFortune([
         { role: 'system', content: call2SystemMessage },
         { role: 'user', content: coreDataContext + fortuneDataContext + remedyDataContext + call2SectionInstructions },
       ], {
         maxTokens: halfTokens,
-        temperature: 0.7,
+        temperature,
       }),
     ]);
+
+    const [result1, result2] = await runBothCalls(0.7);
 
     const call1Duration = Date.now() - call1Start;
     const call2Duration = Date.now() - call2Start;
@@ -1588,9 +1594,9 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
     }
 
     // Combine results
-    const interpretationText = result1.content + '\n\n' + result2.content;
+    let interpretationText = result1.content + '\n\n' + result2.content;
     const generatedAt = new Date().toISOString();
-    const totalTokens = (result1.tokensUsed || 0) + (result2.tokensUsed || 0);
+    let totalTokens = (result1.tokensUsed || 0) + (result2.tokensUsed || 0);
 
     console.log('[Saju Service] Premium report generated (2-call split):', {
       length: interpretationText.length,
@@ -1601,15 +1607,60 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
       hasParentData: !!parentManseryeok,
     });
 
-    const parsedSections = parsePremiumSections(interpretationText);
-    const presentationResult = adaptMarkdownToPresentation({
-      fullText: interpretationText,
+    const adapt = (text) => adaptMarkdownToPresentation({
+      fullText: text,
       manseryeok: childManseryeok,
       fortuneCycles,
       childName,
       generatedAt,
       language,
     });
+
+    let presentationResult = adapt(interpretationText);
+
+    // A format miss costs the reader the whole editorial layout, so it is worth one
+    // more attempt. Only shape problems are retried: unsafe_claim is the safety
+    // filter doing its job, and re-rolling until a safety check passes would be
+    // exactly the wrong behaviour. insufficient_calculated_basis is a data problem
+    // that a second generation cannot change.
+    const RETRYABLE_FALLBACKS = new Set([
+      'missing_or_reordered_sections',
+      'partial_required_labels',
+      'localization_leak',
+    ]);
+    if (
+      presentationResult.presentationStatus !== 'ready'
+      && RETRYABLE_FALLBACKS.has(presentationResult.presentationStatusReason)
+      && process.env.SAJU_PRESENTATION_RETRY_DISABLED !== '1'
+    ) {
+      const firstReason = presentationResult.presentationStatusReason;
+      console.warn(`[Saju Service] Presentation fallback (${firstReason}) — retrying generation once`);
+      try {
+        // Lower temperature on the retry: the first pass already produced usable
+        // substance, so the second only needs to land the structure.
+        const [retry1, retry2] = await runBothCalls(0.4);
+        const retryText = `${retry1.content}\n\n${retry2.content}`;
+        if (retry1.content.trim().length >= MIN_HALF_LENGTH && retry2.content.trim().length >= MIN_HALF_LENGTH) {
+          const retryPresentation = adapt(retryText);
+          totalTokens += (retry1.tokensUsed || 0) + (retry2.tokensUsed || 0);
+          if (retryPresentation.presentationStatus === 'ready') {
+            console.log('[Saju Service] Retry succeeded — presentation ready');
+            interpretationText = retryText;
+            presentationResult = retryPresentation;
+          } else {
+            console.warn(`[Saju Service] Retry still ${retryPresentation.presentationStatusReason} — keeping first result`);
+          }
+        } else {
+          console.warn('[Saju Service] Retry returned too-short content — keeping first result');
+        }
+      } catch (retryError) {
+        // The first result is already usable as fallback markdown; never let a
+        // failed retry take down a paid reading.
+        console.error('[Saju Service] Retry failed, keeping first result:', retryError.message);
+      }
+    }
+
+    const parsedSections = parsePremiumSections(interpretationText);
     return mergePresentationResult({
       fullText: interpretationText,
       sections: parsedSections,
