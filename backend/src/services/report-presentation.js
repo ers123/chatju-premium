@@ -481,10 +481,19 @@ function splitInlineLabels(content, labels) {
   if (!known.length) return content;
   // Longest first so "Color" cannot pre-empt a longer label starting with it.
   const alt = [...known].sort((a, b) => b.length - a.length).map(escapeRe).join('|');
-  const labelRe = new RegExp(`\\*\\*(?:${alt})\\s*[:：]\\*\\*|\\*\\*(?:${alt})\\*\\*\\s*[:：]`, 'g');
+  const boldRe = new RegExp(`\\*\\*(?:${alt})\\s*[:：]\\*\\*|\\*\\*(?:${alt})\\*\\*\\s*[:：]`, 'g');
+  // Providers also drop the bold entirely and run a whole group together as prose:
+  // "Parent behavior change: … Expected child response: … Success signal: …".
+  // Plain text is a looser match, so it only earns a split when two or more labels
+  // share the line — one bare label mid-sentence stays untouched.
+  const plainRe = new RegExp(`(?:^|(?<=[\\s.;)”"]))(?:${alt})\\s*[:：]`, 'g');
 
   return String(content || '').split(/\r?\n/).map((line) => {
-    const hits = [...line.matchAll(labelRe)];
+    let hits = [...line.matchAll(boldRe)];
+    if (hits.length < 2) {
+      const plainHits = [...line.matchAll(plainRe)];
+      if (plainHits.length >= 2) hits = plainHits;
+    }
     if (!hits.length) return line;
     // Already well-formed: a single label sitting at the start (after an optional
     // bullet or list marker) is exactly what the parser expects.
