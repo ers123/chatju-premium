@@ -60,7 +60,10 @@ const PRESENTATION_LOCALES = Object.freeze({
       s7: ['부모 행동 변화', '예상되는 아이 반응', '성공 신호'],
       s8: ['이 아이에게 기억할 5가지', '멈출 말 3가지', '시작할 말 3가지', '감정이 높아질 때 3단계'],
       s9: ['색상', '음식', '활동', '핵심 한 문장', '마무리'],
-      s9OptionalSummary: ['요약', '한 줄 요약', '요약 한 문장', '요약(한 문장)', '이 리포트의 핵심 요약(한 문장)'],
+      // Section 9 may close with a summary line the contract does not require. Any
+      // wording we have not listed reads as an unknown label and invalidates the
+      // whole group, so the accepted variants are collected here as we meet them.
+      s9OptionalSummary: ['요약', '한 줄 요약', '요약 한 문장', '요약(한 문장)', '이 리포트의 핵심 요약(한 문장)', '마지막 요약', '마지막 한 문장', '핵심 요약', '한 문장 요약'],
     },
     generated: {
       focus: '이번 달 양육 포커스',
