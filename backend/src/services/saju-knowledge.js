@@ -166,6 +166,8 @@ function buildKnowledgeContext({
   parentManseryeok = null,
   parentRole = null,
   childAge = null,
+  language = 'ko',
+  outputLangName = null,
 } = {}) {
   const pillars = childManseryeok?.pillars;
   if (!pillars?.day?.korean) return { text: '', selected: { reason: 'no_pillars' } };
@@ -409,6 +411,15 @@ function buildKnowledgeContext({
     '※ 용어(십성·합충·십이운성 등)를 그대로 나열하지 말고 반드시',
     '   "보이는 근거 → 관찰되는 행동 → 부모 행동" 순서로 풀어서 쓸 것.',
     '※ 아래에 없는 내용을 지어내지 말 것.',
+    // 이 블록은 한국어로 쓰여 있고 출력 언어는 상위 프롬프트가 정한다. 언어가 가까운
+    // 일본어에서는 모델이 주입된 한국어 낱말을 부모 대사 안에 그대로 섞어 쓰는 일이 있어
+    // (예: 「なんで 말이 없어？」) 비한국어 리포트에는 명시적 금지를 덧붙인다.
+    ...(language === 'ko' ? [] : [
+      `※ This reference block is written in Korean, but the report is written in ${outputLangName || 'the report language'}.`,
+      '   Your output must not contain a single Korean character. Translate every idea here into',
+      `   ${outputLangName || 'the report language'} — including inside quoted parent scripts, month names, and pillar names.`,
+      '   Write pillar names in Chinese characters (丁酉), never in Korean letters (정유).',
+    ]),
     '',
     ...blocks.map((b) => [
       `〈${plain(b.title)}〉`,

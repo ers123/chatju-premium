@@ -28,7 +28,7 @@ test('actual saju router renders runtime-derived ready reading', async () => {
   const res = await request(app).get(`/saju/reading/${readingId}/pdf`).query({ token });
   expect(res.status).toBe(200); expect(res.headers['content-type']).toMatch(/application\/pdf/); expect(res.body.slice(0, 4).toString()).toBe('%PDF');
   const fs = require('fs'); const os = require('os'); const path = require('path'); const p = path.join(os.tmpdir(), `ready-${process.pid}.pdf`); fs.writeFileSync(p, res.body);
-  const { execFileSync } = require('child_process'); expect(execFileSync('pdftotext', ['-layout', p, '-'], { encoding: 'utf8' })).toContain('참고와 마무리');
+  const { execFileSync } = require('child_process'); expect(execFileSync('pdftotext', ['-layout', p, '-'], { encoding: 'utf8' })).toContain('생활 속 밸런스 (참고 사항)');
   expect(capture).toHaveBeenCalledWith(expect.objectContaining({ aiInterpretation: mockReading.ai_interpretation }));
   expect(capture.mock.calls[0][0].aiInterpretation).toEqual(mockReading.ai_interpretation);
   expect(capture.mock.calls[0][0].generatedAt).toBe(mockReading.ai_interpretation.metadata.generatedAt);

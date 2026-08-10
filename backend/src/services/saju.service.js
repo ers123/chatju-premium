@@ -904,13 +904,21 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
 
   // 교재 기반 명리 근거 — 계산된 원국에 실제로 해당하는 조각만 결정론적으로 선별한다.
   // 지식은 한국어로 주입되고 출력 언어는 아래 language 지시가 결정하므로 전 언어에 적용된다.
-  // 언어 허용 목록: 지식은 한국어로 주입되는데, 한국어와 가까운 표기 체계를 쓰는
-  // 언어(특히 일본어)에서는 모델이 주입된 한국어를 그대로 출력에 섞어 쓴다.
-  // 측정 결과 일본어 리포트의 한글 비율이 5.4%(미주입) → 56.1%(주입)로 치솟았다.
-  // 검증된 언어만 켜고, 나머지는 언어별로 검증한 뒤 하나씩 추가한다.
+  // 지식은 한국어로 주입되고 출력 언어는 아래에서 정해진다. 처음에는 일본어가 주입된
+  // 한국어를 그대로 옮겨 적어(한글 비율 최대 56%) 한국어에만 켜 두었으나, 지금은 지식
+  // 블록이 비한국어 리포트에 "한글을 한 글자도 쓰지 말라"는 가드를 함께 싣는다.
+  // 그 상태로 10개 언어를 전부 생성해 확인했다: 일본어 0.15% → 0.01%, 나머지 0%.
+  // 유료 고객이 전부 비한국어이므로 근거 있는 해석은 특히 이쪽에 필요하다.
   const KNOWLEDGE_LANGUAGES = new Set(
-    (process.env.SAJU_KNOWLEDGE_LANGUAGES || 'ko').split(',').map((x) => x.trim()).filter(Boolean)
+    (process.env.SAJU_KNOWLEDGE_LANGUAGES || 'ko,en,ja,zh,vi,id,es,pt,fr,th')
+      .split(',').map((x) => x.trim()).filter(Boolean)
   );
+
+  // 출력 언어 이름은 아래 라벨 계약과 이 지식 블록 양쪽이 쓰므로 먼저 정한다.
+  // (지식 블록보다 뒤에 선언하면 TDZ ReferenceError가 나고, 아래 catch가 그것을 삼켜
+  //  지식 주입이 조용히 꺼진 채로 돌아간다 — 실제로 한 번 그렇게 됐다.)
+  const langNameMap = { ko: 'Korean', en: 'English', ja: 'Japanese', zh: 'Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
+  const outputLangName = langNameMap[language] || 'English';
 
   let knowledgeContext = '';
   try {
@@ -921,6 +929,8 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
       parentManseryeok,
       parentRole,
       childAge,
+      language,
+      outputLangName,
     });
     knowledgeContext = knowledge.text;
     console.log('[Saju Service] Knowledge context selected:', {
@@ -932,8 +942,6 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
     console.error('[Saju Service] Knowledge context build failed, continuing without it:', err.message);
   }
   const premiumLocale = getPremiumPresentationLocale(language);
-  const langNameMap = { ko: 'Korean', en: 'English', ja: 'Japanese', zh: 'Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
-  const outputLangName = langNameMap[language] || 'English';
   const premiumLabels = premiumLocale.labels;
   const exactLabelContract = `
 **Premium structured label contract**
@@ -1252,7 +1260,9 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
 📝 Personalized parenting report (Sections 1-5)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Use the "## N." heading format. Write the section titles naturally in ${outputLangName}, but follow each section's structure exactly.**
+**Use the "## N." heading format and follow each section's structure exactly.**
+
+**The English section names below identify the sections for you — they are NOT text to copy. Write each heading as "## " plus the number, a period, and a title of your own in ${outputLangName}. A ${outputLangName} report must never carry an English section heading.**
 
 **Every bold label below is already written in ${outputLangName}. Reproduce each label exactly as printed here — do not translate it again, do not reword it, do not add parentheses or extra words to it. Write the report body in ${outputLangName}.**
 
@@ -1335,7 +1345,9 @@ Step 3: render as markdown in the required format
 📝 Personalized parenting report (Sections 6-9)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Use the "## N." heading format. Write the section titles naturally in ${outputLangName}, but follow each section's structure exactly.**
+**Use the "## N." heading format and follow each section's structure exactly.**
+
+**The English section names below identify the sections for you — they are NOT text to copy. Write each heading as "## " plus the number, a period, and a title of your own in ${outputLangName}. A ${outputLangName} report must never carry an English section heading.**
 
 **Every bold label and bracketed heading below is already written in ${outputLangName}. Reproduce each one exactly as printed here — do not translate it again, do not reword it, do not add parentheses or extra words to it. Write the report body in ${outputLangName}.**
 

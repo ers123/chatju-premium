@@ -34,6 +34,7 @@ const PRESENTATION_LOCALES = Object.freeze({
     languageName: 'Korean',
     cover: { kicker: 'SoMyung Premium', title: '아이의 속도를 읽는 양육 가이드' },
     opening: { title: '이번 리포트의 사용법', items: ['관찰', '대화', '실험'] },
+    sectionTitles: ['아이 한눈에 보기', '이 아이는 ○○이 아닙니다', '아이의 행동 시그니처', '상황별 대응 플레이북', '숨겨진 강점', '이 시기의 흐름', '7일 양육 실험', '함께 읽는 양육 카드', '생활 속 밸런스 (참고 사항)'],
     ui: {
       compass: '30초 요약',
       basis: '계산된 근거',
@@ -87,6 +88,7 @@ const PRESENTATION_LOCALES = Object.freeze({
     languageName: 'English',
     cover: { kicker: 'SoMyung Premium', title: "A Parenting Guide to Your Child's Pace" },
     opening: { title: 'How to Use This Report', items: ['Observe', 'Talk', 'Experiment'] },
+    sectionTitles: ['At a Glance', 'This Child Is NOT...', 'Behavioral Signatures', 'Situational Playbook', 'Hidden Strengths', 'The Current Flow', '7-Day Parenting Experiment', 'Parenting Card to Share', 'Everyday Balance (reference)'],
     ui: { compass: '30 second compass', basis: 'Calculated basis', behavior: 'Signal to observe', action: 'Parent action', looksLike: 'Looks like', actual: 'Actually', response: 'Better wording', before: 'Old wording', after: 'Better wording', signal: 'Improvement signal', stop: 'Words to stop', start: 'Words to start', steps: 'When emotions rise' },
     labels: {
       s1: ['Most common misunderstanding', 'What helps most', 'Words to avoid', 'Effective words', 'Parenting focus this month'],
@@ -106,6 +108,7 @@ const PRESENTATION_LOCALES = Object.freeze({
     languageName: 'Japanese',
     cover: { kicker: 'SoMyung Premium', title: '子どものペースを読む子育てガイド' },
     opening: { title: 'このレポートの使い方', items: ['観察', '対話', '実験'] },
+    sectionTitles: ['この子をひと目で', 'この子は○○ではありません', 'この子の行動シグネチャー', '場面別の対応プレイブック', '隠れた強み', '今の時期の流れ', '7日間の子育て実験', 'いっしょに読む子育てカード', '暮らしの中のバランス（参考）'],
     ui: { compass: '30秒サマリー', basis: '算出された根拠', behavior: '観察するサイン', action: '親の行動', looksLike: '表面上は', actual: '実際には', response: '言い換える言葉', before: 'これまでの言葉', after: '言い換える言葉', signal: '改善のサイン', stop: 'やめる言葉', start: '始める言葉', steps: '感情が高まる時' },
     labels: {
       s1: ['最もよくある誤解', '最も助けになること', '避ける言葉', '効果的な言葉', '今月の子育てフォーカス'],
@@ -125,6 +128,7 @@ const PRESENTATION_LOCALES = Object.freeze({
     languageName: 'Chinese',
     cover: { kicker: 'SoMyung Premium', title: '读懂孩子节奏的养育指南' },
     opening: { title: '如何使用这份报告', items: ['观察', '对话', '实验'] },
+    sectionTitles: ['一眼看懂孩子', '这个孩子不是○○', '孩子的行为特征', '情境应对手册', '隐藏的优势', '这个时期的流向', '7天养育实验', '一起阅读的养育卡片', '生活中的平衡（参考）'],
     ui: { compass: '30秒摘要', basis: '计算依据', behavior: '可观察信号', action: '父母行动', looksLike: '表面看起来', actual: '实际上', response: '更好的说法', before: '原来的话', after: '更好的说法', signal: '改善信号', stop: '停止说的话', start: '开始说的话', steps: '情绪升高时' },
     labels: {
       s1: ['最常见的误解', '最有帮助的事', '应避免的话', '有效的话', '本月养育重点'],
@@ -147,43 +151,49 @@ const LATIN_LOCALE_OVERRIDES = Object.freeze({
     languageName: 'Vietnamese',
     cover: { title: 'Hướng dẫn nuôi dạy theo nhịp độ của trẻ' },
     opening: { title: 'Cách dùng báo cáo này', items: ['Quan sát', 'Trò chuyện', 'Thử nghiệm'] },
+    sectionTitles: ['Nhìn nhanh về con', 'Con bạn KHÔNG phải là...', 'Dấu ấn hành vi của trẻ', 'Kịch bản ứng xử theo tình huống', 'Điểm mạnh tiềm ẩn', 'Dòng chảy giai đoạn này', 'Thử nghiệm nuôi dạy 7 ngày', 'Thẻ nuôi dạy cùng đọc', 'Cân bằng trong đời sống (tham khảo)'],
     ui: { compass: 'Tóm tắt 30 giây', basis: 'Cơ sở tính toán', behavior: 'Tín hiệu cần quan sát', action: 'Hành động của cha mẹ', looksLike: 'Bề ngoài', actual: 'Thực ra', response: 'Cách nói tốt hơn', before: 'Cách nói cũ', after: 'Cách nói tốt hơn', signal: 'Dấu hiệu cải thiện', stop: 'Lời nên dừng', start: 'Lời nên bắt đầu', steps: 'Khi cảm xúc tăng cao' },
-    generated: { focus: 'Trọng tâm nuôi dạy tháng này', flow: 'Dòng tham khảo giai đoạn này', readingMethod: 'Cách đọc', readingMethodText: 'Đây không phải là dự đoán cố định tương lai, mà là đường tham khảo để quan sát.', smallExperiment: 'Thử nghiệm nhỏ', remember: 'Lời cần nhớ', card: 'Thẻ nuôi dạy để giữ bên cạnh', ideas: 'Gợi ý tham khảo tùy chọn', close: 'Phương pháp và giới hạn' },
+    generated: { focus: 'Trọng tâm nuôi dạy tháng này', scene: (i) => `Tình huống hiểu lầm ${i + 1}`, signature: (i) => `Dấu ấn hành vi ${i + 1}`, inferencePrefix: 'Suy luận', script: (i) => `Kịch bản trò chuyện ${i + 1}`, referencePrefix: 'Tham khảo', careerHint: 'Gợi ý hướng nghề nghiệp', flow: 'Dòng tham khảo giai đoạn này', avoid: 'Điều nên tránh', readingMethod: 'Cách đọc', readingMethodText: 'Đây không phải là dự đoán cố định tương lai, mà là đường tham khảo để quan sát.', smallExperiment: 'Thử nghiệm nhỏ', reaction: 'Phản ứng', success: 'Thành công', day: (i) => `Ngày ${i + 1}`, remember: 'Lời cần nhớ', card: 'Thẻ nuôi dạy để giữ bên cạnh', ideas: 'Gợi ý tham khảo tùy chọn', close: 'Phương pháp và giới hạn' },
   },
   id: {
     languageName: 'Indonesian',
     cover: { title: 'Panduan Membaca Ritme Anak' },
     opening: { title: 'Cara Menggunakan Laporan Ini', items: ['Amati', 'Bicarakan', 'Coba'] },
+    sectionTitles: ['Sekilas tentang Anak', 'Anak Ini BUKAN...', 'Tanda Khas Perilaku Anak', 'Panduan Respons per Situasi', 'Kekuatan Tersembunyi', 'Arus Periode Ini', 'Eksperimen Pengasuhan 7 Hari', 'Kartu Pengasuhan untuk Dibaca Bersama', 'Keseimbangan Sehari-hari (referensi)'],
     ui: { compass: 'Ringkasan 30 detik', basis: 'Dasar perhitungan', behavior: 'Sinyal yang diamati', action: 'Tindakan orang tua', looksLike: 'Terlihat seperti', actual: 'Sebenarnya', response: 'Ucapan yang lebih baik', before: 'Ucapan lama', after: 'Ucapan yang lebih baik', signal: 'Tanda membaik', stop: 'Kata yang dihentikan', start: 'Kata yang dimulai', steps: 'Saat emosi naik' },
-    generated: { focus: 'Fokus pengasuhan bulan ini', flow: 'Alur referensi periode ini', readingMethod: 'Cara membaca', readingMethodText: 'Ini bukan ramalan yang menetapkan masa depan, melainkan garis referensi untuk observasi.', smallExperiment: 'Eksperimen kecil', remember: 'Kata untuk diingat', card: 'Kartu pengasuhan untuk disimpan', ideas: 'Ide referensi opsional', close: 'Metode dan batasan' },
+    generated: { focus: 'Fokus pengasuhan bulan ini', scene: (i) => `Adegan salah paham ${i + 1}`, signature: (i) => `Tanda khas perilaku ${i + 1}`, inferencePrefix: 'Perkiraan', script: (i) => `Skrip percakapan ${i + 1}`, referencePrefix: 'Referensi', careerHint: 'Petunjuk arah karier', flow: 'Alur referensi periode ini', avoid: 'Yang perlu dihindari', readingMethod: 'Cara membaca', readingMethodText: 'Ini bukan ramalan yang menetapkan masa depan, melainkan garis referensi untuk observasi.', smallExperiment: 'Eksperimen kecil', reaction: 'Respons', success: 'Keberhasilan', day: (i) => `Hari ${i + 1}`, remember: 'Kata untuk diingat', card: 'Kartu pengasuhan untuk disimpan', ideas: 'Ide referensi opsional', close: 'Metode dan batasan' },
   },
   es: {
     languageName: 'Spanish',
     cover: { title: 'Guía para leer el ritmo de tu hijo' },
     opening: { title: 'Cómo usar este informe', items: ['Observar', 'Conversar', 'Experimentar'] },
+    sectionTitles: ['Tu hijo de un vistazo', 'Tu hijo NO es...', 'Sus patrones de conducta', 'Guía práctica por situación', 'Fortalezas ocultas', 'La corriente de esta etapa', 'Experimento de crianza de 7 días', 'Tarjeta de crianza para compartir', 'Equilibrio cotidiano (referencia)'],
     ui: { compass: 'Resumen de 30 segundos', basis: 'Base calculada', behavior: 'Señal a observar', action: 'Acción de los padres', looksLike: 'Parece', actual: 'En realidad', response: 'Mejor frase', before: 'Frase anterior', after: 'Mejor frase', signal: 'Señal de mejora', stop: 'Frases a detener', start: 'Frases a iniciar', steps: 'Cuando sube la emoción' },
-    generated: { focus: 'Foco de crianza de este mes', flow: 'Flujo de referencia de este periodo', readingMethod: 'Cómo leerlo', readingMethodText: 'No es una predicción que fija el futuro, sino una línea de referencia para observar.', smallExperiment: 'Pequeño experimento', remember: 'Frases para recordar', card: 'Tarjeta de crianza para tener cerca', ideas: 'Ideas opcionales de referencia', close: 'Método y límites' },
+    generated: { focus: 'Foco de crianza de este mes', scene: (i) => `Escena de malentendido ${i + 1}`, signature: (i) => `Patrón de conducta ${i + 1}`, inferencePrefix: 'Inferencia', script: (i) => `Guion de conversación ${i + 1}`, referencePrefix: 'Referencia', careerHint: 'Pista de orientación profesional', flow: 'Flujo de referencia de este periodo', avoid: 'Lo que conviene evitar', readingMethod: 'Cómo leerlo', readingMethodText: 'No es una predicción que fija el futuro, sino una línea de referencia para observar.', smallExperiment: 'Pequeño experimento', reaction: 'Respuesta', success: 'Éxito', day: (i) => `Día ${i + 1}`, remember: 'Frases para recordar', card: 'Tarjeta de crianza para tener cerca', ideas: 'Ideas opcionales de referencia', close: 'Método y límites' },
   },
   pt: {
     languageName: 'Portuguese',
     cover: { title: 'Guia para ler o ritmo da criança' },
     opening: { title: 'Como usar este relatório', items: ['Observar', 'Conversar', 'Experimentar'] },
+    sectionTitles: ['A criança num relance', 'Esta criança NÃO é...', 'Padrões de comportamento', 'Guia prático por situação', 'Forças escondidas', 'A corrente desta fase', 'Experimento parental de 7 dias', 'Cartão parental para compartilhar', 'Equilíbrio do dia a dia (referência)'],
     ui: { compass: 'Resumo de 30 segundos', basis: 'Base calculada', behavior: 'Sinal a observar', action: 'Ação dos pais', looksLike: 'Parece', actual: 'Na prática', response: 'Melhor fala', before: 'Fala antiga', after: 'Melhor fala', signal: 'Sinal de melhora', stop: 'Falas a parar', start: 'Falas a começar', steps: 'Quando a emoção sobe' },
-    generated: { focus: 'Foco parental deste mês', flow: 'Fluxo de referência deste período', readingMethod: 'Como ler', readingMethodText: 'Isto não é uma previsão que fixa o futuro, mas uma linha de referência para observação.', smallExperiment: 'Pequeno experimento', remember: 'Frases para lembrar', card: 'Cartão parental para manter por perto', ideas: 'Ideias opcionais de referência', close: 'Método e limites' },
+    generated: { focus: 'Foco parental deste mês', scene: (i) => `Cena de mal-entendido ${i + 1}`, signature: (i) => `Padrão de comportamento ${i + 1}`, inferencePrefix: 'Inferência', script: (i) => `Roteiro de conversa ${i + 1}`, referencePrefix: 'Referência', careerHint: 'Pista de direção profissional', flow: 'Fluxo de referência deste período', avoid: 'O que evitar', readingMethod: 'Como ler', readingMethodText: 'Isto não é uma previsão que fixa o futuro, mas uma linha de referência para observação.', smallExperiment: 'Pequeno experimento', reaction: 'Resposta', success: 'Sucesso', day: (i) => `Dia ${i + 1}`, remember: 'Frases para lembrar', card: 'Cartão parental para manter por perto', ideas: 'Ideias opcionais de referência', close: 'Método e limites' },
   },
   fr: {
     languageName: 'French',
     cover: { title: "Guide pour lire le rythme de l'enfant" },
     opening: { title: 'Comment utiliser ce rapport', items: ['Observer', 'Parler', 'Expérimenter'] },
+    sectionTitles: ["L'enfant en un coup d'œil", "Cet enfant n'est PAS...", 'Signatures de comportement', 'Scénarios selon la situation', 'Forces cachées', 'Le courant de cette période', 'Expérience parentale de 7 jours', 'Carte parentale à partager', 'Équilibre au quotidien (à titre indicatif)'],
     ui: { compass: 'Résumé en 30 secondes', basis: 'Base calculée', behavior: 'Signal à observer', action: 'Action parentale', looksLike: 'En apparence', actual: 'En réalité', response: 'Meilleure formulation', before: 'Ancienne phrase', after: 'Meilleure formulation', signal: "Signal d'amélioration", stop: 'Phrases à arrêter', start: 'Phrases à commencer', steps: "Quand l'émotion monte" },
-    generated: { focus: 'Priorité parentale du mois', flow: 'Repère pour cette période', readingMethod: 'Comment le lire', readingMethodText: "Ce n'est pas une prédiction qui fixe l'avenir, mais un repère d'observation.", smallExperiment: 'Petite expérience', remember: 'Phrases à retenir', card: 'Carte parentale à garder près de soi', ideas: 'Idées de référence optionnelles', close: 'Méthode et limites' },
+    generated: { focus: 'Priorité parentale du mois', scene: (i) => `Scène de malentendu ${i + 1}`, signature: (i) => `Signature de comportement ${i + 1}`, inferencePrefix: 'Déduction', script: (i) => `Script de conversation ${i + 1}`, referencePrefix: 'Repère', careerHint: "Indice d'orientation professionnelle", flow: 'Repère pour cette période', avoid: "Ce qu'il faut éviter", readingMethod: 'Comment le lire', readingMethodText: "Ce n'est pas une prédiction qui fixe l'avenir, mais un repère d'observation.", smallExperiment: 'Petite expérience', reaction: 'Réaction', success: 'Réussite', day: (i) => `Jour ${i + 1}`, remember: 'Phrases à retenir', card: 'Carte parentale à garder près de soi', ideas: 'Idées de référence optionnelles', close: 'Méthode et limites' },
   },
   th: {
     languageName: 'Thai',
     cover: { title: 'คู่มืออ่านจังหวะของลูก' },
     opening: { title: 'วิธีใช้รายงานนี้', items: ['สังเกต', 'พูดคุย', 'ทดลอง'] },
+    sectionTitles: ['มองลูกในภาพรวม', 'ลูกของคุณไม่ใช่○○', 'สัญญาณพฤติกรรมของลูก', 'คู่มือรับมือตามสถานการณ์', 'จุดแข็งที่ซ่อนอยู่', 'กระแสของช่วงเวลานี้', 'การทดลองเลี้ยงดู 7 วัน', 'การ์ดเลี้ยงดูที่อ่านด้วยกัน', 'สมดุลในชีวิตประจำวัน (ข้อมูลอ้างอิง)'],
     ui: { compass: 'สรุป 30 วินาที', basis: 'ฐานการคำนวณ', behavior: 'สัญญาณที่ควรสังเกต', action: 'การกระทำของพ่อแม่', looksLike: 'ดูเหมือนว่า', actual: 'จริง ๆ แล้ว', response: 'คำพูดที่ดีกว่า', before: 'คำพูดเดิม', after: 'คำพูดที่ดีกว่า', signal: 'สัญญาณที่ดีขึ้น', stop: 'คำพูดที่ควรหยุด', start: 'คำพูดที่ควรเริ่ม', steps: 'เมื่ออารมณ์สูงขึ้น' },
-    generated: { focus: 'จุดเน้นการเลี้ยงดูเดือนนี้', flow: 'แนวโน้มอ้างอิงช่วงนี้', readingMethod: 'วิธีอ่าน', readingMethodText: 'นี่ไม่ใช่คำทำนายที่กำหนดอนาคต แต่เป็นแนวอ้างอิงสำหรับการสังเกต', smallExperiment: 'การทดลองเล็ก ๆ', remember: 'คำที่ควรจำ', card: 'การ์ดเลี้ยงดูที่เก็บไว้ใกล้ตัว', ideas: 'ไอเดียอ้างอิงเสริม', close: 'วิธีการและข้อจำกัด' },
+    generated: { focus: 'จุดเน้นการเลี้ยงดูเดือนนี้', scene: (i) => `ฉากคลี่คลายความเข้าใจผิด ${i + 1}`, signature: (i) => `สัญญาณพฤติกรรม ${i + 1}`, inferencePrefix: 'การอนุมาน', script: (i) => `บทสนทนา ${i + 1}`, referencePrefix: 'อ้างอิง', careerHint: 'คำใบ้ทิศทางอาชีพ', flow: 'แนวโน้มอ้างอิงช่วงนี้', avoid: 'สิ่งที่ควรหลีกเลี่ยง', readingMethod: 'วิธีอ่าน', readingMethodText: 'นี่ไม่ใช่คำทำนายที่กำหนดอนาคต แต่เป็นแนวอ้างอิงสำหรับการสังเกต', smallExperiment: 'การทดลองเล็ก ๆ', reaction: 'ปฏิกิริยา', success: 'ความสำเร็จ', day: (i) => `วันที่ ${i + 1}`, remember: 'คำที่ควรจำ', card: 'การ์ดเลี้ยงดูที่เก็บไว้ใกล้ตัว', ideas: 'ไอเดียอ้างอิงเสริม', close: 'วิธีการและข้อจำกัด' },
   },
 });
 
@@ -347,9 +357,15 @@ function normalizePresentation(presentation) {
 
   validateCoverAndOpening(presentation);
 
-  const sections = presentation.sections.map((section) => ({
+  // Section titles are not taken from the model: it does not honour the "write the
+  // headings in the report language" instruction and leaks English into every
+  // non-English report. The locale bundle owns them, and sections are validated
+  // just below to be exactly 1..9 in order, so index i is section i + 1. The
+  // model's title is only a fallback for a locale that has no title at that index.
+  const localeSectionTitles = (presentation.locale && getPremiumPresentationLocale(presentation.locale).sectionTitles) || [];
+  const sections = presentation.sections.map((section, index) => ({
     number: Number(section.number),
-    title: String(section.title || '').trim(),
+    title: String(localeSectionTitles[index] || section.title || '').trim(),
     blocks: Array.isArray(section.blocks) ? section.blocks : [],
     startOnNewPage: section.startOnNewPage !== false,
   }));
