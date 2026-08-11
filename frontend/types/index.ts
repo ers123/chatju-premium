@@ -6,11 +6,13 @@
 // User & Authentication Types
 // ---------------------------------------------
 
+export type SupportedLanguage = 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id' | 'es' | 'pt' | 'fr' | 'th';
+
 export interface User {
   id: string;
   email: string;
   full_name?: string;
-  language_preference?: 'ko' | 'en';
+  language_preference?: SupportedLanguage;
   created_at: string;
   updated_at: string;
 }
@@ -44,8 +46,9 @@ export interface BirthInfo {
   birthTime?: string; // HH:MM format (24-hour)
   gender: 'male' | 'female';
   isLunar?: boolean; // true for lunar calendar
+  isLeapMonth?: boolean; // true for lunar leap month
   timezone?: string; // e.g., 'Asia/Seoul'
-  language?: 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id' | 'es' | 'pt' | 'fr' | 'th';
+  language?: SupportedLanguage;
   // Location for True Solar Time (진태양시) correction
   birthPlace?: string; // City name (e.g., '서울', 'sydney')
   latitude?: number; // Direct latitude (-90 to 90)
@@ -55,6 +58,8 @@ export interface BirthInfo {
   parentBirthTime?: string; // Parent's birth time
   parentRole?: 'mother' | 'father'; // Which parent
   parentGender?: 'M' | 'F'; // Parent's gender
+  parentIsLunar?: boolean; // true if parent's birth date is lunar
+  parentIsLeapMonth?: boolean; // true if parent's lunar month is leap month
   // Twin information
   twinOrder?: 1 | 2; // 1 = first born, 2 = second born
   twinSiblingName?: string; // Twin sibling's name
@@ -173,13 +178,13 @@ export interface SajuReading {
   id: string;
   readingId?: string;
   reportAccessToken?: string;
-  user_id: string;
+  user_id: string | null;
   order_id: string;
   birth_date: string;
   birth_time?: string;
   gender: 'male' | 'female';
   timezone: string;
-  language: 'ko' | 'en';
+  language: SupportedLanguage;
   manseryeok_result: ManseryeokResult;
   ai_interpretation: AIInterpretation;
   interpretation?: string;
@@ -196,7 +201,7 @@ export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 export interface Payment {
   id: string;
-  user_id: string;
+  user_id: string | null;
   order_id: string;
   amount: number;
   currency: 'KRW' | 'USD';
@@ -209,9 +214,12 @@ export interface Payment {
 }
 
 export interface PayPalPaymentRequest {
-  amount: number;
+  amount?: number;
+  currency?: string; // Display-consistency check; server price is authoritative
   description: string; // e.g., "Premium Fortune Reading"
   email?: string; // For receipt and PDF delivery
+  /** Server catalog id (backend products.js); selects a fixed-price product */
+  product_type?: string;
 }
 
 export interface PayPalPaymentResponse {
@@ -354,7 +362,7 @@ export interface BirthInfoFormData {
   timeUnknown: boolean;
   gender: 'male' | 'female';
   timezone: string;
-  language: 'ko' | 'en' | 'ja' | 'zh' | 'vi' | 'id' | 'es' | 'pt' | 'fr' | 'th';
+  language: SupportedLanguage;
   birthPlace?: string;
   isTwin?: boolean;
   twinOrder?: 1 | 2;

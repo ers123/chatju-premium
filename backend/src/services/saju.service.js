@@ -5,10 +5,52 @@ const { getAIService } = require('./ai.service');
 const { supabaseAdmin, handleSupabaseError } = require('../config/supabase');
 const { calculateFullFortuneCycles } = require('./daeun.service');
 const { calculateMansae } = require('../utils/mansae-wrapper');
-const { createAccessToken } = require('../utils/accessToken');
+const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
+const { assertPaymentMatchesProduct } = require('./payment.service');
+const { buildMultipleBirthSection } = require('../utils/multiple-birth');
+const { adaptMarkdownToPresentation, mergePresentationResult, getPremiumPresentationLocale } = require('./report-presentation');
+const { buildKnowledgeContext } = require('./saju-knowledge');
+const { getLocalizedRemedies, elementLabel } = require('../data/saju-knowledge/element-remedies-i18n');
+
+// Stand-in for the child's nickname when the parent did not give one. Localized,
+// because it is printed on the report cover — an English report should not say 아이.
+const DEFAULT_CHILD_NAME = Object.freeze({
+  ko: '아이', en: 'Your child', ja: 'お子さま', zh: '孩子', vi: 'Con bạn',
+  id: 'Anak Anda', es: 'Tu hijo', pt: 'Seu filho', fr: 'Votre enfant', th: 'ลูกของคุณ',
+});
+const getDefaultChildName = (language) => DEFAULT_CHILD_NAME[language] || DEFAULT_CHILD_NAME.en;
+
+/**
+ * Make quotation marks consistent within one report.
+ *
+ * The model mixes conventions inside a single French report — « … » in one line
+ * and “ … ” in the next — which reads to a French parent as a document that was
+ * run through a translator. Asking for it in the prompt is unreliable (the same
+ * approach failed repeatedly for labels and pillar names), so normalise after
+ * generation, where the result is deterministic.
+ *
+ * French only for now: it is the locale where the inconsistency was actually
+ * observed. Spanish and Portuguese also admit guillemets but accept curly quotes,
+ * and CJK has its own brackets — none of those were verified against real output,
+ * and guessing would risk replacing a correct convention with a wrong one.
+ */
+const NBSP = ' ';
+function normalizeQuotes(text, language) {
+  if (language !== 'fr' || !text) return text;
+  // Curly or straight double quotes → guillemets, with the non-breaking spaces
+  // French typography puts inside them. The lazy match keeps a quoted phrase from
+  // swallowing the rest of the paragraph, and the newline guard stops a stray
+  // opening quote from pairing across lines.
+  return text.replace(/[“"]([^“”"\n]{1,400}?)[”"]/g, (_m, inner) => `«${NBSP}${inner.trim()}${NBSP}»`);
+}
 
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
+
+// Lambda timeout is 60s (serverless.yml). Past this much elapsed time the
+// report email is sent without its PDF attachment, so a slow AI call costs the
+// attachment rather than the whole delivery.
+const EMAIL_PDF_BUDGET_MS = Number(process.env.EMAIL_PDF_BUDGET_MS || 40000);
 
 /**
  * Generate FREE Saju preview/teaser (no authentication required)
@@ -27,6 +69,8 @@ async function generateSajuPreview(params) {
     birthDate,
     birthTime = null,
     gender,
+    isLunar = false,
+    isLeapMonth = false,
     timezone = 'Asia/Seoul',
     language = 'ko',
     // Location for solar time correction
@@ -49,12 +93,18 @@ async function generateSajuPreview(params) {
     // Convert gender format (male/female → 남/여)
     const genderKorean = gender === 'male' ? '남' : '여';
 
-    // Calculate with time or without
-    const timeToUse = birthTime || '12:00'; // Default to noon if no time
+    // Calculate with time or without. When birth time is unknown we still use a
+    // noon anchor for date-boundary math, but the hour pillar is OMITTED (not fabricated).
+    const hourUnknown = !birthTime;
+    const timeToUse = birthTime || '12:00';
     const locationOptions = {};
     if (birthPlace) locationOptions.birthPlace = birthPlace;
     if (latitude != null) locationOptions.latitude = latitude;
     if (longitude != null) locationOptions.longitude = longitude;
+    locationOptions.isLunar = isLunar === true;
+    locationOptions.isLeapMonth = isLeapMonth === true;
+    locationOptions.timezone = timezone; // IANA tz (or UTC offset) of the birth wall-clock
+    locationOptions.hourUnknown = hourUnknown;
 
     const childManseryeok = calculateMansae(birthDate, timeToUse, genderKorean, locationOptions);
 
@@ -74,7 +124,7 @@ async function generateSajuPreview(params) {
     // Step 2: Calculate fortune cycles (대운/세운) - Premium feature
     const fortuneCycles = calculateFullFortuneCycles(
       childManseryeok,
-      birthDate,
+      childManseryeok.input?.solarDate || birthDate,
       genderKorean,
       new Date().getFullYear()
     );
@@ -112,6 +162,9 @@ async function generateSajuPreview(params) {
       hasParentAnalysis: !!parentManseryeok,
       metadata: {
         birthDate,
+        solarDate: childManseryeok.input?.solarDate || null,
+        isLunar: isLunar === true,
+        isLeapMonth: isLeapMonth === true,
         birthTime,
         gender,
         language,
@@ -145,9 +198,12 @@ async function generateSajuReading(params) {
   const {
     userId = null,
     orderId = null,
+    paymentAccessToken = null,
     birthDate,
     birthTime = null,
     gender,
+    isLunar = false,
+    isLeapMonth = false,
     timezone = 'Asia/Seoul',
     language = 'ko',
     subjectName = null,
@@ -163,7 +219,15 @@ async function generateSajuReading(params) {
     promoCodeId = null,
     deliveryEmail = null,
     skipPaymentCheck = false,
+    // PIPA/GDPR proof of consent (normalized by route layer)
+    consent = null,
+    // Per-transaction claim key hash (sha256 of raw client secret) — never store raw key
+    claimKeyHash = null,
   } = params;
+
+  // Wall clock for this invocation. Used to decide whether there is still
+  // budget to render the PDF attachment before the Lambda's 60s hard stop.
+  const invocationStart = Date.now();
 
   try {
     console.log('[Saju Service] Starting reading generation:', {
@@ -175,12 +239,24 @@ async function generateSajuReading(params) {
     // Step 1: Verify payment (skip for promo code flow)
     let payment = null;
     if (!skipPaymentCheck) {
-      const { data: paymentData, error: paymentError } = await supabaseAdmin
+      let paymentQuery = supabaseAdmin
         .from('payments')
         .select('*')
-        .eq('order_id', orderId)
-        .eq('user_id', userId)
-        .single();
+        .eq('order_id', orderId);
+
+      if (userId) {
+        paymentQuery = paymentQuery.eq('user_id', userId);
+      } else {
+        const tokenPayload = verifyAccessToken(paymentAccessToken, {
+          purpose: 'payment',
+          orderId,
+        });
+        paymentQuery = paymentQuery
+          .eq('id', tokenPayload.paymentId)
+          .eq('payment_key', tokenPayload.paypalOrderId);
+      }
+
+      const { data: paymentData, error: paymentError } = await paymentQuery.single();
 
       if (paymentError) {
         throw handleSupabaseError(paymentError) || new Error('Payment not found');
@@ -189,8 +265,14 @@ async function generateSajuReading(params) {
       if (paymentData.status !== 'completed') {
         throw new Error(`Payment not completed. Current status: ${paymentData.status}`);
       }
+      // Validate against the product this payment was created for (multi-currency
+      // catalog) — defaulting to premium_saju would reject every non-USD payment.
+      assertPaymentMatchesProduct(paymentData, paymentData.metadata?.product_type);
 
-      payment = paymentData;
+      payment = {
+        ...paymentData,
+        product_type: paymentData.metadata?.product_type || 'premium_saju',
+      };
       console.log('[Saju Service] Payment verified:', payment.product_type);
     } else {
       console.log('[Saju Service] Skipping payment check (promo flow)');
@@ -200,12 +282,19 @@ async function generateSajuReading(params) {
     // Convert gender format (male/female → 남/여)
     const genderKorean = gender === 'male' ? '남' : '여';
 
-    // Calculate with time or without — with solar time correction
-    const timeToUse = birthTime || '12:00'; // Default to noon if no time
+    // Calculate with time or without — with solar time correction. When birth time
+    // is unknown we still use a noon anchor for date-boundary math, but the hour
+    // pillar is OMITTED (not fabricated).
+    const hourUnknown = !birthTime;
+    const timeToUse = birthTime || '12:00';
     const locationOptions = {};
     if (birthPlace) locationOptions.birthPlace = birthPlace;
     if (latitude != null) locationOptions.latitude = latitude;
     if (longitude != null) locationOptions.longitude = longitude;
+    locationOptions.isLunar = isLunar === true;
+    locationOptions.isLeapMonth = isLeapMonth === true;
+    locationOptions.timezone = timezone; // IANA tz (or UTC offset) of the birth wall-clock
+    locationOptions.hourUnknown = hourUnknown;
 
     const manseryeokResult = calculateMansae(birthDate, timeToUse, genderKorean, locationOptions);
 
@@ -222,13 +311,13 @@ async function generateSajuReading(params) {
       year: manseryeokResult.pillars.year.korean,
       month: manseryeokResult.pillars.month.korean,
       day: manseryeokResult.pillars.day.korean,
-      hour: manseryeokResult.pillars.hour.korean,
+      hour: manseryeokResult.pillars.hour?.korean || '(unknown)',
     });
 
     // Step 3: Calculate fortune cycles (대운/세운) - Full Premium version
     const fortuneCycles = calculateFullFortuneCycles(
       manseryeokResult,
-      birthDate,
+      manseryeokResult.input?.solarDate || birthDate,
       genderKorean,
       new Date().getFullYear()
     );
@@ -248,7 +337,8 @@ async function generateSajuReading(params) {
       payment ? payment.product_type : 'premium_saju',
       birthTime === null, // indicate if time is unknown
       fortuneCycles,
-      twinInfo
+      twinInfo,
+      subjectName
     );
 
     console.log('[Saju Service] AI interpretation generated');
@@ -276,12 +366,42 @@ async function generateSajuReading(params) {
     if (payment) readingRow.payment_id = payment.id;
     if (promoCodeId) readingRow.promo_code_id = promoCodeId;
     if (deliveryEmail) readingRow.delivery_email = deliveryEmail.toLowerCase().trim();
+    // PIPA/GDPR proof of consent — stored with the reading row
+    if (consent) readingRow.consent = consent;
+    // Per-transaction claim key hash — possession of raw secret authorizes in-flow polling
+    if (claimKeyHash) readingRow.claim_key_hash = claimKeyHash;
 
-    const { data: reading, error: insertError } = await supabaseAdmin
+    let { data: reading, error: insertError } = await supabaseAdmin
       .from('readings')
       .insert([readingRow])
       .select()
       .single();
+
+    // Fallback: if the readings.consent column doesn't exist yet (migration not run),
+    // embed consent inside the saju_data JSONB so proof of consent is never dropped.
+    // TODO: run migrations/003_security_otp_consent.sql, then this fallback is dead code.
+    if (insertError && consent && /consent/i.test(insertError.message || '')) {
+      console.warn('[Saju Service] readings.consent column missing — embedding consent in saju_data. Run migrations/003_security_otp_consent.sql');
+      const fallbackRow = { ...readingRow, saju_data: { ...completeReadingData, _consent: consent } };
+      delete fallbackRow.consent;
+      ({ data: reading, error: insertError } = await supabaseAdmin
+        .from('readings')
+        .insert([fallbackRow])
+        .select()
+        .single());
+    }
+
+    // Fallback: if claim_key_hash column doesn't exist yet (migration 004 not run), drop it and retry.
+    if (insertError && claimKeyHash && /claim_key_hash/i.test(insertError.message || '')) {
+      console.warn('[Saju Service] readings.claim_key_hash column missing — dropping field and retrying. Run migrations/004_claim_key.sql');
+      const fallbackRow = { ...readingRow };
+      delete fallbackRow.claim_key_hash;
+      ({ data: reading, error: insertError } = await supabaseAdmin
+        .from('readings')
+        .insert([fallbackRow])
+        .select()
+        .single());
+    }
 
     if (insertError) {
       console.error('[Saju Service] Failed to store reading:', insertError);
@@ -297,11 +417,24 @@ async function generateSajuReading(params) {
       orderId: orderId || undefined,
     }, 24 * 60 * 60);
 
-    // Step 6: Fire-and-forget email delivery (if deliveryEmail provided)
+    // Step 6: Email delivery (if deliveryEmail provided). Awaited: on Lambda,
+    // un-awaited work after the response is sent runs in a frozen execution
+    // environment and may never complete — the email is a paid deliverable, so
+    // it must finish (or be recorded as failed) before we return. An email
+    // failure still must not fail the reading itself; email_status tracks it.
     if (deliveryEmail) {
       try {
         const emailService = require('./email.service');
-        emailService.sendReportEmail({
+        // Rendering the CJK PDF attachment costs seconds. If AI generation
+        // already ate most of the 60s budget, drop the attachment rather than
+        // risk the Lambda being killed mid-send — the email body carries a
+        // download link, so an email without the attachment still delivers.
+        const elapsedMs = Date.now() - invocationStart;
+        const skipPdf = elapsedMs > EMAIL_PDF_BUDGET_MS;
+        if (skipPdf) {
+          console.warn(`[Saju Service] ${elapsedMs}ms elapsed — sending report email without PDF attachment to stay inside the Lambda budget`);
+        }
+        await emailService.sendReportEmail({
           email: deliveryEmail,
           childName: subjectName,
           readingId: reading.id,
@@ -311,23 +444,23 @@ async function generateSajuReading(params) {
           gender,
           language,
           reportAccessToken,
-        })
-          .then(async () => {
-            await supabaseAdmin
-              .from('readings')
-              .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
-              .eq('id', reading.id);
-            console.log('[Saju Service] Report email sent to:', require('../utils/logger').maskEmail(deliveryEmail));
-          })
-          .catch(async (emailErr) => {
-            console.error('[Saju Service] Email delivery failed:', emailErr.message);
-            await supabaseAdmin
-              .from('readings')
-              .update({ email_status: 'failed' })
-              .eq('id', reading.id);
-          });
+          skipPdf,
+        });
+        await supabaseAdmin
+          .from('readings')
+          .update({ email_status: 'sent', email_sent_at: new Date().toISOString() })
+          .eq('id', reading.id);
+        console.log('[Saju Service] Report email sent to:', require('../utils/logger').maskEmail(deliveryEmail));
       } catch (emailErr) {
         console.error('[Saju Service] Email delivery failed:', emailErr.message);
+        try {
+          await supabaseAdmin
+            .from('readings')
+            .update({ email_status: 'failed' })
+            .eq('id', reading.id);
+        } catch (statusErr) {
+          console.error('[Saju Service] Failed to record email_status:', statusErr.message);
+        }
       }
     }
 
@@ -342,6 +475,9 @@ async function generateSajuReading(params) {
       viewUrl: `https://chatju.pages.dev/reading/${reading.id}`,
       metadata: {
         birthDate,
+        solarDate: manseryeokResult.input?.solarDate || null,
+        isLunar: isLunar === true,
+        isLeapMonth: isLeapMonth === true,
         birthTime,
         gender,
         language,
@@ -465,7 +601,7 @@ async function generateAIPreview(childManseryeok, parentManseryeok = null, paren
   }
 
   const timeDisclaimer = childTimeUnknown
-    ? '\n**참고: 아이의 출생 시간을 모르므로 시주(時柱)는 정오(12시) 기준입니다.**\n'
+    ? '\n**참고: 아이의 출생 시간을 모르므로 시주(時柱)는 제외하고 년/월/일 세 기둥만으로 분석합니다.**\n'
     : '';
 
   // Language names for preview prompt (premium uses langNameMap defined later)
@@ -481,7 +617,7 @@ ${timeDisclaimer}${languageInstruction}
 - 년주(年柱): ${childPillars.year.korean} (${childPillars.year.element})
 - 월주(月柱): ${childPillars.month.korean} (${childPillars.month.element})
 - 일주(日柱): ${childPillars.day.korean} (${childPillars.day.element}) - 일간(日干) 중심
-- 시주(時柱): ${childPillars.hour.korean} (${childPillars.hour.element})
+- 시주(時柱): ${childPillars.hour?.korean ? `${childPillars.hour.korean} (${childPillars.hour.element})` : '출생 시간 미상 — 시주 제외'}
 
 **아이 오행 분포:**
 ${Object.entries(childElements).map(([elem, count]) => `- ${elem}: ${count}개`).join('\n')}
@@ -626,7 +762,14 @@ function getParentChildRelation(parentElement, childElement) {
  * @param {boolean} childTimeUnknown - Whether child's birth time is unknown
  * @returns {Promise<Object>} AI interpretation with relationship focus
  */
-async function generateAIInterpretation(childManseryeok, parentManseryeok = null, parentRole = null, language = 'ko', productType = 'basic', childTimeUnknown = false, fortuneCycles = null, twinInfo = null) {
+async function generateAIInterpretation(childManseryeok, parentManseryeok = null, parentRole = null, language = 'ko', productType = 'basic', childTimeUnknown = false, fortuneCycles = null, twinInfo = null, childNameInput = '아이') {
+  // The name is optional, and callers pass null rather than omitting it — which
+  // skips the default above and leaves the presentation cover without a child,
+  // failing the contract and dropping a *paid* report to the fallback layout.
+  // A missing nickname must never cost the reader the report they bought.
+  const childName = (typeof childNameInput === 'string' && childNameInput.trim())
+    ? childNameInput.trim()
+    : getDefaultChildName(language);
   const { pillars: childPillars, elements: rawElements } = childManseryeok;
 
   // Normalize element keys to Korean (mansae-wrapper returns English keys)
@@ -718,11 +861,17 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
     : '월령의 지원이 약해 외부 도움을 필요로 합니다. 섬세하고 적응력이 좋지만, 자신감과 독립성을 키워줘야 합니다.';
   const dayMasterDesc = dayMasterImagery[dayStem] || `${dayStem}일간`;
   const deepProfile = dayMasterDeepProfile[dayStem] || {};
-  const weakElementRemedies = elementRemedies[childWeak] || {};
-  const dominantElementRemedies = elementRemedies[childDominant] || {};
+  // 색·음식·활동 추천은 그 나라 부엌과 놀이에서 나와야 한다. 한국어 원본을 그대로
+  // 주면 (a) 미역·도라지 같은 낱말이 비한국어 리포트에 그대로 새고 (b) 번역되더라도
+  // 그 가정이 실행할 수 없는 조언이 된다. 저작본이 있는 언어는 그것을 쓰고, 없으면
+  // 기존대로 한국어 원본으로 폴백한다.
+  const localizedRemedies = getLocalizedRemedies(language);
+  const remedyTable = localizedRemedies || elementRemedies;
+  const weakElementRemedies = remedyTable[childWeak] || {};
+  const dominantElementRemedies = remedyTable[childDominant] || {};
 
   const timeDisclaimer = childTimeUnknown
-    ? '\n**참고: 출생 시간 미상으로 시주는 정오(12시) 기준이며, 실제와 다를 수 있습니다. 시주가 달라지면 일부 해석이 변할 수 있습니다.**\n'
+    ? '\n**참고: 출생 시간 미상으로 시주(時柱)는 제외하고 년/월/일 세 기둥(6자)만으로 분석합니다. 시주를 임의로 추정하지 마세요.**\n'
     : '';
 
   // Calculate child's current age for age-appropriate guidance
@@ -736,6 +885,16 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
     : childAge <= 16 ? '중학생(14~16세)'
     : childAge <= 19 ? '고등학생(17~19세)'
     : '성인';
+
+  // 비한국어 지시문에서 쓰는 영어 연령 구간 라벨. 한국어 ageGroup을 그대로 끼워 넣으면
+  // 모델이 그 한국어를 출력에 옮겨 쓰는 일이 생긴다.
+  const ageGroupEn = childAge <= 3 ? 'infant/toddler (0-3)'
+    : childAge <= 7 ? 'preschool (4-7)'
+    : childAge <= 10 ? 'lower elementary (8-10)'
+    : childAge <= 13 ? 'upper elementary (11-13)'
+    : childAge <= 16 ? 'middle school (14-16)'
+    : childAge <= 19 ? 'high school (17-19)'
+    : 'adult';
 
   // Build parent section using 육친 framework — ENHANCED
   let parentSection = '';
@@ -787,36 +946,77 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
   }
 
   // Build twin context if applicable
-  let twinSection = '';
-  if (twinInfo) {
-    const orderLabel = twinInfo.order === 1 ? '첫째(먼저 태어난 아이)' : '둘째(나중에 태어난 아이)';
-    twinSection = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👶👶 쌍둥이 정보
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const twinSection = buildMultipleBirthSection(twinInfo);
 
-**이 아이는 쌍둥이 중 ${orderLabel}입니다.**
+  // 교재 기반 명리 근거 — 계산된 원국에 실제로 해당하는 조각만 결정론적으로 선별한다.
+  // 지식은 한국어로 주입되고 출력 언어는 아래 language 지시가 결정하므로 전 언어에 적용된다.
+  // 지식은 한국어로 주입되고 출력 언어는 아래에서 정해진다. 처음에는 일본어가 주입된
+  // 한국어를 그대로 옮겨 적어(한글 비율 최대 56%) 한국어에만 켜 두었으나, 지금은 지식
+  // 블록이 비한국어 리포트에 "한글을 한 글자도 쓰지 말라"는 가드를 함께 싣는다.
+  // 그 상태로 10개 언어를 전부 생성해 확인했다: 일본어 0.15% → 0.01%, 나머지 0%.
+  // 유료 고객이 전부 비한국어이므로 근거 있는 해석은 특히 이쪽에 필요하다.
+  const KNOWLEDGE_LANGUAGES = new Set(
+    (process.env.SAJU_KNOWLEDGE_LANGUAGES || 'ko,en,ja,zh,vi,id,es,pt,fr,th')
+      .split(',').map((x) => x.trim()).filter(Boolean)
+  );
 
-**쌍둥이 해석 원칙 (반드시 준수):**
-같은 사주를 가진 쌍둥이도 전혀 다른 성격과 인생을 삽니다.
-이유: 부모가 무의식적으로 두 아이를 다르게 대하기 때문입니다.
-- 먼저 태어난 아이에게 더 큰 기대와 책임감을 부여하는 경향
-- 나중에 태어난 아이에게 더 자유롭거나 편안한 역할을 주는 경향
-- 외모, 체력, 성향의 미세한 차이가 부모의 반응을 다르게 만들고, 그 반응이 다시 아이의 성격을 형성
+  // Pillars go to the model in hanja for non-Korean reports. Handing over the
+  // Korean form and asking the model to convert produced both a Hangul leak and a
+  // wrong pillar in a French report; the calculator already carries the hanja.
+  // Declared here because the fortune-cycle section below builds on it.
+  const pillarLabel = (pillar) => {
+    if (!pillar) return '?';
+    return (language !== 'ko' && pillar.hanja) ? pillar.hanja : (pillar.korean || pillar.hanja || '?');
+  };
 
-**이 리포트에서:**
-- 사주 데이터(命)는 동일하나, 이 아이가 ${orderLabel}라는 환경적 맥락(運)을 반영하세요
-- ${twinInfo.order === 1 ? '첫째에게 흔한 패턴: 책임감 과부하, 완벽주의 경향, 동생과의 비교 의식' : '둘째에게 흔한 패턴: 자유로움과 방임의 경계, 관심 경쟁, "나도 보여줄게" 의식'}
-- 부모에게: "같은 아이인데 왜 이렇게 다르지?"라는 의문에 답해주세요
-${twinInfo.siblingName ? `**쌍둥이 형제/자매 이름:** ${twinInfo.siblingName}` : ''}
-`;
+  // 출력 언어 이름은 아래 라벨 계약과 이 지식 블록 양쪽이 쓰므로 먼저 정한다.
+  // (지식 블록보다 뒤에 선언하면 TDZ ReferenceError가 나고, 아래 catch가 그것을 삼켜
+  //  지식 주입이 조용히 꺼진 채로 돌아간다 — 실제로 한 번 그렇게 됐다.)
+  const langNameMap = { ko: 'Korean', en: 'English', ja: 'Japanese', zh: 'Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
+  const outputLangName = langNameMap[language] || 'English';
+
+  let knowledgeContext = '';
+  try {
+    if (process.env.SAJU_KNOWLEDGE_DISABLED === '1') throw new Error('disabled by SAJU_KNOWLEDGE_DISABLED');
+    if (!KNOWLEDGE_LANGUAGES.has(language)) throw new Error(`knowledge not enabled for language=${language}`);
+    const knowledge = buildKnowledgeContext({
+      childManseryeok,
+      parentManseryeok,
+      parentRole,
+      childAge,
+      language,
+      outputLangName,
+    });
+    knowledgeContext = knowledge.text;
+    console.log('[Saju Service] Knowledge context selected:', {
+      chars: knowledgeContext.length,
+      ...knowledge.selected,
+    });
+  } catch (err) {
+    // 지식 주입 실패가 리포트 생성 자체를 막아서는 안 된다
+    console.error('[Saju Service] Knowledge context build failed, continuing without it:', err.message);
   }
+  const premiumLocale = getPremiumPresentationLocale(language);
+  const premiumLabels = premiumLocale.labels;
+  const exactLabelContract = `
+**Premium structured label contract**
+Use these exact labels in ${outputLangName}. Do not substitute synonyms. Do not leave any label in Korean unless the report language is Korean.
+- Section 1 labels: ${premiumLabels.s1.map((x) => `**${x}:**`).join(' / ')}
+- Section 2 labels: ${premiumLabels.s2.map((x) => `**${x}:**`).join(' / ')}
+- Section 3 labels: ${premiumLabels.s3.map((x) => `**${x}:**`).join(' / ')}
+- Section 4 labels: ${premiumLabels.s4.map((x) => `**${x}:**`).join(' / ')}
+- Section 5 labels: ${premiumLabels.s5.map((x) => `**${x}:**`).join(' / ')}
+- Section 6 labels: ${premiumLabels.s6.map((x) => `**${x}:**`).join(' / ')}
+- Section 7 labels: ${premiumLabels.s7.map((x) => `**${x}:**`).join(' / ')}
+- Section 8 headings: ${premiumLabels.s8.map((x) => `[${x}]`).join(' / ')}
+- Section 9 labels: ${premiumLabels.s9.map((x) => `**${x}:**`).join(' / ')}
+`;
 
   // Language instruction for non-Korean reports
   // Note: for premium reports, the system message (systemMessageBaseEn) already
   // includes the output language instruction. This is kept as a user-prompt
   // reinforcement for the data context sections.
-  const languageInstruction = language !== 'ko' ? `\n**Reminder: Write ALL output in ${langNameMap[language] || 'English'}. Translate Korean terms from the data below into ${langNameMap[language] || 'English'}. Show Chinese characters in parentheses. No Korean text in the output.**\n` : '';
+  const languageInstruction = language !== 'ko' ? `\n**Reminder: Write ALL output in ${outputLangName}. Translate Korean terms from the data below into ${outputLangName}. Show Chinese characters in parentheses. No Korean text in the output.**\n` : '';
 
   // Build solar time correction context for AI
   let correctionNote = '';
@@ -850,9 +1050,9 @@ ${childManseryeok.corrections.isSouthernHemisphere ? '**남반구 출생 → 남
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **현재 나이:** ${fortuneCycles.currentAge}세
-**현재 대운:** ${currentDaeun ? `${currentDaeun.pillar?.korean || '?'} (${currentDaeun.startAge}~${currentDaeun.endAge}세)` : '정보 없음'}
-**현재 세운(올해):** ${currentSeun ? `${currentSeun.pillar?.korean || '?'} (${currentSeun.year}년)` : '정보 없음'}
-**향후 대운 흐름:** ${daeunList.slice(0, 4).map(d => `${d.pillar?.korean || '?'}(${d.startAge}세)`).join(' → ')}
+**현재 대운:** ${currentDaeun ? `${pillarLabel(currentDaeun.pillar)} (${currentDaeun.startAge}~${currentDaeun.endAge}세)` : '정보 없음'}
+**현재 세운(올해):** ${currentSeun ? `${pillarLabel(currentSeun.pillar)} (${currentSeun.year}년)` : '정보 없음'}
+**향후 대운 흐름:** ${daeunList.slice(0, 4).map(d => `${pillarLabel(d.pillar)}(${d.startAge}세)`).join(' → ')}
 ${transitionNote}
 
 **참고 — 대운/세운 해석 원칙:**
@@ -878,9 +1078,17 @@ ${transitionNote}
     const relevantMonths = fortuneCycles.currentSeun.interpretation.monthlyFortunes
       .filter(m => m.month >= currentMonth && m.month <= currentMonth + 3);
     if (relevantMonths.length > 0) {
-      monthlyFortuneData = `\n**월운 데이터 (AI 참고용):**\n${relevantMonths.map(m =>
-        `- ${m.month}월: ${m.pillar.korean}(${m.pillar.stemElement}+${m.pillar.branchElement}) — ${m.tenGod} — ${m.brief}`
-      ).join('\n')}\n`;
+      // Non-Korean reports are told to print the month pillar in Chinese
+      // characters, and this used to hand the model the Korean form and leave the
+      // conversion to it. It got both halves wrong in a French report: it printed
+      // the Korean 정유 and then labelled it 丙申, which is a different pillar
+      // entirely. The calculator already carries the hanja, so pass that and give
+      // the model nothing to convert.
+      const useHanja = language !== 'ko';
+      monthlyFortuneData = `\n**월운 데이터 (AI 참고용):**\n${relevantMonths.map((m) => {
+        const pillar = useHanja ? (m.pillar.hanja || m.pillar.korean) : m.pillar.korean;
+        return `- ${m.month}월: ${pillar}(${m.pillar.stemElement}+${m.pillar.branchElement}) — ${m.tenGod} — ${m.brief}`;
+      }).join('\n')}\n`;
     }
   }
 
@@ -905,7 +1113,7 @@ ${languageInstruction}
 | 년주 | ${childPillars.year.korean[0]} | ${childPillars.year.korean[1]} | ${childPillars.year.hanja || ''} | ${childPillars.year.element} |
 | 월주 | ${childPillars.month.korean[0]} | ${childPillars.month.korean[1]} | ${childPillars.month.hanja || ''} | ${childPillars.month.element} |
 | 일주 | ${childPillars.day.korean[0]} | ${childPillars.day.korean[1]} | ${childPillars.day.hanja || ''} | ${childPillars.day.element} |
-| 시주 | ${childPillars.hour.korean[0]} | ${childPillars.hour.korean[1]} | ${childPillars.hour.hanja || ''} | ${childPillars.hour.element} |
+${childPillars.hour?.korean ? `| 시주 | ${childPillars.hour.korean[0]} | ${childPillars.hour.korean[1]} | ${childPillars.hour.hanja || ''} | ${childPillars.hour.element} |` : '| 시주 | (출생 시간 미상 — 제외) | — | — | — |'}
 
 **일간(日干):** ${dayStem}${childPillars.day.hanja ? '(' + childPillars.day.hanja[0] + ')' : ''} — ${dayMasterDesc}
 **일간 상세 프로필:** ${dayStem}${childPillars.day.hanja ? '(' + childPillars.day.hanja[0] + ')' : ''} = ${deepProfile.nature}, 이미지: ${deepProfile.image}, 계절: ${deepProfile.season}
@@ -915,18 +1123,19 @@ ${languageInstruction}
 **일주 강약:** ${strengthLabel} — ${strengthDesc}
 **현재 나이:** ${childAge}세 (한국 나이) — ${ageGroup}
 
-**오행 분포 (총 8자 중):**
+**오행 분포 (총 ${childPillars.hour?.korean ? 8 : 6}자 중):**
 - 목(木): ${childElements['목']}개 ${childElements['목'] >= 3 ? '▶ 강함' : childElements['목'] === 0 ? '▶ 없음!' : ''}
 - 화(火): ${childElements['화']}개 ${childElements['화'] >= 3 ? '▶ 강함' : childElements['화'] === 0 ? '▶ 없음!' : ''}
 - 토(土): ${childElements['토']}개 ${childElements['토'] >= 3 ? '▶ 강함' : childElements['토'] === 0 ? '▶ 없음!' : ''}
 - 금(金): ${childElements['금']}개 ${childElements['금'] >= 3 ? '▶ 강함' : childElements['금'] === 0 ? '▶ 없음!' : ''}
 - 수(水): ${childElements['수']}개 ${childElements['수'] >= 3 ? '▶ 강함' : childElements['수'] === 0 ? '▶ 없음!' : ''}
 
-**주 기질:** ${childDominant} (${childTraits.name}) — ${childTraits.traits}
-${childSecond && childSecondTraits ? `**부 기질:** ${childSecond} (${childSecondTraits.name}) — ${childSecondTraits.traits}` : ''}
-**부족 오행:** ${childWeak} (${elementTraits[childWeak].name}) — ${elementTraits[childWeak].stress}에 취약
+**주 기질:** ${elementLabel(childDominant, language)} (${childTraits.name}) — ${childTraits.traits}
+${childSecond && childSecondTraits ? `**부 기질:** ${elementLabel(childSecond, language)} (${childSecondTraits.name}) — ${childSecondTraits.traits}` : ''}
+**부족 오행:** ${elementLabel(childWeak, language)} (${elementTraits[childWeak].name}) — ${elementTraits[childWeak].stress}에 취약
 ${parentSection}
-${twinSection}`;
+${twinSection}
+${knowledgeContext}`;
 
   // fortuneDataContext — used by Call 2 ONLY (fortune cycles)
   const fortuneDataContext = `${fortuneCyclesSection}
@@ -938,18 +1147,18 @@ ${monthlyFortuneData}`;
 🌿 오행 밸런스 데이터
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**부족 오행 (${childWeak}) 보완:**
+**부족 오행 (${elementLabel(childWeak, language)}) 보완:**
 - 색상: ${weakElementRemedies.colors || '정보 없음'}
 - 음식: ${weakElementRemedies.foods || '정보 없음'}
 - 활동: ${weakElementRemedies.activities || '정보 없음'}
 - 피해야 할 환경: ${weakElementRemedies.avoidExcess || '정보 없음'}
 
-**강한 오행 (${childDominant}) 조절:**
+**강한 오행 (${elementLabel(childDominant, language)}) 조절:**
 - 과할 때 주의: ${dominantElementRemedies.avoidExcess || '정보 없음'}
 - 계절 에너지: ${weakElementRemedies.season || '정보 없음'}이 가장 보완이 필요한 시기`;
 
   // ── Call 1: Sections 1-5 (Executive summary, misconceptions, behavioral, playbook, strengths) ──
-  const call1SectionInstructions = `
+  const call1SectionInstructionsKo = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 개인화된 양육 리포트 (섹션 1~5)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -960,13 +1169,13 @@ ${monthlyFortuneData}`;
 
 따뜻한 3문장으로 시작: 이 아이의 일간 기질(${deepProfile.image || ''})을 자연 비유로 소개하되, 바로 일상 행동으로 연결.
 
-그다음 구조화 (볼드 레이블도 리포트 언어로):
+그다음 아래 5개 항목으로 구조화. **각 볼드 레이블은 반드시 아래 지정된 리포트 언어 번역만 사용하고, 영어나 대괄호([])는 출력에 절대 포함하지 마세요.** (아래 한국어 예시는 리포트 언어에 맞게 번역해 사용)
 
-- [Most common misreading] (1문장, 구체적 상황)
-- [What helps most] (1문장, 실행 가능)
-- [Phrases to avoid] — 3개, 각각 이유 포함
-- [Phrases that work] — 3개, 각각 왜 효과적인지
-- [This month's parenting focus] (1문장, 리포트 언어로)
+- **가장 흔한 오해:** (1문장, 구체적 상황)
+- **가장 도움이 되는 것:** (1문장, 실행 가능)
+- **피해야 할 말:** — 3개, 각각 이유 포함
+- **효과적인 말:** — 3개, 각각 왜 효과적인지
+- **이번 달 양육 포커스:** (1문장, 리포트 언어로)
 
 ## 2. 이 아이는 ○○이 아닙니다
 
@@ -1010,7 +1219,7 @@ ${monthlyFortuneData}`;
 - 약점으로 오해받는 상황: ... (구체적 장면)
 - 이 강점이 빛나는 환경: ...
 - 키워줄 활동 1가지: ... (이 나이에 바로 시작 가능한 것)
-- 진로 방향 힌트: (1문장)
+- 진로 방향 힌트: 확정이 아닌 흥미·활동을 탐색하는 참고 문장 1개
 
 따뜻한 서사로 감싸되, 구체적 행동으로 마무리.
 
@@ -1027,7 +1236,7 @@ ${monthlyFortuneData}`;
 </execution_order>`;
 
   // ── Call 2: Sections 6-9 (Timeline, experiment, co-parent, lifestyle) ──
-  const call2SectionInstructions = `
+  const call2SectionInstructionsKo = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 개인화된 양육 리포트 (섹션 6~9)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1065,19 +1274,21 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
 
 이 섹션은 스크린샷으로 공유할 수 있을 만큼 간결해야 합니다. 장식 없이 핵심만.
 
-모든 레이블/볼드 제목은 리포트 언어로 작성. 포맷:
+모든 레이블/볼드 제목은 **리포트 언어로 작성하거나 번역**하세요. 한국어 리포트에서는 아래 한국어 예시를 그대로 사용하고, 다른 언어 리포트에서는 같은 의미를 해당 언어로 번역합니다. 포맷:
 
-- [5 things to remember about this child] — 번호 리스트
-- [3 phrases to stop using] — 각각 왜 역효과인지 1문장
-- [3 phrases to start using] — 각각 왜 효과적인지 1문장
-- [3 de-escalation steps when emotions rise] — 즉시/5분 후/안정 후
+- [이 아이에게 기억할 5가지] — 번호 리스트
+- [멈출 말 3가지] — 각각 왜 역효과인지 1문장
+- [시작할 말 3가지] — 각각 왜 효과적인지 1문장
+- [감정이 높아질 때 3단계] — 즉시/5분 후/안정 후
 
 ## 9. 생활 속 밸런스 (참고 사항)
 
 ⚠️ **이 섹션은 참고 사항입니다. 건강 진단이나 방위 풍수가 아닙니다.**
 ⚠️ **아래 데이터의 한국어(목, 화, 토, 금, 수, 나무, 불, 흙, 쇠, 물 등)는 리포트 언어로 번역하세요. 한국어 그대로 출력 금지.**
 
-부족한 오행(${childWeak} = Wood/Fire/Earth/Metal/Water 중 해당) 보완법:
+부족한 오행(${elementLabel(childWeak, language)})을 위한 선택적 참고 아이디어(치료·처방·운명 확정이 아님):
+- **핵심 한 문장:** 이 리포트에서 오늘 기억할 문장
+- **마무리:** 관찰과 대화를 위한 마무리 문장
 - **색상:** ${weakElementRemedies.colors || '정보 없음'} — 옷, 학용품, 방 소품에서 활용
 - **음식:** ${weakElementRemedies.foods || '정보 없음'} — 식탁에서 자연스럽게
 - **활동:** ${weakElementRemedies.activities || '정보 없음'} — 왜 이 활동이 이 기질에 좋은지 1문장
@@ -1095,6 +1306,182 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
 2단계: 해당 섹션들에 대해 데이터 기반 분석
 3단계: 출력 형식에 맞춰 마크다운으로 렌더
 </execution_order>`;
+
+  // ── 비한국어 섹션 지시문 ────────────────────────────────────────────────
+  // 한국어 지시문을 전 언어에 쓰던 것이 다국어 품질 문제의 근원이었다. 한국어 라벨
+  // 예시를 주고 "리포트 언어로 번역해 쓰라"고 하면, 일본어는 번역 대신 한국어를 그대로
+  // 옮겨 적고(실측 한글 비율 최대 29.5%), 영어는 매번 새로 번역해 계약과 어긋나는
+  // 의역을 만든다("What parents often say" → "Parent's common words").
+  //
+  // 해결책은 번역을 시키지 않는 것이다. premiumLabels는 이미 출력 언어의 정확한 계약
+  // 라벨을 갖고 있으므로, 그 문자열을 지시문에 그대로 끼워 넣어 쓸 라벨을 못 박는다.
+  const L = premiumLabels;
+  const bullet = (label) => `- **${label}:**`;
+
+  const call1SectionInstructionsEn = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 Personalized parenting report (Sections 1-5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Use the "## N." heading format and follow each section's structure exactly.**
+
+**The English section names below identify the sections for you — they are NOT text to copy. Write each heading as "## " plus the number, a period, and a title of your own in ${outputLangName}. A ${outputLangName} report must never carry an English section heading.**
+
+**Every bold label below is already written in ${outputLangName}. Reproduce each label exactly as printed here — do not translate it again, do not reword it, do not add parentheses or extra words to it. Write the report body in ${outputLangName}.**
+
+## 1. At a Glance
+
+Open with three warm sentences introducing this child's core temperament through a natural image, then connect it immediately to everyday behavior.
+
+Then these five items, in this order:
+
+${bullet(L.s1[0])} one sentence, a concrete situation
+${bullet(L.s1[1])} one sentence, actionable
+${bullet(L.s1[2])} exactly 3 items as a numbered list under this single label, each with its reason
+${bullet(L.s1[3])} exactly 3 items as a numbered list under this single label, each with why it works
+${bullet(L.s1[4])} one sentence
+
+## 2. This Child Is NOT...
+
+Write 4 to 6 items that confront a common parental misreading head-on. Each item:
+
+${bullet(L.s2[0])} "..." what the parent actually thinks
+${bullet(L.s2[1])} what is really happening inside, concretely
+${bullet(L.s2[2])} "..." something the parent can say or do
+
+Short and direct. No ornament. This section lives on its punch.
+
+## 3. Behavioral Signatures
+
+Write 5 to 7 high-probability behavior patterns for a child in ${ageGroupEn}, age ${childAge}.
+Start each with a 2-3 sentence everyday scene at home (homework, mornings, meals, screens, friends), then:
+
+${bullet(L.s3[0])} ...
+${bullet(L.s3[1])} ...
+${bullet(L.s3[2])} ...
+${bullet(L.s3[3])} ...
+
+## 4. Situational Playbook
+
+Cover all six of these situations, in order. All six are required — do not merge, skip, or shorten the list:
+1) refusing or delaying homework
+2) silence or delayed response
+3) hurt from a friendship
+4) transitioning off screens/games
+5) after-school emotional overload
+6) when the parent pushes too hard
+
+Give each of the six its own subheading, then these four labels:
+
+${bullet(L.s4[0])} "..."
+${bullet(L.s4[1])} how it lands for this particular temperament
+${bullet(L.s4[2])} "..."
+${bullet(L.s4[3])} evidence that this is working
+
+This section is the heart of the report. The scripts must sound like real speech.
+
+## 5. Hidden Strengths
+
+Exactly 3 strengths. Introduce each one with a numbered list item holding only the strength's short bold name — like "1) **<strength name>**" — on its own line, with no colon and no other text on that line. The parser identifies each strength card by that line. Then, underneath it:
+
+${bullet(L.s5[0])} a concrete scene
+${bullet(L.s5[1])} ...
+${bullet(L.s5[2])} something startable at this age
+${bullet(L.s5[3])} one exploratory sentence about interests and activities — never a fixed career claim
+
+Wrap each in warm narrative but land on concrete behavior.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Throughout: insight and action always travel together. No insight-only paragraph.
+- Never write upsell language such as "we'll analyze this further next time." This report must stand as a complete work.
+- Let Section 5 end naturally, but do not write a conclusion for the whole report — the second half continues.
+
+<execution_order>
+Step 1: parse the input data (Four Pillars, Five Element distribution)
+Step 2: analyze the assigned sections from that data
+Step 3: render as markdown in the required format
+</execution_order>`;
+
+  const call2SectionInstructionsEn = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 Personalized parenting report (Sections 6-9)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Use the "## N." heading format and follow each section's structure exactly.**
+
+**The English section names below identify the sections for you — they are NOT text to copy. Write each heading as "## " plus the number, a period, and a title of your own in ${outputLangName}. A ${outputLangName} report must never carry an English section heading.**
+
+**Every bold label and bracketed heading below is already written in ${outputLangName}. Reproduce each one exactly as printed here — do not translate it again, do not reword it, do not add parentheses or extra words to it. Write the report body in ${outputLangName}.**
+
+## 6. The Current Flow
+
+${fortuneCycles ? `Center this on the current 10-year cycle (${fortuneCycles.currentDaeun?.pillar?.hanja || fortuneCycles.currentDaeun?.pillar?.korean || '?'}) and this year's cycle (${fortuneCycles.currentSeun?.pillar?.hanja || fortuneCycles.currentSeun?.pillar?.korean || '?'}).
+- Explain the 10-year cycle in plain language: a shift of environmental backdrop, a stage set — not destiny.
+- What this period means for this child, in an operational tone, never mystical.
+- What the parent should focus on during it.` : `Describe the main flow of the child's current stage (${ageGroupEn}) and the changes just ahead.`}
+
+Then cover the four months from month ${new Date().getMonth() + 1} through month ${new Date().getMonth() + 4}.
+Write each month as its own subheading and print the month's pillar in Chinese characters (e.g. 甲午, 乙未).
+Under each month, these four items:
+
+${bullet(L.s6[0])} ...
+${bullet(L.s6[1])} ...
+${bullet(L.s6[2])} ...
+${bullet(L.s6[3])} ...
+
+One to two concrete sentences each.
+
+## 7. 7-Day Parenting Experiment
+
+Exactly 3 small changes. For each:
+
+${bullet(L.s7[0])} concrete, startable this evening
+${bullet(L.s7[1])} cover days 1-2, then 3-4, then 5-7 as one continuous sentence on this same line — never as sub-bullets or nested bold labels
+${bullet(L.s7[2])} evidence that it is working
+
+Under these three labels, write plain prose only. Do not introduce any additional bold label followed by a colon anywhere inside this section.
+
+Keep them light enough to start without pressure — "five minutes a day" is the right scale.
+
+## 8. Parenting Card to Share
+
+This section must be concise enough to screenshot. Essentials only, no ornament.
+Write these four bracketed headings exactly as printed. **Each heading must be a bullet list item beginning with "- " — never a markdown heading, so never start these lines with "#".** Follow each heading with its numbered list:
+
+- [${L.s8[0]}] — exactly 5 numbered items
+- [${L.s8[1]}] — exactly 3 items, each with one sentence on why it backfires
+- [${L.s8[2]}] — exactly 3 items, each with one sentence on why it works
+- [${L.s8[3]}] — exactly 3 items: immediately / after five minutes / once calm
+
+## 9. Everyday Balance (reference)
+
+⚠️ **This section is reference only. It is not a medical assessment and not geomancy.**
+⚠️ **Translate every element name into ${outputLangName}. Never print the Korean element names.**
+
+Offer optional, everyday ideas supporting the element this child has least of — never treatment, prescription, or fixed fate. Use these labels exactly:
+
+${bullet(L.s9[0])} clothing, school supplies, room accents
+${bullet(L.s9[1])} easy to bring to the table
+${bullet(L.s9[2])} plus one sentence on why it suits this temperament
+${bullet(L.s9[3])} the one sentence to remember from this report today
+${bullet(L.s9[4])} a closing line for observation and conversation
+
+End with a complete, warm message that settles the parent's heart.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Throughout: insight and action always travel together. No insight-only paragraph.
+- Never write upsell language. This report must stand as a complete work.
+
+<execution_order>
+Step 1: parse the input data (Four Pillars, Five Elements, fortune cycles, balance data)
+Step 2: analyze the assigned sections from that data
+Step 3: render as markdown in the required format
+</execution_order>`;
+
+  const call1SectionInstructions = language === 'ko' ? call1SectionInstructionsKo : call1SectionInstructionsEn;
+  const call2SectionInstructions = language === 'ko' ? call2SectionInstructionsKo : call2SectionInstructionsEn;
 
   // Shared system message base — v2 prompt redesign
   // Korean version (for ko locale)
@@ -1132,9 +1519,6 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
 
   // English version (for all non-ko locales — prompting in English produces
   // dramatically better output quality than Korean prompt + translate instruction)
-  const langNameMap = { en: 'English', ja: 'Japanese', zh: 'Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
-  const outputLangName = langNameMap[language] || 'English';
-
   const systemMessageBaseEn = `You are a child temperament interpretation specialist. You combine the temperament analysis framework of East Asian philosophy (Myeongri/Four Pillars) with modern developmental psychology, helping parents understand their child's behavioral patterns and providing actionable parenting strategies.
 
 You are NOT a fortune-teller. You are a personalized parenting interpretation expert.
@@ -1174,6 +1558,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
   // Call 1 system message: sections 1-5 structure guidance
   const call1SectionsKo = `
 **이번 요청은 9개 섹션 리포트 중 섹션 1~5를 작성하는 것입니다.**
+각 라벨은 반드시 굵은 Markdown 형식의 라벨과 콜론으로 쓰고, 값을 생략하거나 합치지 마세요.
 - 섹션 1: 한눈에 보기 (Executive Summary) — 서사 3문장 + 구조화 불릿
 - 섹션 2: 이 아이는 ~이 아닙니다 — 오해 정면 반박, 펀치력
 - 섹션 3: 행동 시그니처 — 일상 장면 + 패턴 분석
@@ -1196,11 +1581,12 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
 **IMPORTANT: The Four Pillars table, Five Elements distribution, and fortune cycle summary are attached separately before the report. Do NOT repeat this data as tables in the body. Jump straight into interpretation and narrative.**`;
 
-  const call1SystemMessage = `${systemMessageBase}\n${language === 'ko' ? call1SectionsKo : call1SectionsEn}`;
+  const call1SystemMessage = `${systemMessageBase}\n${exactLabelContract}\n${language === 'ko' ? call1SectionsKo : call1SectionsEn}`;
 
   // Call 2 system message: sections 6-9 structure guidance
   const call2SectionsKo = `
 **이번 요청은 9개 섹션 리포트 중 섹션 6~9를 작성하는 것입니다.**
+각 라벨은 반드시 굵은 Markdown 형식의 라벨과 콜론으로 쓰고, 값을 생략하거나 합치지 마세요.
 **참고: 섹션 1~5(한눈에 보기, 오해 반박, 행동 시그니처, 상황별 플레이북, 숨겨진 강점)는 이미 작성 완료되었습니다. 섹션 6부터 이어서 작성하세요.**
 
 - 섹션 6: 이 시기의 흐름 — 대운/세운 기반 월별 테이블, 운영적 톤
@@ -1225,7 +1611,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
 **IMPORTANT: The Four Pillars table and Five Elements summary are attached separately. Do NOT repeat them as tables in the body. Jump straight into interpretation and narrative.**`;
 
-  const call2SystemMessage = `${systemMessageBase}\n${language === 'ko' ? call2SectionsKo : call2SectionsEn}`;
+  const call2SystemMessage = `${systemMessageBase}\n${exactLabelContract}\n${language === 'ko' ? call2SectionsKo : call2SectionsEn}`;
 
   // Premium reports: split into 2 calls of ~5000 tokens each
   // Total budget stays the same (~10000 tokens)
@@ -1243,22 +1629,28 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
     const call2Start = Date.now();
     console.log('[Saju Service] Call 2/2: Generating sections 6-9...');
 
-    const [result1, result2] = await Promise.all([
+    // Whether a report satisfies the structured contract is partly a matter of luck:
+    // the same prompt and chart can land on ready one run and fallback the next,
+    // purely on where the model puts its line breaks. Keep the two calls callable
+    // more than once so a format miss can be retried instead of shipped.
+    const runBothCalls = (temperature) => Promise.all([
       aiService.generateFortune([
         { role: 'system', content: call1SystemMessage },
         { role: 'user', content: coreDataContext + call1SectionInstructions },
       ], {
         maxTokens: halfTokens,
-        temperature: 0.7,
+        temperature,
       }),
       aiService.generateFortune([
         { role: 'system', content: call2SystemMessage },
         { role: 'user', content: coreDataContext + fortuneDataContext + remedyDataContext + call2SectionInstructions },
       ], {
         maxTokens: halfTokens,
-        temperature: 0.7,
+        temperature,
       }),
     ]);
+
+    const [result1, result2] = await runBothCalls(0.7);
 
     const call1Duration = Date.now() - call1Start;
     const call2Duration = Date.now() - call2Start;
@@ -1266,9 +1658,33 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
     console.log(`[Saju Service] Call 1/2 (sections 1-5) complete: ${call1Duration}ms, ${result1.content.length} chars, ${result1.tokensUsed} tokens`);
     console.log(`[Saju Service] Call 2/2 (sections 6-9) complete: ${call2Duration}ms, ${result2.content.length} chars, ${result2.tokensUsed} tokens`);
 
-    // Combine results
-    const interpretationText = result1.content + '\n\n' + result2.content;
-    const totalTokens = (result1.tokensUsed || 0) + (result2.tokensUsed || 0);
+    // Each half must carry real section content. A paid reading must never be
+    // saved (and emailed) with a blank or truncated half.
+    const MIN_HALF_LENGTH = 200;
+
+    // THE ONLY PLACE a (call1, call2) pair becomes report text. Both the first
+    // pass and the retry go through here, because the retry replaces the text
+    // wholesale — post-processing wired into just one of the two call sites
+    // silently disappears whenever a retry happens (this is how the French
+    // quotation-mark fix was lost once). Returns null when either half is too
+    // short; the caller decides whether that is fatal.
+    const buildInterpretation = (r1, r2) => {
+      if (r1.content.trim().length < MIN_HALF_LENGTH || r2.content.trim().length < MIN_HALF_LENGTH) {
+        return null;
+      }
+      return normalizeQuotes(`${r1.content}\n\n${r2.content}`, language);
+    };
+
+    let interpretationText = buildInterpretation(result1, result2);
+    if (interpretationText === null) {
+      // Fail before persisting so the reading is not saved or emailed blank;
+      // the client's polling path covers the retry.
+      throw new Error(
+        `AI returned too-short premium content (call1=${result1.content.trim().length} chars, call2=${result2.content.trim().length} chars, min=${MIN_HALF_LENGTH})`
+      );
+    }
+    const generatedAt = new Date().toISOString();
+    let totalTokens = (result1.tokensUsed || 0) + (result2.tokensUsed || 0);
 
     console.log('[Saju Service] Premium report generated (2-call split):', {
       length: interpretationText.length,
@@ -1279,14 +1695,93 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
       hasParentData: !!parentManseryeok,
     });
 
-    return {
+    const adapt = (text) => adaptMarkdownToPresentation({
+      fullText: text,
+      manseryeok: childManseryeok,
+      fortuneCycles,
+      childName,
+      generatedAt,
+      language,
+    });
+
+    let presentationResult = adapt(interpretationText);
+
+    // Korean bleeding into a non-Korean report. The prompt and the injected
+    // knowledge are both written in Korean, and while every locale normally comes
+    // back at or below 0.01% Hangul, Thai was measured once at 13% — whole
+    // paragraphs of the report body in Korean. That ships to the reader even on the
+    // fallback path, so treat it like a format failure and try again.
+    const HANGUL_LIMIT = Number(process.env.SAJU_HANGUL_LIMIT || 0.005);
+    const hangulRatio = (text) => {
+      const t = String(text || '');
+      if (!t.length) return 0;
+      return ((t.match(/[가-힣]/g) || []).length) / t.length;
+    };
+    const contamination = language === 'ko' ? 0 : hangulRatio(interpretationText);
+    if (contamination > HANGUL_LIMIT) {
+      console.warn(`[Saju Service] Korean contamination ${(contamination * 100).toFixed(1)}% in ${language} report`);
+    }
+
+    // A format miss costs the reader the whole editorial layout, so it is worth one
+    // more attempt. Only shape problems are retried: unsafe_claim is the safety
+    // filter doing its job, and re-rolling until a safety check passes would be
+    // exactly the wrong behaviour. insufficient_calculated_basis is a data problem
+    // that a second generation cannot change.
+    const RETRYABLE_FALLBACKS = new Set([
+      'missing_or_reordered_sections',
+      'partial_required_labels',
+      'localization_leak',
+    ]);
+    const shapeFailed = presentationResult.presentationStatus !== 'ready'
+      && RETRYABLE_FALLBACKS.has(presentationResult.presentationStatusReason);
+    if (
+      (shapeFailed || contamination > HANGUL_LIMIT)
+      && process.env.SAJU_PRESENTATION_RETRY_DISABLED !== '1'
+    ) {
+      const firstReason = shapeFailed ? presentationResult.presentationStatusReason : `korean_contamination_${(contamination * 100).toFixed(1)}%`;
+      console.warn(`[Saju Service] Presentation fallback (${firstReason}) — retrying generation once`);
+      try {
+        // Lower temperature on the retry: the first pass already produced usable
+        // substance, so the second only needs to land the structure.
+        const [retry1, retry2] = await runBothCalls(0.4);
+        // Same builder as the first pass — length check and normalization both
+        // come along automatically, and so will anything added to it later.
+        const retryText = buildInterpretation(retry1, retry2);
+        if (retryText !== null) {
+          const retryPresentation = adapt(retryText);
+          totalTokens += (retry1.tokensUsed || 0) + (retry2.tokensUsed || 0);
+          const retryContamination = language === 'ko' ? 0 : hangulRatio(retryText);
+          // Both axes matter, so rank on both rather than on readiness alone: a
+          // ready-but-Korean-contaminated report is not an improvement on a clean one.
+          const score = (ready, contam) => (ready ? 2 : 0) + (contam <= HANGUL_LIMIT ? 1 : 0);
+          const firstScore = score(presentationResult.presentationStatus === 'ready', contamination);
+          const retryScore = score(retryPresentation.presentationStatus === 'ready', retryContamination);
+          if (retryScore > firstScore || (retryScore === firstScore && retryContamination < contamination)) {
+            console.log(`[Saju Service] Retry accepted — status=${retryPresentation.presentationStatus} hangul=${(retryContamination * 100).toFixed(2)}%`);
+            interpretationText = retryText;
+            presentationResult = retryPresentation;
+          } else {
+            console.warn(`[Saju Service] Retry not better (status=${retryPresentation.presentationStatus}, hangul=${(retryContamination * 100).toFixed(2)}%) — keeping first result`);
+          }
+        } else {
+          console.warn('[Saju Service] Retry returned too-short content — keeping first result');
+        }
+      } catch (retryError) {
+        // The first result is already usable as fallback markdown; never let a
+        // failed retry take down a paid reading.
+        console.error('[Saju Service] Retry failed, keeping first result:', retryError.message);
+      }
+    }
+
+    const parsedSections = parsePremiumSections(interpretationText);
+    return mergePresentationResult({
       fullText: interpretationText,
-      sections: parsePremiumSections(interpretationText),
+      sections: parsedSections,
       metadata: {
         provider: result1.provider,
         model: result1.model,
         tokens: totalTokens,
-        generatedAt: new Date().toISOString(),
+        generatedAt,
         reportType: 'relationship_focused',
         hasParentAnalysis: !!parentManseryeok,
         splitCalls: {
@@ -1295,7 +1790,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
           totalDuration,
         },
       },
-    };
+    }, presentationResult);
 
   } catch (error) {
     console.error('[Saju Service] Error generating premium report:', error);
@@ -1420,4 +1915,7 @@ module.exports = {
   generateSajuReading,
   getReading,
   getUserReadings,
+  // 측정/검증용 — 결제·DB를 거치지 않고 생성 품질만 재기 위해 노출한다.
+  // (scripts/measure-localization.js가 언어별 근거 보존율을 잴 때 쓴다.)
+  generateAIInterpretation,
 };

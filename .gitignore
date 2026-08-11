@@ -6,9 +6,12 @@ yarn-error.log*
 package-lock.json
 
 # Environment variables (IMPORTANT - Never commit secrets!)
+# Cover every .env variant (.env.staging held live service keys and was NOT
+# matched by the previous patterns), then allow example templates back in.
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
 backend/.env
 backend/.env.local
 
@@ -58,3 +61,10 @@ backend/somyung-deploy_accessKeys.csv
 # Local tooling / internal notes (not shipped)
 .omx/
 security-check-*.md
+
+# 측정·생성 산출물 (재현 가능하므로 커밋하지 않는다)
+# output/localization 은 eval-localization.js 가 만드는 리포트·판정 캐시로,
+# 한 번 돌리면 수 MB가 쌓인다. localization_findings_*.md 가 결과를 요약한다.
+output/
+out-sandbox/
+tmp/

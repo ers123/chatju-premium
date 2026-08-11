@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api'
+import { buildApiUrl } from '@/lib/api-url'
 import { useLanguage } from '@/app/lib/i18n/context'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
@@ -46,8 +47,7 @@ export default function SignInPage() {
     setError('')
     setIsLoading(true)
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-      const res = await fetch(`${API_URL}/auth/dev-login`, {
+      const res = await fetch(buildApiUrl('/auth/dev-login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: 'dev-test@somyung.local' }),

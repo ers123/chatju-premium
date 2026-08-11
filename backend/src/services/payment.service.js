@@ -4,6 +4,22 @@
 const { supabaseAdmin } = require('../config/supabase');
 const axios = require('axios');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
+const { PREMIUM_SAJU_PRODUCT, getProduct, amountsMatch, formatPayPalAmount } = require('../config/products');
+
+function toSafeError(error) {
+  return {
+    message: error.message,
+    code: error.code,
+    status: error.response?.status,
+    paypalDebugId: error.response?.headers?.['paypal-debug-id'],
+    paypalName: error.response?.data?.name,
+    paypalIssue: error.response?.data?.details?.[0]?.issue,
+  };
+}
+
+function logPaymentError(context, error) {
+  console.error(context, toSafeError(error));
+}
 
 function toClientPayment(payment) {
   if (!payment) return null;
@@ -53,7 +69,7 @@ async function getPayPalAccessToken() {
 
     return tokenResponse.data.access_token;
   } catch (error) {
-    console.error('[Payment Service] Failed to get PayPal access token:', error);
+    logPaymentError('[Payment Service] Failed to get PayPal access token:', error);
     throw new Error('PayPal authentication failed');
   }
 }
@@ -61,12 +77,17 @@ async function getPayPalAccessToken() {
 /**
  * Create PayPal payment order
  * @param {string} userId - User UUID
- * @param {number} amount - Payment amount in USD
+ * @param {number} amount - Client display amount. Server product price is authoritative.
  * @param {string} description - Payment description
  * @returns {object} Payment creation result
  */
-async function createPayPalPayment(userId, amount, description = 'Premium Fortune Reading', email = null) {
+async function createPayPalPayment(userId, amount, description = PREMIUM_SAJU_PRODUCT.description, email = null, productType = PREMIUM_SAJU_PRODUCT.id) {
   try {
+    const product = getProduct(productType);
+    if (!product) {
+      throw new Error('Unsupported product type');
+    }
+    const orderDescription = description || product.description;
     const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Get PayPal access token
@@ -79,16 +100,18 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
         intent: 'CAPTURE',
         purchase_units: [{
           reference_id: orderId,
-          description: description,
+          description: orderDescription,
           amount: {
-            currency_code: 'USD',
-            value: amount.toFixed(2)
+            currency_code: product.currency,
+            // JPY (zero-decimal): PayPal rejects "490.00" — must be "490"
+            value: formatPayPalAmount(product)
           }
         }],
         application_context: {
           return_url: `${process.env.FRONTEND_URL}/payment/success`,
           cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
-          brand_name: 'ChatJu Premium',
+          brand_name: 'SoMyung',
+          shipping_preference: 'NO_SHIPPING',
           user_action: 'PAY_NOW'
         }
       },
@@ -108,15 +131,19 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
       .insert([{
         user_id: userId,
         order_id: orderId,
-        amount: amount,
-        currency: 'USD',
+        amount: product.amount,
+        currency: product.currency,
         status: 'pending',
         payment_method: 'paypal',
         payment_key: paypalOrder.id,
-        order_name: description,
+        order_name: orderDescription,
         metadata: {
           paypal_order_id: paypalOrder.id,
           email: email,
+          product_type: product.id,
+          expected_amount: product.amount,
+          expected_currency: product.currency,
+          client_amount: amount,
           created_at: new Date().toISOString(),
         }
       }])
@@ -133,7 +160,7 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
 
     console.log('[Payment Service] PayPal payment created:', {
       orderId,
-      amount,
+      amount: product.amount,
       paypalOrderId: paypalOrder.id,
     });
 
@@ -142,6 +169,9 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
       paymentId: payment.id,
       orderId,
       paypalOrderId: paypalOrder.id,
+      productType: product.id,
+      amount: product.amount,
+      currency: product.currency,
       email: email ? email.toLowerCase().trim() : undefined,
     });
 
@@ -149,15 +179,15 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
       success: true,
       orderId: orderId,
       paymentId: payment.id,
-      amount: amount,
-      currency: 'USD',
+      amount: product.amount,
+      currency: product.currency,
       paypalOrderId: paypalOrder.id,
       approvalUrl: approvalLink ? approvalLink.href : null,
       paymentAccessToken,
     };
 
   } catch (error) {
-    console.error('[Payment Service] Create PayPal payment error:', error);
+    logPaymentError('[Payment Service] Create PayPal payment error:', error);
     throw error;
   }
 }
@@ -169,10 +199,14 @@ async function createPayPalPayment(userId, amount, description = 'Premium Fortun
  */
 async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
   try {
-    verifyAccessToken(paymentAccessToken, {
+    const tokenPayload = verifyAccessToken(paymentAccessToken, {
       purpose: 'payment',
       paypalOrderId,
     });
+    const product = getProduct(tokenPayload.productType || PREMIUM_SAJU_PRODUCT.id);
+    if (!product || !amountsMatch(tokenPayload.amount, product.amount) || tokenPayload.currency !== product.currency) {
+      throw new Error('Payment access token product mismatch');
+    }
 
     // Idempotency: check if payment is already completed
     const { data: existing } = await supabaseAdmin
@@ -188,6 +222,7 @@ async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
         .select('*')
         .eq('payment_key', paypalOrderId)
         .single();
+      assertPaymentMatchesProduct(fullPayment, product.id);
       return { success: true, payment: toClientPayment(fullPayment), alreadyCaptured: true };
     }
 
@@ -211,6 +246,7 @@ async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
     if (captureData.status !== 'COMPLETED') {
       throw new Error(`PayPal capture failed: ${captureData.status}`);
     }
+    assertPayPalCaptureMatchesProduct(captureData, product);
 
     // Fetch existing payment to merge metadata
     const { data: existingPayment } = await supabaseAdmin
@@ -251,7 +287,7 @@ async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
     };
 
   } catch (error) {
-    console.error('[Payment Service] Capture PayPal payment error:', error);
+    logPaymentError('[Payment Service] Capture PayPal payment error:', error);
 
     if (error.message && error.message.includes('access token')) {
       throw error;
@@ -281,6 +317,35 @@ async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
   }
 }
 
+function getPayPalCaptureAmount(captureData) {
+  return captureData?.purchase_units?.[0]?.payments?.captures?.[0]?.amount || null;
+}
+
+function assertPayPalCaptureMatchesProduct(captureData, product = PREMIUM_SAJU_PRODUCT) {
+  const capturedAmount = getPayPalCaptureAmount(captureData);
+  if (!capturedAmount) {
+    throw new Error('Missing PayPal captured amount');
+  }
+  if (capturedAmount.currency_code !== product.currency || !amountsMatch(capturedAmount.value, product.amount)) {
+    throw new Error('PayPal captured amount does not match product price');
+  }
+}
+
+function assertPaymentMatchesProduct(payment, productType = PREMIUM_SAJU_PRODUCT.id) {
+  const product = getProduct(productType);
+  if (!product) {
+    throw new Error('Unsupported product type');
+  }
+
+  const metadata = payment?.metadata || {};
+  const metadataProductType = metadata.product_type || product.id;
+  if (metadataProductType !== product.id || payment.currency !== product.currency || !amountsMatch(payment.amount, product.amount)) {
+    throw new Error('Payment amount does not match product price');
+  }
+
+  return true;
+}
+
 /**
  * Handle PayPal webhook
  * @param {object} webhookData - Webhook payload from PayPal
@@ -298,7 +363,7 @@ async function handlePayPalWebhook(webhookData) {
         // Order approved but not captured yet
         return { success: true, message: 'Order approved' };
 
-      case 'PAYMENT.CAPTURE.COMPLETED':
+      case 'PAYMENT.CAPTURE.COMPLETED': {
         // Payment already captured via frontend — just ensure DB status is up to date
         const orderId = resource.supplementary_data?.related_ids?.order_id;
         if (orderId) {
@@ -324,9 +389,10 @@ async function handlePayPalWebhook(webhookData) {
           }
         }
         return { success: true, message: 'Payment captured' };
+      }
 
       case 'PAYMENT.CAPTURE.DENIED':
-      case 'PAYMENT.CAPTURE.REFUNDED':
+      case 'PAYMENT.CAPTURE.REFUNDED': {
         // Update payment as failed/refunded
         const failedOrderId = resource.supplementary_data?.related_ids?.order_id;
         if (failedOrderId) {
@@ -342,13 +408,14 @@ async function handlePayPalWebhook(webhookData) {
             .eq('payment_key', failedOrderId);
         }
         return { success: true, message: 'Payment status updated' };
+      }
 
       default:
         return { success: true, message: 'Event ignored' };
     }
 
   } catch (error) {
-    console.error('[Payment Service] PayPal webhook error:', error);
+    logPaymentError('[Payment Service] PayPal webhook error:', error);
     throw error;
   }
 }
@@ -468,6 +535,7 @@ module.exports = {
   handlePayPalWebhook,
 
   // Common
+  assertPaymentMatchesProduct,
   getPaymentByOrderId,
   getPaymentById,
   getPaymentByPaymentKey,

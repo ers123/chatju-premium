@@ -20,7 +20,7 @@ function buildHreflang(path: string = '/'): Record<string, string> {
 
 const localeMap: Record<Language, string> = {
   ko: 'ko_KR', en: 'en_US', ja: 'ja_JP', zh: 'zh_CN',
-  vi: 'vi_VN', id: 'id_ID', es: 'es_ES', pt: 'pt_BR',
+  vi: 'vi_VN', id: 'id_ID', es: 'es_MX', pt: 'pt_BR',
   fr: 'fr_FR', th: 'th_TH',
 }
 

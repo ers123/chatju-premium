@@ -34,6 +34,7 @@ function PaymentSuccessContent() {
   const [status, setStatus] = useState<'checking' | 'success' | 'error'>('checking')
   const [error, setError] = useState('')
   const [orderIdState, setOrderIdState] = useState('')
+  const [amountDisplay, setAmountDisplay] = useState('')
 
   useEffect(() => {
     // Payment was already captured in the payment page via onApprove callback.
@@ -44,6 +45,15 @@ function PaymentSuccessContent() {
       try {
         const completed = JSON.parse(completedRaw)
         setOrderIdState(completed.orderId || '')
+        // Pricing is locale-specific (₩4,900 / €3,49 / ¥490 …) — show what was
+        // actually captured. Promo redemptions have no amount; hide the row.
+        if (completed.amount != null && completed.currency) {
+          try {
+            setAmountDisplay(new Intl.NumberFormat(undefined, { style: 'currency', currency: completed.currency }).format(Number(completed.amount)))
+          } catch {
+            setAmountDisplay(`${completed.amount} ${completed.currency}`)
+          }
+        }
         setStatus('success')
       } catch {
         setError(t.payment.successLoadError)
@@ -135,10 +145,12 @@ function PaymentSuccessContent() {
               <span style={{ color: '#6B5E52' }}>{t.payment.successProductLabel}</span>
               <span style={{ fontWeight: 500, color: '#2D3A35' }}>{t.payment.productTitle}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#6B5E52' }}>{t.payment.successAmountLabel}</span>
-              <span style={{ fontWeight: 700, color: '#C5A059' }}>$4.99</span>
-            </div>
+            {amountDisplay && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6B5E52' }}>{t.payment.successAmountLabel}</span>
+                <span style={{ fontWeight: 700, color: '#C5A059' }}>{amountDisplay}</span>
+              </div>
+            )}
             {orderIdState && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#6B5E52' }}>{t.payment.successOrderIdLabel}</span>

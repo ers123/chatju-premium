@@ -29,9 +29,9 @@ describe('Manseryeok Four Pillar Calculations', () => {
       expected: { year: '을묘', month: '계미', day: '정묘', hour: '정미' },
     },
     {
-      desc: '1985-01-10 06:15 남 — 을축년 (갑자년 overlap check)',
+      desc: '1985-01-10 06:15 남 — 갑자년 (입춘 전)',
       date: '1985-01-10', time: '06:15', gender: '남',
-      expected: { year: '을축', month: '정축', day: '기유', hour: '정묘' },
+      expected: { year: '갑자', month: '정축', day: '기유', hour: '정묘' },
     },
     {
       desc: '1990-05-15 10:00 여 — 경오년',
@@ -46,7 +46,7 @@ describe('Manseryeok Four Pillar Calculations', () => {
     {
       desc: '2010-08-08 03:30 여 — 경인년',
       date: '2010-08-08', time: '03:30', gender: '여',
-      expected: { year: '경인', month: '계미', day: '경인', hour: '무인' },
+      expected: { year: '경인', month: '갑신', day: '경인', hour: '무인' },
     },
   ];
 
@@ -74,13 +74,70 @@ describe('Manseryeok Four Pillar Calculations', () => {
   // ============================================================
   // Solar term boundary (입춘 around Feb 4)
   // ============================================================
-  test('2000-02-04 09:00 여 — Near 입춘 boundary', () => {
+  test('2000-02-04 09:00 여 — Before 입춘 boundary', () => {
     const result = calculateMansae('2000-02-04', '09:00', '여');
     expect(result.error).toBeUndefined();
-    expect(result.pillars.year.korean).toBe('경진');
-    expect(result.pillars.month.korean).toBe('기축');
+    expect(result.pillars.year.korean).toBe('기묘');
+    expect(result.pillars.month.korean).toBe('정축');
     expect(result.pillars.day.korean).toBe('임진');
     expect(result.pillars.hour.korean).toBe('을사');
+  });
+
+  test('2000-02-04 22:00 여 — After 입춘 boundary', () => {
+    const result = calculateMansae('2000-02-04', '22:00', '여');
+    expect(result.error).toBeUndefined();
+    expect(result.pillars.year.korean).toBe('경진');
+    expect(result.pillars.month.korean).toBe('무인');
+  });
+
+  test('1983-02-04 18:30 여 — Before exact 입춘 keeps 축월', () => {
+    const result = calculateMansae('1983-02-04', '18:30', '여');
+    expect(result.error).toBeUndefined();
+    expect(result.pillars.year.korean).toBe('임술');
+    expect(result.pillars.month.korean).toBe('계축');
+  });
+
+  test('1983-02-04 18:45 여 — After exact 입춘 moves to 인월', () => {
+    const result = calculateMansae('1983-02-04', '18:45', '여');
+    expect(result.error).toBeUndefined();
+    expect(result.pillars.year.korean).toBe('계해');
+    expect(result.pillars.month.korean).toBe('갑인');
+  });
+
+  test('2024-03-05 12:00 남 — After exact 경칩 moves to 묘월', () => {
+    const result = calculateMansae('2024-03-05', '12:00', '남');
+    expect(result.error).toBeUndefined();
+    expect(result.pillars.year.korean).toBe('갑진');
+    expect(result.pillars.month.korean).toBe('정묘');
+  });
+
+  test('1983-01-26 12:00 여 — Before 입춘 should still be 임술년', () => {
+    const result = calculateMansae('1983-01-26', '12:00', '여');
+    expect(result.error).toBeUndefined();
+    expect(result.pillars.year.korean).toBe('임술');
+    expect(result.pillars.year.hanja).toBe('壬戌');
+    expect(result.pillars.year.element).toBe('수 + 토');
+    expect(result.pillars.month.korean).toBe('계축');
+  });
+
+  test('1983-02-05 12:00 여 — After 입춘 should be 계해년', () => {
+    const result = calculateMansae('1983-02-05', '12:00', '여');
+    expect(result.error).toBeUndefined();
+    expect(result.pillars.year.korean).toBe('계해');
+    expect(result.pillars.year.hanja).toBe('癸亥');
+    expect(result.pillars.year.element).toBe('수 + 수');
+  });
+
+  test('lunar 1983-01-26 12:00 여 — Converts to solar 1983-03-10 before calculation', () => {
+    const result = calculateMansae('1983-01-26', '12:00', '여', { isLunar: true });
+    expect(result.error).toBeUndefined();
+    expect(result.input.birthDate).toBe('1983-01-26');
+    expect(result.input.solarDate).toBe('1983-03-10');
+    expect(result.input.isLunar).toBe(true);
+    expect(result.pillars.year.korean).toBe('계해');
+    expect(result.pillars.month.korean).toBe('을묘');
+    expect(result.pillars.day.korean).toBe('정유');
+    expect(result.pillars.hour.korean).toBe('병오');
   });
 
   // ============================================================
@@ -157,9 +214,9 @@ describe('Manseryeok Four Pillar Calculations', () => {
       expected: { year: '경인', month: '임오', day: '신묘', hour: '신묘' },
     },
     {
-      desc: '1970-01-01 00:00 남 — 경술년 (New Year midnight)',
+      desc: '1970-01-01 00:00 남 — 기유년 (입춘 전)',
       date: '1970-01-01', time: '00:00', gender: '남',
-      expected: { year: '경술', month: '병자', day: '신사', hour: '무자' },
+      expected: { year: '기유', month: '병자', day: '신사', hour: '무자' },
     },
     {
       desc: '1995-09-21 16:30 여 — 을해년',
@@ -193,6 +250,65 @@ describe('Manseryeok Four Pillar Calculations', () => {
   });
 
   // ============================================================
+  // Foreign timezone births — YEAR/MONTH solar-term comparison must happen
+  // in absolute (UTC) time, not by treating the local wall-clock as KST.
+  // Reference: 입춘 2024 = Feb 4 17:27 KST = Feb 4 08:27 UTC.
+  // ============================================================
+  describe('Foreign timezone births (solar-term frame correction)', () => {
+    test('New York 2024-02-04 05:00 local (EST = UTC 10:00, after 입춘) → 갑진년/병인월', () => {
+      const result = calculateMansae('2024-02-04', '05:00', '남', { timezone: 'America/New_York' });
+      expect(result.error).toBeUndefined();
+      expect(result.pillars.year.korean).toBe('갑진'); // NOT 계묘 (naive-KST bug)
+      expect(result.pillars.month.korean).toBe('병인'); // NOT 을축
+      // Day/hour pillars come from the birth LOCAL clock
+      expect(result.pillars.day.korean).toBe('무술');
+      expect(result.pillars.hour.korean).toBe('을묘');
+    });
+
+    test('New York via birthPlace lookup also lands after 입춘 → 갑진년/병인월', () => {
+      const result = calculateMansae('2024-02-04', '05:00', '남', { birthPlace: 'new york' });
+      expect(result.error).toBeUndefined();
+      expect(result.pillars.year.korean).toBe('갑진');
+      expect(result.pillars.month.korean).toBe('병인');
+    });
+
+    test('London 2024-02-04 09:00 GMT (UTC 09:00 > 입춘 08:27 UTC) → 갑진년/병인월', () => {
+      const result = calculateMansae('2024-02-04', '09:00', '여', { timezone: 'Europe/London' });
+      expect(result.error).toBeUndefined();
+      expect(result.pillars.year.korean).toBe('갑진'); // naive-KST would say 계묘 (09:00 < 17:27 KST)
+      expect(result.pillars.month.korean).toBe('병인');
+    });
+
+    test('Korean default (no timezone / Asia/Seoul) is unchanged near the boundary', () => {
+      const noTz = calculateMansae('2024-02-04', '05:00', '남');
+      const seoulTz = calculateMansae('2024-02-04', '05:00', '남', { timezone: 'Asia/Seoul' });
+      for (const result of [noTz, seoulTz]) {
+        expect(result.error).toBeUndefined();
+        expect(result.pillars.year.korean).toBe('계묘'); // before 입춘 17:27 KST
+        expect(result.pillars.month.korean).toBe('을축');
+      }
+    });
+  });
+
+  // ============================================================
+  // Unknown birth time — hour pillar omitted, never fabricated from noon
+  // ============================================================
+  describe('Unknown birth time (hourUnknown)', () => {
+    test('omits hour pillar and counts 6 element characters', () => {
+      const result = calculateMansae('2024-07-15', '12:00', '남', { hourUnknown: true });
+      expect(result.error).toBeUndefined();
+      expect(result.hourUnknown).toBe(true);
+      expect(result.pillars.hour).toBeNull();
+      expect(result.input.birthTime).toBeNull();
+      const totalElements = Object.values(result.elements).reduce((a, b) => a + b, 0);
+      expect(totalElements).toBe(6); // 3 pillars × 2 characters
+      // Year/month/day pillars still computed normally
+      expect(result.pillars.year.korean).toBe('갑진');
+      expect(result.pillars.day.korean).toBe('경진');
+    });
+  });
+
+  // ============================================================
   // Error handling
   // ============================================================
   describe('Error handling', () => {
@@ -213,11 +329,14 @@ describe('Manseryeok Four Pillar Calculations', () => {
     expect(result.elements).toBeDefined();
     expect(result.dayMaster).toBeDefined();
     expect(result.gender).toBe('남');
-    expect(result.input).toEqual({
+    expect(result.input).toEqual(expect.objectContaining({
       birthDate: '2000-01-01',
       birthTime: '12:00',
       gender: '남',
-    });
+      isLunar: false,
+      isLeapMonth: false,
+      solarDate: '2000-01-01',
+    }));
     expect(typeof result.dstWarning).toBe('boolean');
 
     // Check pillar structure

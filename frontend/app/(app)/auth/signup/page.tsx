@@ -4,10 +4,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { localizedLegalPath } from '@/app/lib/i18n/routes'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 export default function SignUpPage() {
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -270,9 +271,9 @@ export default function SignUpPage() {
 
               <p style={{ fontSize: '0.75rem', color: '#8B8580', textAlign: 'center', margin: 0 }}>
                 {t.auth.termsAgreePre}{' '}
-                <Link href="/terms" style={{ color: '#C5A059', textDecoration: 'none' }}>{t.auth.terms}</Link>
+                <Link href={localizedLegalPath(lang, 'terms')} style={{ color: '#C5A059', textDecoration: 'none' }}>{t.auth.terms}</Link>
                 {' '}{t.auth.termsAnd}{' '}
-                <Link href="/privacy" style={{ color: '#C5A059', textDecoration: 'none' }}>{t.auth.privacy}</Link>
+                <Link href={localizedLegalPath(lang, 'privacy')} style={{ color: '#C5A059', textDecoration: 'none' }}>{t.auth.privacy}</Link>
                 {t.auth.termsAgreePost}
               </p>
             </form>

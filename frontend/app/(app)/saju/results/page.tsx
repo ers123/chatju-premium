@@ -4,15 +4,20 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
-import { apiClient } from '@/lib/api'
+import { apiClient, generateClaimKey, pollForReadingByClaim } from '@/lib/api'
+import { buildApiUrl } from '@/lib/api-url'
+import { getPremiumPricing, buildPayPalSdkParams } from '@/lib/pricing'
 import { useLanguage } from '@/app/lib/i18n/context'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ShareableResultCard from '@/components/saju/ShareableResultCard'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
+import PremiumEditorialReport, {
+  hasReadyPresentation,
+  type PremiumReportData,
+} from '@/components/saju/PremiumEditorialReport'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
-const PRODUCT_AMOUNT = 4.99
 
 // Types
 interface FourPillar {
@@ -28,7 +33,7 @@ interface SajuResult {
     년주: FourPillar
     월주: FourPillar
     일주: FourPillar
-    시주: FourPillar
+    시주?: FourPillar // absent when birth time is unknown
   }
   dayMaster: string
   ohaengBalance: Record<string, number>
@@ -147,13 +152,15 @@ function translateBranch(korean: string, lang: string): string {
 
 // Four Pillars Display Component
 function FourPillarsDisplay({ pillars, t, lang }: { pillars: SajuResult['fourPillars']; t: { pillarYear: string; pillarMonth: string; pillarDay: string; pillarHour: string }; lang: string }) {
-  const pillarOrder = ['시주', '일주', '월주', '년주'] as const
+  // 시주 is absent when birth time is unknown — drop it so the grid doesn't crash.
+  const pillarOrder = (['시주', '일주', '월주', '년주'] as const).filter((key) => pillars[key])
   const pillarLabels = { 년주: t.pillarYear, 월주: t.pillarMonth, 일주: t.pillarDay, 시주: t.pillarHour }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${pillarOrder.length}, 1fr)`, gap: '0.5rem' }}>
       {pillarOrder.map((key) => {
         const pillar = pillars[key]
+        if (!pillar) return null
         return (
           <div key={key} style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.75rem', marginBottom: '0.5rem', color: '#8B8580' }}>{pillarLabels[key]}</div>
@@ -211,14 +218,21 @@ function OhaengBalanceChart({ balance, ohaengElements, elementCount }: { balance
 
 export default function ResultsPage() {
   const router = useRouter()
-  const { t, lang } = useLanguage()
+  const { t, lang, ready: langReady } = useLanguage()
   useEffect(() => { document.title = t.sajuResults.pageTitle }, [t])
   const sr = t.sajuResults
+  // Per-locale chargeable pricing; null = no PayPal checkout (ko: free tier + promo only)
+  const pricing = getPremiumPricing(lang)
+  const paypalSdkParams = pricing ? buildPayPalSdkParams(pricing.currency) : ''
   const [result, setResult] = useState<SajuResult | null>(null)
   const [inputData, setInputData] = useState<{ name: string; birthDate: string; birthTime: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const [premiumReport, setPremiumReport] = useState<Record<string, string> | null>(null)
+  // The card appends "check your network connection" under the message. That is
+  // only true for an unexplained failure — telling someone who hit the hourly
+  // preview limit to check their wifi sends them chasing the wrong thing.
+  const [showNetworkHint, setShowNetworkHint] = useState(true)
+  const [premiumReport, setPremiumReport] = useState<PremiumReportData | null>(null)
   const [corrections, setCorrections] = useState<{ applied: boolean; note: string; adjustedTime?: string | null; isSouthernHemisphere?: boolean } | null>(null)
   const [dstWarning, setDstWarning] = useState(false)
   const [premiumLoading, setPremiumLoading] = useState(false)
@@ -226,6 +240,7 @@ export default function ResultsPage() {
   const [readingId, setReadingId] = useState<string | null>(null)
   const [reportAccessToken, setReportAccessToken] = useState<string | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
+  const previewRequestKeyRef = useRef<string | null>(null)
 
   // Inline payment state
   const [showPayment, setShowPayment] = useState(false)
@@ -233,6 +248,7 @@ export default function ResultsPage() {
   const paymentEmailRef = useRef('')
   const [paymentProcessing, setPaymentProcessing] = useState(false)
   const [paymentError, setPaymentError] = useState('')
+  const [paymentErrorCode, setPaymentErrorCode] = useState('')
   const [paypalSdkReady, setPaypalSdkReady] = useState(false)
   const paypalRendered = useRef(false)
   const paymentAccessTokenRef = useRef('')
@@ -254,7 +270,7 @@ export default function ResultsPage() {
 
   // Render PayPal buttons when SDK is ready, panel is open, and email is valid (container div exists)
   useEffect(() => {
-    if (!paypalSdkReady || !showPayment || !emailValid || paypalRendered.current) return
+    if (!pricing || !paypalSdkReady || !showPayment || !emailValid || paypalRendered.current) return
     if (typeof window === 'undefined' || !(window as any).paypal) return
     // Small delay to ensure DOM is rendered after email validation shows the container
     const timer = setTimeout(() => {
@@ -265,18 +281,24 @@ export default function ResultsPage() {
     try {
       ;(window as any).paypal.Buttons({
         createOrder: async () => {
-          if (!paymentEmailRef.current.trim()) { setPaymentError('Please enter your email first'); throw new Error('Email required') }
-          const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email: paymentEmailRef.current })
+          if (!paymentEmailRef.current.trim()) {
+            setPaymentErrorCode('PAYMENT_ERROR')
+            setPaymentError(t.payment.emailRequired)
+            throw new Error('Email required')
+          }
+          const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email: paymentEmailRef.current }
+          const response = await apiClient.createPayPalPayment(orderPayload)
           if (response.success && response.paypalOrderId && response.paymentAccessToken) {
             paymentAccessTokenRef.current = response.paymentAccessToken
-            sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken }))
+            sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken, amount: pricing.amount, currency: pricing.currency }))
             return response.paypalOrderId
           }
-          throw new Error('Order creation failed')
+          throw new Error(t.payment.errorCreateOrder)
         },
         onApprove: async (data: { orderID: string }) => {
           setPaymentProcessing(true)
           setPaymentError('')
+          setPaymentErrorCode('')
           try {
             const pendingRaw = sessionStorage.getItem('pending_order')
             const pending = pendingRaw ? JSON.parse(pendingRaw) : null
@@ -285,33 +307,52 @@ export default function ResultsPage() {
             const captureResult = await apiClient.capturePayPalPayment(data.orderID, paymentAccessToken)
             if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
               const payment = (captureResult as any).payment
-              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString(), email: paymentEmail }))
+              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, amount: payment.amount, currency: payment.currency, paymentAccessToken, completedAt: new Date().toISOString(), email: paymentEmail }))
               sessionStorage.removeItem('pending_order')
               setShowPayment(false)
               // Trigger premium report fetch
               window.location.reload()
             } else {
-              setPaymentError('Payment capture failed. Please try again.')
+              setPaymentErrorCode('PAYMENT_ERROR')
+              setPaymentError((t.payment as any).captureFailed || t.payment.errorCapturePayment)
             }
-          } catch { setPaymentError('Payment processing error. Please try again.') }
+          } catch (err: any) {
+            if (err?.code === 'RATE_LIMITED' || err?.statusCode === 429) {
+              // Rate limited, not failed — show the server's specific message
+              setPaymentErrorCode('RATE_LIMITED')
+              setPaymentError(err?.error || (t.payment as any).genericError || t.payment.errorProcessPayment)
+            } else {
+              setPaymentErrorCode('PAYMENT_ERROR')
+              setPaymentError((t.payment as any).genericError || t.payment.errorProcessPayment)
+            }
+          }
           finally { setPaymentProcessing(false) }
         },
-        onError: () => setPaymentError('Payment error. Please try again.'),
+        onError: () => {
+          setPaymentErrorCode('PAYMENT_ERROR')
+          setPaymentError((t.payment as any).genericError || t.payment.errorPaymentGeneral)
+        },
         onCancel: () => {},
       }).render('#inline-paypal-container')
-    } catch { setPaymentError('Failed to initialize payment.') }
+    } catch {
+      setPaymentErrorCode('PAYMENT_ERROR')
+      setPaymentError((t.payment as any).initFailed || t.payment.errorPaymentInit)
+    }
     }, 100) // 100ms delay for DOM render
     return () => clearTimeout(timer)
   }, [paypalSdkReady, showPayment, emailValid])
 
   const pollForReading = async (token: string, maxAttempts = 18) => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+    let consecutiveErrors = 0
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise(r => setTimeout(r, 5000))
       try {
-        const res = await fetch(`${API_URL}/saju/reading-check?token=${encodeURIComponent(token)}`)
+        const res = await fetch(buildApiUrl(`/saju/reading-check?token=${encodeURIComponent(token)}`))
         const data = await res.json()
         if (data.status === 'complete' && data.reading) return data.reading
+        // status 'error' = backend fault (not "still generating") — bail after a streak
+        consecutiveErrors = data.status === 'error' ? consecutiveErrors + 1 : 0
+        if (consecutiveErrors >= 3) return null
       } catch {}
     }
     return null
@@ -322,10 +363,12 @@ export default function ResultsPage() {
     if (!promoCode.trim() || !paymentEmail.trim()) return
     setPromoValidating(true)
     setPaymentError('')
+    setPaymentErrorCode('')
     try {
       const validation = await apiClient.validatePromoCode(promoCode)
       if (!validation.valid) {
-        setPaymentError(validation.error || 'Invalid promo code')
+        setPaymentErrorCode('PROMO_INVALID')
+        setPaymentError(validation.error || (t.payment as any).invalidPromo || t.payment.promoInvalid)
         setPromoValidating(false)
         return
       }
@@ -334,33 +377,60 @@ export default function ResultsPage() {
       const stored = sessionStorage.getItem('sajuInput')
       if (!stored) return
       const input = JSON.parse(stored)
-      const lookup = await apiClient.createReportLookupToken({ email: paymentEmail, promoCode })
-      const reportLookupToken = lookup.reportLookupToken
+
+      // Generate a random claim key — passed to backend so it can tag the reading.
+      // If generation times out, we poll with this key instead of an OTP-gated token.
+      const claimKey = generateClaimKey()
 
       let reading = null
       try {
         // Try the direct call — may timeout at 30s via API Gateway
-        reading = await apiClient.calculateWithPromo({
+        const promoPayload = {
           promoCode,
           email: paymentEmail,
           birthDate: input.birthDate,
           birthTime: input.birthTime,
           gender: input.gender,
+          unknownTime: input.unknownTime === true,
           isLunar: input.calendar === 'lunar',
+          isLeapMonth: input.isLeapMonth === true,
           language: lang,
           subjectName: input.name,
           birthPlace: input.birthPlace,
           parentBirthDate: input.parentBirthDate,
           parentBirthTime: input.parentBirthTime,
           parentRole: input.parentRole,
+          parentIsLunar: input.parentCalendar === 'lunar',
+          parentIsLeapMonth: input.parentIsLeapMonth === true,
           twinOrder: input.twinOrder,
           twinSiblingName: input.twinSiblingName,
-        })
-      } catch {
-        reading = await pollForReading(reportLookupToken)
+          consent: input.consent,
+          claimKey,
+        }
+        reading = await apiClient.calculateWithPromo(promoPayload)
+      } catch (err: any) {
+        if (err?.code === 'PROMO_ALREADY_USED' || err?.statusCode === 409) {
+          setPaymentErrorCode('PROMO_ALREADY_USED')
+          setPaymentError(t.payment.promoAlreadyUsedMessage || err.error || t.payment.promoInvalid)
+          setPaymentProcessing(false)
+          setPromoValidating(false)
+          return
+        }
+        if (err?.code === 'RATE_LIMITED' || err?.statusCode === 429) {
+          // Request was rejected before generation started — polling would
+          // just spin for 60s and end in a misleading "report pending".
+          setPaymentErrorCode('RATE_LIMITED')
+          setPaymentError(err?.error || (t.payment as any).genericError || t.payment.errorPaymentGeneral)
+          setPaymentProcessing(false)
+          setPromoValidating(false)
+          return
+        }
+        // Timeout or transient error — poll by claim key (no OTP required)
+        reading = await pollForReadingByClaim(claimKey)
         if (!reading) {
-          sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, reportLookupToken }))
-          setPaymentError('Report is still being generated. This page will refresh automatically.')
+          sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, claimKey }))
+          setPaymentErrorCode('REPORT_PENDING')
+          setPaymentError((t.payment as any).reportPending || sr.premiumGeneratingDesc)
           setPaymentProcessing(false)
           setPromoValidating(false)
           setTimeout(() => window.location.reload(), 10000)
@@ -370,11 +440,12 @@ export default function ResultsPage() {
 
       // Store and reload to show premium
       sessionStorage.setItem('promo_reading', JSON.stringify(reading))
-      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, reportLookupToken }))
+      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, claimKey }))
       setShowPayment(false)
       window.location.reload()
     } catch (err: any) {
-      setPaymentError(err.error || err.message || 'Error processing promo code')
+      setPaymentErrorCode('PAYMENT_ERROR')
+      setPaymentError(err.error || err.message || (t.payment as any).genericError || t.payment.errorPaymentGeneral)
     } finally {
       setPromoValidating(false)
       setPaymentProcessing(false)
@@ -383,6 +454,9 @@ export default function ResultsPage() {
 
   // Check for completed payment and fetch premium report
   useEffect(() => {
+    // The report language is fixed at generation time, so never call before the
+    // visitor's language is known.
+    if (!langReady) return
     if (!result || !inputData) return
 
     const completedRaw = sessionStorage.getItem('completed_payment')
@@ -404,13 +478,14 @@ export default function ResultsPage() {
           r = JSON.parse(promoReadingRaw)
           sessionStorage.removeItem('promo_reading') // One-time use
         } else if (completed.orderId === 'promo') {
-          if (!completed.reportLookupToken) {
-            setPremiumError('Report generation is still in progress. Please check your email shortly.')
+          // Poll by claim key (no OTP required — possession of key is authz)
+          if (!completed.claimKey) {
+            setPremiumError((t.payment as any).reportPending || sr.premiumGeneratingDesc)
             return
           }
-          r = await pollForReading(completed.reportLookupToken)
+          r = await pollForReadingByClaim(completed.claimKey)
           if (!r) {
-            setPremiumError('Report generation is still in progress. Please refresh this page in a moment.')
+            setPremiumError((t.payment as any).reportPending || sr.premiumGeneratingDesc)
             return
           }
         } else {
@@ -418,41 +493,55 @@ export default function ResultsPage() {
           if (!stored) return
           const input = JSON.parse(stored)
 
-          // Resolve language with localStorage fallback (same as preview)
-          let resolvedLang = lang
-          if (resolvedLang === 'ko') {
-            const savedLang = localStorage.getItem('somyung-lang')
-            if (savedLang && savedLang !== 'ko') {
-              resolvedLang = savedLang as typeof lang
-            }
-          }
+          // Gated on langReady like the preview, so this is the visitor's language.
+          const resolvedLang = lang
 
-          const lookup = await apiClient.createReportLookupToken({ email: completed.email, orderId: completed.orderId })
+          // Use stored claim key for in-flow polling; generate and persist a new one if absent.
+          // Persisting ensures the same key is reused if the page reloads before the reading is ready.
+          // (Back-compat: completed_payment stored before this fix won't have claimKey.)
+          let paidClaimKey = completed.claimKey
+          if (!paidClaimKey) {
+            paidClaimKey = generateClaimKey()
+            // Persist so reloads reuse the same key
+            sessionStorage.setItem('completed_payment', JSON.stringify({ ...completed, claimKey: paidClaimKey }))
+          }
           let reading
           try {
-            reading = await apiClient.getFullReading(completed.orderId, {
-            birthDate: input.birthDate,
-            birthTime: input.birthTime,
-            gender: input.gender,
-            isLunar: input.calendar === 'lunar',
-            language: resolvedLang,
-            // Location for solar time correction
-            birthPlace: input.birthPlace,
-            // Twin info
-            twinOrder: input.twinOrder,
-            twinSiblingName: input.twinSiblingName,
-            // Parent data
-            parentBirthDate: input.parentBirthDate,
-            parentBirthTime: input.parentBirthTime,
-            parentRole: input.parentRole,
-            parentGender: input.parentGender,
-            // Email for PDF delivery
-            deliveryEmail: completed.email,
-            })
+            const calculatePayload = {
+              birthDate: input.birthDate,
+              birthTime: input.birthTime,
+              gender: input.gender,
+              unknownTime: input.unknownTime === true,
+              isLunar: input.calendar === 'lunar',
+              isLeapMonth: input.isLeapMonth === true,
+              language: resolvedLang,
+              // The promo path has always sent this; the paid path did not, so a
+              // paying customer's report was built with no name — which empties the
+              // presentation cover and drops the whole report to the fallback layout.
+              subjectName: input.name,
+              // Location for solar time correction
+              birthPlace: input.birthPlace,
+              // Twin info
+              twinOrder: input.twinOrder,
+              twinSiblingName: input.twinSiblingName,
+              // Parent data
+              parentBirthDate: input.parentBirthDate,
+              parentBirthTime: input.parentBirthTime,
+              parentRole: input.parentRole,
+              parentGender: input.parentGender,
+              parentIsLunar: input.parentCalendar === 'lunar',
+              parentIsLeapMonth: input.parentIsLeapMonth === true,
+              // Email for PDF delivery
+              deliveryEmail: completed.email,
+              // Consent record collected on the input form
+              consent: input.consent,
+            }
+            reading = await apiClient.getFullReading(completed.orderId, calculatePayload, completed.paymentAccessToken, paidClaimKey)
           } catch {
-            reading = await pollForReading(lookup.reportLookupToken)
+            // Timeout — poll by claim key (no OTP required)
+            reading = await pollForReadingByClaim(paidClaimKey)
             if (!reading) {
-              setPremiumError('Report generation is still in progress. Please refresh this page in a moment.')
+              setPremiumError((t.payment as any).reportPending || sr.premiumGeneratingDesc)
               return
             }
           }
@@ -467,11 +556,12 @@ export default function ResultsPage() {
           sessionStorage.setItem('report_access_token', r.reportAccessToken)
         }
 
-        // Backend returns aiInterpretation: { fullText, sections, metadata }
+        // Preserve the full structured presentation so web and PDF share the
+        // same ready-path content model. Markdown remains an explicit fallback.
         if (r.aiInterpretation?.fullText) {
-          setPremiumReport({ fullText: r.aiInterpretation.fullText, ...(r.aiInterpretation.sections || {}) })
+          setPremiumReport(r.aiInterpretation as PremiumReportData)
         } else if (r.premiumSections) {
-          setPremiumReport(r.premiumSections)
+          setPremiumReport({ sections: r.premiumSections })
         } else if (r.interpretation) {
           setPremiumReport({ fullText: r.interpretation })
         }
@@ -484,20 +574,19 @@ export default function ResultsPage() {
     }
 
     fetchPremium()
-  }, [result, inputData])
+  }, [result, inputData, langReady])
 
   const handlePdfExport = useCallback(async () => {
     const token = reportAccessToken || sessionStorage.getItem('report_access_token')
     if (!readingId || !token) return
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
-      const response = await fetch(`${API_URL}/saju/reading/${readingId}/pdf?token=${encodeURIComponent(token)}`)
+      const response = await fetch(buildApiUrl(`/saju/reading/${readingId}/pdf?token=${encodeURIComponent(token)}`))
       if (!response.ok) throw new Error('PDF download failed')
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `SoMyung_${inputData?.name || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`
+      a.download = `SoMyung_Report_${new Date().toISOString().split('T')[0]}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -509,6 +598,10 @@ export default function ResultsPage() {
   }, [readingId, reportAccessToken, inputData, sr.pdfError])
 
   useEffect(() => {
+    // Same reason as the premium effect: the preview text is generated in
+    // whatever language we send, so wait until we know it.
+    if (!langReady) return
+
     const fetchResults = async () => {
       try {
         const stored = sessionStorage.getItem('sajuInput')
@@ -520,22 +613,22 @@ export default function ResultsPage() {
         const input = JSON.parse(stored)
         setInputData(input)
 
-        // Resolve language: prefer context lang, but if still default 'ko',
-        // check localStorage directly (context useEffect may not have run yet)
-        let resolvedLang = lang
-        if (resolvedLang === 'ko') {
-          const savedLang = localStorage.getItem('somyung-lang')
-          if (savedLang && savedLang !== 'ko') {
-            resolvedLang = savedLang as typeof lang
-          }
-        }
+        // The effect below waits for langReady, so `lang` is the visitor's real
+        // language here rather than the 'ko' the context starts on.
+        const resolvedLang = lang
+
+        const previewRequestKey = `${resolvedLang}:${stored}`
+        if (previewRequestKeyRef.current === previewRequestKey) return
+        previewRequestKeyRef.current = previewRequestKey
 
         // Send both child and parent data for relationship analysis
-        const previewData = await apiClient.getPreview({
+        const previewPayload = {
           birthDate: input.birthDate,
           birthTime: input.birthTime,
           gender: input.gender,
+          unknownTime: input.unknownTime === true,
           isLunar: input.calendar === 'lunar',
+          isLeapMonth: input.isLeapMonth === true,
           language: resolvedLang,
           // Location for solar time correction
           birthPlace: input.birthPlace,
@@ -546,7 +639,10 @@ export default function ResultsPage() {
           parentBirthDate: input.parentBirthDate,
           parentBirthTime: input.parentBirthTime,
           parentRole: input.parentRole,
-        })
+          parentIsLunar: input.parentCalendar === 'lunar',
+          parentIsLeapMonth: input.parentIsLeapMonth === true,
+        }
+        const previewData = await apiClient.getPreview(previewPayload)
 
         const manseryeok = previewData.manseryeok
         const transformedResult: SajuResult = {
@@ -569,12 +665,18 @@ export default function ResultsPage() {
               천간오행: manseryeok.pillars.day.element.split(' + ')[0] || '',
               지지오행: manseryeok.pillars.day.element.split(' + ')[1] || '',
             },
-            시주: {
-              천간: manseryeok.pillars.hour.heavenlyStem,
-              지지: manseryeok.pillars.hour.earthlyBranch,
-              천간오행: manseryeok.pillars.hour.element.split(' + ')[0] || '',
-              지지오행: manseryeok.pillars.hour.element.split(' + ')[1] || '',
-            },
+            // 시주 is omitted by the backend when birth time is unknown; only
+            // include it when the hour pillar is present (else this used to crash).
+            ...(manseryeok.pillars.hour
+              ? {
+                  시주: {
+                    천간: manseryeok.pillars.hour.heavenlyStem,
+                    지지: manseryeok.pillars.hour.earthlyBranch,
+                    천간오행: manseryeok.pillars.hour.element.split(' + ')[0] || '',
+                    지지오행: manseryeok.pillars.hour.element.split(' + ')[1] || '',
+                  },
+                }
+              : {}),
           },
           dayMaster: manseryeok.dayMaster,
           ohaengBalance: {
@@ -598,14 +700,24 @@ export default function ResultsPage() {
         setResult(transformedResult)
       } catch (err) {
         console.error('Error fetching results:', err)
-        setError(sr.errorFetch)
+        previewRequestKeyRef.current = null
+        // Surface the free-preview rate-limit (429) with its real message +
+        // upgrade hint instead of a misleading generic "network error".
+        const e = err as { code?: string; statusCode?: number; error?: string }
+        if (e?.code === 'PREVIEW_LIMIT_EXCEEDED' || e?.statusCode === 429) {
+          setError(sr.errorPreviewLimit || e?.error || sr.errorFetch)
+          setShowNetworkHint(false)
+        } else {
+          setError(sr.errorFetch)
+          setShowNetworkHint(true)
+        }
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchResults()
-  }, [router, sr.errorFetch])
+  }, [router, sr.errorFetch, langReady, lang])
 
   if (isLoading) {
     return (
@@ -681,9 +793,11 @@ export default function ResultsPage() {
           <p style={{ color: '#6B7280', marginBottom: '0.5rem', lineHeight: 1.6 }}>
             {error || sr.errorDefault}
           </p>
-          <p style={{ color: '#9CA3AF', fontSize: '0.875rem', marginBottom: '2rem' }}>
-            {sr.errorNetwork}
-          </p>
+          {showNetworkHint && (
+            <p style={{ color: '#9CA3AF', fontSize: '0.875rem', marginBottom: '2rem' }}>
+              {sr.errorNetwork}
+            </p>
+          )}
           <button
             onClick={() => router.push('/saju/input')}
             style={{
@@ -949,36 +1063,33 @@ export default function ResultsPage() {
         {/* PREMIUM: Report or Locked CTA */}
         {premiumReport ? (
           <>
-            {/* Premium Report Header */}
-            <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '12px', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, right: 0, width: '10rem', height: '10rem', background: 'rgba(184,146,45,0.1)', borderRadius: '50%', filter: 'blur(48px)' }} />
-              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 1rem', borderRadius: '6px', background: 'rgba(184,146,45,0.2)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 700, marginBottom: '1rem' }}>
-                  <CheckIcon /> {sr.premiumComplete}
+            {hasReadyPresentation(premiumReport) ? (
+              <PremiumEditorialReport presentation={premiumReport.presentation} />
+            ) : (
+              <section style={{ background: '#FBF9F4', border: '1px solid #D8CFC0', borderRadius: 0, padding: 'clamp(1.5rem, 4vw, 3rem)', marginBottom: '2rem' }}>
+                <div style={{ borderBottom: '3px solid #A47C3F', paddingBottom: '1rem', marginBottom: '1.5rem', color: '#24352F' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#60776C', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    <CheckIcon /> {sr.premiumComplete}
+                  </div>
+                  <h2 style={{ margin: '0.75rem 0 0', fontSize: '1.75rem', fontWeight: 700, fontFamily: "'Nanum Myeongjo', serif" }}>{sr.premiumTitle}</h2>
                 </div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif' }}>{sr.premiumTitle}</h2>
-              </div>
-            </section>
-
-            {/* Premium Report — rendered as markdown */}
-            <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
-              <div style={{ color: '#4B4035', maxWidth: 'none' }}>
+                <div style={{ color: '#30332F', maxWidth: 'none' }}>
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
                     h2: ({ children }) => (
-                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginTop: '2.5rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #EBE5DF' }}>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: "'Nanum Myeongjo', serif", color: '#24352F', marginTop: '2.5rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #D8CFC0' }}>
                         {children}
                       </h2>
                     ),
                     h3: ({ children }) => (
-                      <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1A3D2E', marginTop: '1.5rem', marginBottom: '0.75rem' }}>{children}</h3>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#24352F', marginTop: '1.5rem', marginBottom: '0.75rem' }}>{children}</h3>
                     ),
                     p: ({ children }) => (
-                      <p style={{ marginBottom: '1rem', lineHeight: 1.7, color: '#4B4035' }}>{children}</p>
+                      <p style={{ marginBottom: '1rem', lineHeight: 1.75, color: '#30332F' }}>{children}</p>
                     ),
                     strong: ({ children }) => (
-                      <strong style={{ fontWeight: 600, color: '#1A3D2E' }}>{children}</strong>
+                      <strong style={{ fontWeight: 600, color: '#24352F' }}>{children}</strong>
                     ),
                     ul: ({ children }) => (
                       <ul style={{ marginBottom: '1rem', marginLeft: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>{children}</ul>
@@ -987,31 +1098,31 @@ export default function ResultsPage() {
                       <ol style={{ marginBottom: '1rem', marginLeft: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', listStyleType: 'decimal', listStylePosition: 'inside' }}>{children}</ol>
                     ),
                     li: ({ children }) => (
-                      <li style={{ lineHeight: 1.7, color: '#4B4035' }}>{children}</li>
+                      <li style={{ lineHeight: 1.75, color: '#30332F' }}>{children}</li>
                     ),
                     hr: () => (
-                      <hr style={{ margin: '2rem 0', borderColor: '#EBE5DF' }} />
+                      <hr style={{ margin: '2rem 0', borderColor: '#D8CFC0' }} />
                     ),
                     table: ({ children }) => (
                       <div style={{ overflowX: 'auto', marginBottom: '1rem' }}>
-                        <table style={{ width: '100%', fontSize: '0.875rem', borderCollapse: 'collapse', borderColor: '#EBE5DF' }}>{children}</table>
+                        <table style={{ width: '100%', fontSize: '0.875rem', borderCollapse: 'collapse', borderColor: '#D8CFC0' }}>{children}</table>
                       </div>
                     ),
                     th: ({ children }) => (
-                      <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#1A3D2E', borderBottom: '2px solid #EBE5DF', backgroundColor: '#FAF8F5' }}>{children}</th>
+                      <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#24352F', borderBottom: '2px solid #D8CFC0', backgroundColor: '#F5F0E7' }}>{children}</th>
                     ),
                     td: ({ children }) => (
-                      <td style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #F3F0ED' }}>{children}</td>
+                      <td style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #E7E0D5' }}>{children}</td>
                     ),
                   }}
                 >
-                  {premiumReport.fullText || Object.entries(premiumReport)
-                    .filter(([key]) => key !== 'metadata')
+                  {premiumReport.fullText || Object.entries(premiumReport.sections || {})
                     .map(([, value]) => value)
                     .join('\n\n')}
                 </ReactMarkdown>
               </div>
             </section>
+            )}
           </>
         ) : premiumLoading ? (
           <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '2rem 1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
@@ -1024,11 +1135,7 @@ export default function ResultsPage() {
             <div style={{ background: '#F8F6F3', borderRadius: '10px', padding: '1rem', border: '1px solid #EBE5DF' }}>
               <p style={{ color: '#C5A059', fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>✉ {(() => { try { const c = sessionStorage.getItem('completed_payment'); return c ? JSON.parse(c).email : '' } catch { return '' } })()}</p>
               <p style={{ color: '#6B5E52', fontSize: '0.9375rem' }}>
-                {lang === 'ko'
-                  ? '리포트는 위 이메일로도 전송됩니다. 이 페이지를 닫아도 괜찮습니다.'
-                  : lang === 'ja'
-                  ? 'レポートは上記のメールにも送信されます。このページを閉じても大丈夫です。'
-                  : 'Your report will also be sent to this email. Feel free to close this page.'}
+                {t.payment.emailAlsoSent}
               </p>
             </div>
           </section>
@@ -1037,11 +1144,7 @@ export default function ResultsPage() {
             <p style={{ color: '#C67B6F', fontSize: '1rem', marginBottom: '1rem' }}>{premiumError}</p>
             <div style={{ background: '#F8F6F3', borderRadius: '10px', padding: '1rem', border: '1px solid #EBE5DF' }}>
               <p style={{ color: '#6B5E52', fontSize: '0.9375rem' }}>
-                {lang === 'ko'
-                  ? '리포트는 이메일로도 전송됩니다. 잠시 후 새로고침하시거나 이메일을 확인해주세요.'
-                  : lang === 'ja'
-                  ? 'レポートはメールでも送信されます。しばらくしてからページを更新するか、メールをご確認ください。'
-                  : 'Your report will also be delivered by email. Please refresh shortly or check your inbox.'}
+                {t.payment.emailAlsoSent}
               </p>
             </div>
           </section>
@@ -1084,9 +1187,19 @@ export default function ResultsPage() {
                     type="email"
                     placeholder="email@example.com"
                     value={paymentEmail}
-                    onChange={(e) => { setPaymentEmail(e.target.value); paymentEmailRef.current = e.target.value }}
+                    onChange={(e) => {
+                      setPaymentEmail(e.target.value)
+                      paymentEmailRef.current = e.target.value
+                      if (paymentErrorCode === 'PROMO_ALREADY_USED') {
+                        setPaymentError('')
+                        setPaymentErrorCode('')
+                      }
+                    }}
                     style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.875rem', boxSizing: 'border-box' as const, marginBottom: '0.75rem' }}
                   />
+                  <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 0.75rem' }}>
+                    {(t.payment as any).paypalVerificationNote || 'PayPal may still ask for payment verification details inside its secure checkout.'}
+                  </p>
 
                   {/* Step 2: Payment options — only show when email is entered */}
                   {paymentEmail.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentEmail) ? (
@@ -1097,7 +1210,13 @@ export default function ResultsPage() {
                           type="text"
                           placeholder={t.payment.promoCodePlaceholder || 'Promo code'}
                           value={promoCode}
-                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                          onChange={(e) => {
+                            setPromoCode(e.target.value.toUpperCase())
+                            if (paymentErrorCode === 'PROMO_ALREADY_USED') {
+                              setPaymentError('')
+                              setPaymentErrorCode('')
+                            }
+                          }}
                           style={{ flex: 1, padding: '0.625rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', fontSize: '0.8125rem' }}
                         />
                         <button
@@ -1109,21 +1228,38 @@ export default function ResultsPage() {
                         </button>
                       </div>
 
-                      {/* Divider */}
-                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
-                        {(t.payment as any).orPayWith || 'Or pay with'}
-                      </div>
+                      {pricing ? (
+                        <>
+                          {/* Divider */}
+                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.75rem' }}>
+                            {(t.payment as any).orPayWith || 'Or pay with'}
+                          </div>
+                          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 1.6, margin: '0 0 0.75rem' }}>
+                            {(t.payment as any).paypalCheckoutNote || 'Pay with a PayPal account, debit card, or credit card. Availability may vary by country and PayPal risk checks.'}
+                          </p>
 
-                      {/* PayPal buttons */}
-                      <div id="inline-paypal-container" />
-                      <Script
-                        src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay`}
-                        onReady={() => setPaypalSdkReady(true)}
-                      />
+                          {/* PayPal buttons */}
+                          <div id="inline-paypal-container" />
+                          <Script
+                            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&${paypalSdkParams}`}
+                            onReady={() => setPaypalSdkReady(true)}
+                          />
+                        </>
+                      ) : (
+                        /* Korea: no PayPal checkout — free tier + promo code only */
+                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', textAlign: 'center' }}>
+                          <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, margin: '0 0 0.35rem' }}>
+                            {(t.payment as any).krUnavailable || '한국에서는 카드 결제를 아직 지원하지 않습니다.'}
+                          </p>
+                          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
+                            {(t.payment as any).krUseFreeOrPromo || '무료 미리보기를 이용하시거나, 위의 프로모션 코드를 입력해 프리미엄 리포트를 받아보세요.'}
+                          </p>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '1rem 0' }}>
-                      Enter your email above to see payment options
+                      {t.payment.emailRequired}
                     </p>
                   )}
 
@@ -1137,29 +1273,34 @@ export default function ResultsPage() {
                         ✉ {paymentEmail}
                       </p>
                       <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9375rem', lineHeight: 1.6 }}>
-                        {lang === 'ko'
-                          ? '리포트가 준비되면 위 이메일로도 전송됩니다.\n이 페이지를 닫아도 괜찮습니다.'
-                          : lang === 'ja'
-                          ? 'レポートは上記のメールにも送信されます。\nこのページを閉じても大丈夫です。'
-                          : 'Your report will also be sent to the email above.\nFeel free to close this page.'}
+                        {t.payment.emailAlsoSent}
                       </p>
                     </div>
                   )}
 
                   {paymentError && (
-                    <div style={{ textAlign: 'center', padding: '1.5rem 1rem', background: 'rgba(197,160,89,0.08)', borderRadius: '12px', marginTop: '1rem' }}>
-                      <p style={{ color: '#C5A059', fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                        ✉ {paymentEmail}
+                    <div
+                      role="alert"
+                      aria-live="assertive"
+                      style={{
+                        textAlign: 'center',
+                        padding: '1.5rem 1rem',
+                        background: paymentErrorCode === 'PROMO_ALREADY_USED' ? 'rgba(198,123,111,0.14)' : 'rgba(197,160,89,0.08)',
+                        border: paymentErrorCode === 'PROMO_ALREADY_USED' ? '1px solid rgba(198,123,111,0.45)' : '1px solid transparent',
+                        borderRadius: '12px',
+                        marginTop: '1rem'
+                      }}
+                    >
+                      <p style={{ color: paymentErrorCode === 'PROMO_ALREADY_USED' ? '#F0A095' : '#C5A059', fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                        {paymentErrorCode === 'PROMO_ALREADY_USED' ? t.payment.promoAlreadyUsedTitle : `✉ ${paymentEmail}`}
                       </p>
                       <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '0.75rem' }}>
                         {paymentError}
                       </p>
                       <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem' }}>
-                        {lang === 'ko'
-                          ? '리포트는 이메일로도 전송됩니다. 창을 닫아도 괜찮습니다.'
-                          : lang === 'ja'
-                          ? 'レポートはメールでも送信されます。ページを閉じても大丈夫です。'
-                          : 'Your report will also be delivered by email. You can safely close this page.'}
+                        {paymentErrorCode === 'PROMO_ALREADY_USED'
+                          ? t.payment.promoAlreadyUsedAction
+                          : t.payment.emailAlsoSent}
                       </p>
                     </div>
                   )}

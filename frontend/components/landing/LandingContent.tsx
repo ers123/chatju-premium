@@ -1186,13 +1186,15 @@ export default function LandingPage() {
                   color: '#FFFFFF',
                   margin: 0
                 }}>{t.pricing.premium.price}</p>
-                <p style={{
-                  fontSize: '18px',
-                  fontWeight: 500,
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  textDecoration: 'line-through',
-                  margin: 0
-                }}>{t.pricing.premium.originalPrice}</p>
+                {t.pricing.premium.originalPrice && (
+                  <p style={{
+                    fontSize: '18px',
+                    fontWeight: 500,
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    textDecoration: 'line-through',
+                    margin: 0
+                  }}>{t.pricing.premium.originalPrice}</p>
+                )}
               </div>
               <p style={{
                 fontSize: '13px',

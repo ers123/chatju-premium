@@ -4,13 +4,14 @@ import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
-import { apiClient } from '@/lib/api'
+import { apiClient, generateClaimKey } from '@/lib/api'
+import { getPremiumPricing, buildPayPalSdkParams } from '@/lib/pricing'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { localizedLegalPath } from '@/app/lib/i18n/routes'
 import type { PromoValidateResponse } from '@/types'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test'
-const PRODUCT_AMOUNT = 4.99
 
 const isAuthenticated = () => {
   if (typeof window === 'undefined') return false
@@ -65,10 +66,14 @@ const INCLUDED_ICONS = ['🌊', '🌳', '👨‍👩‍👧', '💪', '🔮', '�
 
 function PaymentContent() {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
   useEffect(() => { document.title = t.payment.pageTitle }, [t])
+  // Pricing is per-locale; null means paid checkout is unavailable (ko: free tier + promo only)
+  const pricing = getPremiumPricing(lang)
+  const paypalSdkParams = pricing ? buildPayPalSdkParams(pricing.currency) : ''
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [errorCode, setErrorCode] = useState('')
   const [sdkReady, setSdkReady] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const buttonsRenderedRef = useRef(false)
@@ -90,10 +95,14 @@ function PaymentContent() {
       apiClient.validatePromoCode(promoParam).then((result) => {
         setPromoResult(result)
         if (!result.valid) {
+          setErrorCode('PROMO_INVALID')
           setError(result.error || t.payment.promoInvalid)
           setIsPromoFlow(false)
         }
-      }).catch(() => { setIsPromoFlow(false) })
+      }).catch(() => {
+        setErrorCode('PROMO_INVALID')
+        setIsPromoFlow(false)
+      })
       return
     }
     // No auth required — email collected on payment page
@@ -102,20 +111,22 @@ function PaymentContent() {
 
   useEffect(() => {
     if (!sdkReady || isLoading || !window.paypal || buttonsRenderedRef.current) return
-    if (promoResult?.valid) return
+    if (promoResult?.valid || !pricing) return
     buttonsRenderedRef.current = true
     try {
       window.paypal.Buttons({
         createOrder: async () => {
           try {
-            const response = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email })
+            const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email }
+            const response = await apiClient.createPayPalPayment(orderPayload)
             if (response.success && response.paypalOrderId && response.paymentAccessToken) {
               paymentAccessTokenRef.current = response.paymentAccessToken
-              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken, amount: PRODUCT_AMOUNT }))
+              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: response.orderId, paypalOrderId: response.paypalOrderId, paymentAccessToken: response.paymentAccessToken, amount: pricing.amount, currency: pricing.currency }))
               return response.paypalOrderId
             }
             throw new Error(t.payment.errorCreateOrder)
           } catch (err: any) {
+            setErrorCode('PAYMENT_ERROR')
             setError(err.error || t.payment.errorCreateOrderProcess)
             throw err
           }
@@ -130,7 +141,7 @@ function PaymentContent() {
             const result = await apiClient.capturePayPalPayment(data.orderID, paymentAccessToken)
             if (result && (result as any).success && (result as any).payment) {
               const payment = (result as any).payment
-              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString(), email }))
+              sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, amount: payment.amount, currency: payment.currency, paymentAccessToken, completedAt: new Date().toISOString(), email }))
               sessionStorage.removeItem('pending_order')
               // Go directly to results page to show premium content
               router.push('/saju/results')
@@ -146,7 +157,7 @@ function PaymentContent() {
 
   // Google Pay button
   useEffect(() => {
-    if (!sdkReady || isLoading || !window.paypal?.Googlepay || promoResult?.valid) return
+    if (!sdkReady || isLoading || !window.paypal?.Googlepay || promoResult?.valid || !pricing) return
     const gpContainer = document.getElementById('googlepay-container')
     if (!gpContainer || gpContainer.children.length > 0) return
 
@@ -164,14 +175,15 @@ function PaymentContent() {
         const btn = paymentsClient.createButton({
           onClick: async () => {
             try {
-              const res = await apiClient.createPayPalPayment({ amount: PRODUCT_AMOUNT, description: 'Premium Saju Reading', email })
-              if (!res.success || !res.paypalOrderId || !res.paymentAccessToken) throw new Error('Order creation failed')
-              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, paymentAccessToken: res.paymentAccessToken, amount: PRODUCT_AMOUNT }))
+              const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email }
+              const res = await apiClient.createPayPalPayment(orderPayload)
+              if (!res.success || !res.paypalOrderId || !res.paymentAccessToken) throw new Error(t.payment.errorCreateOrder)
+              sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, paymentAccessToken: res.paymentAccessToken, amount: pricing.amount, currency: pricing.currency }))
 
               const paymentDataRequest = {
                 apiVersion: 2, apiVersionMinor: 0,
                 allowedPaymentMethods: gpConfig.allowedPaymentMethods,
-                transactionInfo: { totalPriceStatus: 'FINAL', totalPrice: String(PRODUCT_AMOUNT), currencyCode: 'USD', countryCode: 'US' },
+                transactionInfo: { totalPriceStatus: 'FINAL', totalPrice: String(pricing.amount), currencyCode: pricing.currency, countryCode: 'US' },
                 merchantInfo: gpConfig.merchantInfo,
               }
               const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest)
@@ -183,7 +195,7 @@ function PaymentContent() {
               const captureResult = await apiClient.capturePayPalPayment(res.paypalOrderId, res.paymentAccessToken)
               if (captureResult && (captureResult as any).success && (captureResult as any).payment) {
                 const payment = (captureResult as any).payment
-                sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, completedAt: new Date().toISOString() }))
+                sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: payment.order_id, paymentId: payment.id, amount: payment.amount, currency: payment.currency, paymentAccessToken: res.paymentAccessToken, completedAt: new Date().toISOString(), email }))
                 sessionStorage.removeItem('pending_order')
                 router.push('/payment/success')
               } else { setError(t.payment.errorCapturePayment) }
@@ -208,41 +220,72 @@ function PaymentContent() {
       const result = await apiClient.validatePromoCode(promoCode.trim())
       setPromoResult(result)
       if (result.valid) { setIsPromoFlow(true) }
-      else { setError(result.error || t.payment.promoInvalid) }
-    } catch (err: any) { setError(err.error || t.payment.promoValidateError) }
+      else {
+        setErrorCode('PROMO_INVALID')
+        setError(result.error || t.payment.promoInvalid)
+      }
+    } catch (err: any) {
+      setErrorCode('PROMO_INVALID')
+      setError(err.error || t.payment.promoValidateError)
+    }
     finally { setPromoValidating(false) }
   }
 
   const handlePromoSubmit = async () => {
     if (!email.trim()) { setError(t.payment.emailRequired); return }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError(t.payment.emailInvalid); return }
-    setIsProcessing(true); setError('')
+    setIsProcessing(true); setError(''); setErrorCode('')
     try {
       const sajuInput = sessionStorage.getItem('sajuInput')
       if (!sajuInput) { setError(t.payment.errorNoBirthInfo); setIsProcessing(false); return }
       const birthInfo = JSON.parse(sajuInput)
-      const lookup = await apiClient.createReportLookupToken({ email: email.trim(), promoCode: promoCode.trim() })
-      // Fire request — don't await response (API Gateway may timeout at 30s)
-      // Lambda continues running and will send email regardless
-      apiClient.calculateWithPromo({
-        promoCode: promoCode.trim(), email: email.trim(), subjectName: birthInfo.name,
-        birthDate: birthInfo.birthDate, birthTime: birthInfo.birthTime, gender: birthInfo.gender,
-        timezone: birthInfo.timezone, language: birthInfo.language, birthPlace: birthInfo.birthPlace,
-        latitude: birthInfo.latitude, longitude: birthInfo.longitude,
-        parentBirthDate: birthInfo.parentBirthDate, parentBirthTime: birthInfo.parentBirthTime,
-        parentRole: birthInfo.parentRole, twinOrder: birthInfo.twinOrder, twinSiblingName: birthInfo.twinSiblingName,
-      }).catch(() => {}) // Ignore timeout errors — Lambda still runs
 
-      // Wait a moment for the request to be received by server, then redirect
+      // Generate a random claim key — passed to backend at calculation time so the
+      // reading is tagged with sha256(claimKey). Enables polling without OTP.
+      const claimKey = generateClaimKey()
+
+      try {
+        const promoPayload = {
+          promoCode: promoCode.trim(), email: email.trim(), subjectName: birthInfo.name,
+          birthDate: birthInfo.birthDate, birthTime: birthInfo.birthTime, gender: birthInfo.gender,
+          unknownTime: birthInfo.unknownTime === true,
+          isLunar: birthInfo.calendar === 'lunar',
+          isLeapMonth: birthInfo.isLeapMonth === true,
+          timezone: birthInfo.timezone, language: birthInfo.language, birthPlace: birthInfo.birthPlace,
+          latitude: birthInfo.latitude, longitude: birthInfo.longitude,
+          parentBirthDate: birthInfo.parentBirthDate, parentBirthTime: birthInfo.parentBirthTime,
+          parentRole: birthInfo.parentRole, parentIsLunar: birthInfo.parentCalendar === 'lunar',
+          parentIsLeapMonth: birthInfo.parentIsLeapMonth === true,
+          twinOrder: birthInfo.twinOrder, twinSiblingName: birthInfo.twinSiblingName,
+          consent: birthInfo.consent,
+          claimKey,
+        }
+        await apiClient.calculateWithPromo(promoPayload)
+      } catch (err: any) {
+        if (err?.code === 'PROMO_ALREADY_USED' || err?.statusCode === 409) {
+          setErrorCode('PROMO_ALREADY_USED')
+          setError(t.payment.promoAlreadyUsedMessage || err.error || t.payment.promoInvalid)
+          return
+        }
+        // For non-policy errors, keep the existing recovery path:
+        // the server may still finish and email the report;
+        // results page will poll by claimKey on reload.
+      }
+
+      // Wait a moment for the request to be received by server, then redirect.
+      // Store claimKey so results page can poll without OTP.
       await new Promise(r => setTimeout(r, 3000))
-      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', promoCode: promoCode.trim(), email: email.trim(), reportLookupToken: lookup.reportLookupToken, completedAt: new Date().toISOString() }))
+      sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', promoCode: promoCode.trim(), email: email.trim(), claimKey, completedAt: new Date().toISOString() }))
       router.push('/payment/success')
-    } catch (err: any) { setError(err.error || t.payment.errorReportGenerate) }
+    } catch (err: any) {
+      setErrorCode('PAYMENT_ERROR')
+      setError(err.error || t.payment.errorReportGenerate)
+    }
     finally { setIsProcessing(false) }
   }
 
   const handlePromoClear = () => {
-    setPromoResult(null); setPromoCode(''); setIsPromoFlow(false); setError('')
+    setPromoResult(null); setPromoCode(''); setIsPromoFlow(false); setError(''); setErrorCode('')
     buttonsRenderedRef.current = false
   }
 
@@ -259,14 +302,14 @@ function PaymentContent() {
 
   return (
     <>
-      {!isPromoFlow && (
+      {!isPromoFlow && pricing && (
         <>
           <Script
             src="https://pay.google.com/gp/p/js/pay.js"
             strategy="afterInteractive"
           />
           <Script
-            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&components=buttons,googlepay&enable-funding=venmo`}
+            src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&${paypalSdkParams}`}
             strategy="afterInteractive"
             onLoad={() => setSdkReady(true)}
           />
@@ -300,14 +343,17 @@ function PaymentContent() {
                 {promoResult?.valid ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#5A7A66' }}>{t.payment.free}</span>
-                    <span style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'line-through' }}>$4.99</span>
+                    {pricing && (
+                      <span style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'line-through' }}>{t.pricing.premium.price}</span>
+                    )}
                     <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#5A7A66', background: 'rgba(90,122,102,0.1)', borderRadius: '4px' }}>{t.payment.promoAppliedBadge}</span>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#C5A059' }}>$4.99</span>
-                    <span style={{ fontSize: '0.875rem', color: '#8B8580', textDecoration: 'line-through' }}>$9.99</span>
-                    <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#C67B6F', background: 'rgba(198,123,111,0.1)', borderRadius: '4px' }}>{t.payment.discountBadge}</span>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#C5A059' }}>{t.pricing.premium.price}</span>
+                    {pricing && (
+                      <span style={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#8B8580', background: 'rgba(139,133,128,0.1)', borderRadius: '4px' }}>{t.payment.discountBadge}</span>
+                    )}
                   </div>
                 )}
               </div>
@@ -393,6 +439,29 @@ function PaymentContent() {
                   {t.payment.emailAlsoSent}
                 </p>
               )}
+              {error && (
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  style={errorCode === 'PROMO_ALREADY_USED' ? { ...s.error, background: 'rgba(198,123,111,0.14)', borderColor: 'rgba(198,123,111,0.45)' } : s.error}
+                >
+                  {errorCode === 'PROMO_ALREADY_USED' && (
+                    <p style={{ margin: '0 0 0.35rem', fontWeight: 700 }}>{t.payment.promoAlreadyUsedTitle}</p>
+                  )}
+                  <p style={{ margin: 0 }}>{error}</p>
+                  {errorCode === 'PROMO_ALREADY_USED' && (
+                    <p style={{ margin: '0.5rem 0 0', color: '#8F574F' }}>{t.payment.promoAlreadyUsedAction}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : !pricing ? (
+            /* Korea: no PayPal checkout — free tier + promo code only */
+            <div style={s.card}>
+              <h2 style={s.h2}>{(t.payment as any).krUnavailable || '한국에서는 카드 결제를 아직 지원하지 않습니다.'}</h2>
+              <p style={{ ...s.text, marginBottom: 0 }}>
+                {(t.payment as any).krUseFreeOrPromo || '무료 미리보기를 이용하시거나, 위의 프로모션 코드를 입력해 프리미엄 리포트를 받아보세요.'}
+              </p>
               {error && <div style={s.error}>{error}</div>}
             </div>
           ) : (
@@ -408,10 +477,16 @@ function PaymentContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 style={s.input}
               />
+              <p style={{ ...s.textMuted, margin: '0.75rem 0 0', lineHeight: 1.6 }}>
+                {(t.payment as any).paypalVerificationNote || 'PayPal may still ask for payment verification details inside its secure checkout.'}
+              </p>
             </div>
 
             <div style={{ ...s.card, opacity: email.trim() ? 1 : 0.5, pointerEvents: email.trim() ? 'auto' : 'none' }}>
               <h2 style={s.h2}>{t.payment.paymentMethodTitle}</h2>
+              <p style={{ ...s.textMuted, margin: '-0.25rem 0 0.75rem', lineHeight: 1.6 }}>
+                {(t.payment as any).paypalCheckoutNote || 'Pay with a PayPal account, debit card, or credit card. Availability may vary by country and PayPal risk checks.'}
+              </p>
               {isProcessing && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 0' }}>
                   <div style={{ ...s.spinner, width: '2rem', height: '2rem', borderWidth: '3px', marginRight: '0.75rem' }} />
@@ -434,8 +509,8 @@ function PaymentContent() {
           {/* Terms */}
           <p style={{ ...s.textMuted, textAlign: 'center', lineHeight: 1.8, marginTop: '1.5rem' }}>
             {promoResult?.valid ? t.payment.termsPromo : t.payment.termsPaid}{' '}
-            <Link href="/terms" style={{ color: '#C5A059' }}>{t.payment.termsOfService}</Link>,{' '}
-            <Link href="/privacy" style={{ color: '#C5A059' }}>{t.payment.privacyPolicy}</Link>,{' '}
+            <Link href={localizedLegalPath(lang, 'terms')} style={{ color: '#C5A059' }}>{t.payment.termsOfService}</Link>,{' '}
+            <Link href={localizedLegalPath(lang, 'privacy')} style={{ color: '#C5A059' }}>{t.payment.privacyPolicy}</Link>,{' '}
             <Link href="/refund" style={{ color: '#C5A059' }}>{t.payment.refundPolicy}</Link>{t.payment.termsAgree}
             <br />{t.payment.termsWithdrawal}
           </p>
@@ -455,10 +530,11 @@ function PaymentContent() {
 }
 
 function LoadingFallback() {
+  const { t } = useLanguage()
   return (
     <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={s.center}>
-        <p style={s.textMuted}>Loading...</p>
+        <p style={s.textMuted}>{t.payment.loading}</p>
       </div>
     </div>
   )

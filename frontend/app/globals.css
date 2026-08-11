@@ -104,10 +104,19 @@ html {
   scroll-behavior: smooth;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* Kept inside @layer base on purpose. Tailwind v4 emits its utilities into
+   cascade layers, and an unlayered rule beats every layered one no matter how
+   specific — so an unlayered `* { margin: 0; padding: 0 }` silently voids every
+   p-*, px-*, m-* and mt-* utility in the app. That is what flattened the cookie
+   consent banner (text touching its own border) and it applies equally to the
+   whole components/ui library. Layering the reset lets utilities win again
+   while keeping the reset itself for everything that does not set one. */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 }
 
 body {

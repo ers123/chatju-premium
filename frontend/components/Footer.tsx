@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { localizedLegalPath } from '@/app/lib/i18n/routes'
 import { resetCookieConsent } from './CookieConsent'
 
 export default function Footer() {
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
   const f = t.footerDetail
 
   return (
@@ -69,12 +70,12 @@ export default function Footer() {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               <li style={{ marginBottom: '10px' }}>
-                <Link href="/terms" style={{ fontSize: '14px', color: '#888888', textDecoration: 'none' }}>
+                <Link href={localizedLegalPath(lang, 'terms')} style={{ fontSize: '14px', color: '#888888', textDecoration: 'none' }}>
                   {t.footer.terms}
                 </Link>
               </li>
               <li style={{ marginBottom: '10px' }}>
-                <Link href="/privacy" style={{ fontSize: '14px', color: '#888888', textDecoration: 'none' }}>
+                <Link href={localizedLegalPath(lang, 'privacy')} style={{ fontSize: '14px', color: '#888888', textDecoration: 'none' }}>
                   {t.footer.privacy}
                 </Link>
               </li>

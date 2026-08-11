@@ -258,19 +258,38 @@ npm run build
 
 7. Your site will be available at: `https://chatju.pages.dev`
 
-#### Option B: Direct Upload (Alternative)
+#### Option B: Direct Upload — **this is how somyung.cc actually ships**
+
+The Pages project `somyung` is **not** connected to a Git repository, so pushing to
+GitHub deploys nothing. Every production release is a manual upload. The `somyung`
+shown as the deployment Source in the dashboard is the `--branch` label below, not a
+Git branch.
 
 ```bash
-# Install Wrangler CLI
-npm install -g wrangler
-
-# Login to Cloudflare
-wrangler login
-
-# Deploy
 cd frontend
-npm run build
-wrangler pages deploy .next
+npm run build                 # next.config.ts uses output: 'export' → writes to out/
+npx wrangler pages deploy out --project-name=somyung --branch=somyung
+```
+
+`wrangler login` once if it asks; the OAuth session is reused afterwards.
+
+**Check `NEXT_PUBLIC_API_URL` before building.** It is baked into the bundle at build
+time and must be the API Gateway origin:
+
+```
+https://0eo64hyuv7.execute-api.ap-northeast-2.amazonaws.com
+```
+
+The Lambda Function URL (`…lambda-url.ap-northeast-2.on.aws`) reaches the same Lambda
+but sits outside API Gateway, so building against it silently removes the rate limit
+in front of the paid endpoints. `frontend/.env.production` is gitignored, so a fresh
+clone will not have the right value — set it before the first deploy, and keep it in
+sync with the `NEXT_PUBLIC_API_URL` variable on the Pages project.
+
+Verify the output before uploading:
+
+```bash
+grep -rhoE 'https://[A-Za-z0-9]+\.(execute-api|lambda-url)[^"]*' out/ | sort -u
 ```
 
 ### Step 4: Configure Custom Domain (Optional)

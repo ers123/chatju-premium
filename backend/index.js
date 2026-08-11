@@ -4,13 +4,14 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const serverless = require('serverless-http');
-const { generalLimiter } = require('./src/middleware/rateLimit');
+const { generalLimiter, fortuneTellLimiter } = require('./src/middleware/rateLimit');
 const { globalErrorHandler } = require('./src/utils/responses');
 const { buildMessages } = require('./src/config/prompts');
 const logger = require('./src/utils/logger');
 const { getAIService } = require('./src/services/ai.service');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // CORS 설정 (Environment-aware)
 const allowedOrigins = process.env.NODE_ENV === 'production'
@@ -46,7 +47,7 @@ const aiService = getAIService();
 // ============================================
 // 기존 무료 운세 엔드포인트
 // ============================================
-app.post('/fortuneTell', async (req, res) => {
+app.post('/fortuneTell', fortuneTellLimiter, async (req, res) => {
     try {
         logger.debug('Free Fortune: Received request', {
             userMessagesCount: req.body.userMessages?.length || 0,

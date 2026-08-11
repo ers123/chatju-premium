@@ -162,7 +162,7 @@ export default function RootLayout({
                     "name": "Is my personal information safe?",
                     "acceptedAnswer": {
                       "@type": "Answer",
-                      "text": "Birth date information is used solely for analysis. We don't collect personal identification data such as name or phone number. Free analysis requires no signup, and all data is encrypted during transmission."
+                      "text": "We collect only the birth information needed to generate your report, and — for paid reports — an email address and a name (or nickname) you choose to label the report. Free previews are not stored in our database. All data is encrypted in transit, and you can request deletion at any time. See our Privacy Policy at somyung.cc/privacy for details."
                     }
                   },
                   {
@@ -170,7 +170,7 @@ export default function RootLayout({
                     "name": "How is the paid version different?",
                     "acceptedAnswer": {
                       "@type": "Answer",
-                      "text": "The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report ($4.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, career aptitude analysis, fortune cycle forecast, monthly fortune, and actionable weekly tasks. For the price of a cup of coffee, you get a complete guide to understanding your child."
+                      "text": "The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report (US$4.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, career aptitude analysis, fortune cycle forecast, monthly fortune, and actionable weekly tasks. For the price of a cup of coffee, you get a complete guide to understanding your child."
                     }
                   }
                 ]

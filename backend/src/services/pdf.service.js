@@ -3,6 +3,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { parseNumberedSections, normalizePresentation, sanitizePresentation } = require('./report-presentation');
 
 const FONTS_DIR = path.join(__dirname, '../../assets/fonts');
 const FONT_MAP = {
@@ -15,6 +16,11 @@ const FONT_MAP = {
     family: 'NotoSansJP',
     regular: path.join(FONTS_DIR, 'NotoSansJP-Regular.ttf'),
     bold: path.join(FONTS_DIR, 'NotoSansJP-Bold.ttf'),
+  },
+  th: {
+    family: 'NotoSansThaiLooped',
+    regular: path.join(FONTS_DIR, 'NotoSansThaiLooped-Regular.ttf'),
+    bold: path.join(FONTS_DIR, 'NotoSansThaiLooped-Bold.ttf'),
   },
 };
 
@@ -33,6 +39,41 @@ const LABELS = {
     premiumReport: '프리미엄 사주 리포트',
     generatedOn: '생성일',
     footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: '아이의 기질 지도',
+    elementDistribution: '오행 분포',
+    howToReadTitle: '계산된 사실을 읽는 방법',
+    howToReadCalcLabel: '계산값',
+    howToReadCalcText: '위 표는 입력한 생년월일시를 기준으로 계산한 사주 네 기둥과 오행 분포입니다.',
+    howToReadScopeLabel: '해석 범위',
+    howToReadScopeText: '뒤의 내용은 이 계산값을 부모가 관찰할 수 있는 행동과 대화 언어로 번역한 참고 가설이며, 아이의 발달이나 미래를 확정하지 않습니다.',
+    continued: '계속',
+    coverKicker: '아이의 기질을 오늘의 양육 언어로',
+    coverTagline: '기질은 예측이 아니라, 아이를 이해하기 위한 참고 지도입니다.',
+    openingTitle: '부모를 위한 30초 요약',
+    cardNote: '읽는 방법',
+    cardObservation: '오늘의 관찰',
+    cardInsight: '기질을 행동으로 번역하기',
+    cardTranslator: '오해를 번역해 보기',
+    cardScript: '대화 스크립트',
+    cardTimeline: '이번 시기의 참고 흐름',
+    cardChecklist: '7일의 작은 실험',
+    cardParentingCard: '곁에 두는 양육 카드',
+    cardClose: '마무리',
+    cardFallback: '참고',
+    presentationUi: {
+      basis: '보이는 근거',
+      behavior: '관찰할 모습',
+      action: '오늘의 대응',
+      looksLike: '겉으로는',
+      actual: '실제로는',
+      response: '더 나은 말',
+      before: '이전',
+      after: '이후',
+      signal: '기대 신호',
+      stop: '멈출 말',
+      start: '시작할 말',
+      steps: '감정이 높을 때',
+    },
   },
   en: {
     pillars: ['Year', 'Month', 'Day', 'Hour'],
@@ -47,6 +88,41 @@ const LABELS = {
     premiumReport: 'Premium Saju Report',
     generatedOn: 'Generated on',
     footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: "Your Child's Temperament Map",
+    elementDistribution: 'Five Elements Distribution',
+    howToReadTitle: 'How to Read These Calculations',
+    howToReadCalcLabel: 'Calculated values',
+    howToReadCalcText: 'The table above shows the Four Pillars and the Five Elements distribution calculated from the birth date and time you entered.',
+    howToReadScopeLabel: 'Scope of reading',
+    howToReadScopeText: "What follows translates these calculated values into behavior and wording a parent can observe. It is a reference hypothesis and does not determine your child's development or future.",
+    continued: 'continued',
+    coverKicker: "Your child's temperament, in today's parenting language",
+    coverTagline: 'Temperament is not a prediction; it is a reference map for understanding your child.',
+    openingTitle: 'A 30-second summary for parents',
+    cardNote: 'How to read this',
+    cardObservation: "Today's observation",
+    cardInsight: 'Translating temperament into behavior',
+    cardTranslator: 'Translating the misunderstanding',
+    cardScript: 'Conversation script',
+    cardTimeline: 'Reference flow for this period',
+    cardChecklist: 'A small 7-day experiment',
+    cardParentingCard: 'Parenting card to keep nearby',
+    cardClose: 'Closing',
+    cardFallback: 'Reference',
+    presentationUi: {
+      basis: 'Calculated basis',
+      behavior: 'Signal to observe',
+      action: 'Parent action',
+      looksLike: 'Looks like',
+      actual: 'Actually',
+      response: 'Better wording',
+      before: 'Old wording',
+      after: 'Better wording',
+      signal: 'Improvement signal',
+      stop: 'Words to stop',
+      start: 'Words to start',
+      steps: 'When emotions rise',
+    },
   },
   ja: {
     pillars: ['年柱', '月柱', '日柱', '時柱'],
@@ -61,6 +137,41 @@ const LABELS = {
     premiumReport: 'プレミアム四柱推命レポート',
     generatedOn: '生成日',
     footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: '子どもの気質マップ',
+    elementDistribution: '五行の分布',
+    howToReadTitle: '算出された事実の読み方',
+    howToReadCalcLabel: '算出値',
+    howToReadCalcText: '上の表は、入力された生年月日時をもとに算出した四柱と五行の分布です。',
+    howToReadScopeLabel: '解釈の範囲',
+    howToReadScopeText: 'これ以降の内容は、この算出値を親が観察できる行動と言葉に翻訳した参考の仮説であり、子どもの発達や未来を確定するものではありません。',
+    continued: '続き',
+    coverKicker: '子どもの気質を、今日の子育ての言葉に',
+    coverTagline: '気質は予言ではなく、子どもを理解するための参考地図です。',
+    openingTitle: '親のための30秒サマリー',
+    cardNote: '読み方',
+    cardObservation: '今日の観察',
+    cardInsight: '気質を行動に翻訳する',
+    cardTranslator: '誤解を翻訳してみる',
+    cardScript: '対話スクリプト',
+    cardTimeline: 'この時期の参考フロー',
+    cardChecklist: '7日間の小さな実験',
+    cardParentingCard: 'そばに置く子育てカード',
+    cardClose: '締めくくり',
+    cardFallback: '参考',
+    presentationUi: {
+      basis: '算出された根拠',
+      behavior: '観察するサイン',
+      action: '親の行動',
+      looksLike: '表面上は',
+      actual: '実際には',
+      response: '言い換える言葉',
+      before: 'これまでの言葉',
+      after: '言い換える言葉',
+      signal: '改善のサイン',
+      stop: 'やめる言葉',
+      start: '始める言葉',
+      steps: '感情が高まる時',
+    },
   },
   zh: {
     pillars: ['年柱', '月柱', '日柱', '时柱'],
@@ -75,6 +186,335 @@ const LABELS = {
     premiumReport: '高级四柱八字报告',
     generatedOn: '生成日期',
     footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: '孩子的气质地图',
+    elementDistribution: '五行分布',
+    howToReadTitle: '如何阅读这些计算结果',
+    howToReadCalcLabel: '计算值',
+    howToReadCalcText: '上表是根据您输入的出生年月日时计算出的四柱与五行分布。',
+    howToReadScopeLabel: '解读范围',
+    howToReadScopeText: '后面的内容是把这些计算结果翻译成父母可以观察的行为和说法的参考假设，并不确定孩子的发展或未来。',
+    continued: '续',
+    coverKicker: '把孩子的气质，化作今天的养育语言',
+    coverTagline: '气质不是预言，而是理解孩子的参考地图。',
+    openingTitle: '给父母的30秒摘要',
+    cardNote: '阅读方式',
+    cardObservation: '今天的观察',
+    cardInsight: '把气质翻译成行为',
+    cardTranslator: '翻译这个误解',
+    cardScript: '对话脚本',
+    cardTimeline: '这个时期的参考流程',
+    cardChecklist: '7天的小实验',
+    cardParentingCard: '放在身边的养育卡片',
+    cardClose: '结语',
+    cardFallback: '参考',
+    presentationUi: {
+      basis: '计算依据',
+      behavior: '可观察信号',
+      action: '父母行动',
+      looksLike: '表面看起来',
+      actual: '实际上',
+      response: '更好的说法',
+      before: '原来的话',
+      after: '更好的说法',
+      signal: '改善信号',
+      stop: '停止说的话',
+      start: '开始说的话',
+      steps: '情绪升高时',
+    },
+  },
+  vi: {
+    pillars: ['Năm', 'Tháng', 'Ngày', 'Giờ'],
+    elements: ['Mộc (木)', 'Hỏa (火)', 'Thổ (土)', 'Kim (金)', 'Thủy (水)'],
+    elementAnalysis: 'Phân tích Ngũ hành',
+    fourPillars: 'Tứ trụ',
+    birthInfo: 'Thông tin cơ bản',
+    birthDate: 'Ngày sinh',
+    gender: 'Giới tính',
+    male: 'Nam',
+    female: 'Nữ',
+    premiumReport: 'Báo cáo Saju cao cấp',
+    generatedOn: 'Ngày tạo',
+    footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: 'Bản đồ khí chất của trẻ',
+    elementDistribution: 'Phân bố Ngũ hành',
+    howToReadTitle: 'Cách đọc các số liệu tính toán',
+    howToReadCalcLabel: 'Giá trị tính toán',
+    howToReadCalcText: 'Bảng trên là Tứ trụ và phân bố Ngũ hành được tính từ ngày giờ sinh bạn đã nhập.',
+    howToReadScopeLabel: 'Phạm vi diễn giải',
+    howToReadScopeText: 'Phần sau là giả thuyết tham khảo, dịch các giá trị này thành hành vi và lời nói mà cha mẹ có thể quan sát; nó không quyết định sự phát triển hay tương lai của trẻ.',
+    continued: 'tiếp theo',
+    coverKicker: 'Khí chất của con, thành lời nuôi dạy hôm nay',
+    coverTagline: 'Khí chất không phải lời tiên đoán, mà là bản đồ tham khảo để hiểu con.',
+    openingTitle: 'Tóm tắt 30 giây cho cha mẹ',
+    cardNote: 'Cách đọc',
+    cardObservation: 'Quan sát hôm nay',
+    cardInsight: 'Dịch khí chất thành hành vi',
+    cardTranslator: 'Dịch lại hiểu lầm',
+    cardScript: 'Kịch bản trò chuyện',
+    cardTimeline: 'Dòng tham khảo giai đoạn này',
+    cardChecklist: 'Thử nghiệm nhỏ 7 ngày',
+    cardParentingCard: 'Thẻ nuôi dạy để giữ bên cạnh',
+    cardClose: 'Lời kết',
+    cardFallback: 'Tham khảo',
+    presentationUi: {
+      basis: 'Cơ sở tính toán',
+      behavior: 'Tín hiệu cần quan sát',
+      action: 'Hành động của cha mẹ',
+      looksLike: 'Bề ngoài',
+      actual: 'Thực ra',
+      response: 'Cách nói tốt hơn',
+      before: 'Cách nói cũ',
+      after: 'Cách nói tốt hơn',
+      signal: 'Dấu hiệu cải thiện',
+      stop: 'Lời nên dừng',
+      start: 'Lời nên bắt đầu',
+      steps: 'Khi cảm xúc tăng cao',
+    },
+  },
+  id: {
+    pillars: ['Tahun', 'Bulan', 'Hari', 'Jam'],
+    elements: ['Kayu (木)', 'Api (火)', 'Tanah (土)', 'Logam (金)', 'Air (水)'],
+    elementAnalysis: 'Analisis Lima Elemen',
+    fourPillars: 'Empat Pilar',
+    birthInfo: 'Informasi Dasar',
+    birthDate: 'Tanggal Lahir',
+    gender: 'Jenis Kelamin',
+    male: 'Laki-laki',
+    female: 'Perempuan',
+    premiumReport: 'Laporan Saju Premium',
+    generatedOn: 'Dibuat pada',
+    footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: 'Peta Temperamen Anak',
+    elementDistribution: 'Distribusi Lima Unsur',
+    howToReadTitle: 'Cara Membaca Hasil Perhitungan Ini',
+    howToReadCalcLabel: 'Nilai perhitungan',
+    howToReadCalcText: 'Tabel di atas adalah Empat Pilar dan distribusi Lima Unsur yang dihitung dari tanggal dan jam lahir yang Anda masukkan.',
+    howToReadScopeLabel: 'Cakupan tafsir',
+    howToReadScopeText: 'Bagian berikutnya adalah hipotesis referensi yang menerjemahkan nilai perhitungan ini menjadi perilaku dan ucapan yang dapat diamati orang tua, dan tidak menentukan perkembangan atau masa depan anak.',
+    continued: 'lanjutan',
+    coverKicker: 'Temperamen anak, dalam bahasa pengasuhan hari ini',
+    coverTagline: 'Temperamen bukan ramalan, melainkan peta referensi untuk memahami anak.',
+    openingTitle: 'Ringkasan 30 detik untuk orang tua',
+    cardNote: 'Cara membaca',
+    cardObservation: 'Pengamatan hari ini',
+    cardInsight: 'Menerjemahkan temperamen jadi perilaku',
+    cardTranslator: 'Menerjemahkan salah paham',
+    cardScript: 'Skrip percakapan',
+    cardTimeline: 'Alur referensi periode ini',
+    cardChecklist: 'Eksperimen kecil 7 hari',
+    cardParentingCard: 'Kartu pengasuhan untuk disimpan',
+    cardClose: 'Penutup',
+    cardFallback: 'Referensi',
+    presentationUi: {
+      basis: 'Dasar perhitungan',
+      behavior: 'Sinyal yang diamati',
+      action: 'Tindakan orang tua',
+      looksLike: 'Terlihat seperti',
+      actual: 'Sebenarnya',
+      response: 'Ucapan yang lebih baik',
+      before: 'Ucapan lama',
+      after: 'Ucapan yang lebih baik',
+      signal: 'Tanda membaik',
+      stop: 'Kata yang dihentikan',
+      start: 'Kata yang dimulai',
+      steps: 'Saat emosi naik',
+    },
+  },
+  es: {
+    pillars: ['Año', 'Mes', 'Día', 'Hora'],
+    elements: ['Madera (木)', 'Fuego (火)', 'Tierra (土)', 'Metal (金)', 'Agua (水)'],
+    elementAnalysis: 'Análisis de los Cinco Elementos',
+    fourPillars: 'Cuatro Pilares',
+    birthInfo: 'Información básica',
+    birthDate: 'Fecha de nacimiento',
+    gender: 'Género',
+    male: 'Masculino',
+    female: 'Femenino',
+    premiumReport: 'Informe Saju Premium',
+    generatedOn: 'Generado el',
+    footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: 'Mapa del temperamento de tu hijo',
+    elementDistribution: 'Distribución de los Cinco Elementos',
+    howToReadTitle: 'Cómo leer estos cálculos',
+    howToReadCalcLabel: 'Valores calculados',
+    howToReadCalcText: 'La tabla anterior muestra los Cuatro Pilares y la distribución de los Cinco Elementos calculados a partir de la fecha y hora de nacimiento que indicaste.',
+    howToReadScopeLabel: 'Alcance de la lectura',
+    howToReadScopeText: 'Lo que sigue traduce estos valores calculados en conductas y frases que los padres pueden observar; es una hipótesis de referencia y no determina el desarrollo ni el futuro de tu hijo.',
+    continued: 'continuación',
+    coverKicker: 'El temperamento de tu hijo, en lenguaje de crianza para hoy',
+    coverTagline: 'El temperamento no es una predicción, sino un mapa de referencia para entender a tu hijo.',
+    openingTitle: 'Resumen de 30 segundos para los padres',
+    cardNote: 'Cómo leerlo',
+    cardObservation: 'La observación de hoy',
+    cardInsight: 'Traducir el temperamento en conducta',
+    cardTranslator: 'Traducir el malentendido',
+    cardScript: 'Guion de conversación',
+    cardTimeline: 'Flujo de referencia de este periodo',
+    cardChecklist: 'Pequeño experimento de 7 días',
+    cardParentingCard: 'Tarjeta de crianza para tener cerca',
+    cardClose: 'Cierre',
+    cardFallback: 'Referencia',
+    presentationUi: {
+      basis: 'Base calculada',
+      behavior: 'Señal a observar',
+      action: 'Acción de los padres',
+      looksLike: 'Parece',
+      actual: 'En realidad',
+      response: 'Mejor frase',
+      before: 'Frase anterior',
+      after: 'Mejor frase',
+      signal: 'Señal de mejora',
+      stop: 'Frases a detener',
+      start: 'Frases a iniciar',
+      steps: 'Cuando sube la emoción',
+    },
+  },
+  pt: {
+    pillars: ['Ano', 'Mês', 'Dia', 'Hora'],
+    elements: ['Madeira (木)', 'Fogo (火)', 'Terra (土)', 'Metal (金)', 'Água (水)'],
+    elementAnalysis: 'Análise dos Cinco Elementos',
+    fourPillars: 'Quatro Pilares',
+    birthInfo: 'Informações básicas',
+    birthDate: 'Data de nascimento',
+    gender: 'Gênero',
+    male: 'Masculino',
+    female: 'Feminino',
+    premiumReport: 'Relatório Saju Premium',
+    generatedOn: 'Gerado em',
+    footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: 'Mapa do temperamento da criança',
+    elementDistribution: 'Distribuição dos Cinco Elementos',
+    howToReadTitle: 'Como ler estes cálculos',
+    howToReadCalcLabel: 'Valores calculados',
+    howToReadCalcText: 'A tabela acima mostra os Quatro Pilares e a distribuição dos Cinco Elementos calculados a partir da data e hora de nascimento informadas.',
+    howToReadScopeLabel: 'Alcance da leitura',
+    howToReadScopeText: 'O que vem a seguir traduz estes valores calculados em comportamentos e falas que os pais podem observar; é uma hipótese de referência e não determina o desenvolvimento nem o futuro da criança.',
+    continued: 'continuação',
+    coverKicker: 'O temperamento da criança, na linguagem parental de hoje',
+    coverTagline: 'O temperamento não é uma previsão, mas um mapa de referência para entender a criança.',
+    openingTitle: 'Resumo de 30 segundos para os pais',
+    cardNote: 'Como ler',
+    cardObservation: 'A observação de hoje',
+    cardInsight: 'Traduzir o temperamento em comportamento',
+    cardTranslator: 'Traduzir o mal-entendido',
+    cardScript: 'Roteiro de conversa',
+    cardTimeline: 'Fluxo de referência deste período',
+    cardChecklist: 'Pequeno experimento de 7 dias',
+    cardParentingCard: 'Cartão parental para manter por perto',
+    cardClose: 'Encerramento',
+    cardFallback: 'Referência',
+    presentationUi: {
+      basis: 'Base calculada',
+      behavior: 'Sinal a observar',
+      action: 'Ação dos pais',
+      looksLike: 'Parece',
+      actual: 'Na prática',
+      response: 'Melhor fala',
+      before: 'Fala antiga',
+      after: 'Melhor fala',
+      signal: 'Sinal de melhora',
+      stop: 'Falas a parar',
+      start: 'Falas a começar',
+      steps: 'Quando a emoção sobe',
+    },
+  },
+  fr: {
+    pillars: ['Année', 'Mois', 'Jour', 'Heure'],
+    elements: ['Bois (木)', 'Feu (火)', 'Terre (土)', 'Métal (金)', 'Eau (水)'],
+    elementAnalysis: 'Analyse des Cinq Éléments',
+    fourPillars: 'Quatre Piliers',
+    birthInfo: 'Informations de base',
+    birthDate: 'Date de naissance',
+    gender: 'Genre',
+    male: 'Masculin',
+    female: 'Féminin',
+    premiumReport: 'Rapport Saju Premium',
+    generatedOn: 'Généré le',
+    footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: "Carte du tempérament de l'enfant",
+    elementDistribution: 'Répartition des Cinq Éléments',
+    howToReadTitle: 'Comment lire ces calculs',
+    howToReadCalcLabel: 'Valeurs calculées',
+    howToReadCalcText: 'Le tableau ci-dessus présente les Quatre Piliers et la répartition des Cinq Éléments calculés à partir de la date et de l’heure de naissance saisies.',
+    howToReadScopeLabel: 'Portée de la lecture',
+    howToReadScopeText: "La suite traduit ces valeurs calculées en comportements et en formulations que les parents peuvent observer ; c'est un repère hypothétique et cela ne détermine ni le développement ni l'avenir de l'enfant.",
+    continued: 'suite',
+    coverKicker: "Le tempérament de l'enfant, en mots parentaux pour aujourd'hui",
+    coverTagline: "Le tempérament n'est pas une prédiction, mais un repère pour comprendre l'enfant.",
+    openingTitle: 'Résumé en 30 secondes pour les parents',
+    cardNote: 'Comment le lire',
+    cardObservation: "L'observation du jour",
+    cardInsight: 'Traduire le tempérament en comportement',
+    cardTranslator: 'Traduire le malentendu',
+    cardScript: 'Script de conversation',
+    cardTimeline: 'Repère pour cette période',
+    cardChecklist: 'Petite expérience de 7 jours',
+    cardParentingCard: 'Carte parentale à garder près de soi',
+    cardClose: 'Clôture',
+    cardFallback: 'Repère',
+    presentationUi: {
+      basis: 'Base calculée',
+      behavior: 'Signal à observer',
+      action: 'Action parentale',
+      looksLike: 'En apparence',
+      actual: 'En réalité',
+      response: 'Meilleure formulation',
+      before: 'Ancienne phrase',
+      after: 'Meilleure formulation',
+      signal: "Signal d'amélioration",
+      stop: 'Phrases à arrêter',
+      start: 'Phrases à commencer',
+      steps: "Quand l'émotion monte",
+    },
+  },
+  th: {
+    pillars: ['ปี', 'เดือน', 'วัน', 'เวลา'],
+    elements: ['ไม้ (木)', 'ไฟ (火)', 'ดิน (土)', 'โลหะ (金)', 'น้ำ (水)'],
+    elementAnalysis: 'การวิเคราะห์ธาตุทั้งห้า',
+    fourPillars: 'เสาหลักทั้งสี่',
+    birthInfo: 'ข้อมูลพื้นฐาน',
+    birthDate: 'วันเกิด',
+    gender: 'เพศ',
+    male: 'ชาย',
+    female: 'หญิง',
+    premiumReport: 'รายงาน Saju พรีเมียม',
+    generatedOn: 'สร้างเมื่อ',
+    footer: 'SoMyung | somyung.cc',
+    calculatedProfileTitle: 'แผนที่ลักษณะนิสัยของลูก',
+    elementDistribution: 'การกระจายธาตุทั้งห้า',
+    howToReadTitle: 'วิธีอ่านผลการคำนวณนี้',
+    howToReadCalcLabel: 'ค่าที่คำนวณได้',
+    howToReadCalcText: 'ตารางด้านบนคือเสาหลักทั้งสี่และการกระจายธาตุทั้งห้า ซึ่งคำนวณจากวันและเวลาเกิดที่คุณกรอก',
+    howToReadScopeLabel: 'ขอบเขตการตีความ',
+    howToReadScopeText: 'เนื้อหาต่อจากนี้คือสมมติฐานอ้างอิงที่แปลค่าการคำนวณเหล่านี้เป็นพฤติกรรมและคำพูดที่พ่อแม่สังเกตได้ และไม่ได้กำหนดพัฒนาการหรืออนาคตของลูก',
+    continued: 'ต่อ',
+    coverKicker: 'แปลลักษณะนิสัยของลูกเป็นคำพูดเลี้ยงดูในวันนี้',
+    coverTagline: 'ลักษณะนิสัยไม่ใช่คำทำนาย แต่เป็นแผนที่อ้างอิงเพื่อเข้าใจลูก',
+    openingTitle: 'สรุป 30 วินาทีสำหรับพ่อแม่',
+    cardNote: 'วิธีอ่าน',
+    cardObservation: 'การสังเกตวันนี้',
+    cardInsight: 'แปลลักษณะนิสัยเป็นพฤติกรรม',
+    cardTranslator: 'แปลความเข้าใจผิด',
+    cardScript: 'บทสนทนา',
+    cardTimeline: 'แนวโน้มอ้างอิงช่วงนี้',
+    cardChecklist: 'การทดลองเล็ก ๆ 7 วัน',
+    cardParentingCard: 'การ์ดเลี้ยงดูที่เก็บไว้ใกล้ตัว',
+    cardClose: 'ปิดท้าย',
+    cardFallback: 'อ้างอิง',
+    presentationUi: {
+      basis: 'ฐานการคำนวณ',
+      behavior: 'สัญญาณที่ควรสังเกต',
+      action: 'การกระทำของพ่อแม่',
+      looksLike: 'ดูเหมือนว่า',
+      actual: 'จริง ๆ แล้ว',
+      response: 'คำพูดที่ดีกว่า',
+      before: 'คำพูดเดิม',
+      after: 'คำพูดที่ดีกว่า',
+      signal: 'สัญญาณที่ดีขึ้น',
+      stop: 'คำพูดที่ควรหยุด',
+      start: 'คำพูดที่ควรเริ่ม',
+      steps: 'เมื่ออารมณ์สูงขึ้น',
+    },
   },
 };
 
@@ -84,23 +524,26 @@ function getLabels(language) {
 
 // ─── Color palette ──────────────────────────────────────────────────────────
 const COLORS = {
-  headerBg: '#2D3A35',
-  gold: '#C5A059',
-  darkText: '#2D3A35',
-  bodyText: '#4A4440',
-  lightText: '#8B8580',
-  subtleText: '#B0A9A2',
-  divider: '#EBE5DF',
-  pillarBg: '#2D3A35',
-  pageBg: '#FDFCFA',
+  headerBg: '#24352F',
+  gold: '#A47C3F',
+  darkText: '#24352F',
+  bodyText: '#30332F',
+  lightText: '#6D6A64',
+  subtleText: '#918A80',
+  divider: '#D8CFC0',
+  pillarBg: '#24352F',
+  pageBg: '#F5F0E7',
+  surface: '#FBF9F4',
+  sage: '#60776C',
+  oxide: '#92594E',
 };
 
 const ELEMENT_COLORS = {
-  wood: '#5A7A66',
-  fire: '#A85544',
-  earth: '#B8922D',
-  metal: '#6B7578',
-  water: '#556B7E',
+  wood: '#60776C',
+  fire: '#92594E',
+  earth: '#A47C3F',
+  metal: '#6F7774',
+  water: '#526977',
 };
 
 // ─── Markdown parser ────────────────────────────────────────────────────────
@@ -223,8 +666,22 @@ function parseInline(text) {
  * Generate a premium report PDF
  */
 async function generateReportPDF(params) {
-  const { childName, birthDate, gender, manseryeok, aiInterpretation, language } = params;
+  const { childName, birthDate, gender, manseryeok, aiInterpretation, language, generatedAt } = params;
   const labels = getLabels(language || 'ko');
+
+  // The calculator returns element names in Korean ("금 + 화"), and the pillar card
+  // prints them straight under the hanja. The legacy renderer converts them; the
+  // structured one did not, so an English report showed "금 + 화" on its own cover
+  // page. Hanja rather than translated words: the cell is a quarter of the page
+  // wide, and 木/火 sit naturally beside the pillar characters above them.
+  const ELEMENT_HANJA = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
+  const localizePillarElement = (value) => {
+    const text = String(value || '');
+    if (!text || (language || 'ko') === 'ko') return text;
+    return text.replace(/[목화토금수]/g, (m) => ELEMENT_HANJA[m] || m);
+  };
+  const reportDate = generatedAt ? new Date(generatedAt) : new Date();
+  const reportDateLabel = reportDate.toISOString().split('T')[0];
 
   const PDFDocument = require('pdfkit');
 
@@ -239,6 +696,7 @@ async function generateReportPDF(params) {
           Author: 'SoMyung (somyung.cc)',
           Subject: labels.premiumReport,
           Creator: 'SoMyung PDF Engine',
+          CreationDate: reportDate,
         },
       });
 
@@ -249,7 +707,7 @@ async function generateReportPDF(params) {
 
       // Register both supported font families so pdfkit can switch cleanly per language.
       const registeredFonts = {};
-      for (const key of ['default', 'ja']) {
+      for (const key of ['default', 'ja', 'th']) {
         const fontFiles = FONT_MAP[key];
         const hasFont = fs.existsSync(fontFiles.regular);
         const hasBoldFont = fs.existsSync(fontFiles.bold);
@@ -274,7 +732,7 @@ async function generateReportPDF(params) {
         };
       }
 
-      const activeFontKey = (language === 'ja' || language === 'zh') ? 'ja' : 'default';
+      const activeFontKey = language === 'th' ? 'th' : (language === 'ja' || language === 'zh') ? 'ja' : 'default';
       const fontRegular = registeredFonts[activeFontKey].regular;
       const fontBold = registeredFonts[activeFontKey].bold;
       const pillarCardFont = registeredFonts.ja.bold || registeredFonts.ja.regular || fontBold;
@@ -366,7 +824,384 @@ async function generateReportPDF(params) {
         doc.moveDown(0.5);
       }
 
+      // ─── Structured editorial renderer ──────────────────────────────
+      // The ready path uses square, measured blocks. Every value is measured
+      // with the exact width/font used for drawing, and long content is split
+      // at row or word boundaries before a frame is painted.
+      const CARD = {
+        outerPad: 16,
+        titleGap: 11,
+        rowGap: 8,
+        labelWidth: 106,
+        columnGap: 12,
+        bodyFontSize: 9.5,
+        labelFontSize: 8.5,
+        titleFontSize: 10.5,
+        lineGap: 4,
+      };
+      const CARD_INNER_W = CONTENT_W - (CARD.outerPad * 2);
+      const CARD_BODY_W = CARD_INNER_W - CARD.labelWidth - CARD.columnGap;
+      let activeSection = null;
+      let activePresentationUi = { ...labels.presentationUi };
 
+      function textHeight(text, font, fontSize, width, lineGap = 0) {
+        doc.font(font).fontSize(fontSize);
+        return doc.heightOfString(String(text || ''), { width, lineGap });
+      }
+
+      function measurePresentationRow(row) {
+        const hasLabel = Boolean(row.label);
+        const bodyWidth = hasLabel ? CARD_BODY_W : CARD_INNER_W;
+        const labelHeight = hasLabel
+          ? textHeight(row.label, fontBold, CARD.labelFontSize, CARD.labelWidth, 1)
+          : 0;
+        const bodyHeight = textHeight(row.text, fontRegular, CARD.bodyFontSize, bodyWidth, CARD.lineGap);
+        return Math.max(labelHeight, bodyHeight) + CARD.rowGap;
+      }
+
+      function splitTextToHeight(text, width, maxHeight) {
+        const value = String(text || '').trim();
+        if (!value) return ['', ''];
+        if (textHeight(value, fontRegular, CARD.bodyFontSize, width, CARD.lineGap) <= maxHeight) {
+          return [value, ''];
+        }
+
+        const words = value.split(/\s+/);
+        let low = 1;
+        let high = words.length;
+        let best = 0;
+        while (low <= high) {
+          const mid = Math.floor((low + high) / 2);
+          const candidate = words.slice(0, mid).join(' ');
+          if (textHeight(candidate, fontRegular, CARD.bodyFontSize, width, CARD.lineGap) <= maxHeight) {
+            best = mid;
+            low = mid + 1;
+          } else {
+            high = mid - 1;
+          }
+        }
+
+        if (best > 0) return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+
+        let charLow = 1;
+        let charHigh = value.length;
+        let charBest = 1;
+        while (charLow <= charHigh) {
+          const mid = Math.floor((charLow + charHigh) / 2);
+          if (textHeight(value.slice(0, mid), fontRegular, CARD.bodyFontSize, width, CARD.lineGap) <= maxHeight) {
+            charBest = mid;
+            charLow = mid + 1;
+          } else {
+            charHigh = mid - 1;
+          }
+        }
+        return [value.slice(0, charBest), value.slice(charBest).trim()];
+      }
+
+      function writeSectionContinuation() {
+        if (!activeSection) {
+          doc.y = 68;
+          return;
+        }
+        doc.y = 58;
+        doc.font(fontRegular).fontSize(8.5).fillColor(COLORS.gold)
+          .text(`${String(activeSection.number).padStart(2, '0')} · ${labels.continued}`, MARGIN_L, doc.y, { width: CONTENT_W });
+        doc.font(fontBold).fontSize(13).fillColor(COLORS.darkText)
+          .text(activeSection.title, MARGIN_L, doc.y + 14, { width: CONTENT_W });
+        doc.y += 42;
+      }
+
+      function drawPresentationFrame(title, rows, accent, continued) {
+        const titleHeight = textHeight(
+          continued ? `${title} · ${labels.continued}` : title,
+          fontBold,
+          CARD.titleFontSize,
+          CARD_INNER_W,
+          1
+        );
+        const rowsHeight = rows.reduce((sum, row) => sum + measurePresentationRow(row), 0);
+        const height = CARD.outerPad + titleHeight + CARD.titleGap + rowsHeight + (CARD.outerPad - CARD.rowGap);
+        const y = doc.y;
+
+        doc.save();
+        doc.rect(MARGIN_L, y, CONTENT_W, height).fill(COLORS.surface);
+        doc.rect(MARGIN_L, y, CONTENT_W, height)
+          .lineWidth(0.55).strokeColor(COLORS.divider).stroke();
+        doc.rect(MARGIN_L, y, CONTENT_W, 3).fill(accent);
+        doc.restore();
+
+        doc.font(fontBold).fontSize(CARD.titleFontSize).fillColor(COLORS.darkText)
+          .text(continued ? `${title} · ${labels.continued}` : title, MARGIN_L + CARD.outerPad, y + CARD.outerPad, {
+            width: CARD_INNER_W,
+            lineGap: 1,
+          });
+        let rowY = y + CARD.outerPad + titleHeight + CARD.titleGap;
+        rows.forEach((row, index) => {
+          const hasLabel = Boolean(row.label);
+          const bodyX = hasLabel
+            ? MARGIN_L + CARD.outerPad + CARD.labelWidth + CARD.columnGap
+            : MARGIN_L + CARD.outerPad;
+          const bodyWidth = hasLabel ? CARD_BODY_W : CARD_INNER_W;
+          const rowHeight = measurePresentationRow(row);
+
+          if (index > 0) {
+            doc.moveTo(MARGIN_L + CARD.outerPad, rowY - 4)
+              .lineTo(MARGIN_L + CONTENT_W - CARD.outerPad, rowY - 4)
+              .lineWidth(0.35).strokeColor(COLORS.divider).stroke();
+          }
+          if (hasLabel) {
+            doc.font(fontBold).fontSize(CARD.labelFontSize).fillColor(accent)
+              .text(row.label, MARGIN_L + CARD.outerPad, rowY, {
+                width: CARD.labelWidth,
+                lineGap: 1,
+              });
+          }
+          doc.font(fontRegular).fontSize(CARD.bodyFontSize).fillColor(COLORS.bodyText)
+            .text(row.text, bodyX, rowY, { width: bodyWidth, lineGap: CARD.lineGap });
+          rowY += rowHeight;
+        });
+
+        doc.y = y + height + 12;
+      }
+
+      function writePresentationCard(title, rows, accent = COLORS.gold) {
+        const pending = rows.map((row) => ({
+          label: String(row.label || ''),
+          text: String(row.text || ''),
+        }));
+        let continued = false;
+
+        while (pending.length > 0) {
+          const titleText = continued ? `${title} · ${labels.continued}` : title;
+          const titleHeight = textHeight(titleText, fontBold, CARD.titleFontSize, CARD_INNER_W, 1);
+          const fixedHeight = CARD.outerPad + titleHeight + CARD.titleGap + (CARD.outerPad - CARD.rowGap);
+          const minimumRowHeight = Math.min(56, measurePresentationRow(pending[0]));
+
+          if (doc.y + fixedHeight + minimumRowHeight > FOOTER_Y) {
+            doc.addPage();
+            writeSectionContinuation();
+          }
+
+          const availableRowsHeight = FOOTER_Y - doc.y - fixedHeight - 12;
+          const pageRows = [];
+          let usedHeight = 0;
+
+          while (pending.length > 0) {
+            const row = pending[0];
+            const rowHeight = measurePresentationRow(row);
+            if (usedHeight + rowHeight <= availableRowsHeight) {
+              pageRows.push(row);
+              usedHeight += rowHeight;
+              pending.shift();
+              continue;
+            }
+
+            if (pageRows.length === 0) {
+              const hasLabel = Boolean(row.label);
+              const bodyWidth = hasLabel ? CARD_BODY_W : CARD_INNER_W;
+              const labelHeight = hasLabel
+                ? textHeight(row.label, fontBold, CARD.labelFontSize, CARD.labelWidth, 1)
+                : 0;
+              const maxBodyHeight = Math.max(24, availableRowsHeight - CARD.rowGap);
+              const [head, rest] = splitTextToHeight(row.text, bodyWidth, Math.max(maxBodyHeight, labelHeight));
+              pageRows.push({ label: row.label, text: head });
+              pending.shift();
+              if (rest) pending.unshift({
+                label: row.label ? `${row.label} · ${labels.continued}` : '',
+                text: rest,
+              });
+            }
+            break;
+          }
+
+          drawPresentationFrame(title, pageRows, accent, continued);
+          continued = pending.length > 0;
+          if (continued) {
+            doc.addPage();
+            writeSectionContinuation();
+          }
+        }
+      }
+
+      function writeStructuredBlock(block) {
+        const ui = activePresentationUi;
+        const type = block.type || 'text';
+        if (type === 'text' || type === 'note') {
+          writePresentationCard(block.title || (type === 'note' ? labels.cardNote : labels.cardObservation), [{ text: block.text || '' }], type === 'note' ? ELEMENT_COLORS.water : COLORS.gold);
+          return;
+        }
+        if (type === 'insight') {
+          // A block may carry its own rows when the generic basis/behavior/action
+          // labels would misdescribe its content (section 5's strength cards).
+          const rows = Array.isArray(block.rows) && block.rows.length
+            ? block.rows.filter((r) => r && r.label && r.text).map((r) => ({ label: r.label, text: r.text }))
+            : [
+              { label: ui.basis, text: block.basis || '' },
+              { label: ui.behavior, text: block.behavior || '' },
+              { label: ui.action, text: block.action || '' },
+            ];
+          writePresentationCard(block.title || labels.cardInsight, rows, ELEMENT_COLORS.wood);
+          return;
+        }
+        if (type === 'translator') {
+          writePresentationCard(block.title || labels.cardTranslator, [
+            { label: ui.looksLike, text: block.looksLike || '' },
+            { label: ui.actual, text: block.actual || '' },
+            { label: ui.response, text: block.response || '' },
+          ], ELEMENT_COLORS.fire);
+          return;
+        }
+        if (type === 'script') {
+          writePresentationCard(block.title || labels.cardScript, [
+            { label: ui.before, text: block.before || '' },
+            { label: ui.after, text: block.after || '' },
+            { label: ui.signal, text: block.signal || '' },
+          ], ELEMENT_COLORS.water);
+          return;
+        }
+        if (type === 'timeline') {
+          writePresentationCard(block.title || labels.cardTimeline, (block.items || []).map((item) => ({ label: item.label, text: item.text })), ELEMENT_COLORS.earth);
+          return;
+        }
+        if (type === 'checklist') {
+          writePresentationCard(block.title || labels.cardChecklist, (block.items || []).map((item) => ({ label: item.label, text: `□ ${item.text}` })), ELEMENT_COLORS.wood);
+          return;
+        }
+        if (type === 'parenting-card') {
+          writePresentationCard(block.title || labels.cardParentingCard, [
+            { label: ui.stop, text: block.stop || '' },
+            { label: ui.start, text: block.start || '' },
+            { label: ui.steps, text: block.steps || '' },
+          ], COLORS.gold);
+          return;
+        }
+        if (type === 'close') {
+          writePresentationCard(block.title || labels.cardClose, [{ text: block.text || '' }], COLORS.headerBg);
+          return;
+        }
+        writePresentationCard(block.title || labels.cardFallback, [{ text: block.text || '' }]);
+      }
+
+      function renderCalculatedProfilePage() {
+        const pillars = manseryeok?.pillars;
+        const elements = manseryeok?.elements;
+        if (!pillars && !elements) return;
+
+        doc.addPage();
+        doc.y = 68;
+        doc.font(fontRegular).fontSize(9).fillColor(COLORS.gold)
+          .text('CALCULATED PROFILE', MARGIN_L, doc.y, { width: CONTENT_W });
+        doc.font(fontBold).fontSize(21).fillColor(COLORS.darkText)
+          .text(labels.calculatedProfileTitle, MARGIN_L, doc.y + 18, { width: CONTENT_W });
+        doc.y += 66;
+
+        if (pillars) {
+          const pillarKeys = ['year', 'month', 'day', 'hour'];
+          const pillarW = CONTENT_W / 4;
+          const y = doc.y;
+          pillarKeys.forEach((key, index) => {
+            const x = MARGIN_L + (pillarW * index);
+            const pillar = pillars[key];
+            doc.rect(x, y, pillarW, 25).fill(COLORS.headerBg);
+            doc.rect(x, y + 25, pillarW, 66).fill(COLORS.surface);
+            doc.rect(x, y, pillarW, 91).lineWidth(0.5).strokeColor(COLORS.divider).stroke();
+            doc.font(fontBold).fontSize(8).fillColor('#F5F0E7')
+              .text(labels.pillars[index], x, y + 8, { width: pillarW, align: 'center' });
+            doc.font(pillarCardFont).fontSize(20).fillColor(COLORS.darkText)
+              .text(pillar?.hanja || pillar?.korean || '-', x, y + 37, { width: pillarW, align: 'center' });
+            doc.font(fontRegular).fontSize(8).fillColor(COLORS.lightText)
+              .text(localizePillarElement(pillar?.element || pillar?.오행 || ''), x, y + 67, { width: pillarW, align: 'center' });
+          });
+          doc.y = y + 112;
+        }
+
+        if (elements) {
+          doc.font(fontBold).fontSize(11).fillColor(COLORS.darkText)
+            .text(labels.elementDistribution, MARGIN_L, doc.y, { width: CONTENT_W });
+          doc.y += 25;
+          const keys = ['wood', 'fire', 'earth', 'metal', 'water'];
+          const colors = keys.map((key) => ELEMENT_COLORS[key]);
+          const total = keys.reduce((sum, key) => sum + Number(elements[key] || 0), 0) || 1;
+          keys.forEach((key, index) => {
+            const y = doc.y;
+            const value = Number(elements[key] || 0);
+            const pct = Math.round((value / total) * 100);
+            doc.font(fontBold).fontSize(8.5).fillColor(COLORS.bodyText)
+              .text(labels.elements[index], MARGIN_L, y + 2, { width: 76 });
+            doc.rect(MARGIN_L + 82, y, 295, 13).fill('#E5DED2');
+            doc.rect(MARGIN_L + 82, y, Math.max(3, 295 * (value / total)), 13).fill(colors[index]);
+            doc.font(fontRegular).fontSize(8).fillColor(COLORS.lightText)
+              .text(`${value} · ${pct}%`, MARGIN_L + 390, y + 1, { width: 90, align: 'right' });
+            doc.y += 23;
+          });
+        }
+
+        doc.y += 12;
+        writePresentationCard(labels.howToReadTitle, [{
+          label: labels.howToReadCalcLabel,
+          text: labels.howToReadCalcText,
+        }, {
+          label: labels.howToReadScopeLabel,
+          text: labels.howToReadScopeText,
+        }], COLORS.sage);
+      }
+
+      function renderStructuredPresentation(presentation) {
+        activePresentationUi = { ...activePresentationUi, ...(presentation.ui || {}) };
+        const cover = presentation.cover;
+        // Cover has no report body: the first analytical content starts on page two.
+        doc.rect(0, 0, PAGE_W, PAGE_H).fill(COLORS.headerBg);
+        doc.font(fontBold).fontSize(30).fillColor(COLORS.gold)
+          .text('SoMyung', MARGIN_L, 105, { width: CONTENT_W, align: 'center' });
+        doc.font(fontRegular).fontSize(12).fillColor('#DDD4C8')
+          .text(cover.kicker || labels.coverKicker, MARGIN_L, 158, { width: CONTENT_W, align: 'center' });
+        doc.font(fontBold).fontSize(25).fillColor('#FFFFFF')
+          .text(cover.title || labels.premiumReport, MARGIN_L, 248, { width: CONTENT_W, align: 'center', lineGap: 8 });
+        doc.font(fontRegular).fontSize(12).fillColor('#DDD4C8')
+          .text(cover.child || childName || '', MARGIN_L, 340, { width: CONTENT_W, align: 'center' });
+        doc.font(fontRegular).fontSize(10).fillColor('#BFB7AD')
+          .text(cover.date || `${labels.generatedOn}: ${reportDateLabel}`, MARGIN_L, 375, { width: CONTENT_W, align: 'center' });
+        doc.font(fontRegular).fontSize(9).fillColor('#BFB7AD')
+          .text(labels.coverTagline, MARGIN_L, 675, { width: CONTENT_W, align: 'center' });
+
+        doc.addPage();
+        doc.y = 82;
+        doc.font(fontBold).fontSize(21).fillColor(COLORS.darkText)
+          .text(presentation.opening.title || labels.openingTitle, MARGIN_L, doc.y, { width: CONTENT_W });
+        doc.moveDown(0.8);
+        for (const item of presentation.opening.items || []) {
+          writePresentationCard(item.title, [{ text: item.text }], item.accent || COLORS.gold);
+        }
+        if (presentation.opening.note) writeStructuredBlock({ type: 'note', text: presentation.opening.note });
+        renderCalculatedProfilePage();
+
+        for (const section of presentation.sections) {
+          activeSection = { number: section.number, title: section.title };
+          if (section.startOnNewPage) {
+            doc.addPage();
+            doc.y = 68;
+          } else {
+            // The contract can explicitly keep a short final section with the
+            // preceding card. It still moves to a new page if it cannot fit.
+            ensureSpace(320);
+            doc.moveDown(0.6);
+          }
+          doc.font(fontRegular).fontSize(10).fillColor(COLORS.gold)
+            .text(String(section.number).padStart(2, '0'), MARGIN_L, doc.y, { width: CONTENT_W });
+          doc.font(fontBold).fontSize(20).fillColor(COLORS.darkText)
+            .text(section.title, MARGIN_L, doc.y + 18, { width: CONTENT_W });
+          doc.y += 56;
+          for (const block of section.blocks) writeStructuredBlock(block);
+        }
+      }
+
+
+      const presentation = aiInterpretation?.presentationStatus === 'ready'
+        ? sanitizePresentation(normalizePresentation(aiInterpretation.presentation))
+        : null;
+      if (presentation) {
+        renderStructuredPresentation(presentation);
+      } else {
       // ═════════════════════════════════════════════════════════════════
       // COVER PAGE
       // ═════════════════════════════════════════════════════════════════
@@ -394,7 +1229,7 @@ async function generateReportPDF(params) {
         MARGIN_L, infoY + 18
       );
       doc.text(
-        `${labels.generatedOn}: ${new Date().toISOString().split('T')[0]}`,
+        `${labels.generatedOn}: ${reportDateLabel}`,
         MARGIN_L, infoY + 36
       );
 
@@ -501,24 +1336,11 @@ async function generateReportPDF(params) {
       let sections = [];
 
       if (fullText) {
-        // Split on ## N. headers
-        const sectionRegex = /^##\s+\d+\.\s+/m;
-        const parts = fullText.split(sectionRegex);
-        const headerMatches = [...fullText.matchAll(/^(##\s+\d+\.\s+.+)$/gm)];
-
-        // First part before any ## header (skip if empty)
-        if (parts[0] && parts[0].trim()) {
-          sections.push({ title: null, content: parts[0].trim() });
+        const firstHeaderIndex = fullText.search(/^#{1,4}\s*\d+\.\s+/m);
+        if (firstHeaderIndex > 0 && fullText.slice(0, firstHeaderIndex).trim()) {
+          sections.push({ title: null, content: fullText.slice(0, firstHeaderIndex).trim() });
         }
-
-        // Matched sections
-        headerMatches.forEach((match, idx) => {
-          const title = match[1].replace(/^##\s+\d+\.\s+/, '').trim();
-          const content = (parts[idx + 1] || '').trim();
-          if (content) {
-            sections.push({ title, content });
-          }
-        });
+        sections.push(...parseNumberedSections(fullText).map(({ title, content }) => ({ title, content })));
       }
 
       // Fallback to sections object if fullText parsing yields nothing
@@ -604,6 +1426,7 @@ async function generateReportPDF(params) {
         // Extra space after each major section
         doc.moveDown(0.6);
       }
+      }
 
 
       // ═════════════════════════════════════════════════════════════════
@@ -626,7 +1449,7 @@ async function generateReportPDF(params) {
 
         // Use low-level _fragment to avoid page creation side effects
         doc.font(fontRegular).fontSize(7).fillColor(COLORS.subtleText);
-        const footerText = `☯ ${labels.footer}`;
+        const footerText = `☯ ${labels.footer}  |  ${i + 1} / ${contentPageCount}`;
         const textWidth = doc.widthOfString(footerText);
         const footerX = MARGIN_L + (CONTENT_W - textWidth) / 2;
         doc.text(footerText, footerX, FOOTER_Y + 2, { lineBreak: false });
@@ -641,4 +1464,6 @@ async function generateReportPDF(params) {
 
 module.exports = {
   generateReportPDF,
+  parseNumberedSections,
+  normalizePresentation,
 };

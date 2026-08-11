@@ -48,13 +48,19 @@ const authLimiter = rateLimit({
 });
 
 /**
- * AI/Saju rate limit - expensive OpenAI operations
- * 10 requests per hour per IP (free preview)
- * Paid users bypass this via authentication
+ * AI/Saju rate limit - expensive OpenAI operations (free preview)
+ * Paid users bypass this via authentication.
+ *
+ * Keyed by IP, which is the problem: Korean mobile carriers put large numbers
+ * of subscribers behind shared NAT addresses, so a handful of unrelated
+ * visitors can exhaust one another's quota. This sits at the very top of the
+ * paid funnel, so a false block costs a customer outright — far more than the
+ * few cents of AI spend it saves at current traffic. Raised 10 -> 30/hr.
+ * Tunable without a redeploy via SAJU_PREVIEW_MAX_PER_HOUR.
  */
 const sajuPreviewLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // 10 free previews per hour
+  max: Number(process.env.SAJU_PREVIEW_MAX_PER_HOUR || 30),
   message: {
     success: false,
     error: 'Free preview limit reached. Please wait an hour or upgrade to premium.',
@@ -160,6 +166,41 @@ const readLimiter = rateLimit({
 });
 
 /**
+ * Free chat fortune limit — /fortuneTell hits a paid AI provider per call,
+ * so the general 100/15min limit alone allows unbounded spend from rotating IPs.
+ * 15 requests per hour per IP.
+ */
+const fortuneTellLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 15,
+  message: {
+    success: false,
+    error: 'Free fortune limit reached. Please try again in an hour.',
+    code: 'FORTUNE_LIMIT_EXCEEDED',
+    retryAfter: '1 hour'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
+ * Report-lookup OTP request limit — prevent email bombing / OTP brute force
+ * 5 OTP requests per 15 minutes per IP
+ */
+const otpRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: {
+    success: false,
+    error: 'Too many verification code requests, please try again later.',
+    code: 'OTP_RATE_LIMIT_EXCEEDED',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
  * Create custom rate limiter with specific options
  * @param {Object} options - Rate limit options
  * @returns {Function} Rate limit middleware
@@ -185,9 +226,11 @@ module.exports = {
   authLimiter,
   sajuPreviewLimiter,
   sajuPremiumLimiter,
+  fortuneTellLimiter,
   paymentCreationLimiter,
   paymentConfirmLimiter,
   webhookLimiter,
   readLimiter,
+  otpRequestLimiter,
   createRateLimiter,
 };

@@ -55,7 +55,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
               "img-src 'self' data: https:",
               "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
-              "connect-src 'self' http://localhost:3000 https://somyung.pages.dev https://*.supabase.co https://www.paypal.com https://www.sandbox.paypal.com https://pay.google.com https://*.execute-api.ap-northeast-2.amazonaws.com https://developers.kakao.com",
+              "connect-src 'self' http://localhost:3000 https://somyung.pages.dev https://*.supabase.co https://www.paypal.com https://www.sandbox.paypal.com https://pay.google.com https://*.execute-api.ap-northeast-2.amazonaws.com https://*.lambda-url.ap-northeast-2.on.aws https://www.google-analytics.com https://developers.kakao.com",
               "frame-src 'self' https://www.paypal.com https://www.sandbox.paypal.com https://pay.google.com",
               "form-action 'self'",
               "base-uri 'self'",

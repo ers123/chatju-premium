@@ -45,7 +45,7 @@ async function authMiddleware(req, res, next) {
       return res.status(401).json({
         error: 'Invalid or expired token',
         code: 'INVALID_TOKEN',
-        details: error.message,
+        ...(process.env.NODE_ENV !== 'production' && { details: error.message }),
       });
     }
 
@@ -76,7 +76,7 @@ async function authMiddleware(req, res, next) {
     return res.status(500).json({
       error: 'Authentication error',
       code: 'AUTH_ERROR',
-      details: error.message,
+      ...(process.env.NODE_ENV !== 'production' && { details: error.message }),
     });
   }
 }
@@ -116,5 +116,36 @@ async function optionalAuthMiddleware(req, res, next) {
   next();
 }
 
+/**
+ * Admin authorization middleware — must run AFTER authMiddleware.
+ * Allowlist of admin user IDs comes from ADMIN_USER_IDS (comma-separated).
+ * Fail closed: if the env var is unset/empty, ALL requests are denied.
+ */
+function requireAdmin(req, res, next) {
+  const allowlist = (process.env.ADMIN_USER_IDS || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  if (allowlist.length === 0) {
+    logger.warn('Admin access denied: ADMIN_USER_IDS not configured (fail closed)');
+    return res.status(403).json({
+      error: 'Forbidden',
+      code: 'FORBIDDEN',
+    });
+  }
+
+  if (!req.user || !allowlist.includes(req.user.id)) {
+    logger.warn('Admin access denied: user not in allowlist', { userId: req.user?.id });
+    return res.status(403).json({
+      error: 'Forbidden',
+      code: 'FORBIDDEN',
+    });
+  }
+
+  next();
+}
+
 module.exports = authMiddleware;
 module.exports.optionalAuth = optionalAuthMiddleware;
+module.exports.requireAdmin = requireAdmin;

@@ -20,9 +20,14 @@ service: chatju-premium-backend
 # Framework version constraint
 frameworkVersion: '3 || 4'
 
+# Load backend/.env into ${env:*} resolution. Framework-native dotenv is used
+# instead of relying on serverless-dotenv-plugin, whose values are populated
+# too late for v3 variable resolution (SUPABASE_URL/ANON_KEY would error).
+useDotenv: true
+
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs20.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'ap-northeast-2'} # Seoul region (Korea)
   memorySize: 1024 # MB - 1024 needed for CJK font rendering in PDF
@@ -47,23 +52,39 @@ provider:
   # Environment variables (CRITICAL: Set these in AWS Console or use .env)
   environment:
     NODE_ENV: production
-    AI_PROVIDER: ${env:AI_PROVIDER, 'gemini'} # Default to Gemini (free tier)
+    AI_PROVIDER: ${env:AI_PROVIDER, 'openai'}
 
     # AI Provider API Keys (set at least one)
-    OPENAI_API_KEY: ${env:OPENAI, ''}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    OPENAI: ${env:OPENAI, ''}
+    OPENAI_MODEL: ${env:OPENAI_MODEL, 'gpt-5.4-nano'}
+    OPENAI_FALLBACK_MODEL: ${env:OPENAI_FALLBACK_MODEL, 'gpt-5.4-mini'}
+    GEMINI_MODEL: ${env:GEMINI_MODEL, 'gemini-3-flash-preview'}
+    CLAUDE_MODEL: ${env:CLAUDE_MODEL, 'claude-sonnet-4-6'}
     GEMINI_API_KEY: ${env:GEMINI_API_KEY, ''}
     ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
 
     # Supabase Configuration
     SUPABASE_URL: ${env:SUPABASE_URL}
     SUPABASE_ANON_KEY: ${env:SUPABASE_ANON_KEY}
+    # Code reads SUPABASE_SERVICE_KEY; also expose the *_ROLE_KEY alias.
+    SUPABASE_SERVICE_KEY: ${env:SUPABASE_SERVICE_KEY, ''}
     SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_KEY, ''}
+
+    # Frontend origin (used for links/CORS in app code)
+    FRONTEND_URL: ${env:FRONTEND_URL, ''}
 
     # Payment Gateway API Keys (optional - using Paddle)
     TOSS_SECRET_KEY: ${env:TOSS_SECRET_KEY, ''}
     TOSS_CLIENT_KEY: ${env:TOSS_CLIENT_KEY, ''}
     PAYPAL_CLIENT_ID: ${env:PAYPAL_CLIENT_ID, ''}
     PAYPAL_CLIENT_SECRET: ${env:PAYPAL_CLIENT_SECRET, ''}
+    # Live vs sandbox base URL (e.g. https://api-m.paypal.com). Without this the
+    # backend may default to the wrong PayPal environment.
+    PAYPAL_API_BASE_URL: ${env:PAYPAL_API_BASE_URL, ''}
+    # Webhook ID from PayPal Developer Dashboard. Empty = webhooks rejected
+    # (fail-closed); the synchronous capture flow is unaffected. Set post-launch.
+    PAYPAL_WEBHOOK_ID: ${env:PAYPAL_WEBHOOK_ID, ''}
     STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY, ''}
     STRIPE_PUBLISHABLE_KEY: ${env:STRIPE_PUBLISHABLE_KEY, ''}
 
@@ -78,8 +99,32 @@ provider:
     # Signed report/payment access tokens
     ACCESS_TOKEN_SECRET: ${env:ACCESS_TOKEN_SECRET, ''}
 
+    # Admin allowlist (comma-separated Supabase user IDs). Empty = admin routes
+    # deny everyone (safe default). Set to your user ID to use the admin panel.
+    ADMIN_USER_IDS: ${env:ADMIN_USER_IDS, ''}
+
     # CORS Configuration (production only allows production domain)
     CORS_ORIGIN: https://somyung.cc
+
+    # Operational tuning knobs. Each is read with a code-side default, so an
+    # empty value here is safe and simply keeps the default. They are declared
+    # so they can be changed in the Lambda console without a code change.
+    # Free previews per hour per IP (default 30; IP-keyed, and Korean carrier
+    # NAT shares addresses across many subscribers).
+    SAJU_PREVIEW_MAX_PER_HOUR: ${env:SAJU_PREVIEW_MAX_PER_HOUR, ''}
+    # Per-call upstream AI timeout in ms (default 45000, vs the 60s Lambda cap).
+    AI_CALL_TIMEOUT_MS: ${env:AI_CALL_TIMEOUT_MS, ''}
+    # Elapsed ms after which the report email drops its PDF attachment so the
+    # email itself still goes out (default 40000).
+    EMAIL_PDF_BUDGET_MS: ${env:EMAIL_PDF_BUDGET_MS, ''}
+    # Max Hangul ratio tolerated in a non-Korean report before retrying (default 0.005).
+    SAJU_HANGUL_LIMIT: ${env:SAJU_HANGUL_LIMIT, ''}
+    # Languages whose reports use the localized-voice path (rewritten usage
+    # block + cultural register + authored parent lines). Default 'fr' — the
+    # only language measured. Set to a comma list to add measured languages;
+    # SAJU_LOCALIZED_VOICE=0 kills it everywhere without a redeploy.
+    SAJU_LOCALIZED_VOICE_LANGUAGES: ${env:SAJU_LOCALIZED_VOICE_LANGUAGES, ''}
+    SAJU_LOCALIZED_VOICE: ${env:SAJU_LOCALIZED_VOICE, ''}
 
   # IAM Role Statements (permissions for Lambda)
   iam:
@@ -100,6 +145,10 @@ functions:
   api:
     handler: index.handler
     description: ChatJu Premium Backend API
+    # Cap public Function URL scale while preserving headroom above the
+    # observed 30-day peak concurrency of 2.
+    reservedConcurrency: 5
+    url: true
     events:
       # HTTP API Gateway - handles all routes
       - httpApi:
@@ -115,7 +164,8 @@ functions:
 # Plugins
 # ============================================
 plugins:
-  - serverless-dotenv-plugin # Load .env file
+  # .env is loaded via top-level `useDotenv: true` (Framework-native), so the
+  # serverless-dotenv-plugin is intentionally not listed (it conflicts with it).
   - serverless-offline # For local testing: serverless offline
 
 # ============================================
@@ -150,15 +200,20 @@ custom:
     httpPort: 3000
     host: 0.0.0.0
 
-  # API Gateway throttling (prevent abuse)
-  apiGatewayThrottling:
-    maxRequestsPerSecond: 100
-    maxConcurrentRequests: 50
-
 # ============================================
 # Resources (CloudFormation)
 # ============================================
 resources:
+  # Extend Serverless's generated HTTP API $default stage with actual
+  # API Gateway throttling. The former custom.apiGatewayThrottling key was inert.
+  extensions:
+    HttpApiStage:
+      Properties:
+        DefaultRouteSettings:
+          DetailedMetricsEnabled: false
+          ThrottlingBurstLimit: 20
+          ThrottlingRateLimit: 10
+
   Resources:
     # CloudWatch Log Group (30 day retention)
     ApiLogGroup:
@@ -206,7 +261,7 @@ resources:
 #    - SUPABASE_URL
 #    - SUPABASE_ANON_KEY
 #    - SUPABASE_SERVICE_ROLE_KEY
-#    - At least one AI provider key (GEMINI_API_KEY recommended)
+#    - At least one AI provider key (OPENAI_API_KEY or OPENAI recommended)
 #    - TOSS_SECRET_KEY (for Korean payments)
 #    - PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET (for international payments)
 #

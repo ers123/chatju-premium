@@ -84,6 +84,22 @@ function maskEmail(email) {
 }
 logger.maskEmail = maskEmail;
 
+function sanitizeUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  try {
+    const parsed = new URL(url, 'https://log.local');
+    for (const key of parsed.searchParams.keys()) {
+      if (/token|secret|key|authorization|password/i.test(key)) {
+        parsed.searchParams.set(key, '[redacted]');
+      }
+    }
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return url.replace(/([?&][^=]*(?:token|secret|key|authorization|password)[^=]*=)[^&]+/gi, '$1[redacted]');
+  }
+}
+logger.sanitizeUrl = sanitizeUrl;
+
 /**
  * Helper function to log HTTP requests
  * @param {Object} req - Express request object
@@ -93,7 +109,7 @@ logger.maskEmail = maskEmail;
 logger.logRequest = (req, res, duration) => {
   const logData = {
     method: req.method,
-    url: req.originalUrl || req.url,
+    url: sanitizeUrl(req.originalUrl || req.url),
     statusCode: res.statusCode,
     duration: `${duration}ms`,
     userAgent: req.get('user-agent')?.slice(0, 50),
@@ -106,7 +122,7 @@ logger.logRequest = (req, res, duration) => {
   }
 
   const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info';
-  logger.log(level, `${req.method} ${req.originalUrl}`, logData);
+  logger.log(level, `${req.method} ${sanitizeUrl(req.originalUrl || req.url)}`, logData);
 };
 
 /**

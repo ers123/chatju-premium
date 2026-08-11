@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { buildApiUrl } from '@/lib/api-url';
 
 // ============================================
 // Admin Settings Page
@@ -52,9 +53,8 @@ export default function AdminSettingsPage() {
       setError(null);
 
       const token = localStorage.getItem('chatju_token');
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
-      const response = await axios.get(`${API_URL}/admin/ai-provider`, {
+      const response = await axios.get(buildApiUrl('/admin/ai-provider'), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -83,10 +83,9 @@ export default function AdminSettingsPage() {
       setSuccessMessage(null);
 
       const token = localStorage.getItem('chatju_token');
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
       const response = await axios.post(
-        `${API_URL}/admin/ai-provider`,
+        buildApiUrl('/admin/ai-provider'),
         { provider },
         {
           headers: {
