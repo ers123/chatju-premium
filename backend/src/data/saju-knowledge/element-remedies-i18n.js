@@ -43,6 +43,48 @@ const ELEMENT_REMEDIES_I18N = {
     '금': { colors: 'blanc, argenté, gris, crème', foods: 'poires, radis, oignons, riz blanc, aliments piquants (gingembre, moutarde)', activities: 'puzzles, LEGO et maquettes, pratique d\'un instrument, écriture d\'histoires, initiation au code', season: 'l\'automne', avoidExcess: 'des attentes floues, un traitement injuste, les remarques faites en public' },
     '수': { colors: 'noir, bleu marine, bleu profond', foods: 'algues (nori), haricots noirs, sardines, tofu, bouillons légèrement salés', activities: 'natation, lecture, temps calme de respiration, tenir un journal, explorer la nature au bord de l\'eau', season: 'l\'hiver', avoidExcess: 'l\'isolement affectif, une ambiance d\'inquiétude permanente' },
   },
+  zh: {
+    '목': { colors: '蓝色、绿色、嫩绿色', foods: '菠菜、西兰花、豌豆苗、酸味水果（柑橘、柠檬）、芹菜', activities: '爬山、公园散步、阳台种植、画画、简单木工手作', season: '春季', avoidExcess: '过度的成长与成绩压力、过于激烈的竞争环境' },
+    '화': { colors: '红色、橙色、紫色', foods: '番茄、胡萝卜、红枣、苦瓜、绿茶', activities: '跑步、跳舞、话剧表演、当众发言、体育课与球类运动', season: '夏季', avoidExcess: '刺激过多、睡眠不足、屏幕时间过长' },
+    '토': { colors: '黄色、棕色、米色、土黄色', foods: '红薯、土豆、南瓜、小米粥、糙米', activities: '和家人一起做饭、陶艺捏塑、整理房间、阳台种菜、桌游', season: '换季时节', avoidExcess: '环境骤然变化、规则前后不一致' },
+    '금': { colors: '白色、银色、灰色、奶油色', foods: '梨、白萝卜、洋葱、白米饭、姜', activities: '拼图、乐高、乐器练习、写作、编程入门', season: '秋季', avoidExcess: '标准模糊、待遇不公、当众批评' },
+    '수': { colors: '黑色、藏青色、深蓝色', foods: '海带、紫菜、黑豆、豆腐、清淡的咸味汤', activities: '游泳、阅读、静坐调息、写日记、自然探索', season: '冬季', avoidExcess: '情感上的孤立、充满担忧与焦虑的气氛' },
+  },
+  es: {
+    '목': { colors: 'azul, verde, verde claro', foods: 'espinacas, brócoli, judías verdes, frutas ácidas (naranja, limón), kiwi', activities: 'senderismo, paseos por el parque, jardinería en macetas, dibujar, manualidades con madera', season: 'primavera', avoidExcess: 'presión excesiva por rendir, ambientes demasiado competitivos' },
+    '화': { colors: 'rojo, naranja, morado', foods: 'tomate, zanahoria, pimiento rojo, fresas, escarola o endibia', activities: 'correr, bailar, teatro escolar, exposiciones en clase, deportes de equipo', season: 'verano', avoidExcess: 'exceso de estímulos, falta de sueño, demasiado tiempo de pantalla' },
+    '토': { colors: 'amarillo, marrón, beige, ocre', foods: 'boniato, patata, calabaza, arroz integral, plátano', activities: 'cocinar en familia, modelar con arcilla, ordenar su cuarto, cuidar un huerto o macetas, juegos de mesa', season: 'cambio de estación', avoidExcess: 'cambios bruscos de entorno, normas que no se mantienen' },
+    '금': { colors: 'blanco, plateado, gris, crema', foods: 'pera, nabo, cebolla, arroz blanco, jengibre', activities: 'puzles, LEGO, tocar un instrumento, escribir, iniciación a la programación', season: 'otoño', avoidExcess: 'criterios ambiguos, trato injusto, críticas en público' },
+    '수': { colors: 'negro, azul marino, azul oscuro', foods: 'sardinas o boquerones, mejillones, aceitunas negras, alubias negras, caldo de pescado', activities: 'natación, lectura, ratos de calma y respiración, escribir un diario, salidas a la naturaleza', season: 'invierno', avoidExcess: 'aislamiento emocional, ambientes cargados de preocupación y ansiedad' },
+  },
+  pt: {
+    '목': { colors: 'azul, verde, verde-claro', foods: 'espinafre, brócolis, vagem, frutas ácidas (laranja, limão), maracujá', activities: 'trilhas e caminhadas, passear no parque, jardinagem em vasos, desenhar, artesanato em madeira', season: 'primavera', avoidExcess: 'pressão excessiva por desempenho, ambientes competitivos demais' },
+    '화': { colors: 'vermelho, laranja, roxo', foods: 'tomate, cenoura, pimentão vermelho, morango, jiló', activities: 'correr, dançar, teatro na escola, apresentações em sala, esportes', season: 'verão', avoidExcess: 'excesso de estímulos, sono insuficiente, muito tempo de tela' },
+    '토': { colors: 'amarelo, marrom, bege, ocre', foods: 'batata-doce, mandioca, abóbora, arroz integral, banana', activities: 'cozinhar junto, modelar argila, organizar o quarto, cuidar de uma horta ou vasos, jogos de tabuleiro', season: 'virada das estações', avoidExcess: 'mudanças bruscas de rotina, regras inconstantes' },
+    '금': { colors: 'branco, prata, cinza, creme', foods: 'pera, nabo, cebola, arroz branco, gengibre', activities: 'quebra-cabeças, LEGO, praticar um instrumento, escrever, programação para iniciantes', season: 'outono', avoidExcess: 'critérios vagos, tratamento injusto, críticas em público' },
+    '수': { colors: 'preto, azul-marinho, azul-escuro', foods: 'sardinha, feijão-preto, azeitona preta, caldo de peixe, frutos do mar', activities: 'natação, leitura, momentos de silêncio e respiração, escrever um diário, explorar a natureza', season: 'inverno', avoidExcess: 'isolamento emocional, ambientes carregados de preocupação e ansiedade' },
+  },
+  vi: {
+    '목': { colors: 'màu xanh dương, xanh lá, xanh nõn chuối', foods: 'rau muống, cải bó xôi, giá đỗ, đậu que, trái cây chua (quýt, chanh)', activities: 'leo núi, đi dạo công viên, trồng cây, vẽ tranh, làm đồ thủ công bằng gỗ', season: 'mùa xuân', avoidExcess: 'áp lực thành tích quá lớn, môi trường cạnh tranh gay gắt' },
+    '화': { colors: 'màu đỏ, cam, tím', foods: 'cà chua, cà rốt, thanh long ruột đỏ, mướp đắng, trà xanh', activities: 'chạy bộ, nhảy múa, đóng kịch, thuyết trình trước lớp, chơi thể thao', season: 'mùa hè', avoidExcess: 'kích thích quá mức, thiếu ngủ, xem màn hình quá nhiều' },
+    '토': { colors: 'màu vàng, nâu, be, vàng đất', foods: 'khoai lang, khoai tây, bí đỏ, gạo lứt, chuối', activities: 'nấu ăn cùng gia đình, nặn đất sét, dọn dẹp sắp xếp, chăm vườn rau nhỏ, chơi cờ và board game', season: 'thời điểm giao mùa', avoidExcess: 'thay đổi môi trường đột ngột, quy tắc thiếu nhất quán' },
+    '금': { colors: 'màu trắng, bạc, xám, kem', foods: 'lê, củ cải trắng, hành tây, cơm trắng, gừng', activities: 'xếp hình, lắp LEGO, tập nhạc cụ, viết lách, học lập trình cơ bản', season: 'mùa thu', avoidExcess: 'tiêu chuẩn mơ hồ, đối xử thiếu công bằng, phê bình trước đám đông' },
+    '수': { colors: 'màu đen, xanh navy, xanh dương đậm', foods: 'rong biển, đậu đen, đậu hũ, cá biển, canh rong biển', activities: 'bơi lội, đọc sách, ngồi tĩnh lặng, viết nhật ký, khám phá thiên nhiên', season: 'mùa đông', avoidExcess: 'sự cô lập về cảm xúc, bầu không khí lo lắng căng thẳng' },
+  },
+  id: {
+    '목': { colors: 'biru, hijau, hijau muda', foods: 'bayam, brokoli, kacang panjang, tauge, buah asam (jeruk, belimbing)', activities: 'mendaki, jalan pagi di taman, berkebun di pot, menggambar, prakarya dari kayu', season: 'awal musim hujan, saat tanaman mulai tumbuh', avoidExcess: 'tekanan prestasi yang berlebihan, lingkungan yang terlalu kompetitif' },
+    '화': { colors: 'merah, oranye, ungu', foods: 'tomat, wortel, buah naga merah, pare, teh hijau', activities: 'berlari, menari, drama sekolah, bercerita di depan kelas, olahraga', season: 'musim kemarau yang terik', avoidExcess: 'rangsangan berlebihan, kurang tidur, terlalu lama menatap layar' },
+    '토': { colors: 'kuning, cokelat, krem, oker', foods: 'ubi jalar, singkong, labu kuning, beras merah, pisang', activities: 'memasak bersama, membuat kerajinan tanah liat, merapikan kamar, merawat tanaman pot, bermain board game', season: 'masa pancaroba, peralihan musim', avoidExcess: 'perubahan lingkungan yang mendadak, aturan yang tidak konsisten' },
+    '금': { colors: 'putih, perak, abu-abu, krem susu', foods: 'pir, lobak putih, bawang bombai, nasi putih, jahe', activities: 'menyusun puzzle, bermain LEGO, latihan alat musik, menulis, belajar coding dasar', season: 'akhir musim kemarau, saat udara kering', avoidExcess: 'standar yang tidak jelas, perlakuan tidak adil, kritik di depan orang banyak' },
+    '수': { colors: 'hitam, biru dongker, biru tua', foods: 'rumput laut, ikan laut, kacang hitam, tahu, sup bening yang asin ringan', activities: 'berenang, membaca, duduk tenang dan latihan napas, menulis buku harian, menjelajah alam', season: 'puncak musim hujan', avoidExcess: 'isolasi emosional, suasana yang penuh kekhawatiran dan kecemasan' },
+  },
+  th: {
+    '목': { colors: 'สีฟ้า, สีเขียว, สีเขียวอ่อน', foods: 'ผักโขม, บรอกโคลี, ถั่วฝักยาว, ยอดผักบุ้ง, ผลไม้รสเปรี้ยว (ส้ม มะนาว)', activities: 'เดินเล่นในสวนสาธารณะ, ปลูกต้นไม้, วาดรูป, งานประดิษฐ์จากไม้, ปั่นจักรยานกลางแจ้ง', season: 'ต้นฤดูฝน ช่วงที่ต้นไม้ผลิใบ', avoidExcess: 'การกดดันเรื่องผลการเรียนมากเกินไป, บรรยากาศแข่งขันที่รุนแรง' },
+    '화': { colors: 'สีแดง, สีส้ม, สีม่วง', foods: 'มะเขือเทศ, แครอท, แก้วมังกรแดง, มะระ, ชาเขียว', activities: 'วิ่งเล่น, เต้น, การแสดงละครของโรงเรียน, พูดหน้าชั้นเรียน, เล่นกีฬา', season: 'ฤดูร้อน', avoidExcess: 'สิ่งเร้ามากเกินไป, นอนไม่พอ, ใช้หน้าจอนานเกินไป' },
+    '토': { colors: 'สีเหลือง, สีน้ำตาล, สีเบจ, สีดินเผา', foods: 'มันเทศ, เผือก, ฟักทอง, ข้าวกล้อง, กล้วย', activities: 'ทำอาหารกับที่บ้าน, ปั้นดินเผา, จัดห้องให้เป็นระเบียบ, ปลูกผักสวนครัว, เล่นบอร์ดเกม', season: 'ช่วงเปลี่ยนฤดู', avoidExcess: 'การเปลี่ยนสภาพแวดล้อมกะทันหัน, กฎเกณฑ์ที่ไม่สม่ำเสมอ' },
+    '금': { colors: 'สีขาว, สีเงิน, สีเทา, สีครีม', foods: 'สาลี่, หัวไชเท้า, หอมใหญ่, ข้าวสวย, ขิง', activities: 'ต่อจิ๊กซอว์, ต่อเลโก้, ฝึกเครื่องดนตรี, เขียนเรื่องสั้น, หัดเขียนโปรแกรม', season: 'ปลายฝนต้นหนาว ช่วงที่อากาศแห้ง', avoidExcess: 'เกณฑ์ที่คลุมเครือ, การถูกปฏิบัติอย่างไม่เป็นธรรม, การถูกตำหนิต่อหน้าคนอื่น' },
+    '수': { colors: 'สีดำ, สีกรมท่า, สีน้ำเงินเข้ม', foods: 'ปลาทะเล, อาหารทะเลอย่างกุ้งและหอย, ถั่วดำ, เต้าหู้, น้ำซุปใสรสเค็มอ่อน', activities: 'ว่ายน้ำ, อ่านหนังสือ, นั่งสมาธิ, เขียนไดอารี่, เดินสำรวจธรรมชาติ', season: 'ฤดูหนาว', avoidExcess: 'การถูกปล่อยให้โดดเดี่ยวทางอารมณ์, บรรยากาศที่เต็มไปด้วยความกังวล' },
+  },
 };
 
 /** 해당 언어의 오행 보완표. 없으면 null이고 호출부가 한국어 원본을 쓴다. */
