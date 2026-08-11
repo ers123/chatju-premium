@@ -94,7 +94,36 @@ n=1이라 폴백의 인과는 단정할 수 없다. 다만 이득이 확인되�
 
 ---
 
-## 5. 진짜 병목: 측정 도구
+## 4.5 계측기 재건 후 다시 잰 결과 (추가: 같은 날 후속 작업)
+
+아래 §5에서 지목한 대로 계측기부터 고쳤다. `scripts/eval-localization.js`가
+①신호 목록을 `buildKnowledgeContext().signals`에서 결정론적으로 받고
+②같은 리포트를 3회 채점해 신호별 다수결·점수 중앙값을 쓰고
+③원국을 여러 개 돌리고
+④언어별 루브릭(`localization-rubric.js`)으로 합격/불합격을 낸다.
+
+**심판 자기일관성이 88~92%로 올라왔다.** 기존 ±25pt 요동이 ±7pt 수준으로 줄었다.
+
+그리고 신호에 종류를 붙이자(`kind: 'script' | 'analytic'`) 그림이 선명해졌다.
+
+| lang | 전체 | **script** | analytic | 일관성 |
+|---|---|---|---|---|
+| ko | 22% | **75%** | 5% | 91% |
+| fr | 19% | **54%** | 7% | 90% |
+
+- **§6은 실재하지만 대사(script) 레이어에 국한된 현상이다.** 여기서만 21pt 격차가 난다.
+- **analytic 신호는 ko 5% / fr 7%로 언어와 무관하게 바닥이다.** 이건 결함이 아니라
+  설계다 — 프롬프트가 "십성 분포 같은 용어를 그대로 나열하지 말라"고 금지한다.
+- 따라서 §3의 "전체 보존율" 수치(75% vs 50% 등)는 신호 단위가 거칠어 과대평가된
+  값이었다. 방향은 맞았지만 크기는 이 표를 믿어야 한다.
+- 게이트 임계값은 그래서 `groundingScript` 축에 건다. ko 0.65 / 그 외 0.6.
+
+부수 발견: **한국어 리포트도 nativeness 3/5로 걸린다.** 번역 문제가 아니라 리포트
+전체가 보고서체로 읽힌다는 뜻이므로, 언어와 무관한 별도 과제다.
+
+---
+
+## 5. (당시 판단) 진짜 병목: 측정 도구
 
 같은 산출물이 비교마다 다르게 나온다.
 
@@ -108,14 +137,21 @@ n=1이라 폴백의 인과는 단정할 수 없다. 다만 이득이 확인되�
 
 원인은 심판이 매 호출마다 소스를 다르게 쪼개는 것(신호 10~13개로 요동).
 
-### 다음에 할 일 (개입보다 먼저)
+### 다음에 할 일 (개입보다 먼저) — **완료됨, §4.5 참고**
 
-1. **신호 목록을 고정한다.** 심판에게 매번 뽑게 하지 말고, `buildKnowledgeContext`의
-   `selected` 메타데이터에서 결정론적으로 생성해 심판에게 채점만 시킨다.
-2. **반복 채점 + 다수결.** 같은 쌍을 3회 채점해 중앙값을 쓴다.
-3. **원국을 늘린다.** 1개 고정 원국은 그 원국에 과적합된 결론을 준다. 최소 5개.
+1. ~~신호 목록을 고정한다~~ → `buildKnowledgeContext().signals`로 결정론화
+2. ~~반복 채점 + 다수결~~ → `--rounds=3`, 신호별 다수결·점수 중앙값
+3. ~~원국을 늘린다~~ → `--charts=N` (기본 5개 정의됨)
 
-이게 갖춰진 뒤라야 §4의 개입들을 다시 판정할 수 있다.
+이제 §4의 개입 2건을 이 계측기로 다시 판정할 수 있다:
+
+```bash
+npm run eval:localization -- --langs=fr --charts=3 --rounds=3 --label=voice-off
+SAJU_LOCALIZED_VOICE=1 node scripts/eval-localization.js --langs=fr --charts=3 --rounds=3 --label=voice-on --regenerate
+```
+
+`groundingScript` 축에서 voice-on이 voice-off를 유의미하게 넘으면 그때 켠다.
+잔여 잡음이 ±7pt이므로 그보다 작은 차이는 여전히 판정하지 말 것.
 
 ---
 
@@ -123,8 +159,10 @@ n=1이라 폴백의 인과는 단정할 수 없다. 다만 이득이 확인되�
 
 | 파일 | 상태 |
 |---|---|
-| `scripts/measure-localization.js` | 신규, 유지 |
-| `scripts/compare-localization.js` | 신규, 유지 (동일 심판 비교) |
+| `scripts/eval-localization.js` | **현행 계측기** (`npm run eval:localization`) |
+| `data/saju-knowledge/localization-rubric.js` | 언어별 합격 기준. 지금은 평가용, 이후 출력 게이트로 승격 가능 |
+| ~~`scripts/measure-localization.js`~~ | 삭제 — 리포트별 개별 채점이라 비교 불가 |
+| ~~`scripts/compare-localization.js`~~ | 삭제 — eval이 결정론적 신호 목록으로 대체 |
 | `data/saju-knowledge/cultural-register.js` | 신규, **기본 꺼짐** |
 | `data/saju-knowledge/harmful-phrases-i18n.js` | 신규(프랑스어 15쌍), **기본 꺼짐** |
 | `services/saju-knowledge.js` | 플래그 분기 추가. 꺼짐일 때 기존 동작과 바이트 동일 |

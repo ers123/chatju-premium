@@ -502,7 +502,30 @@ function buildKnowledgeContext({
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
   ].join('\n');
 
-  return { text, selected };
+  // 평가용 신호 목록. 주입된 블록의 각 줄이 곧 "이 리포트가 담아야 할 근거" 하나다.
+  //
+  // 왜 여기서 만드는가: 2026-08-11 평가에서 심판에게 소스를 주고 신호를 직접
+  // 뽑게 했더니 호출마다 10~13개로 요동쳤고, 그 탓에 같은 산출물이 50%와 77%로
+  // 나왔다(localization_findings_2026-08-11.md §5). 채점 대상 목록이 흔들리면
+  // 어떤 개입도 판정할 수 없다. 목록은 주입 시점에 결정론적으로 확정하고,
+  // 심판에게는 채점만 시킨다.
+  // 신호에 종류를 붙인다. 42개를 한 덩어리로 세면 언어별 차이가 희석된다 —
+  // 리포트 하나가 주입된 모든 줄을 구체적으로 담을 수는 없으므로 전체 보존율은
+  // 어느 언어나 낮게 깔리고, 정작 차이가 나는 지점이 묻힌다.
+  // 'script'는 부모가 그대로 소리 내어 읽는 대사(따옴표가 있거나 대화/팁 계열),
+  // 'analytic'은 판단 근거다. 번역 부하가 걸리는 쪽은 script다.
+  const SCRIPT_HINT = /(부모 대화|부모 팁|피할 말|대신|"|“|»|«)/;
+  const signals = blocks.flatMap((b, bi) => b.lines.map((l, li) => {
+    const text = plain(l);
+    return {
+      id: `${bi + 1}.${li + 1}`,
+      block: plain(b.title),
+      kind: SCRIPT_HINT.test(text) ? 'script' : 'analytic',
+      text,
+    };
+  }));
+
+  return { text, selected, signals };
 }
 
 module.exports = {

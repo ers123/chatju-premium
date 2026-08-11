@@ -13,6 +13,7 @@
     "test:integration": "jest --testPathPattern=tests/integration",
     "test:coverage": "jest --coverage",
     "verify:live": "node tests/verify-live-deploy.js",
+    "eval:localization": "node scripts/eval-localization.js",
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix",
     "retention:cleanup": "node scripts/retention-cleanup.js",
