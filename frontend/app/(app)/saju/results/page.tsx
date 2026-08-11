@@ -228,6 +228,10 @@ export default function ResultsPage() {
   const [inputData, setInputData] = useState<{ name: string; birthDate: string; birthTime: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  // The card appends "check your network connection" under the message. That is
+  // only true for an unexplained failure — telling someone who hit the hourly
+  // preview limit to check their wifi sends them chasing the wrong thing.
+  const [showNetworkHint, setShowNetworkHint] = useState(true)
   const [premiumReport, setPremiumReport] = useState<PremiumReportData | null>(null)
   const [corrections, setCorrections] = useState<{ applied: boolean; note: string; adjustedTime?: string | null; isSouthernHemisphere?: boolean } | null>(null)
   const [dstWarning, setDstWarning] = useState(false)
@@ -698,8 +702,10 @@ export default function ResultsPage() {
         const e = err as { code?: string; statusCode?: number; error?: string }
         if (e?.code === 'PREVIEW_LIMIT_EXCEEDED' || e?.statusCode === 429) {
           setError(sr.errorPreviewLimit || e?.error || sr.errorFetch)
+          setShowNetworkHint(false)
         } else {
           setError(sr.errorFetch)
+          setShowNetworkHint(true)
         }
       } finally {
         setIsLoading(false)
@@ -783,9 +789,11 @@ export default function ResultsPage() {
           <p style={{ color: '#6B7280', marginBottom: '0.5rem', lineHeight: 1.6 }}>
             {error || sr.errorDefault}
           </p>
-          <p style={{ color: '#9CA3AF', fontSize: '0.875rem', marginBottom: '2rem' }}>
-            {sr.errorNetwork}
-          </p>
+          {showNetworkHint && (
+            <p style={{ color: '#9CA3AF', fontSize: '0.875rem', marginBottom: '2rem' }}>
+              {sr.errorNetwork}
+            </p>
+          )}
           <button
             onClick={() => router.push('/saju/input')}
             style={{
