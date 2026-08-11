@@ -1908,4 +1908,7 @@ module.exports = {
   generateSajuReading,
   getReading,
   getUserReadings,
+  // 측정/검증용 — 결제·DB를 거치지 않고 생성 품질만 재기 위해 노출한다.
+  // (scripts/measure-localization.js가 언어별 근거 보존율을 잴 때 쓴다.)
+  generateAIInterpretation,
 };

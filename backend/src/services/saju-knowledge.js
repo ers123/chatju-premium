@@ -17,6 +17,8 @@ const BRANCH = require('../data/saju-knowledge/branch-relations');
 const SEASONAL = require('../data/saju-knowledge/seasonal-tuning');
 const ELEMENTS = require('../data/saju-knowledge/element-patterns');
 const PARENT = require('../data/saju-knowledge/parent-child');
+const { getCulturalRegister } = require('../data/saju-knowledge/cultural-register');
+const { getLocalizedHarmfulPhrases } = require('../data/saju-knowledge/harmful-phrases-i18n');
 
 const YANG_STEMS = new Set(['갑', '병', '무', '경', '임']);
 const YANG_BRANCHES = new Set(['자', '인', '진', '오', '신', '술']);
@@ -155,6 +157,64 @@ const DYNAMIC_KEY_MAP = {
   childControlsParent: 'controlledBy',
   same: 'same',
 };
+
+// 비한국어 리포트에서 이 블록을 "어떻게 쓸지" 지시한다.
+//
+// 이전 지시문은 "Translate every idea here into {language}"였다. 그 결과를 재보니
+// (2026-08-11, output/localization/) 프랑스어는 주제는 살리지만 문구 수준 신호를
+// 잃고 일반 육아 조언으로 후퇴했다 — 근거 보존율 ko 75% vs fr 50%. 번역을 시키니
+// 번역체가 나오거나, 번역이 어려운 대사는 통째로 일반론으로 대체된 것이다.
+//
+// 그래서 지시를 "번역"에서 "기능 이식"으로 바꾼다. 한국어 대사는 옮겨야 할 문장이
+// 아니라 '무엇을 해내는 말인지'를 보여주는 예시로 규정하고, 같은 기능을 하는 그
+// 나라 부모의 실제 말을 새로 쓰게 한다. 한국어 금지·간지 표기 같은 기존 제약은
+// 힘들게 얻은 것이므로 그대로 유지한다.
+// 2026-08-11 측정 결과: 이 재구성은 근거 보존율을 전혀 움직이지 못했다
+// (동일 심판 비교에서 baseline 10/2/1 대 개편본 10/2/1로 완전히 동일).
+// 그래서 기본값은 꺼짐이고, 프로덕션은 측정된 기존 지시문을 그대로 쓴다.
+// 더 나은 측정 도구가 생겼을 때 SAJU_LOCALIZED_VOICE=1로 다시 재볼 수 있게
+// 코드는 남겨 둔다. 자세한 근거는 localization_findings_2026-08-11.md.
+const LOCALIZED_VOICE_ENABLED = process.env.SAJU_LOCALIZED_VOICE === '1';
+
+function buildNonKoreanUsageBlock(language, outputLangName) {
+  const lang = outputLangName || 'the report language';
+
+  if (!LOCALIZED_VOICE_ENABLED) {
+    // 측정된 기존 동작 (2026-08-08 이후 프로덕션에서 돌던 그대로).
+    return [
+      `※ This reference block is written in Korean, but the report is written in ${lang}.`,
+      '   Your output must not contain a single Korean character. Translate every idea here into',
+      `   ${lang} — including inside quoted parent scripts, month names, and pillar names.`,
+      '   Write pillar names in Chinese characters (丁酉), never in Korean letters (정유).',
+    ];
+  }
+
+  const register = getCulturalRegister(language);
+
+  return [
+    `※ HOW TO USE THIS BLOCK — the report is written in ${lang}.`,
+    '   The Korean lines below are source data. They are NOT text to translate.',
+    '   1. The analytic lines (distribution, which signal applies, why) are facts about',
+    '      this chart. Use them as the basis of what you claim.',
+    '   2. The quoted parent lines show WHAT A SENTENCE MUST ACCOMPLISH, not the sentence',
+    `      to reproduce. For each one, work out its function, then write a fresh line that a`,
+    `      ${lang}-speaking parent would really say to accomplish the same thing.`,
+    '      A translated Korean sentence is a failure. So is replacing it with generic advice',
+    '      ("be patient", "encourage them") — that drops the very thing the parent paid for.',
+    '   3. Every concrete mechanism in the source (an agreed stop-signal, a specific',
+    '      substitution of words, a named activity) must survive as an equally concrete',
+    `      mechanism in ${lang}, rebuilt from ${lang} family life rather than transplanted.`,
+    `   4. Output must not contain a single Korean character — including inside quoted parent`,
+    '      lines, month names, and pillar names. Write pillar names in Chinese characters',
+    '      (丁酉), never in Korean letters (정유).',
+    ...(register ? [
+      '',
+      `※ HOW PARENTS ACTUALLY TALK IN ${register.label.toUpperCase()} — match this register when you`,
+      '   write any quoted line. These are common defaults, not rules about any one family.',
+      ...register.lines.map((l) => `   - ${l}`),
+    ] : []),
+  ];
+}
 
 /**
  * 계산된 사주에 해당하는 지식만 골라 프롬프트 주입용 마크다운을 만든다.
@@ -373,9 +433,25 @@ function buildKnowledgeContext({
   const harmful = PARENT.HARMFUL_PHRASES?.[dayElement];
   if (Array.isArray(harmful) && harmful.length) {
     selected.harmfulPhrases = dayElement;
+    // 이 블록은 부모가 그대로 소리 내어 읽는 대사다. 한국어 원문을 그대로 주면
+    // 비한국어 리포트에서는 모델이 옮기다 지쳐 통째로 일반 조언으로 바꿔 버린다
+    // (측정: output/localization/, 손실이 집중된 지점이 정확히 여기였다).
+    // 저작본이 있는 언어에는 그 언어의 대사를 그대로 주고, why(분석)만 원문을
+    // 유지한다. 저작본이 없으면 기존 동작대로 한국어를 준다.
+    // 측정 결과 개선이 없었고(90% → 80%) 그 실행에서 레이아웃이 fallback으로
+    // 떨어졌다. n=1이라 인과를 단정할 수는 없지만, 이득이 확인되지 않은 변경을
+    // 유료 리포트에 켜 둘 이유가 없어 기본값은 꺼짐이다.
+    const localized = LOCALIZED_VOICE_ENABLED ? getLocalizedHarmfulPhrases(language, dayElement) : null;
+    selected.harmfulPhrasesLocalized = !!localized;
+    const pairs = harmful.slice(0, 3);
     blocks.push({
       title: `${dayElement} 기질 아이에게 특히 상처가 되는 말`,
-      lines: harmful.slice(0, 3).map((p) => `- 피할 말 "${p.avoid}" (${p.why}) → 대신 "${p.instead}"`),
+      lines: pairs.map((p, i) => {
+        const loc = localized?.[i];
+        return loc
+          ? `- 피할 말 ${loc.avoid} (${p.why}) → 대신 ${loc.instead}`
+          : `- 피할 말 "${p.avoid}" (${p.why}) → 대신 "${p.instead}"`;
+      }),
     });
   }
 
@@ -414,12 +490,7 @@ function buildKnowledgeContext({
     // 이 블록은 한국어로 쓰여 있고 출력 언어는 상위 프롬프트가 정한다. 언어가 가까운
     // 일본어에서는 모델이 주입된 한국어 낱말을 부모 대사 안에 그대로 섞어 쓰는 일이 있어
     // (예: 「なんで 말이 없어？」) 비한국어 리포트에는 명시적 금지를 덧붙인다.
-    ...(language === 'ko' ? [] : [
-      `※ This reference block is written in Korean, but the report is written in ${outputLangName || 'the report language'}.`,
-      '   Your output must not contain a single Korean character. Translate every idea here into',
-      `   ${outputLangName || 'the report language'} — including inside quoted parent scripts, month names, and pillar names.`,
-      '   Write pillar names in Chinese characters (丁酉), never in Korean letters (정유).',
-    ]),
+    ...(language === 'ko' ? [] : buildNonKoreanUsageBlock(language, outputLangName)),
     '',
     ...blocks.map((b) => [
       `〈${plain(b.title)}〉`,
