@@ -167,29 +167,53 @@ describe('contract: env tuning knobs survive serverless.yml empty-string injecti
 describe('contract: localized voice is enabled only where it was measured', () => {
   const { calculateMansae } = require('../src/utils/mansae-wrapper');
   const { buildKnowledgeContext } = require('../src/services/saju-knowledge');
-  const { localizedLanguages } = require('../src/data/saju-knowledge/harmful-phrases-i18n');
+  const { localizedLanguages, PENDING_MEASUREMENT } = require('../src/data/saju-knowledge/harmful-phrases-i18n');
 
   const chart = () => calculateMansae('2018-05-14', '09:30', 'female', { timezone: 'Asia/Seoul' });
   const build = (language, outputLangName) => buildKnowledgeContext({
     childManseryeok: chart(), childAge: 7, language, outputLangName,
   });
 
-  test('French gets the authored parent lines', () => {
-    expect(build('fr', 'French').selected.harmfulPhrasesLocalized).toBe(true);
-  });
+  const ALL_LANGS = ['ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th'];
 
-  test.each([['ja', 'Japanese'], ['es', 'Spanish'], ['th', 'Thai'], ['en', 'English']])(
-    '%s still falls back to the Korean source lines (not yet measured)',
-    (lang, name) => {
-      expect(build(lang, name).selected.harmfulPhrasesLocalized).toBeFalsy();
+  // Data-driven so that measuring and enabling a new language does not also
+  // require editing a hardcoded list here — the lists in the data module are
+  // the single source of truth.
+  test.each(ALL_LANGS.filter((l) => !localizedLanguages().includes(l)).map((l) => [l]))(
+    '%s has no authored lines, so it falls back to the Korean source',
+    (lang) => {
+      expect(build(lang, 'X').selected.harmfulPhrasesLocalized).toBeFalsy();
     }
   );
 
-  test('every language with authored lines is one the gate actually enables', () => {
-    // Authoring lines for a language but never enabling it (or vice versa) means
-    // the work silently does nothing. Keep the two lists in step.
-    for (const lang of localizedLanguages()) {
+  test.each(localizedLanguages().filter((l) => !PENDING_MEASUREMENT.includes(l)).map((l) => [l]))(
+    '%s is authored and measured, so it gets its own parent lines',
+    (lang) => {
       expect(build(lang, 'X').selected.harmfulPhrasesLocalized).toBe(true);
+    }
+  );
+
+  test('every authored language is either enabled or explicitly awaiting measurement', () => {
+    // The intended order is author -> measure -> enable, so "authored but off"
+    // is a legitimate state — as long as it is declared. What must not happen is
+    // lines authored for a language that is neither enabled nor on the pending
+    // list, because that work would silently never reach a reader.
+    for (const lang of localizedLanguages()) {
+      const enabled = build(lang, 'X').selected.harmfulPhrasesLocalized === true;
+      const pending = PENDING_MEASUREMENT.includes(lang);
+      expect(enabled || pending).toBe(true);
+      // And it cannot claim to be both.
+      expect(enabled && pending).toBe(false);
+    }
+  });
+
+  test('a language cannot be enabled before its lines are authored', () => {
+    // The reverse mistake: enabling a language with no authored lines silently
+    // ships the Korean source lines under a "localized" flag.
+    for (const lang of ['ko', 'en', 'ja', 'zh', 'vi', 'id', 'es', 'pt', 'fr', 'th']) {
+      if (build(lang, 'X').selected.harmfulPhrasesLocalized === true) {
+        expect(localizedLanguages()).toContain(lang);
+      }
     }
   });
 

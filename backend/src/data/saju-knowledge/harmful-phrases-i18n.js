@@ -27,6 +27,80 @@
 // 하는 말"이라고 느끼는지부터 확인할 것. 그 감각이 없으면 번역본이다.
 
 const HARMFUL_PHRASES_I18N = {
+  ja: {
+    // avoid는 親がつい口にする実際の言い方、instead は誘いかけ形。
+    // 命令形を避け、褒めは控えめ・具体的に(cultural-register.js の ja 参照)。
+    '목': [
+      {
+        avoid: '「いつも始めるだけで、最後までやらないよね。」',
+        instead: '「今回はどこまでやってみる？　そこまでで終わりにしていいよ。」',
+      },
+      {
+        avoid: '「あなたに何がわかるの。」',
+        instead: '「そう思ってるんだね。お母さんはちょっと違うんだけど、理由きいてくれる？」',
+      },
+      {
+        avoid: '「お兄ちゃんはこんなことなかったのに。」',
+        instead: '「これは難しかったんだよね。どこで詰まったか教えてくれる？」',
+      },
+    ],
+    '화': [
+      {
+        avoid: '「ちょっと静かにして。」',
+        instead: '「全部聞きたいから、これだけ終わらせるね。五分だけ待ってくれる？」',
+      },
+      {
+        avoid: '「どうせまたすぐ飽きるでしょ。」',
+        instead: '「今はこれが一番楽しいんだね。いつまでやるか一緒に決めてみようか。」',
+      },
+      {
+        avoid: '「そんなことでどうしてそんなに怒るの。」',
+        instead: '「すごく悔しかったんだね。最初から話してくれる？」',
+      },
+    ],
+    '토': [
+      {
+        avoid: '「どうしてそんなに遅いの。」',
+        instead: '「準備できたら教えてね。どれくらいかかるかだけ言ってくれたら待つよ。」',
+      },
+      {
+        avoid: '「自分の意見はないの。」',
+        instead: '「三つのうちどれがいい？　今決めなくていいから、思いついたら教えてね。」',
+      },
+      {
+        avoid: '「もう気にしないで。」',
+        instead: '「まだ心に残ってるんだね。どこが一番ひっかかってる？」',
+      },
+    ],
+    '금': [
+      {
+        avoid: '「そこまで細かく言わなくてもいいでしょ。」',
+        instead: '「あなたの中では納得できてないんだね。どうなったら納得できそう？」',
+      },
+      {
+        avoid: '「完璧じゃなくていいから、適当でいいよ。」',
+        instead: '「ここまでで十分よくできてると思うよ。あなたから見て、まだ気になるところある？」',
+      },
+      {
+        avoid: '「もう少し融通きかせなさい。」',
+        instead: '「今回は例外にしてもいい場面だと思うんだけど、どう思う？」',
+      },
+    ],
+    '수': [
+      {
+        avoid: '「考えてないで、まず動きなさい。」',
+        instead: '「頭の中で整理してるところだよね。今までまとまった分だけ教えてくれる？」',
+      },
+      {
+        avoid: '「何を考えてるのか、さっぱりわからない。」',
+        instead: '「言葉にしにくかったら、あとで書いて渡してくれてもいいよ。急がないから。」',
+      },
+      {
+        avoid: '「どうしてお友だちと遊ばないの。」',
+        instead: '「今日はひとりでいたい日？　部屋にいてもいいよ。」',
+      },
+    ],
+  },
   fr: {
     '목': [
       {
@@ -114,4 +188,19 @@ function localizedLanguages() {
   return Object.keys(HARMFUL_PHRASES_I18N);
 }
 
-module.exports = { HARMFUL_PHRASES_I18N, getLocalizedHarmfulPhrases, localizedLanguages };
+// 저작은 끝났지만 아직 측정 전이라 게이트를 켜지 않은 언어.
+//
+// 저작 → 측정 → 켜기 순서를 강제하기 위한 목록이다. 여기에 없고 게이트에도 없는
+// 저작 언어가 생기면 테스트가 깨진다 — 저작해 놓고 아무 데도 안 쓰이는(= 죽은
+// 작업) 상태를 막기 위해서다.
+//
+// 켜는 절차:
+//   npm run eval:localization -- --langs=<lang> --charts=3 --rounds=3 --label=<lang>-off --regenerate
+//   SAJU_LOCALIZED_VOICE=1 node scripts/eval-localization.js --langs=<lang> --charts=3 --rounds=3 --label=<lang>-on --regenerate
+// script 보존율이 유의미하게 오르고 fallback이 0이면 saju-knowledge.js의
+// LOCALIZED_VOICE_LANGUAGES 기본값에 추가하고 이 목록에서 뺀다.
+// (비어 있음 = 저작된 언어가 모두 측정을 거쳐 켜져 있다는 뜻)
+const PENDING_MEASUREMENT = [];
+
+module.exports = { HARMFUL_PHRASES_I18N, getLocalizedHarmfulPhrases, localizedLanguages, PENDING_MEASUREMENT };
+
