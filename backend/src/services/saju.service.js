@@ -10,6 +10,7 @@ const { assertPaymentMatchesProduct } = require('./payment.service');
 const { buildMultipleBirthSection } = require('../utils/multiple-birth');
 const { adaptMarkdownToPresentation, mergePresentationResult, getPremiumPresentationLocale } = require('./report-presentation');
 const { buildKnowledgeContext } = require('./saju-knowledge');
+const { getLocalizedRemedies, elementLabel } = require('../data/saju-knowledge/element-remedies-i18n');
 
 // Stand-in for the child's nickname when the parent did not give one. Localized,
 // because it is printed on the report cover — an English report should not say 아이.
@@ -860,8 +861,14 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
     : '월령의 지원이 약해 외부 도움을 필요로 합니다. 섬세하고 적응력이 좋지만, 자신감과 독립성을 키워줘야 합니다.';
   const dayMasterDesc = dayMasterImagery[dayStem] || `${dayStem}일간`;
   const deepProfile = dayMasterDeepProfile[dayStem] || {};
-  const weakElementRemedies = elementRemedies[childWeak] || {};
-  const dominantElementRemedies = elementRemedies[childDominant] || {};
+  // 색·음식·활동 추천은 그 나라 부엌과 놀이에서 나와야 한다. 한국어 원본을 그대로
+  // 주면 (a) 미역·도라지 같은 낱말이 비한국어 리포트에 그대로 새고 (b) 번역되더라도
+  // 그 가정이 실행할 수 없는 조언이 된다. 저작본이 있는 언어는 그것을 쓰고, 없으면
+  // 기존대로 한국어 원본으로 폴백한다.
+  const localizedRemedies = getLocalizedRemedies(language);
+  const remedyTable = localizedRemedies || elementRemedies;
+  const weakElementRemedies = remedyTable[childWeak] || {};
+  const dominantElementRemedies = remedyTable[childDominant] || {};
 
   const timeDisclaimer = childTimeUnknown
     ? '\n**참고: 출생 시간 미상으로 시주(時柱)는 제외하고 년/월/일 세 기둥(6자)만으로 분석합니다. 시주를 임의로 추정하지 마세요.**\n'
@@ -1123,9 +1130,9 @@ ${childPillars.hour?.korean ? `| 시주 | ${childPillars.hour.korean[0]} | ${chi
 - 금(金): ${childElements['금']}개 ${childElements['금'] >= 3 ? '▶ 강함' : childElements['금'] === 0 ? '▶ 없음!' : ''}
 - 수(水): ${childElements['수']}개 ${childElements['수'] >= 3 ? '▶ 강함' : childElements['수'] === 0 ? '▶ 없음!' : ''}
 
-**주 기질:** ${childDominant} (${childTraits.name}) — ${childTraits.traits}
-${childSecond && childSecondTraits ? `**부 기질:** ${childSecond} (${childSecondTraits.name}) — ${childSecondTraits.traits}` : ''}
-**부족 오행:** ${childWeak} (${elementTraits[childWeak].name}) — ${elementTraits[childWeak].stress}에 취약
+**주 기질:** ${elementLabel(childDominant, language)} (${childTraits.name}) — ${childTraits.traits}
+${childSecond && childSecondTraits ? `**부 기질:** ${elementLabel(childSecond, language)} (${childSecondTraits.name}) — ${childSecondTraits.traits}` : ''}
+**부족 오행:** ${elementLabel(childWeak, language)} (${elementTraits[childWeak].name}) — ${elementTraits[childWeak].stress}에 취약
 ${parentSection}
 ${twinSection}
 ${knowledgeContext}`;
@@ -1140,13 +1147,13 @@ ${monthlyFortuneData}`;
 🌿 오행 밸런스 데이터
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**부족 오행 (${childWeak}) 보완:**
+**부족 오행 (${elementLabel(childWeak, language)}) 보완:**
 - 색상: ${weakElementRemedies.colors || '정보 없음'}
 - 음식: ${weakElementRemedies.foods || '정보 없음'}
 - 활동: ${weakElementRemedies.activities || '정보 없음'}
 - 피해야 할 환경: ${weakElementRemedies.avoidExcess || '정보 없음'}
 
-**강한 오행 (${childDominant}) 조절:**
+**강한 오행 (${elementLabel(childDominant, language)}) 조절:**
 - 과할 때 주의: ${dominantElementRemedies.avoidExcess || '정보 없음'}
 - 계절 에너지: ${weakElementRemedies.season || '정보 없음'}이 가장 보완이 필요한 시기`;
 
@@ -1279,7 +1286,7 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
 ⚠️ **이 섹션은 참고 사항입니다. 건강 진단이나 방위 풍수가 아닙니다.**
 ⚠️ **아래 데이터의 한국어(목, 화, 토, 금, 수, 나무, 불, 흙, 쇠, 물 등)는 리포트 언어로 번역하세요. 한국어 그대로 출력 금지.**
 
-부족한 오행(${childWeak} = Wood/Fire/Earth/Metal/Water 중 해당)을 위한 선택적 참고 아이디어(치료·처방·운명 확정이 아님):
+부족한 오행(${elementLabel(childWeak, language)})을 위한 선택적 참고 아이디어(치료·처방·운명 확정이 아님):
 - **핵심 한 문장:** 이 리포트에서 오늘 기억할 문장
 - **마무리:** 관찰과 대화를 위한 마무리 문장
 - **색상:** ${weakElementRemedies.colors || '정보 없음'} — 옷, 학용품, 방 소품에서 활용

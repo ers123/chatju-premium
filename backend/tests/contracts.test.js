@@ -232,6 +232,45 @@ describe('contract: localized voice is enabled only where it was measured', () =
   });
 });
 
+// ── 3b. Localized element remedies carry no Korean ────────────────────────
+// The colour/food/activity table is injected into every non-Korean report. While
+// it was Korean-only, its words leaked verbatim: an English report printed 미역,
+// 해조류 and 기준. Any authored table must therefore be complete and Hangul-free,
+// or it reintroduces exactly the defect it exists to remove.
+describe('contract: localized element remedies', () => {
+  const {
+    getLocalizedRemedies, localizedRemedyLanguages, elementLabel,
+  } = require('../src/data/saju-knowledge/element-remedies-i18n');
+  const ELEMENTS = ['목', '화', '토', '금', '수'];
+
+  test.each(localizedRemedyLanguages().map((l) => [l]))('%s covers all five elements', (lang) => {
+    const table = getLocalizedRemedies(lang);
+    expect(Object.keys(table).sort()).toEqual([...ELEMENTS].sort());
+    for (const el of ELEMENTS) {
+      for (const field of ['colors', 'foods', 'activities', 'season', 'avoidExcess']) {
+        expect(typeof table[el][field]).toBe('string');
+        expect(table[el][field].length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  test.each(localizedRemedyLanguages().map((l) => [l]))('%s contains no Hangul', (lang) => {
+    const table = getLocalizedRemedies(lang);
+    const all = Object.values(table).flatMap((e) => Object.values(e)).join('');
+    expect(all).not.toMatch(/[가-힣]/);
+  });
+
+  test('element names are written in hanja for non-Korean reports', () => {
+    // The bare Korean element name used to be interpolated into the prompt, and
+    // 목 / 수 turned up in English reports as a result.
+    expect(elementLabel('수', 'ko')).toBe('수');
+    expect(elementLabel('수', 'en')).toBe('水 (Water)');
+    for (const el of ELEMENTS) {
+      expect(elementLabel(el, 'fr')).not.toMatch(/[가-힣]/);
+    }
+  });
+});
+
 // ── 4. Backend catalog ↔ database CHECK constraint ────────────────────────
 describe('contract: catalog currencies ⊆ payments.currency CHECK constraint', () => {
   const { allowed, definedIn } = effectiveCurrencyConstraint();
