@@ -106,6 +106,20 @@ provider:
     # CORS Configuration (production only allows production domain)
     CORS_ORIGIN: https://somyung.cc
 
+    # Operational tuning knobs. Each is read with a code-side default, so an
+    # empty value here is safe and simply keeps the default. They are declared
+    # so they can be changed in the Lambda console without a code change.
+    # Free previews per hour per IP (default 30; IP-keyed, and Korean carrier
+    # NAT shares addresses across many subscribers).
+    SAJU_PREVIEW_MAX_PER_HOUR: ${env:SAJU_PREVIEW_MAX_PER_HOUR, ''}
+    # Per-call upstream AI timeout in ms (default 45000, vs the 60s Lambda cap).
+    AI_CALL_TIMEOUT_MS: ${env:AI_CALL_TIMEOUT_MS, ''}
+    # Elapsed ms after which the report email drops its PDF attachment so the
+    # email itself still goes out (default 40000).
+    EMAIL_PDF_BUDGET_MS: ${env:EMAIL_PDF_BUDGET_MS, ''}
+    # Max Hangul ratio tolerated in a non-Korean report before retrying (default 0.005).
+    SAJU_HANGUL_LIMIT: ${env:SAJU_HANGUL_LIMIT, ''}
+
   # IAM Role Statements (permissions for Lambda)
   iam:
     role:

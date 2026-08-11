@@ -48,13 +48,19 @@ const authLimiter = rateLimit({
 });
 
 /**
- * AI/Saju rate limit - expensive OpenAI operations
- * 10 requests per hour per IP (free preview)
- * Paid users bypass this via authentication
+ * AI/Saju rate limit - expensive OpenAI operations (free preview)
+ * Paid users bypass this via authentication.
+ *
+ * Keyed by IP, which is the problem: Korean mobile carriers put large numbers
+ * of subscribers behind shared NAT addresses, so a handful of unrelated
+ * visitors can exhaust one another's quota. This sits at the very top of the
+ * paid funnel, so a false block costs a customer outright — far more than the
+ * few cents of AI spend it saves at current traffic. Raised 10 -> 30/hr.
+ * Tunable without a redeploy via SAJU_PREVIEW_MAX_PER_HOUR.
  */
 const sajuPreviewLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // 10 free previews per hour
+  max: Number(process.env.SAJU_PREVIEW_MAX_PER_HOUR || 30),
   message: {
     success: false,
     error: 'Free preview limit reached. Please wait an hour or upgrade to premium.',

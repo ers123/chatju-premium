@@ -1652,17 +1652,30 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
     console.log(`[Saju Service] Call 2/2 (sections 6-9) complete: ${call2Duration}ms, ${result2.content.length} chars, ${result2.tokensUsed} tokens`);
 
     // Each half must carry real section content. A paid reading must never be
-    // saved (and emailed) with a blank or truncated half — fail here so the
-    // reading is not persisted and the client's retry/polling path applies.
+    // saved (and emailed) with a blank or truncated half.
     const MIN_HALF_LENGTH = 200;
-    if (result1.content.trim().length < MIN_HALF_LENGTH || result2.content.trim().length < MIN_HALF_LENGTH) {
+
+    // THE ONLY PLACE a (call1, call2) pair becomes report text. Both the first
+    // pass and the retry go through here, because the retry replaces the text
+    // wholesale — post-processing wired into just one of the two call sites
+    // silently disappears whenever a retry happens (this is how the French
+    // quotation-mark fix was lost once). Returns null when either half is too
+    // short; the caller decides whether that is fatal.
+    const buildInterpretation = (r1, r2) => {
+      if (r1.content.trim().length < MIN_HALF_LENGTH || r2.content.trim().length < MIN_HALF_LENGTH) {
+        return null;
+      }
+      return normalizeQuotes(`${r1.content}\n\n${r2.content}`, language);
+    };
+
+    let interpretationText = buildInterpretation(result1, result2);
+    if (interpretationText === null) {
+      // Fail before persisting so the reading is not saved or emailed blank;
+      // the client's polling path covers the retry.
       throw new Error(
         `AI returned too-short premium content (call1=${result1.content.trim().length} chars, call2=${result2.content.trim().length} chars, min=${MIN_HALF_LENGTH})`
       );
     }
-
-    // Combine results
-    let interpretationText = normalizeQuotes(result1.content + '\n\n' + result2.content, language);
     const generatedAt = new Date().toISOString();
     let totalTokens = (result1.tokensUsed || 0) + (result2.tokensUsed || 0);
 
@@ -1724,10 +1737,10 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
         // Lower temperature on the retry: the first pass already produced usable
         // substance, so the second only needs to land the structure.
         const [retry1, retry2] = await runBothCalls(0.4);
-        // Normalize here too — the retry replaces interpretationText wholesale, so
-        // skipping it would silently undo the first pass's cleanup.
-        const retryText = normalizeQuotes(`${retry1.content}\n\n${retry2.content}`, language);
-        if (retry1.content.trim().length >= MIN_HALF_LENGTH && retry2.content.trim().length >= MIN_HALF_LENGTH) {
+        // Same builder as the first pass — length check and normalization both
+        // come along automatically, and so will anything added to it later.
+        const retryText = buildInterpretation(retry1, retry2);
+        if (retryText !== null) {
           const retryPresentation = adapt(retryText);
           totalTokens += (retry1.tokensUsed || 0) + (retry2.tokensUsed || 0);
           const retryContamination = language === 'ko' ? 0 : hangulRatio(retryText);

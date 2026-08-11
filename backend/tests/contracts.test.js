@@ -122,7 +122,42 @@ describe('contract: frontend pricing ↔ backend product catalog', () => {
   });
 });
 
-// ── 2. Backend catalog ↔ database CHECK constraint ────────────────────────
+// ── 2. Tuning knobs ↔ how serverless.yml actually injects them ────────────
+// serverless.yml declares each knob as ${env:NAME, ''}, so on a deploy where
+// the shell has no value the Lambda receives an EMPTY STRING, not an absent
+// variable. A knob read as Number(process.env.X) would become 0 — which for
+// the rate limiter means every free preview is blocked. Every knob must fall
+// back to its default when the value is ''.
+describe('contract: env tuning knobs survive serverless.yml empty-string injection', () => {
+  const KNOBS = [
+    ['SAJU_PREVIEW_MAX_PER_HOUR', () => Number(process.env.SAJU_PREVIEW_MAX_PER_HOUR || 30), 30],
+    ['AI_CALL_TIMEOUT_MS', () => parseInt(process.env.AI_CALL_TIMEOUT_MS || '45000', 10), 45000],
+    ['EMAIL_PDF_BUDGET_MS', () => Number(process.env.EMAIL_PDF_BUDGET_MS || 40000), 40000],
+    ['SAJU_HANGUL_LIMIT', () => Number(process.env.SAJU_HANGUL_LIMIT || 0.005), 0.005],
+  ];
+
+  test.each(KNOBS)('%s falls back to its default when injected as an empty string', (name, read, expected) => {
+    const saved = process.env[name];
+    process.env[name] = '';
+    try {
+      const value = read();
+      expect(value).toBe(expected);
+      expect(value).toBeGreaterThan(0);
+    } finally {
+      if (saved === undefined) delete process.env[name];
+      else process.env[name] = saved;
+    }
+  });
+
+  test('serverless.yml declares every knob (otherwise it cannot be tuned in the console)', () => {
+    const sls = fs.readFileSync(path.join(__dirname, '..', 'serverless.yml'), 'utf8');
+    for (const [name] of KNOBS) {
+      expect(sls).toContain(`${name}:`);
+    }
+  });
+});
+
+// ── 3. Backend catalog ↔ database CHECK constraint ────────────────────────
 describe('contract: catalog currencies ⊆ payments.currency CHECK constraint', () => {
   const { allowed, definedIn } = effectiveCurrencyConstraint();
 
