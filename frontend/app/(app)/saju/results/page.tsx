@@ -515,6 +515,10 @@ export default function ResultsPage() {
               isLunar: input.calendar === 'lunar',
               isLeapMonth: input.isLeapMonth === true,
               language: resolvedLang,
+              // The promo path has always sent this; the paid path did not, so a
+              // paying customer's report was built with no name — which empties the
+              // presentation cover and drops the whole report to the fallback layout.
+              subjectName: input.name,
               // Location for solar time correction
               birthPlace: input.birthPlace,
               // Twin info

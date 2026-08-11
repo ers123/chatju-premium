@@ -112,6 +112,7 @@ export default function InputFormPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [dateError, setDateError] = useState('')
+  const [parentDateError, setParentDateError] = useState('')
 
   const todayStr = getTodayStr()
   const minBirthDateStr = getMinBirthDateStr()
@@ -134,6 +135,8 @@ export default function InputFormPage() {
       setStep(2)
       return
     }
+
+    if (parentDateError) return
 
     setIsSubmitting(true)
 
@@ -1124,10 +1127,12 @@ export default function InputFormPage() {
                           : ''}
                         onChange={e => {
                           const value = e.target.value
-                          // Same two-digit-year trap as the child field: ignore
-                          // anything outside the accepted range rather than storing
-                          // a year the calendar cannot mean.
-                          if (value && (value < '1945-01-01' || value > '2005-12-31')) return
+                          // Always keep what was typed. Dropping out-of-range values
+                          // here made the field fight the user: a native date input
+                          // emits every intermediate state, so a half-typed year is
+                          // briefly year 0002 and the field appeared to snap back.
+                          // Range is reported below and gates the submit instead.
+                          setParentDateError(value && (value < '1945-01-01' || value > '2005-12-31') ? invalidDateMsg : '')
                           const [year, month, day] = value.split('-')
                           setFormData(prev => ({
                             ...prev,
@@ -1143,13 +1148,19 @@ export default function InputFormPage() {
                           fontSize: '1.125rem',
                           padding: '1rem',
                           borderRadius: '0.75rem',
-                          border: '1px solid #E5E7EB',
+                          border: parentDateError ? '1px solid #A85544' : '1px solid #E5E7EB',
                           background: '#F8F6F3',
                           outline: 'none',
                           cursor: 'pointer',
                           fontFamily: 'inherit'
                         }}
+                        aria-invalid={!!parentDateError}
                       />
+                      {parentDateError && (
+                        <p style={{ color: '#A85544', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                          {parentDateError}
+                        </p>
+                      )}
                     </div>
 
                     {/* Parent Zodiac Preview */}

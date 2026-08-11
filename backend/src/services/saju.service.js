@@ -11,6 +11,14 @@ const { buildMultipleBirthSection } = require('../utils/multiple-birth');
 const { adaptMarkdownToPresentation, mergePresentationResult, getPremiumPresentationLocale } = require('./report-presentation');
 const { buildKnowledgeContext } = require('./saju-knowledge');
 
+// Stand-in for the child's nickname when the parent did not give one. Localized,
+// because it is printed on the report cover — an English report should not say 아이.
+const DEFAULT_CHILD_NAME = Object.freeze({
+  ko: '아이', en: 'Your child', ja: 'お子さま', zh: '孩子', vi: 'Con bạn',
+  id: 'Anak Anda', es: 'Tu hijo', pt: 'Seu filho', fr: 'Votre enfant', th: 'ลูกของคุณ',
+});
+const getDefaultChildName = (language) => DEFAULT_CHILD_NAME[language] || DEFAULT_CHILD_NAME.en;
+
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
 
@@ -729,7 +737,14 @@ function getParentChildRelation(parentElement, childElement) {
  * @param {boolean} childTimeUnknown - Whether child's birth time is unknown
  * @returns {Promise<Object>} AI interpretation with relationship focus
  */
-async function generateAIInterpretation(childManseryeok, parentManseryeok = null, parentRole = null, language = 'ko', productType = 'basic', childTimeUnknown = false, fortuneCycles = null, twinInfo = null, childName = '아이') {
+async function generateAIInterpretation(childManseryeok, parentManseryeok = null, parentRole = null, language = 'ko', productType = 'basic', childTimeUnknown = false, fortuneCycles = null, twinInfo = null, childNameInput = '아이') {
+  // The name is optional, and callers pass null rather than omitting it — which
+  // skips the default above and leaves the presentation cover without a child,
+  // failing the contract and dropping a *paid* report to the fallback layout.
+  // A missing nickname must never cost the reader the report they bought.
+  const childName = (typeof childNameInput === 'string' && childNameInput.trim())
+    ? childNameInput.trim()
+    : getDefaultChildName(language);
   const { pillars: childPillars, elements: rawElements } = childManseryeok;
 
   // Normalize element keys to Korean (mansae-wrapper returns English keys)
