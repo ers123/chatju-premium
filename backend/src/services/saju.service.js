@@ -929,6 +929,15 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
       .split(',').map((x) => x.trim()).filter(Boolean)
   );
 
+  // Pillars go to the model in hanja for non-Korean reports. Handing over the
+  // Korean form and asking the model to convert produced both a Hangul leak and a
+  // wrong pillar in a French report; the calculator already carries the hanja.
+  // Declared here because the fortune-cycle section below builds on it.
+  const pillarLabel = (pillar) => {
+    if (!pillar) return '?';
+    return (language !== 'ko' && pillar.hanja) ? pillar.hanja : (pillar.korean || pillar.hanja || '?');
+  };
+
   // 출력 언어 이름은 아래 라벨 계약과 이 지식 블록 양쪽이 쓰므로 먼저 정한다.
   // (지식 블록보다 뒤에 선언하면 TDZ ReferenceError가 나고, 아래 catch가 그것을 삼켜
   //  지식 주입이 조용히 꺼진 채로 돌아간다 — 실제로 한 번 그렇게 됐다.)
@@ -1010,9 +1019,9 @@ ${childManseryeok.corrections.isSouthernHemisphere ? '**남반구 출생 → 남
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **현재 나이:** ${fortuneCycles.currentAge}세
-**현재 대운:** ${currentDaeun ? `${currentDaeun.pillar?.korean || '?'} (${currentDaeun.startAge}~${currentDaeun.endAge}세)` : '정보 없음'}
-**현재 세운(올해):** ${currentSeun ? `${currentSeun.pillar?.korean || '?'} (${currentSeun.year}년)` : '정보 없음'}
-**향후 대운 흐름:** ${daeunList.slice(0, 4).map(d => `${d.pillar?.korean || '?'}(${d.startAge}세)`).join(' → ')}
+**현재 대운:** ${currentDaeun ? `${pillarLabel(currentDaeun.pillar)} (${currentDaeun.startAge}~${currentDaeun.endAge}세)` : '정보 없음'}
+**현재 세운(올해):** ${currentSeun ? `${pillarLabel(currentSeun.pillar)} (${currentSeun.year}년)` : '정보 없음'}
+**향후 대운 흐름:** ${daeunList.slice(0, 4).map(d => `${pillarLabel(d.pillar)}(${d.startAge}세)`).join(' → ')}
 ${transitionNote}
 
 **참고 — 대운/세운 해석 원칙:**
@@ -1038,9 +1047,17 @@ ${transitionNote}
     const relevantMonths = fortuneCycles.currentSeun.interpretation.monthlyFortunes
       .filter(m => m.month >= currentMonth && m.month <= currentMonth + 3);
     if (relevantMonths.length > 0) {
-      monthlyFortuneData = `\n**월운 데이터 (AI 참고용):**\n${relevantMonths.map(m =>
-        `- ${m.month}월: ${m.pillar.korean}(${m.pillar.stemElement}+${m.pillar.branchElement}) — ${m.tenGod} — ${m.brief}`
-      ).join('\n')}\n`;
+      // Non-Korean reports are told to print the month pillar in Chinese
+      // characters, and this used to hand the model the Korean form and leave the
+      // conversion to it. It got both halves wrong in a French report: it printed
+      // the Korean 정유 and then labelled it 丙申, which is a different pillar
+      // entirely. The calculator already carries the hanja, so pass that and give
+      // the model nothing to convert.
+      const useHanja = language !== 'ko';
+      monthlyFortuneData = `\n**월운 데이터 (AI 참고용):**\n${relevantMonths.map((m) => {
+        const pillar = useHanja ? (m.pillar.hanja || m.pillar.korean) : m.pillar.korean;
+        return `- ${m.month}월: ${pillar}(${m.pillar.stemElement}+${m.pillar.branchElement}) — ${m.tenGod} — ${m.brief}`;
+      }).join('\n')}\n`;
     }
   }
 
