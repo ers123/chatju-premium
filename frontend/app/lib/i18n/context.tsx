@@ -9,17 +9,32 @@ interface LanguageContextType {
   lang: Language
   setLang: (lang: Language) => void
   t: TranslationSet
+  /**
+   * False until the real language is known.
+   *
+   * Routes without a /[lang]/ prefix start at 'ko' and only learn the visitor's
+   * actual language once the effect below runs. Anything that sends `lang` to the
+   * API must wait for this, or an English visitor gets an English page with a
+   * Korean report — the body language is baked into the AI call, so it cannot be
+   * corrected after the fact.
+   */
+  ready: boolean
 }
 
 const LanguageContext = createContext<LanguageContextType | null>(null)
 
 export function LanguageProvider({ children, initialLang }: { children: ReactNode; initialLang?: Language }) {
   const [lang, setLangState] = useState<Language>(initialLang ?? 'ko')
+  // A /[lang]/ route already knows the language at first render; everything else
+  // has to wait for the effect. Rendering starts on the server, so this cannot be
+  // resolved during the initial render without a hydration mismatch.
+  const [ready, setReady] = useState<boolean>(!!initialLang)
 
   useEffect(() => {
     if (initialLang) {
       localStorage.setItem('somyung-lang', initialLang)
       document.documentElement.lang = initialLang
+      setReady(true)
       return
     }
     const saved = localStorage.getItem('somyung-lang') as Language | null
@@ -34,6 +49,7 @@ export function LanguageProvider({ children, initialLang }: { children: ReactNod
         document.documentElement.lang = langMap[browserLang]
       }
     }
+    setReady(true)
   }, [initialLang])
 
   const setLang = (newLang: Language) => {
@@ -43,7 +59,7 @@ export function LanguageProvider({ children, initialLang }: { children: ReactNod
   }
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] }}>
+    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang], ready }}>
       {children}
     </LanguageContext.Provider>
   )

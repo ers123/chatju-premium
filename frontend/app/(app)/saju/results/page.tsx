@@ -218,7 +218,7 @@ function OhaengBalanceChart({ balance, ohaengElements, elementCount }: { balance
 
 export default function ResultsPage() {
   const router = useRouter()
-  const { t, lang } = useLanguage()
+  const { t, lang, ready: langReady } = useLanguage()
   useEffect(() => { document.title = t.sajuResults.pageTitle }, [t])
   const sr = t.sajuResults
   // Per-locale chargeable pricing; null = no PayPal checkout (ko: free tier + promo only)
@@ -450,6 +450,9 @@ export default function ResultsPage() {
 
   // Check for completed payment and fetch premium report
   useEffect(() => {
+    // The report language is fixed at generation time, so never call before the
+    // visitor's language is known.
+    if (!langReady) return
     if (!result || !inputData) return
 
     const completedRaw = sessionStorage.getItem('completed_payment')
@@ -486,14 +489,8 @@ export default function ResultsPage() {
           if (!stored) return
           const input = JSON.parse(stored)
 
-          // Resolve language with localStorage fallback (same as preview)
-          let resolvedLang = lang
-          if (resolvedLang === 'ko') {
-            const savedLang = localStorage.getItem('somyung-lang')
-            if (savedLang && savedLang !== 'ko') {
-              resolvedLang = savedLang as typeof lang
-            }
-          }
+          // Gated on langReady like the preview, so this is the visitor's language.
+          const resolvedLang = lang
 
           // Use stored claim key for in-flow polling; generate and persist a new one if absent.
           // Persisting ensures the same key is reused if the page reloads before the reading is ready.
@@ -569,7 +566,7 @@ export default function ResultsPage() {
     }
 
     fetchPremium()
-  }, [result, inputData])
+  }, [result, inputData, langReady])
 
   const handlePdfExport = useCallback(async () => {
     const token = reportAccessToken || sessionStorage.getItem('report_access_token')
@@ -593,6 +590,10 @@ export default function ResultsPage() {
   }, [readingId, reportAccessToken, inputData, sr.pdfError])
 
   useEffect(() => {
+    // Same reason as the premium effect: the preview text is generated in
+    // whatever language we send, so wait until we know it.
+    if (!langReady) return
+
     const fetchResults = async () => {
       try {
         const stored = sessionStorage.getItem('sajuInput')
@@ -604,15 +605,9 @@ export default function ResultsPage() {
         const input = JSON.parse(stored)
         setInputData(input)
 
-        // Resolve language: prefer context lang, but if still default 'ko',
-        // check localStorage directly (context useEffect may not have run yet)
-        let resolvedLang = lang
-        if (resolvedLang === 'ko') {
-          const savedLang = localStorage.getItem('somyung-lang')
-          if (savedLang && savedLang !== 'ko') {
-            resolvedLang = savedLang as typeof lang
-          }
-        }
+        // The effect below waits for langReady, so `lang` is the visitor's real
+        // language here rather than the 'ko' the context starts on.
+        const resolvedLang = lang
 
         const previewRequestKey = `${resolvedLang}:${stored}`
         if (previewRequestKeyRef.current === previewRequestKey) return
@@ -712,7 +707,7 @@ export default function ResultsPage() {
     }
 
     fetchResults()
-  }, [router, sr.errorFetch])
+  }, [router, sr.errorFetch, langReady, lang])
 
   if (isLoading) {
     return (

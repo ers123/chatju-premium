@@ -125,9 +125,11 @@ export default function InputFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Reject future birth dates (JS guard in addition to the input's max attribute)
+    // Reject out-of-range birth dates (JS guard in addition to the input's
+    // min/max attributes). The lower bound matters as much as the upper one: a
+    // native date input will happily hand back year 0019 for a two-digit entry.
     const isoBirthDate = `${formData.year}-${formData.month.padStart(2, '0')}-${formData.day.padStart(2, '0')}`
-    if (isoBirthDate > todayStr) {
+    if (isoBirthDate > todayStr || isoBirthDate < minBirthDateStr) {
       setDateError(invalidDateMsg)
       setStep(2)
       return
@@ -575,7 +577,11 @@ export default function InputFormPage() {
                       : ''}
                     onChange={e => {
                       const value = e.target.value
-                      setDateError(value && value > todayStr ? invalidDateMsg : '')
+                      // Check both ends of the range. A native date input accepts a
+                      // two-digit year and stores it literally — typing "19" yields
+                      // 0019-06-30, which is earlier than today and so passed a
+                      // max-only check, then rendered as "0019.06.30" on the report.
+                      setDateError(value && (value > todayStr || value < minBirthDateStr) ? invalidDateMsg : '')
                       const [year, month, day] = value.split('-')
                       setFormData(prev => ({
                         ...prev,
@@ -1117,7 +1123,12 @@ export default function InputFormPage() {
                           ? `${formData.parentYear}-${formData.parentMonth.padStart(2, '0')}-${formData.parentDay.padStart(2, '0')}`
                           : ''}
                         onChange={e => {
-                          const [year, month, day] = e.target.value.split('-')
+                          const value = e.target.value
+                          // Same two-digit-year trap as the child field: ignore
+                          // anything outside the accepted range rather than storing
+                          // a year the calendar cannot mean.
+                          if (value && (value < '1945-01-01' || value > '2005-12-31')) return
+                          const [year, month, day] = value.split('-')
                           setFormData(prev => ({
                             ...prev,
                             parentYear: year || '',
