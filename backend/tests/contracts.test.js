@@ -157,7 +157,50 @@ describe('contract: env tuning knobs survive serverless.yml empty-string injecti
   });
 });
 
-// ── 3. Backend catalog ↔ database CHECK constraint ────────────────────────
+// ── 3. Localized voice is only on for languages that were measured ────────
+// The localized-voice path (rewritten usage block + cultural register +
+// authored parent lines) was measured on French only: script retention 30% ->
+// 56% across two runs each, with no presentation fallback once the instruction
+// was flattened. No other language has authored lines yet, and none has been
+// measured. Turning one on without measuring is exactly the mistake this
+// session spent its time undoing, so the enabled set is pinned here.
+describe('contract: localized voice is enabled only where it was measured', () => {
+  const { calculateMansae } = require('../src/utils/mansae-wrapper');
+  const { buildKnowledgeContext } = require('../src/services/saju-knowledge');
+  const { localizedLanguages } = require('../src/data/saju-knowledge/harmful-phrases-i18n');
+
+  const chart = () => calculateMansae('2018-05-14', '09:30', 'female', { timezone: 'Asia/Seoul' });
+  const build = (language, outputLangName) => buildKnowledgeContext({
+    childManseryeok: chart(), childAge: 7, language, outputLangName,
+  });
+
+  test('French gets the authored parent lines', () => {
+    expect(build('fr', 'French').selected.harmfulPhrasesLocalized).toBe(true);
+  });
+
+  test.each([['ja', 'Japanese'], ['es', 'Spanish'], ['th', 'Thai'], ['en', 'English']])(
+    '%s still falls back to the Korean source lines (not yet measured)',
+    (lang, name) => {
+      expect(build(lang, name).selected.harmfulPhrasesLocalized).toBeFalsy();
+    }
+  );
+
+  test('every language with authored lines is one the gate actually enables', () => {
+    // Authoring lines for a language but never enabling it (or vice versa) means
+    // the work silently does nothing. Keep the two lists in step.
+    for (const lang of localizedLanguages()) {
+      expect(build(lang, 'X').selected.harmfulPhrasesLocalized).toBe(true);
+    }
+  });
+
+  test('the Korean report is untouched by any of this', () => {
+    const ko = build('ko', 'Korean');
+    expect(ko.selected.harmfulPhrasesLocalized).toBeFalsy();
+    expect(ko.text).not.toContain('HOW TO USE THIS BLOCK');
+  });
+});
+
+// ── 4. Backend catalog ↔ database CHECK constraint ────────────────────────
 describe('contract: catalog currencies ⊆ payments.currency CHECK constraint', () => {
   const { allowed, definedIn } = effectiveCurrencyConstraint();
 

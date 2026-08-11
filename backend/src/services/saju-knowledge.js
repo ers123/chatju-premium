@@ -169,17 +169,40 @@ const DYNAMIC_KEY_MAP = {
 // 아니라 '무엇을 해내는 말인지'를 보여주는 예시로 규정하고, 같은 기능을 하는 그
 // 나라 부모의 실제 말을 새로 쓰게 한다. 한국어 금지·간지 표기 같은 기존 제약은
 // 힘들게 얻은 것이므로 그대로 유지한다.
-// 2026-08-11 측정 결과: 이 재구성은 근거 보존율을 전혀 움직이지 못했다
-// (동일 심판 비교에서 baseline 10/2/1 대 개편본 10/2/1로 완전히 동일).
-// 그래서 기본값은 꺼짐이고, 프로덕션은 측정된 기존 지시문을 그대로 쓴다.
-// 더 나은 측정 도구가 생겼을 때 SAJU_LOCALIZED_VOICE=1로 다시 재볼 수 있게
-// 코드는 남겨 둔다. 자세한 근거는 localization_findings_2026-08-11.md.
-const LOCALIZED_VOICE_ENABLED = process.env.SAJU_LOCALIZED_VOICE === '1';
+// 2026-08-11 판정 (localization_findings_2026-08-11.md §7)
+//
+// 처음 잰 결과로는 "효과 없음"이었으나 그 계측기가 망가져 있었다. 신호 목록을
+// 결정론화하고 3회 채점·복수 원국으로 다시 재니 결론이 뒤집혔다. fr 3원국 기준
+// 대사(script) 보존율:
+//   꺼짐 36% / 25%   (평균 30%)
+//   켜짐 57% / 55%   (평균 56%, 두 실행 편차 2pt)
+// 26pt 차이가 재현됐고 두 조건의 범위가 겹치지 않는다.
+//
+// 단, 처음엔 켜면 6건 중 4건이 presentationStatus=fallback으로 떨어졌다. 원인은
+// 내용이 아니라 형태였다 — 지시를 번호 목록으로 쓰자 모델이 그 구조를 출력
+// 템플릿으로 모방해 라벨 계약을 깼다. 평문으로 낮추자 보존율 57%를 유지한 채
+// 폴백이 0/3이 됐다.
+//
+// 켜는 범위는 "측정된 언어만"이다. 프랑스어만 3원국 × 2회로 검증했고, 나머지
+// 언어는 대사 저작본도 아직 없다(한국어로 폴백). 언어를 추가할 때는 먼저
+// `npm run eval:localization -- --langs=<lang>`로 재고 나서 목록에 넣을 것.
+const LOCALIZED_VOICE_LANGUAGES = new Set(
+  (process.env.SAJU_LOCALIZED_VOICE_LANGUAGES || 'fr')
+    .split(',').map((s) => s.trim()).filter(Boolean)
+);
+// 전체를 강제로 켜고/끄고 재볼 때 쓰는 노브 (측정용).
+const LOCALIZED_VOICE_FORCE = process.env.SAJU_LOCALIZED_VOICE;
+
+function isLocalizedVoiceEnabled(language) {
+  if (LOCALIZED_VOICE_FORCE === '1') return true;
+  if (LOCALIZED_VOICE_FORCE === '0') return false;
+  return LOCALIZED_VOICE_LANGUAGES.has(language);
+}
 
 function buildNonKoreanUsageBlock(language, outputLangName) {
   const lang = outputLangName || 'the report language';
 
-  if (!LOCALIZED_VOICE_ENABLED) {
+  if (!isLocalizedVoiceEnabled(language)) {
     // 측정된 기존 동작 (2026-08-08 이후 프로덕션에서 돌던 그대로).
     return [
       `※ This reference block is written in Korean, but the report is written in ${lang}.`,
@@ -193,25 +216,28 @@ function buildNonKoreanUsageBlock(language, outputLangName) {
 
   return [
     `※ HOW TO USE THIS BLOCK — the report is written in ${lang}.`,
+    // 형태 주의: 번호 목록·소제목·불릿을 쓰지 않는다. 이 블록 맨 위 경고대로
+    // 모델은 참고 블록의 생김새를 출력 템플릿으로 모방하는 습성이 있고, 실제로
+    // 번호 목록으로 썼을 때 6건 중 4건이 presentationStatus=fallback으로 떨어졌다
+    // (2026-08-11 측정). 지시 내용은 그대로 두고 형태만 주변 ※ 주석과 같게 낮춘다.
     '   The Korean lines below are source data. They are NOT text to translate.',
-    '   1. The analytic lines (distribution, which signal applies, why) are facts about',
-    '      this chart. Use them as the basis of what you claim.',
-    '   2. The quoted parent lines show WHAT A SENTENCE MUST ACCOMPLISH, not the sentence',
-    `      to reproduce. For each one, work out its function, then write a fresh line that a`,
-    `      ${lang}-speaking parent would really say to accomplish the same thing.`,
-    '      A translated Korean sentence is a failure. So is replacing it with generic advice',
-    '      ("be patient", "encourage them") — that drops the very thing the parent paid for.',
-    '   3. Every concrete mechanism in the source (an agreed stop-signal, a specific',
-    '      substitution of words, a named activity) must survive as an equally concrete',
-    `      mechanism in ${lang}, rebuilt from ${lang} family life rather than transplanted.`,
-    `   4. Output must not contain a single Korean character — including inside quoted parent`,
-    '      lines, month names, and pillar names. Write pillar names in Chinese characters',
-    '      (丁酉), never in Korean letters (정유).',
+    '   The analytic lines (distribution, which signal applies, why) are facts about this',
+    '   chart, and are the basis of what you claim.',
+    `   The quoted parent lines show what a sentence must accomplish, not the sentence to`,
+    `   reproduce. Work out what each one does, then write a fresh line that a ${lang}-speaking`,
+    '   parent would really say to accomplish the same thing. A translated Korean sentence is',
+    '   a failure, and so is replacing it with generic advice such as "be patient" — that drops',
+    '   the very thing the parent paid for.',
+    '   Every concrete mechanism in the source (an agreed stop-signal, a specific substitution',
+    `   of words, a named activity) must survive as an equally concrete mechanism in ${lang},`,
+    `   rebuilt from ${lang} family life rather than transplanted.`,
+    '   Output must not contain a single Korean character, including inside quoted parent lines,',
+    '   month names, and pillar names. Write pillar names in Chinese characters (丁酉), never in',
+    '   Korean letters (정유).',
     ...(register ? [
-      '',
-      `※ HOW PARENTS ACTUALLY TALK IN ${register.label.toUpperCase()} — match this register when you`,
-      '   write any quoted line. These are common defaults, not rules about any one family.',
-      ...register.lines.map((l) => `   - ${l}`),
+      `※ When you write any quoted line, match how parents actually talk in ${register.label}.`,
+      '   These are common defaults, not rules about any one family.',
+      ...register.lines.map((l) => `   ${l}`),
     ] : []),
   ];
 }
@@ -441,7 +467,7 @@ function buildKnowledgeContext({
     // 측정 결과 개선이 없었고(90% → 80%) 그 실행에서 레이아웃이 fallback으로
     // 떨어졌다. n=1이라 인과를 단정할 수는 없지만, 이득이 확인되지 않은 변경을
     // 유료 리포트에 켜 둘 이유가 없어 기본값은 꺼짐이다.
-    const localized = LOCALIZED_VOICE_ENABLED ? getLocalizedHarmfulPhrases(language, dayElement) : null;
+    const localized = isLocalizedVoiceEnabled(language) ? getLocalizedHarmfulPhrases(language, dayElement) : null;
     selected.harmfulPhrasesLocalized = !!localized;
     const pairs = harmful.slice(0, 3);
     blocks.push({
