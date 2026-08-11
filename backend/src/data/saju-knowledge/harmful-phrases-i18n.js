@@ -410,7 +410,7 @@ function localizedLanguages() {
 // zh/es 는 측정했으나 기준선이 이미 높아 범위가 겹쳤다. 저작본은 남겨 두되
 // 켜지 않는다 — 근거 없이 켜지 않는다는 원칙과, 나중에 더 나은 계측기로 다시
 // 잴 수 있도록 하기 위해서다.
-const PENDING_MEASUREMENT = ['zh', 'es', 'vi', 'th'];
+const PENDING_MEASUREMENT = ['zh', 'es', 'vi'];
 
 module.exports = { HARMFUL_PHRASES_I18N, getLocalizedHarmfulPhrases, localizedLanguages, PENDING_MEASUREMENT };
 

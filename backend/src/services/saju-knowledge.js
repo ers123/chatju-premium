@@ -192,6 +192,8 @@ const DYNAMIC_KEY_MAP = {
 //   en: 41% -> 63% (범위 27-54 / 59-66, 겹침 없음)
 //   pt: 46% -> 57% (범위 42-50 / 56-57, 겹침 없음)
 //   id: 28% -> 57% (범위 27-30 / 52-61, 겹침 없음 — 기준선이 가장 낮아 이득도 가장 컸다)
+//   th: 35% -> 64% (범위 31-39 / 62-66, 겹침 없음)
+// 보류: zh, es (기준선이 높아 얻을 것 없음), vi (4대4로 재도 범위가 겹침, U=1.5)
 // 미달로 보류: zh 50->56, es 52->56 (둘 다 범위 겹침 — 기준선이 이미 높아 얻을 것이 없다)
 //
 // 일본어는 부수 효과가 더 컸다. 꺼짐 상태에서는 모델이 한국어 원본 대사를
@@ -199,7 +201,7 @@ const DYNAMIC_KEY_MAP = {
 // 「避ける言葉」에 인쇄됐다(6건 중 5낱말). 대사가 처음부터 일본어면 베낄 것이
 // 없어 0이 됐다.
 const LOCALIZED_VOICE_LANGUAGES = new Set(
-  (process.env.SAJU_LOCALIZED_VOICE_LANGUAGES || 'fr,ja,en,pt,id')
+  (process.env.SAJU_LOCALIZED_VOICE_LANGUAGES || 'fr,ja,en,pt,id,th')
     .split(',').map((s) => s.trim()).filter(Boolean)
 );
 // 전체를 강제로 켜고/끄고 재볼 때 쓰는 노브 (측정용).
