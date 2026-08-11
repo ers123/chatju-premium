@@ -119,6 +119,12 @@ provider:
     EMAIL_PDF_BUDGET_MS: ${env:EMAIL_PDF_BUDGET_MS, ''}
     # Max Hangul ratio tolerated in a non-Korean report before retrying (default 0.005).
     SAJU_HANGUL_LIMIT: ${env:SAJU_HANGUL_LIMIT, ''}
+    # Languages whose reports use the localized-voice path (rewritten usage
+    # block + cultural register + authored parent lines). Default 'fr' — the
+    # only language measured. Set to a comma list to add measured languages;
+    # SAJU_LOCALIZED_VOICE=0 kills it everywhere without a redeploy.
+    SAJU_LOCALIZED_VOICE_LANGUAGES: ${env:SAJU_LOCALIZED_VOICE_LANGUAGES, ''}
+    SAJU_LOCALIZED_VOICE: ${env:SAJU_LOCALIZED_VOICE, ''}
 
   # IAM Role Statements (permissions for Lambda)
   iam:

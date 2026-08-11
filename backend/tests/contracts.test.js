@@ -193,6 +193,14 @@ describe('contract: localized voice is enabled only where it was measured', () =
     }
   });
 
+  test('serverless.yml exposes the kill switch and the language list', () => {
+    // Without these declared, the Lambda has no way to disable the localized
+    // path if it misbehaves in production — the only remedy would be a redeploy.
+    const sls = fs.readFileSync(path.join(__dirname, '..', 'serverless.yml'), 'utf8');
+    expect(sls).toContain('SAJU_LOCALIZED_VOICE:');
+    expect(sls).toContain('SAJU_LOCALIZED_VOICE_LANGUAGES:');
+  });
+
   test('the Korean report is untouched by any of this', () => {
     const ko = build('ko', 'Korean');
     expect(ko.selected.harmfulPhrasesLocalized).toBeFalsy();
