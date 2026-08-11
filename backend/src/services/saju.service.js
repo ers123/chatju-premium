@@ -19,6 +19,30 @@ const DEFAULT_CHILD_NAME = Object.freeze({
 });
 const getDefaultChildName = (language) => DEFAULT_CHILD_NAME[language] || DEFAULT_CHILD_NAME.en;
 
+/**
+ * Make quotation marks consistent within one report.
+ *
+ * The model mixes conventions inside a single French report — « … » in one line
+ * and “ … ” in the next — which reads to a French parent as a document that was
+ * run through a translator. Asking for it in the prompt is unreliable (the same
+ * approach failed repeatedly for labels and pillar names), so normalise after
+ * generation, where the result is deterministic.
+ *
+ * French only for now: it is the locale where the inconsistency was actually
+ * observed. Spanish and Portuguese also admit guillemets but accept curly quotes,
+ * and CJK has its own brackets — none of those were verified against real output,
+ * and guessing would risk replacing a correct convention with a wrong one.
+ */
+const NBSP = ' ';
+function normalizeQuotes(text, language) {
+  if (language !== 'fr' || !text) return text;
+  // Curly or straight double quotes → guillemets, with the non-breaking spaces
+  // French typography puts inside them. The lazy match keeps a quoted phrase from
+  // swallowing the rest of the paragraph, and the newline guard stops a stray
+  // opening quote from pairing across lines.
+  return text.replace(/[“"]([^“”"\n]{1,400}?)[”"]/g, (_m, inner) => `«${NBSP}${inner.trim()}${NBSP}»`);
+}
+
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
 
@@ -1638,7 +1662,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
     }
 
     // Combine results
-    let interpretationText = result1.content + '\n\n' + result2.content;
+    let interpretationText = normalizeQuotes(result1.content + '\n\n' + result2.content, language);
     const generatedAt = new Date().toISOString();
     let totalTokens = (result1.tokensUsed || 0) + (result2.tokensUsed || 0);
 
@@ -1700,7 +1724,9 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
         // Lower temperature on the retry: the first pass already produced usable
         // substance, so the second only needs to land the structure.
         const [retry1, retry2] = await runBothCalls(0.4);
-        const retryText = `${retry1.content}\n\n${retry2.content}`;
+        // Normalize here too — the retry replaces interpretationText wholesale, so
+        // skipping it would silently undo the first pass's cleanup.
+        const retryText = normalizeQuotes(`${retry1.content}\n\n${retry2.content}`, language);
         if (retry1.content.trim().length >= MIN_HALF_LENGTH && retry2.content.trim().length >= MIN_HALF_LENGTH) {
           const retryPresentation = adapt(retryText);
           totalTokens += (retry1.tokensUsed || 0) + (retry2.tokensUsed || 0);
