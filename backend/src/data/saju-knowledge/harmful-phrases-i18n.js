@@ -383,16 +383,34 @@ function localizedLanguages() {
 // 저작 언어가 생기면 테스트가 깨진다 — 저작해 놓고 아무 데도 안 쓰이는(= 죽은
 // 작업) 상태를 막기 위해서다.
 //
-// 켜는 절차:
-//   npm run eval:localization -- --langs=<lang> --charts=3 --rounds=3 --label=<lang>-off --regenerate
-//   SAJU_LOCALIZED_VOICE=1 node scripts/eval-localization.js --langs=<lang> --charts=3 --rounds=3 --label=<lang>-on --regenerate
-// script 보존율이 유의미하게 오르고 fallback이 0이면 saju-knowledge.js의
-// LOCALIZED_VOICE_LANGUAGES 기본값에 추가하고 이 목록에서 뺀다.
+// ── 켜는 절차와 판정 규칙 (2026-08-12 확립) ──────────────────────────
+//
+// 1) 기준선부터 잰다. 조건당 2회, 원국 3개.
+//      npm run eval:localization -- --langs=<lang> --charts=3 --rounds=3 --label=<lang>-off-a --regenerate
+//      (라벨을 재사용하면 이전 결과를 덮어쓴다. 실제로 한 번 그렇게 잃었다.)
+//
+// 2) 기준선 script 보존율이 50% 이상이면 거기서 멈춘다.
+//    저작본을 켜면 어느 언어든 56~63%로 수렴하므로, 이미 그 높이에 있는 언어는
+//    얻을 것이 없다. zh(50%)와 es(52%)가 그래서 보류됐다.
+//
+// 3) 50% 미만이면 ON을 2회 잰다.
+//      SAJU_LOCALIZED_VOICE=1 node scripts/eval-localization.js --langs=<lang> ... --label=<lang>-on-a --regenerate
+//
+// 4) 판정: **OFF 최고값 < ON 최저값** 일 때만 켠다. 평균 차이로 판정하지 않는다.
+//    생성 잡음이 원국당 최대 29pt까지 흔들리므로 평균은 쉽게 속는다.
+//    맞닿거나 겹치면 보류하거나 3차를 돌린다.
+//    통과 예: fr(36/25 → 57/55), en(27/54 → 59/66), pt(42/50 → 56/57)
+//
+// 5) fallback도 함께 본다. 켰는데 presentationStatus=fallback이 늘면 켜지 않는다.
+//    (참고 블록의 형태가 출력 구조를 오염시킨 전례가 있다 — §7.1)
+//
+// 통과하면 saju-knowledge.js의 LOCALIZED_VOICE_LANGUAGES 기본값에 추가하고
+// 이 목록에서 뺀다. 보류하면 이 목록에 남겨 둔다 — 저작본을 지우지는 않는다.
 // (비어 있음 = 저작된 언어가 모두 측정을 거쳐 켜져 있다는 뜻)
 // zh/es 는 측정했으나 기준선이 이미 높아 범위가 겹쳤다. 저작본은 남겨 두되
 // 켜지 않는다 — 근거 없이 켜지 않는다는 원칙과, 나중에 더 나은 계측기로 다시
 // 잴 수 있도록 하기 위해서다.
-const PENDING_MEASUREMENT = ['zh', 'es', 'vi', 'id', 'th'];
+const PENDING_MEASUREMENT = ['zh', 'es', 'vi', 'th'];
 
 module.exports = { HARMFUL_PHRASES_I18N, getLocalizedHarmfulPhrases, localizedLanguages, PENDING_MEASUREMENT };
 
