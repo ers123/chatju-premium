@@ -389,7 +389,10 @@ function localizedLanguages() {
 // script 보존율이 유의미하게 오르고 fallback이 0이면 saju-knowledge.js의
 // LOCALIZED_VOICE_LANGUAGES 기본값에 추가하고 이 목록에서 뺀다.
 // (비어 있음 = 저작된 언어가 모두 측정을 거쳐 켜져 있다는 뜻)
-const PENDING_MEASUREMENT = ['zh', 'es', 'pt', 'vi', 'id', 'th'];
+// zh/es 는 측정했으나 기준선이 이미 높아 범위가 겹쳤다. 저작본은 남겨 두되
+// 켜지 않는다 — 근거 없이 켜지 않는다는 원칙과, 나중에 더 나은 계측기로 다시
+// 잴 수 있도록 하기 위해서다.
+const PENDING_MEASUREMENT = ['zh', 'es', 'vi', 'id', 'th'];
 
 module.exports = { HARMFUL_PHRASES_I18N, getLocalizedHarmfulPhrases, localizedLanguages, PENDING_MEASUREMENT };
 
