@@ -8,6 +8,7 @@ import { apiClient, generateClaimKey, pollForReadingByClaim } from '@/lib/api'
 import { buildApiUrl } from '@/lib/api-url'
 import { getPremiumPricing, buildPayPalSdkParams } from '@/lib/pricing'
 import { useLanguage } from '@/app/lib/i18n/context'
+import { formatBirthDateForDisplay } from '@/app/lib/date-display'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ShareableResultCard from '@/components/saju/ShareableResultCard'
@@ -924,7 +925,7 @@ export default function ResultsPage() {
               {inputData?.name}{sr.analysisTitle}
             </h1>
             <p style={{ color: '#8B8580' }}>
-              {inputData?.birthDate} {inputData?.birthTime}
+              {formatBirthDateForDisplay(inputData?.birthDate, lang)} {inputData?.birthTime}
             </p>
             <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', fontWeight: 500, color: '#8B8580' }}>{sr.analysisSubtitle}</p>
           </div>

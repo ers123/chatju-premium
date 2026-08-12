@@ -2,6 +2,7 @@
 // Email delivery service using Resend
 
 const logger = require('../utils/logger');
+const { formatBirthDate } = require('../utils/report-date');
 
 let resendClient = null;
 
@@ -342,7 +343,7 @@ function buildReportEmailHtml({ displayName, readingId, manseryeok, aiInterpreta
             <tr><td style="padding: 8px 0; border-bottom: 1px solid #F0EDE9; font-size: 13px; color: #6B5E52;">
               <table width="100%"><tr>
                 <td style="color: #8B8580;">${copy.birthDate}</td>
-                <td align="right" style="font-weight: 600;">${birthDate}</td>
+                <td align="right" style="font-weight: 600;">${formatBirthDate(birthDate, language)}</td>
               </tr></table>
             </td></tr>
             <tr><td style="padding: 8px 0; border-bottom: 1px solid #F0EDE9; font-size: 13px; color: #6B5E52;">

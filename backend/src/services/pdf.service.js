@@ -2,7 +2,7 @@
 // Premium PDF report generation using pdfkit — text-based, ~200-500KB
 
 const path = require('path');
-const { formatReportDate } = require('../utils/report-date');
+const { formatReportDate, formatBirthDate } = require('../utils/report-date');
 const fs = require('fs');
 const { parseNumberedSections, normalizePresentation, sanitizePresentation } = require('./report-presentation');
 
@@ -710,6 +710,8 @@ async function generateReportPDF(params) {
   // toISOString() is UTC, so a KST/JST reader generating before 09:00 saw
   // yesterday's date on the cover. See utils/report-date.js.
   const reportDateLabel = formatReportDate(reportDate, timeZone);
+  // 프론트가 보내는 `2017.06.14`는 한국식 표기다. 독자 언어의 관행으로 옮긴다.
+  const birthDateLabel = formatBirthDate(birthDate, language || 'ko');
 
   const PDFDocument = require('pdfkit');
 
@@ -1330,7 +1332,7 @@ async function generateReportPDF(params) {
       // Birth info below header band
       const infoY = 185;
       doc.font(fontRegular).fontSize(10).fillColor(COLORS.lightText);
-      doc.text(`${labels.birthDate}: ${birthDate || '-'}`, MARGIN_L, infoY);
+      doc.text(`${labels.birthDate}: ${birthDateLabel || '-'}`, MARGIN_L, infoY);
       doc.text(
         `${labels.gender}: ${gender === 'male' ? labels.male : labels.female}`,
         MARGIN_L, infoY + 18
