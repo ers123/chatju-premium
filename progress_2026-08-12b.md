@@ -308,3 +308,57 @@ ff7ec01 fix(reports): anchor the child's temperament to the day stem, preview in
 
 8. **무엇을 고칠지 정하기 전에 DB를 먼저 보라.** 실사용 리포트가 ko 12 / ja 6 / en 6이고
    결제가 5건이라는 사실이, 오늘 "다음에 무엇을 할까"의 답을 전부 바꿨다.
+
+---
+
+## 9. 이어서 한 일 (8/12 3차)
+
+직전 §6.3에 "기록만 해 두는 것"으로 미뤄 둔 결함 F·G를 처리했다.
+
+### 9.1 결함 G — 점 표기 날짜 (`2c0a09d`)
+
+프론트가 저장하는 `2017.06.14`가 **네 곳**으로 흘러가고 있었다. PDF 표지(legacy 경로),
+리포트 이메일, 결과 화면 히어로, 입력 5단계 요약. 열 개 언어 전부가 한국식 점 표기를 봤다.
+
+저장 형식은 그대로 두고(백엔드 파서가 이 형식을 받는다) 그릴 때만 옮긴다.
+`backend/src/utils/report-date.js`의 `formatBirthDate`와
+`frontend/app/lib/date-display.ts`의 `formatBirthDateForDisplay`가 **같은 로케일 표**를 쓴다 —
+PDF와 화면이 다른 날짜를 보이면 안 된다.
+
+태국어는 `th-TH-u-ca-gregory`로 고정했다. th 로케일의 기본 달력은 불기라서 그냥 두면
+표지에 2560년이 찍히고 리포트 안의 대운·세운 연도와 어긋난다.
+
+**검증**: 열 개 언어의 포맷 결과를 `hasGlyphForCodePoint`로 전부 통과 확인한 뒤,
+태국어·프랑스어 PDF를 실제로 렌더해 `pdftoppm`으로 눈으로 봤다. 이메일 HTML도 세 언어로
+직접 렌더해 날짜 셀을 확인했다. 신규 테스트 9건(`tests/report-date.test.js`).
+
+### 9.2 결함 F — 비활성 버튼 사유 (`b508b2d`)
+
+막힌 단계에서 비어 있는 필수 항목을 이름으로 나열한다. 기존 라벨을 재사용해서 새 문자열은
+언어당 한 줄(`missingRequired`)뿐이다.
+
+힌트는 버튼 **행 바깥**에 둔다. 처음에 행 안에 넣었더니 5단계에서 "Start Analysis"가
+두 줄로 찌그러졌다. 그리고 렌더 안에서 컴포넌트를 정의하면 안 된다
+(`react-hooks/static-components`) — 조각을 돌려주는 함수로 바꿨다.
+
+### 9.3 운영
+
+- 백엔드·프론트엔드 배포 완료. `verify:live` **14/14**, 백엔드 테스트 **184건**.
+- somyung.cc에서 입력 마법사 5단계를 실제로 통과해 확인: 요약이 `June 14, 2017`,
+  마지막 단계 힌트가 `Still needed to continue: Mother's Birth Time, …`.
+- **테스트 행 3건은 이미 없었다.** 드라이런 결과 `readings: 24 total, 0 test`.
+  누군가 이미 지웠다(백업 파일은 `output/db-backups/`에 남아 있다).
+- `frontend/.env.cloudflare` 삭제. 저장소 어디서도 읽지 않고, Pages 배포는
+  `wrangler login` OAuth 세션을 쓴다.
+- 부모 나이 하한 20세는 **의도된 값으로 확정**(사용자 판단). 변경 없음.
+
+### 9.4 새로 관측한 것
+
+- **태국어 legacy 표지에서 `รายงานพรีเมียม`가 `SoMyung` 로고와 세로로 겹친다.**
+  태국어 글자 높이 때문이고, 이번 변경과 무관한 기존 문제다. legacy 경로(fallback ~6%)에서만 보인다.
+- **`SoMyung_컴플라이언스_그로스_전략.md` §3.1은 이미 낡았다.** 영문 `/about/`을 라이브에서
+  읽어 보면 전문이 영어다(한국어는 자격증명 `명리심리상담사 1급` 같은 용어 병기뿐).
+  Week 1 목록을 실행하기 전에 각 항목을 **라이브에서 먼저 확인할 것.**
+- §4.1의 503은 그대로다. 프론트를 Function URL로 바꾸는 것은 해법이 아니다 —
+  `frontend/.env.production`의 주석대로 그 URL은 API Gateway의 쓰로틀링 밖에 있다.
+  진짜 해법은 생성 요청을 202로 즉시 돌려주고 이미 있는 claim key 폴링에 맡기는 것이다.
