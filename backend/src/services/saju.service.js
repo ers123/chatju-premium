@@ -596,31 +596,59 @@ async function generateAIPreview(childManseryeok, parentManseryeok = null, paren
     return Object.entries(elements).reduce((a, b) => a[1] > b[1] ? a : b)[0];
   };
 
-  const childDominant = getStrongestElement(childElements);
+  // 계산기는 오행 개수를 영어 키로 돌려준다({wood:1, earth:4, …}). 한국어 프롬프트가
+  // 그 키를 그대로 찍어 "- wood: 1개"로 나가고 있었다. 일간 기질은 한글('목')이라
+  // 같은 오행이어도 문자열로는 절대 같아 보이지 않는다 — 둘을 별개 정보로 읽을 여지를
+  // 프롬프트가 스스로 만들고 있었다.
+  const ELEMENT_EN_TO_KO = { wood: '목', fire: '화', earth: '토', metal: '금', water: '수' };
+  const toKoElement = (value) => ELEMENT_EN_TO_KO[value] || value;
+
+  const childDominantRaw = getStrongestElement(childElements);
+  const childDominant = toKoElement(childDominantRaw);
   // 기질의 기준은 일간(日干)이다. 오행 개수 최다는 "이 원국에 무엇이 많은가"일 뿐이고,
   // 둘은 원국의 약 60%에서 갈린다(측정: 864개 원국). 유료 리포트의 부모 대사는
   // 처음부터 일간을 기준으로 골라 왔으므로, 프리뷰가 개수 최다를 "핵심 기질"로
   // 내걸면 부모는 산 리포트에서 다른 아이 얘기를 읽게 된다.
   const childCore = STEM_ELEMENT[childPillars.day.korean[0]] || childDominant;
+  // 비한국어 프롬프트에는 한자를 함께 준다. "수"는 번역 대상이지만 水는 어느 언어에서도
+  // 같은 글자라, 모델이 엉뚱한 오행으로 갈아타는 것을 막는 고정점이 된다.
+  const ELEMENT_HANJA_KO = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
+  const childCoreHanja = ELEMENT_HANJA_KO[childCore] || '';
 
   let parentInfo = '';
   let relationshipAnalysis = '';
 
   if (parentManseryeok) {
-    const parentDominant = getStrongestElement(parentManseryeok.elements);
+    const parentDominantRaw = getStrongestElement(parentManseryeok.elements);
+    const parentDominant = toKoElement(parentDominantRaw);
     const parentCore = STEM_ELEMENT[parentManseryeok.pillars.day.korean[0]] || parentDominant;
     const parentLabel = parentRole === 'mother' ? '엄마' : '아빠';
 
-    parentInfo = `
+    const parentRoleEn = parentRole === 'mother' ? 'mother' : 'father';
+    const parentCoreHanja = ELEMENT_HANJA_KO[parentCore] || parentCore;
+    const parentDominantHanja = ELEMENT_HANJA_KO[parentDominant] || parentDominant;
+
+    parentInfo = language === 'ko'
+      ? `
 **${parentLabel} 사주 (궁합 분석용):**
 - 일주(日柱): ${parentManseryeok.pillars.day.korean} (${parentManseryeok.pillars.day.element})
 - 기질 오행(일간 기준): ${parentCore}
-- 원국에 가장 많은 오행: ${parentDominant} (${parentManseryeok.elements[parentDominant]}개)
+- 원국에 가장 많은 오행: ${parentDominant} (${parentManseryeok.elements[parentDominantRaw]}개)
+`
+      : `
+**The ${parentRoleEn}'s chart (for the relationship reading):**
+- Day pillar (日柱): ${parentManseryeok.pillars.day.hanja || parentManseryeok.pillars.day.korean}
+- Core temperament (from the day stem): ${parentCoreHanja}
+- Most numerous element: ${parentDominantHanja} (${parentManseryeok.elements[parentDominantRaw]})
 `;
 
-    relationshipAnalysis = `
+    relationshipAnalysis = language === 'ko'
+      ? `
 3. **부모-자녀 관계 힌트** (2문장): ${parentLabel}(${parentCore} 기질)과 아이(${childCore} 기질)의 관계에서 가장 자주 발생하는 갈등 패턴 1가지만 짧게. 구체적 해결 방법은 언급하지 말고 "왜 부딪히는지"만 설명.
-4. **프리미엄 티저** (1문장): "상세 리포트에서는 이 아이만의 행동 시그니처, 6가지 상황별 대응 스크립트, 7일 양육 실험까지 확인할 수 있습니다." 라고 마무리.`;
+4. **프리미엄 티저** (1문장): "상세 리포트에서는 이 아이만의 행동 시그니처, 6가지 상황별 대응 스크립트, 7일 양육 실험까지 확인할 수 있습니다." 라고 마무리.`
+      : `
+3. **Parent-child friction** (2 sentences): the single most common friction pattern between a ${parentRoleEn} of ${parentCoreHanja} temperament and a child of ${childCoreHanja} temperament. Explain only WHY they collide — give no fix, no scripts.
+4. **Premium teaser** (1 sentence): close by saying the full report covers this child's behavioural signature, six situation-by-situation scripts, and a seven-day parenting experiment.`;
   }
 
   const timeDisclaimer = childTimeUnknown
@@ -632,9 +660,43 @@ async function generateAIPreview(childManseryeok, parentManseryeok = null, paren
   const previewOutputLang = previewLangNames[language] || 'English';
   const languageInstruction = language !== 'ko' ? `\n**Write ALL output in ${previewOutputLang}. Translate Korean terms into ${previewOutputLang}. Show Chinese characters in parentheses. No Korean text in the output.**\n` : '';
 
-  const prompt = `당신은 20년 경력의 아동 심리 전문 사주 상담사입니다.
+  // 기질/편중을 알려 주는 블록. 비한국어 출력에서는 **한글을 한 글자도 쓰지 않는다.**
+  // 프롬프트에 한글 오행명("수", "토")을 넣었더니 모델이 그대로 베껴 인도네시아어
+  // 프리뷰가 통째로 한국어로 나오는 일이 늘었다(측정: 혼입 20% → 33%). 한자는 열 개
+  // 언어에서 모두 같은 글자라 이 문제가 없고, 오행을 고정하는 힘은 오히려 더 세다.
+  const coreLabel = language === 'ko' ? childCore : childCoreHanja;
+  const dominantLabel = language === 'ko' ? childDominant : (ELEMENT_HANJA_KO[childDominant] || childDominant);
+  const elementLines = Object.entries(childElements)
+    .map(([elem, count]) => {
+      const ko = toKoElement(elem);
+      const hanja = ELEMENT_HANJA_KO[ko] || '';
+      return language === 'ko' ? `- ${ko}(${hanja}): ${count}개` : `- ${hanja}: ${count}`;
+    })
+    .join('\n');
+
+  const coreBlock = language === 'ko'
+    ? `**아이 기질 오행(일간 기준): ${coreLabel}** ← 이 아이의 핵심 기질은 ${coreLabel}다. 다른 오행으로 바꿔 부르지 말 것.
+
+**아이 오행 분포(원국에 무엇이 많은가 — 핵심 기질과 다른 정보다):**
+${elementLines}
+가장 많은 오행은 ${dominantLabel}이다. 이것은 "이 아이는 ${dominantLabel} 기질"이라는 뜻이 **아니다** — 기질은 ${coreLabel}이고, ${dominantLabel}는 이 아이가 놓인 에너지의 편중이다.
+**두 가지를 모두 쓰되 역할을 구분한다:** 기질은 ${coreLabel}로 부르고, ${dominantLabel}가 많다는 사실은 "그 기질이 어떤 환경 속에 있는가"를 설명할 때 한 번 언급한다. ${dominantLabel}를 기질의 이름으로 부르지 말 것.`
+    : `**CORE TEMPERAMENT (from the day stem): ${coreLabel}** — this child's core temperament is ${coreLabel}. Never substitute another element for it.
+
+**Element counts (what the chart is crowded with — a different fact from temperament):**
+${elementLines}
+The most numerous element is ${dominantLabel}. That does NOT make this a "${dominantLabel} child": the temperament is ${coreLabel}, and ${dominantLabel} is the energy the child is surrounded by.
+**Use both, with distinct roles:** name the temperament ${coreLabel}, and mention the abundance of ${dominantLabel} once, as the environment that temperament sits in. Never use ${dominantLabel} as the name of the temperament.
+Write every element name in ${previewOutputLang} with the Chinese character in parentheses. No Korean.`;
+
+  // 프롬프트 본문의 언어. 지금까지 열 개 언어 전부가 **한국어 프롬프트**를 받고
+  // "출력만 다른 언어로 쓰라"는 지시 한 줄에 기대고 있었다. 측정해 보니 그 지시가
+  // 자주 졌다 — 비한국어 프리뷰의 20%에 한글이 섞였고, 그중 절반은 본문 전체가
+  // 한국어였다(vi·id·th에 몰림). 유료 리포트는 2026-08-08에 섹션 지시문을 영어로
+  // 옮겨 같은 문제를 없앴는데, 프리뷰만 그대로 남아 있었다.
+  const promptKo = `당신은 20년 경력의 아동 심리 전문 사주 상담사입니다.
 부모가 아이를 더 잘 이해하고, 갈등을 줄일 수 있도록 도와주세요.
-${timeDisclaimer}${languageInstruction}
+${timeDisclaimer}
 
 **아이 사주팔자:**
 - 년주(年柱): ${childPillars.year.korean} (${childPillars.year.element})
@@ -642,16 +704,19 @@ ${timeDisclaimer}${languageInstruction}
 - 일주(日柱): ${childPillars.day.korean} (${childPillars.day.element}) - 일간(日干) 중심
 - 시주(時柱): ${childPillars.hour?.korean ? `${childPillars.hour.korean} (${childPillars.hour.element})` : '출생 시간 미상 — 시주 제외'}
 
-**아이 오행 분포:**
-${Object.entries(childElements).map(([elem, count]) => `- ${elem}: ${count}개`).join('\n')}
+${coreBlock}
 ${parentInfo}
 
 **분석 요청 (미리보기 - 관계 중심):**
-1. **이 아이의 핵심 기질** (2문장): 타고난 성향과 에너지 방향
+1. **이 아이의 핵심 기질** (2문장): 타고난 성향과 에너지 방향. **반드시 ${coreLabel} 기질로 서술한다.**
 2. **부모가 가장 오해하기 쉬운 점** (2문장): "이래서 그랬구나" 싶은 행동의 진짜 이유
 ${parentManseryeok ? relationshipAnalysis : `3. **한 줄 양육 조언** (1문장): 이 기질의 아이에게 가장 중요한 것`}
 
 **작성 원칙:**
+- **기질을 부르는 이름은 ${coreLabel} 하나뿐이다.** 화면 상단에 "${coreLabel} 기질"이 이미
+  표시된 상태에서 본문이 다른 오행을 핵심 기질로 부르면, 부모는 같은 화면에서 서로
+  다른 두 아이 얘기를 읽게 된다. 개수가 가장 많은 오행을 "core/main/dominant
+  temperament"로 부르지 말 것.
 - "아이를 분석"하는 게 아니라 "관계를 이해"하는 관점
 - 부모의 죄책감을 덜어주는 따뜻한 톤
 - 추상적 설명 대신 구체적 상황/예시
@@ -659,6 +724,41 @@ ${parentManseryeok ? relationshipAnalysis : `3. **한 줄 양육 조언** (1문�
 - 읽으면 "아, 그래서 그랬구나!"는 느끼지만 "그래서 어떻게 해야 하지?"가 궁금하게 끝나야 함
 - 마지막에 상세 리포트 티저를 자연스럽게
 - 총 5-7문장`;
+
+  const promptEn = `You are a child-psychology counsellor with 20 years of experience reading Saju (四柱).
+Help this parent understand their child and reduce friction between them.
+${timeDisclaimer}${languageInstruction}
+
+**The child's Four Pillars:**
+- Year pillar (年柱): ${childPillars.year.hanja || childPillars.year.korean}
+- Month pillar (月柱): ${childPillars.month.hanja || childPillars.month.korean}
+- Day pillar (日柱): ${childPillars.day.hanja || childPillars.day.korean} — the day stem (日干) is the anchor
+- Hour pillar (時柱): ${childPillars.hour ? (childPillars.hour.hanja || childPillars.hour.korean) : 'birth time unknown — hour pillar omitted'}
+
+${coreBlock}
+${parentInfo}
+
+**What to write (preview — relationship-focused):**
+1. **This child's core temperament** (2 sentences): innate disposition and where their energy goes. **Describe it as ${coreLabel} temperament — no other element.**
+2. **What parents most often misread** (2 sentences): the real reason behind a behaviour that looks like defiance or laziness.
+${parentManseryeok ? relationshipAnalysis : `3. **One-line parenting note** (1 sentence): the single thing that matters most for a child of this temperament.`}
+
+**How to write it:**
+- **There is exactly one name for the temperament: ${coreLabel}.** The page already shows
+  "${coreLabel} temperament" in a heading above your text. If your text calls a different element
+  the core temperament, the parent reads about two different children on one screen.
+  Never call the most-numerous element the core, main or dominant temperament.
+- Frame it as understanding the relationship, not analysing the child.
+- Warm tone that lifts the parent's guilt.
+- Concrete situations and examples instead of abstractions.
+- Be specific about temperament and the misreading — but never give scripts, fixes or
+  conversation techniques. That is what the paid report is for.
+- The reader should finish thinking "ah, that's why" and wanting to know "so what do I do?".
+- End with a natural teaser for the full report.
+- 5-7 sentences total.
+- Write in ${previewOutputLang}. Not one Korean character anywhere in the output.`;
+
+  const prompt = language === 'ko' ? promptKo : promptEn;
 
   try {
     console.log('[Saju Service] Calling AI service for relationship-focused preview...');
@@ -679,6 +779,14 @@ ${parentManseryeok ? relationshipAnalysis : `3. **한 줄 양육 조언** (1문�
     const previewSystemEn = `You are a parent-child relationship specialist using Saju (Four Pillars) analysis.
 
 **CRITICAL: Write the ENTIRE preview in ${previewOutputLang}.** All text must be in ${previewOutputLang}. Translate Korean terms. Show Chinese characters in parentheses. No Korean text in the output.
+
+**CRITICAL — the child's core temperament is ${childCoreHanja} (from the day stem), and nothing else.**
+The page already shows "${childCoreHanja} temperament" in a heading above your text. Name that same
+element as the core temperament. The element with the highest COUNT in the chart is a different
+fact — it says what the chart is crowded with, not who the child is. Never call the most-numerous
+element the "core", "main", or "dominant temperament", and never open with it.
+Still mention it once, as the environment that temperament sits in — dropping it makes the
+preview thinner than it should be. Two facts, two roles.
 
 **Myeongri Philosophy (must follow):**
 - Saju (四柱) reveals innate temperament, it does NOT determine destiny.
