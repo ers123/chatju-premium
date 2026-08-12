@@ -12,6 +12,7 @@ const { sajuPreviewLimiter, sajuPremiumLimiter, readLimiter, otpRequestLimiter }
 const reportLookupOtp = require('../services/reportLookupOtp.service');
 const { calculateMansae } = require('../utils/mansae-wrapper');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
+const { dispatchReportJob } = require('../services/report-job');
 
 // Apply sanitization to all routes
 router.use(sanitizeStrings);
@@ -32,6 +33,17 @@ const CLAIM_KEY_REGEX = /^[A-Za-z0-9+/=_-]{32,128}$/;
 function validateClaimKey(value) {
   if (typeof value !== 'string') return null;
   return CLAIM_KEY_REGEX.test(value) ? value : null;
+}
+
+/**
+ * 클라이언트가 202 + 폴링 방식을 감당할 수 있다고 밝혔는가.
+ *
+ * 새 프론트만 `async: true`를 보낸다. 이미 브라우저에 캐시된 옛 번들은 202를 받으면
+ * 그것을 완성된 리포트로 착각하므로, 명시적으로 밝힌 클라이언트에게만 새 경로를 준다.
+ * 프론트가 전부 교체되면 이 게이트는 지워도 된다.
+ */
+function wantsAsyncReport(req) {
+  return req.body?.async === true || req.body?.async === 'true';
 }
 
 /**
@@ -371,8 +383,7 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
     const validatedClaimKey = validateClaimKey(claimKey);
     const claimKeyHash = validatedClaimKey ? hashClaimKey(validatedClaimKey) : null;
 
-    // Generate reading
-    const reading = await sajuService.generateSajuReading({
+    const readingParams = {
       userId,
       orderId,
       paymentAccessToken,
@@ -395,7 +406,28 @@ router.post('/calculate', authMiddleware.optionalAuth, sajuPremiumLimiter, valid
       twinInfo: twinOrder ? { order: twinOrder, siblingName: twinSiblingName || null } : null,
       deliveryEmail,
       claimKeyHash,
-    });
+    };
+
+    // 비동기 경로는 claim key를 가진 클라이언트만 쓸 수 있다. 폴링할 열쇠가 없으면
+    // 202를 받아도 결과를 가져올 방법이 없다. 오래된 번들은 async를 보내지 않으므로
+    // 지금까지와 똑같이 동기로 처리된다.
+    if (wantsAsyncReport(req) && claimKeyHash) {
+      // 결제 문제는 잡 안이 아니라 여기서 잡아야 한다. 202를 준 뒤 잡이 실패하면
+      // 사용자는 이유도 모른 채 폴링만 하게 된다.
+      await sajuService.verifyPaymentForReading({ orderId, userId, paymentAccessToken });
+
+      const dispatch = await dispatchReportJob({ reading: readingParams });
+      if (dispatch.mode === 'async') {
+        return res.status(202).json({ status: 'pending', pollWith: 'claim' });
+      }
+      // 디스패치가 실패해 인라인으로 돌았다 — 완성본이 있으면 그대로 준다.
+      return dispatch.reading
+        ? res.status(200).json(dispatch.reading)
+        : res.status(202).json({ status: 'pending', pollWith: 'claim' });
+    }
+
+    // Generate reading
+    const reading = await sajuService.generateSajuReading(readingParams);
 
     // Return success response
     res.status(200).json(reading);
@@ -566,9 +598,7 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
     const validatedClaimKeyPromo = validateClaimKey(claimKey);
     const claimKeyHashPromo = validatedClaimKeyPromo ? hashClaimKey(validatedClaimKeyPromo) : null;
 
-    // Step 4: Generate reading first (before consuming promo code)
-    // If AI generation fails, the promo code stays available for retry
-    const reading = await sajuService.generateSajuReading({
+    const promoReadingParams = {
       userId: null,
       orderId: null,
       birthDate: normalizedBirthDate,
@@ -590,14 +620,37 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       deliveryEmail: email,
       skipPaymentCheck: true,
       claimKeyHash: claimKeyHashPromo,
-    });
+    };
 
-    // Step 5: Reading succeeded — now consume the promo code
-    await promoService.usePromoCode({
+    // 프로모 소진은 생성 성공 뒤에만 한다. 실패했으면 코드를 다시 쓸 수 있어야 한다.
+    // 비동기 경로에서는 이 순서를 잡이 그대로 지킨다.
+    const promoConsumption = {
       promoCodeId: promoResult.promoCode.id,
       email,
       childName: subjectName,
       childBirthDate: normalizedBirthDate,
+    };
+
+    if (wantsAsyncReport(req) && claimKeyHashPromo) {
+      const dispatch = await dispatchReportJob({
+        reading: promoReadingParams,
+        promo: promoConsumption,
+      });
+      if (dispatch.mode === 'async') {
+        return res.status(202).json({ status: 'pending', pollWith: 'claim' });
+      }
+      return dispatch.reading
+        ? res.status(200).json(dispatch.reading)
+        : res.status(202).json({ status: 'pending', pollWith: 'claim' });
+    }
+
+    // Step 4: Generate reading first (before consuming promo code)
+    // If AI generation fails, the promo code stays available for retry
+    const reading = await sajuService.generateSajuReading(promoReadingParams);
+
+    // Step 5: Reading succeeded — now consume the promo code
+    await promoService.usePromoCode({
+      ...promoConsumption,
       readingId: reading.readingId,
     });
 

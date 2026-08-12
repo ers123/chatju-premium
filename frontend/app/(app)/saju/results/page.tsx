@@ -439,8 +439,11 @@ export default function ResultsPage() {
           setPromoValidating(false)
           return
         }
+        // REPORT_PENDING은 api 클라이언트가 이미 90초를 기다린 뒤 던진 것이다.
+        // 여기서 또 폴링하면 사용자를 두 번 기다리게 한다.
+        const alreadyPolled = err?.code === 'REPORT_PENDING'
         // Timeout or transient error — poll by claim key (no OTP required)
-        reading = await pollForReadingByClaim(claimKey)
+        reading = alreadyPolled ? null : await pollForReadingByClaim(claimKey)
         if (!reading) {
           sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: 'promo', completedAt: new Date().toISOString(), email: paymentEmail, claimKey }))
           setPaymentErrorCode('REPORT_PENDING')
@@ -551,9 +554,12 @@ export default function ResultsPage() {
               consent: input.consent,
             }
             reading = await apiClient.getFullReading(completed.orderId, calculatePayload, completed.paymentAccessToken, paidClaimKey)
-          } catch {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } catch (err: any) {
+            // REPORT_PENDING이면 api 클라이언트가 이미 기다린 뒤다 — 다시 폴링하지 않는다.
+            const alreadyPolled = err?.code === 'REPORT_PENDING'
             // Timeout — poll by claim key (no OTP required)
-            reading = await pollForReadingByClaim(paidClaimKey)
+            reading = alreadyPolled ? null : await pollForReadingByClaim(paidClaimKey)
             if (!reading) {
               setPremiumError((t.payment as any).reportPending || sr.premiumGeneratingDesc)
               return

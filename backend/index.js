@@ -198,6 +198,26 @@ if (require.main === module) {
 // ============================================
 // AWS Lambda용 핸들러 (배포 시 사용)
 // ============================================
-module.exports.handler = serverless(app, {
+const httpHandler = serverless(app, {
   binary: ['application/pdf', 'image/png', 'image/jpeg'],
 });
+
+// 같은 Lambda가 두 종류의 이벤트를 받는다. API Gateway가 보낸 HTTP 요청과, 리포트
+// 라우트가 스스로 띄운 생성 잡이다. 잡은 게이트웨이 뒤에 있지 않으므로 60초를 다
+// 쓸 수 있다 — 30초 한도 때문에 정상 리포트가 503으로 보이던 문제의 해결책이다.
+// (src/services/report-job.js의 주석 참고)
+module.exports.handler = async (event, context) => {
+    const { isReportJobEvent, runReportJob } = require('./src/services/report-job');
+    if (isReportJobEvent(event)) {
+        try {
+            const result = await runReportJob(event);
+            return { ok: true, readingId: result.readingId || null, skipped: !!result.skipped };
+        } catch (error) {
+            // 여기서 던지면 Lambda가 비동기 호출을 재시도한다. 재시도는 워커의
+            // claim key 중복 검사에 걸려 걸러지지만, 실패 자체는 로그로 남겨야 한다.
+            logger.logError(error, { context: 'Report Job' });
+            throw error;
+        }
+    }
+    return httpHandler(event, context);
+};

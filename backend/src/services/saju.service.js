@@ -194,6 +194,54 @@ async function generateSajuPreview(params) {
  * @param {string} params.subjectName - Name of person (optional)
  * @returns {Promise<Object>} Reading result with database ID
  */
+/**
+ * 결제가 이 리포트를 만들 자격이 있는지 확인한다.
+ *
+ * 생성 본문에서 떼어냈다. 리포트 생성이 비동기 잡으로 넘어간 뒤에도 **결제 문제는
+ * 요청 즉시** 4xx로 알려야 하기 때문이다. 202를 돌려준 다음 잡 안에서 실패하면
+ * 사용자는 영원히 폴링만 하게 된다.
+ *
+ * @throws 결제가 없거나, 완료되지 않았거나, 상품이 어긋나면 던진다. 라우트의 기존
+ *         catch가 메시지로 상태 코드를 가른다.
+ * @returns {Promise<object>} product_type이 채워진 payment 행
+ */
+async function verifyPaymentForReading({ orderId, userId, paymentAccessToken }) {
+  let paymentQuery = supabaseAdmin
+    .from('payments')
+    .select('*')
+    .eq('order_id', orderId);
+
+  if (userId) {
+    paymentQuery = paymentQuery.eq('user_id', userId);
+  } else {
+    const tokenPayload = verifyAccessToken(paymentAccessToken, {
+      purpose: 'payment',
+      orderId,
+    });
+    paymentQuery = paymentQuery
+      .eq('id', tokenPayload.paymentId)
+      .eq('payment_key', tokenPayload.paypalOrderId);
+  }
+
+  const { data: paymentData, error: paymentError } = await paymentQuery.single();
+
+  if (paymentError) {
+    throw handleSupabaseError(paymentError) || new Error('Payment not found');
+  }
+
+  if (paymentData.status !== 'completed') {
+    throw new Error(`Payment not completed. Current status: ${paymentData.status}`);
+  }
+  // Validate against the product this payment was created for (multi-currency
+  // catalog) — defaulting to premium_saju would reject every non-USD payment.
+  assertPaymentMatchesProduct(paymentData, paymentData.metadata?.product_type);
+
+  return {
+    ...paymentData,
+    product_type: paymentData.metadata?.product_type || 'premium_saju',
+  };
+}
+
 async function generateSajuReading(params) {
   const {
     userId = null,
@@ -239,40 +287,7 @@ async function generateSajuReading(params) {
     // Step 1: Verify payment (skip for promo code flow)
     let payment = null;
     if (!skipPaymentCheck) {
-      let paymentQuery = supabaseAdmin
-        .from('payments')
-        .select('*')
-        .eq('order_id', orderId);
-
-      if (userId) {
-        paymentQuery = paymentQuery.eq('user_id', userId);
-      } else {
-        const tokenPayload = verifyAccessToken(paymentAccessToken, {
-          purpose: 'payment',
-          orderId,
-        });
-        paymentQuery = paymentQuery
-          .eq('id', tokenPayload.paymentId)
-          .eq('payment_key', tokenPayload.paypalOrderId);
-      }
-
-      const { data: paymentData, error: paymentError } = await paymentQuery.single();
-
-      if (paymentError) {
-        throw handleSupabaseError(paymentError) || new Error('Payment not found');
-      }
-
-      if (paymentData.status !== 'completed') {
-        throw new Error(`Payment not completed. Current status: ${paymentData.status}`);
-      }
-      // Validate against the product this payment was created for (multi-currency
-      // catalog) — defaulting to premium_saju would reject every non-USD payment.
-      assertPaymentMatchesProduct(paymentData, paymentData.metadata?.product_type);
-
-      payment = {
-        ...paymentData,
-        product_type: paymentData.metadata?.product_type || 'premium_saju',
-      };
+      payment = await verifyPaymentForReading({ orderId, userId, paymentAccessToken });
       console.log('[Saju Service] Payment verified:', payment.product_type);
     } else {
       console.log('[Saju Service] Skipping payment check (promo flow)');
@@ -1925,6 +1940,7 @@ function parseInterpretationSections(text) {
 module.exports = {
   generateSajuPreview, // NEW: Free preview function
   generateSajuReading,
+  verifyPaymentForReading,
   getReading,
   getUserReadings,
   // 측정/검증용 — 결제·DB를 거치지 않고 생성 품질만 재기 위해 노출한다.

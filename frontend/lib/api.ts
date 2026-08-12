@@ -176,8 +176,11 @@ export const apiClient = {
       paymentAccessToken,
       ...birthInfo,
       ...(claimKey ? { claimKey } : {}),
+      // 202 + 폴링을 감당할 수 있다고 서버에 밝힌다. 이 플래그가 없으면 서버는
+      // 예전처럼 다 만들 때까지 응답을 붙들고, 30초에서 게이트웨이가 끊는다.
+      ...(claimKey ? { async: true } : {}),
     });
-    return response.data;
+    return awaitPendingReading(response, claimKey) as Promise<SajuReading>;
   },
 
   /**
@@ -260,8 +263,11 @@ export const apiClient = {
    * sha256(claimKey), enabling in-flow polling via reading-check?claim= without OTP.
    */
   calculateWithPromo: async (data: PromoCalculateRequest & { claimKey?: string }): Promise<SajuReading> => {
-    const response = await api.post<SajuReading>('/saju/calculate-promo', data);
-    return response.data;
+    const response = await api.post<SajuReading>('/saju/calculate-promo', {
+      ...data,
+      ...(data.claimKey ? { async: true } : {}),
+    });
+    return awaitPendingReading(response, data.claimKey) as Promise<SajuReading>;
   },
 
   createReportLookupToken: async (data: { email: string; orderId?: string; promoCode?: string }): Promise<ReportLookupTokenResponse> => {
@@ -315,6 +321,29 @@ export function generateClaimKey(): string {
   }
   // SSR / Node fallback: concatenate two UUIDs (128 bits → still fine for a secret)
   return crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+}
+
+/**
+ * 서버가 202(생성 중)를 주면 claim key로 결과를 받아 온다.
+ *
+ * 리포트 한 건에 40~50초가 걸리는데 API Gateway는 30초에서 끊는다. 그래서 서버는
+ * 검증만 끝내고 생성을 잡으로 넘긴 뒤 202를 준다. 호출자 입장에서는 예전과 똑같이
+ * "완성된 리포트가 담긴 프로미스"로 보이게 여기서 기다려 준다.
+ *
+ * 시간 안에 못 받으면 `REPORT_PENDING`으로 던진다 — 호출자가 다시 폴링하지 않고
+ * 바로 "생성 중" 화면으로 갈 수 있게 하는 신호다.
+ */
+async function awaitPendingReading(
+  response: { status: number; data: unknown },
+  claimKey?: string
+): Promise<unknown> {
+  if (response.status !== 202) return response.data;
+  if (!claimKey) throw { code: 'REPORT_PENDING', statusCode: 202 };
+
+  // 생성 자체가 40~50초다. 폴링 예산을 그보다 넉넉하게 잡는다(5초 × 18 = 90초).
+  const reading = await pollForReadingByClaim(claimKey, { maxAttempts: 18 });
+  if (!reading) throw { code: 'REPORT_PENDING', statusCode: 202 };
+  return reading;
 }
 
 /**

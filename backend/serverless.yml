@@ -125,6 +125,9 @@ provider:
     # SAJU_LOCALIZED_VOICE=0 kills it everywhere without a redeploy.
     SAJU_LOCALIZED_VOICE_LANGUAGES: ${env:SAJU_LOCALIZED_VOICE_LANGUAGES, ''}
     SAJU_LOCALIZED_VOICE: ${env:SAJU_LOCALIZED_VOICE, ''}
+    # 리포트 생성을 비동기 잡으로 띄울지. `0`이면 재배포 없이 예전(동기) 동작으로
+    # 되돌아간다 — 30초를 넘기면 게이트웨이가 503을 내고 프론트가 폴링으로 줍는다.
+    SAJU_ASYNC_REPORTS: ${env:SAJU_ASYNC_REPORTS, ''}
 
   # IAM Role Statements (permissions for Lambda)
   iam:
@@ -138,6 +141,16 @@ provider:
             - logs:PutLogEvents
           Resource: 'arn:aws:logs:*:*:*'
 
+        # 리포트 생성 잡을 자기 자신에게 비동기로 띄우기 위한 권한.
+        # API Gateway는 30초에서 끊지만 리포트는 40~50초가 걸린다. 요청 핸들러는
+        # 검증만 하고 이 호출로 워커를 띄운 뒤 202를 준다.
+        # (src/services/report-job.js)
+        - Effect: Allow
+          Action:
+            - lambda:InvokeFunction
+          Resource:
+            - 'arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-api'
+
 # ============================================
 # Functions (Lambda handlers)
 # ============================================
@@ -149,6 +162,10 @@ functions:
     # observed 30-day peak concurrency of 2.
     reservedConcurrency: 5
     url: true
+    # 비동기 호출(리포트 생성 잡)이 실패해도 Lambda가 재시도하지 않게 한다. 기본값 2는
+    # 같은 아이의 리포트를 두 번 만들 수 있다. 워커가 claim key로 중복을 막긴 하지만,
+    # 재시도로 얻을 것이 없으므로 애초에 끈다.
+    maximumRetryAttempts: 0
     events:
       # HTTP API Gateway - handles all routes
       - httpApi:
