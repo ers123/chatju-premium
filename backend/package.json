@@ -23,7 +23,8 @@
     "deploy:dev": "serverless deploy --stage dev",
     "deploy:remove": "serverless remove --stage prod",
     "logs": "serverless logs -f api --stage prod --tail",
-    "offline": "serverless offline"
+    "offline": "serverless offline",
+    "cleanup:test-rows": "node scripts/cleanup-test-rows.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0 || ^1.0.0",
