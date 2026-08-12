@@ -759,6 +759,74 @@ async function generateReportPDF(params) {
 
       console.log('[PDF] Using fonts:', { fontRegular, fontBold });
 
+      // NotoSansThaiLooped carries 200 glyphs: Thai, and almost nothing else. It
+      // has no Latin letters, no digits, and no hanja, so every Thai PDF was
+      // printing "SoMyung | somyung.cc | 3 / 17" as empty boxes, along with the
+      // element counts, the percentages, and the pillar elements (火+金 came out
+      // as "+"). Verified against the font's own glyph table, not inferred.
+      //
+      // pdfkit has no font fallback, so the document's text() is wrapped for Thai
+      // only: Thai codepoints keep the Thai font, everything else is drawn with
+      // NotoSansJP, which covers Latin, digits, hanja and ☯. The two fonts are
+      // exactly complementary, so nothing is left without a glyph.
+      if (activeFontKey === 'th' && registeredFonts.ja.hasFont) {
+        const THAI_BLOCK = /[฀-๿]/;
+        const fallback = { regular: registeredFonts.ja.regular, bold: registeredFonts.ja.bold || registeredFonts.ja.regular };
+        const rawFont = doc.font.bind(doc);
+        const rawText = doc.text.bind(doc);
+        let currentFont = fontRegular;
+
+        doc.font = function (name, ...rest) {
+          if (typeof name === 'string') currentFont = name;
+          return rawFont(name, ...rest);
+        };
+
+        const fallbackFor = (name) => (name === fontBold ? fallback.bold : fallback.regular);
+
+        // Whitespace is neutral — it joins the run in progress so a Thai sentence
+        // does not fragment at every space.
+        const splitRuns = (str) => {
+          const runs = [];
+          for (const ch of Array.from(str)) {
+            const thai = /\s/.test(ch) && runs.length ? runs[runs.length - 1].thai : THAI_BLOCK.test(ch);
+            if (runs.length && runs[runs.length - 1].thai === thai) runs[runs.length - 1].text += ch;
+            else runs.push({ thai, text: ch });
+          }
+          return runs;
+        };
+
+        doc.text = function (str, ...rest) {
+          if (typeof str !== 'string' || str === '') return rawText(str, ...rest);
+          const runs = splitRuns(str);
+
+          // One run: draw it whole, so x/y/width/align behave exactly as before.
+          if (runs.length === 1) {
+            if (runs[0].thai) return rawText(str, ...rest);
+            rawFont(fallbackFor(currentFont));
+            const result = rawText(str, ...rest);
+            rawFont(currentFont);
+            return result;
+          }
+
+          // Mixed: pdfkit's `continued` keeps wrapping and line breaking intact
+          // across the runs while the font changes between them.
+          const optsIndex = rest.findIndex((a) => a && typeof a === 'object');
+          const opts = optsIndex >= 0 ? rest[optsIndex] : {};
+          const positional = optsIndex >= 0 ? rest.slice(0, optsIndex) : rest;
+          let result = doc;
+          runs.forEach((run, i) => {
+            const last = i === runs.length - 1;
+            rawFont(run.thai ? currentFont : fallbackFor(currentFont));
+            const runOpts = { ...opts, continued: !last };
+            result = i === 0
+              ? rawText(run.text, ...positional, runOpts)
+              : rawText(run.text, runOpts);
+          });
+          rawFont(currentFont);
+          return result;
+        };
+      }
+
       const PAGE_W = doc.page.width;   // 595.28 for A4
       const PAGE_H = doc.page.height;  // 841.89 for A4
       const MARGIN_L = 50;
