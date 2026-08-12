@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
 import { localizedLegalPath } from '@/app/lib/i18n/routes'
+import { formatBirthDateForDisplay } from '@/app/lib/date-display'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 // UI components (using native elements with inline styles)
 
@@ -254,6 +255,37 @@ export default function InputFormPage() {
 
   const s = t.sajuInput
   const stepTitles = s.steps
+
+  // 비활성 버튼은 왜 눌리지 않는지 말해 주지 않는다. QA에서 부모 출생 시간을 비워 둔
+  // 채 5단계에 도착한 사람이 회색 버튼 앞에서 멈췄고, 화면 어디에도 이유가 없었다.
+  // 막힌 단계에서 무엇이 비었는지 이름으로 알려 준다.
+  const parentLabel = formData.parentRole === 'mother' ? s.mother : s.father
+  const missingFields: Record<number, string[]> = {
+    1: [!formData.name && s.childName, !formData.gender && s.gender].filter(Boolean) as string[],
+    // 날짜 오류(미래·범위 밖)는 입력 바로 아래에 이미 자기 문구로 뜬다.
+    2: [!(formData.year && formData.month && formData.day) && s.birthDate].filter(Boolean) as string[],
+    3: [!canProceedStep3 && s.childBirthTime].filter(Boolean) as string[],
+    4: [!canProceedStep4 && s.parentBirthDate(parentLabel)].filter(Boolean) as string[],
+    5: [
+      parentDateComplete && !parentTimeComplete && s.parentBirthTime(parentLabel),
+      !formData.ageVerified && s.ageVerification,
+      !formData.guardianConfirmed && s.guardianConfirmation,
+      !formData.privacyAgreed && s.privacyAgreement,
+      !formData.overseasProcessingAgreed && s.overseasProcessingAgreement,
+    ].filter(Boolean) as string[],
+  }
+
+  // 컴포넌트가 아니라 그냥 조각을 돌려주는 함수다. 렌더 안에서 컴포넌트를 정의하면
+  // 매 렌더마다 새 타입이 되어 상태가 초기화된다(react-hooks/static-components).
+  const missingHint = (hintStep: number) => {
+    const fields = missingFields[hintStep]
+    if (!fields || fields.length === 0) return null
+    return (
+      <p role="status" style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: '#8B8580', textAlign: 'center' }}>
+        {s.missingRequired(fields.join(', '))}
+      </p>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#FDFCFA' }}>
@@ -522,6 +554,7 @@ export default function InputFormPage() {
               >
                 {s.nextStep}
               </button>
+              {missingHint(1)}
             </div>
           )}
 
@@ -688,6 +721,7 @@ export default function InputFormPage() {
                   {s.nextStep}
                 </button>
               </div>
+              {missingHint(2)}
             </div>
           )}
 
@@ -960,6 +994,7 @@ export default function InputFormPage() {
                   {s.nextStep}
                 </button>
               </div>
+              {missingHint(3)}
             </div>
           )}
 
@@ -1231,6 +1266,7 @@ export default function InputFormPage() {
                   {s.nextStep}
                 </button>
               </div>
+              {missingHint(4)}
             </div>
           )}
 
@@ -1316,12 +1352,12 @@ export default function InputFormPage() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: '#6B7280' }}>{s.summaryChildBirth}</span>
-                      <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formData.year}.{formData.month}.{formData.day}</span>
+                      <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formatBirthDateForDisplay(`${formData.year}.${formData.month.padStart(2, '0')}.${formData.day.padStart(2, '0')}`, lang)}</span>
                     </div>
                     {parentDateComplete && (
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: '#6B7280' }}>{s.summaryParentBirth(formData.parentRole === 'mother' ? s.mother : s.father)}</span>
-                        <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formData.parentYear}.{formData.parentMonth}.{formData.parentDay}</span>
+                        <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formatBirthDateForDisplay(`${formData.parentYear}.${formData.parentMonth.padStart(2, '0')}.${formData.parentDay.padStart(2, '0')}`, lang)}</span>
                       </div>
                     )}
                   </div>
@@ -1515,6 +1551,7 @@ export default function InputFormPage() {
                   <span>✨</span>
                 </button>
               </div>
+              {missingHint(5)}
             </div>
           )}
         </form>
