@@ -4,7 +4,7 @@
 const { getAIService } = require('./ai.service');
 const { supabaseAdmin, handleSupabaseError } = require('../config/supabase');
 const { calculateFullFortuneCycles } = require('./daeun.service');
-const { calculateMansae } = require('../utils/mansae-wrapper');
+const { calculateMansae, STEM_ELEMENT } = require('../utils/mansae-wrapper');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
 const { assertPaymentMatchesProduct } = require('./payment.service');
 const { buildMultipleBirthSection } = require('../utils/multiple-birth');
@@ -338,7 +338,8 @@ async function generateSajuReading(params) {
       birthTime === null, // indicate if time is unknown
       fortuneCycles,
       twinInfo,
-      subjectName
+      subjectName,
+      timezone
     );
 
     console.log('[Saju Service] AI interpretation generated');
@@ -581,22 +582,29 @@ async function generateAIPreview(childManseryeok, parentManseryeok = null, paren
   };
 
   const childDominant = getStrongestElement(childElements);
+  // 기질의 기준은 일간(日干)이다. 오행 개수 최다는 "이 원국에 무엇이 많은가"일 뿐이고,
+  // 둘은 원국의 약 60%에서 갈린다(측정: 864개 원국). 유료 리포트의 부모 대사는
+  // 처음부터 일간을 기준으로 골라 왔으므로, 프리뷰가 개수 최다를 "핵심 기질"로
+  // 내걸면 부모는 산 리포트에서 다른 아이 얘기를 읽게 된다.
+  const childCore = STEM_ELEMENT[childPillars.day.korean[0]] || childDominant;
 
   let parentInfo = '';
   let relationshipAnalysis = '';
 
   if (parentManseryeok) {
     const parentDominant = getStrongestElement(parentManseryeok.elements);
+    const parentCore = STEM_ELEMENT[parentManseryeok.pillars.day.korean[0]] || parentDominant;
     const parentLabel = parentRole === 'mother' ? '엄마' : '아빠';
 
     parentInfo = `
 **${parentLabel} 사주 (궁합 분석용):**
 - 일주(日柱): ${parentManseryeok.pillars.day.korean} (${parentManseryeok.pillars.day.element})
-- 주 오행: ${parentDominant} (${parentManseryeok.elements[parentDominant]}개)
+- 기질 오행(일간 기준): ${parentCore}
+- 원국에 가장 많은 오행: ${parentDominant} (${parentManseryeok.elements[parentDominant]}개)
 `;
 
     relationshipAnalysis = `
-3. **부모-자녀 관계 힌트** (2문장): ${parentLabel}(${parentDominant} 기질)과 아이(${childDominant} 기질)의 관계에서 가장 자주 발생하는 갈등 패턴 1가지만 짧게. 구체적 해결 방법은 언급하지 말고 "왜 부딪히는지"만 설명.
+3. **부모-자녀 관계 힌트** (2문장): ${parentLabel}(${parentCore} 기질)과 아이(${childCore} 기질)의 관계에서 가장 자주 발생하는 갈등 패턴 1가지만 짧게. 구체적 해결 방법은 언급하지 말고 "왜 부딪히는지"만 설명.
 4. **프리미엄 티저** (1문장): "상세 리포트에서는 이 아이만의 행동 시그니처, 6가지 상황별 대응 스크립트, 7일 양육 실험까지 확인할 수 있습니다." 라고 마무리.`;
   }
 
@@ -762,7 +770,7 @@ function getParentChildRelation(parentElement, childElement) {
  * @param {boolean} childTimeUnknown - Whether child's birth time is unknown
  * @returns {Promise<Object>} AI interpretation with relationship focus
  */
-async function generateAIInterpretation(childManseryeok, parentManseryeok = null, parentRole = null, language = 'ko', productType = 'basic', childTimeUnknown = false, fortuneCycles = null, twinInfo = null, childNameInput = '아이') {
+async function generateAIInterpretation(childManseryeok, parentManseryeok = null, parentRole = null, language = 'ko', productType = 'basic', childTimeUnknown = false, fortuneCycles = null, twinInfo = null, childNameInput = '아이', readerTimeZone = undefined) {
   // The name is optional, and callers pass null rather than omitting it — which
   // skips the default above and leaves the presentation cover without a child,
   // failing the contract and dropping a *paid* report to the fallback layout.
@@ -830,14 +838,17 @@ async function generateAIInterpretation(childManseryeok, parentManseryeok = null
   const getStrongestElement = (elements) => Object.entries(elements).reduce((a, b) => a[1] > b[1] ? a : b)[0];
   const getWeakestElement = (elements) => Object.entries(elements).reduce((a, b) => a[1] < b[1] ? a : b)[0];
 
+  // childDominant is "what this chart has the most of" — it drives the remedy
+  // table below (what to temper). It is NOT the child's temperament; that is the
+  // day stem, which the injected parent scripts have always used.
   const childDominant = getStrongestElement(childElements);
   const childWeak = getWeakestElement(childElements);
-  const childTraits = elementTraits[childDominant];
 
   // Determine 신강/신약 — enhanced with 월령(月令) consideration
   const dayStem = childPillars.day.korean[0]; // First char = heavenly stem
-  const { STEM_ELEMENT, BRANCH_ELEMENT } = require('../utils/mansae-wrapper');
+  const { BRANCH_ELEMENT } = require('../utils/mansae-wrapper');
   const dayMasterElement = STEM_ELEMENT[dayStem]; // 일간의 오행
+  const childTraits = elementTraits[dayMasterElement] || elementTraits[childDominant];
   const monthBranch = childPillars.month.korean[1]; // 월지
   const monthBranchElement = BRANCH_ELEMENT[monthBranch];
 
@@ -1130,8 +1141,8 @@ ${childPillars.hour?.korean ? `| 시주 | ${childPillars.hour.korean[0]} | ${chi
 - 금(金): ${childElements['금']}개 ${childElements['금'] >= 3 ? '▶ 강함' : childElements['금'] === 0 ? '▶ 없음!' : ''}
 - 수(水): ${childElements['수']}개 ${childElements['수'] >= 3 ? '▶ 강함' : childElements['수'] === 0 ? '▶ 없음!' : ''}
 
-**주 기질:** ${elementLabel(childDominant, language)} (${childTraits.name}) — ${childTraits.traits}
-${childSecond && childSecondTraits ? `**부 기질:** ${elementLabel(childSecond, language)} (${childSecondTraits.name}) — ${childSecondTraits.traits}` : ''}
+**주 기질 (일간 기준):** ${elementLabel(dayMasterElement, language)} (${childTraits.name}) — ${childTraits.traits}
+${childSecond && childSecondTraits && childSecond !== dayMasterElement ? `**부 기질 (원국에 두 번째로 많은 오행):** ${elementLabel(childSecond, language)} (${childSecondTraits.name}) — ${childSecondTraits.traits}` : ''}
 **부족 오행:** ${elementLabel(childWeak, language)} (${elementTraits[childWeak].name}) — ${elementTraits[childWeak].stress}에 취약
 ${parentSection}
 ${twinSection}
@@ -1702,6 +1713,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
       childName,
       generatedAt,
       language,
+      timeZone: readerTimeZone,
     });
 
     let presentationResult = adapt(interpretationText);

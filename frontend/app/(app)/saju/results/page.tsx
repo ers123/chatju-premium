@@ -70,7 +70,17 @@ const elementVisuals: Record<string, { emoji: string; color: string; bgColor: st
   '수': { emoji: '💧', color: '#556B7E', bgColor: '#E3F2FD' },
 }
 
-// Get dominant element from balance
+// The child's core temperament: the element of the day stem (일간), which is the
+// self in this system and the anchor the paid report's parent scripts already use.
+// Falls back to the count-based reading only if the day pillar is missing.
+const getCoreElement = (result: SajuResult) => {
+  const dayStemElement = result.fourPillars?.일주?.천간오행
+  if (dayStemElement && dayStemElement in elementVisuals) return dayStemElement
+  return getDominantElement(result.ohaengBalance)
+}
+
+// Get the most-represented element in the chart. Still used where the question
+// really is "what does this chart have a lot of" — not for core temperament.
 const getDominantElement = (balance: Record<string, number>) => {
   let maxKey = '목'
   let maxValue = 0
@@ -368,7 +378,10 @@ export default function ResultsPage() {
       const validation = await apiClient.validatePromoCode(promoCode)
       if (!validation.valid) {
         setPaymentErrorCode('PROMO_INVALID')
-        setPaymentError(validation.error || (t.payment as any).invalidPromo || t.payment.promoInvalid)
+        // The server's message is written in Korean for every locale, so a
+        // Japanese or Spanish visitor was being shown Korean here. Always
+        // prefer the translated string; the server text is a last resort.
+        setPaymentError(t.payment.promoInvalid || (t.payment as any).invalidPromo || validation.error)
         setPromoValidating(false)
         return
       }
@@ -819,7 +832,13 @@ export default function ResultsPage() {
     )
   }
 
-  const dominantElement = getDominantElement(result.ohaengBalance)
+  // The child's core temperament is the day stem's element (일간), not whichever
+  // element merely appears most often in the chart. Those two disagree in about
+  // 60% of charts, and the paid report has always keyed its parent scripts to the
+  // day stem — so a preview that announced "fire" was handing the reader a report
+  // about a water child. The weak element stays count-based: that one really is
+  // a question of what the chart is short of.
+  const dominantElement = getCoreElement(result)
   const weakElement = getWeakElement(result.ohaengBalance)
   const dominantVisual = elementVisuals[dominantElement]
   const weakVisual = elementVisuals[weakElement]
@@ -1316,7 +1335,7 @@ export default function ResultsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
             {/* Visual share card */}
             {result && inputData && (() => {
-              const dominant = getDominantElement(result.ohaengBalance)
+              const dominant = getCoreElement(result)
               const visual = elementVisuals[dominant]
               if (!visual) return null
               const elInfo = sr.elements?.[dominant as keyof typeof sr.elements]
@@ -1354,7 +1373,7 @@ export default function ResultsPage() {
               <p style={{ fontSize: '0.875rem', color: '#6B5E52', marginBottom: '1rem', lineHeight: 1.6 }}>
                 {sr.siblingDesc || 'Analyze a sibling to compare temperaments'}
               </p>
-              <Link href={`/saju/input?from=sibling&siblingName=${encodeURIComponent(inputData?.name || '')}&siblingElement=${getDominantElement(result?.ohaengBalance || {})}`} style={{
+              <Link href={`/saju/input?from=sibling&siblingName=${encodeURIComponent(inputData?.name || '')}&siblingElement=${result ? getCoreElement(result) : ''}`} style={{
                   padding: '0.75rem 1.5rem',
                   borderRadius: '10px',
                   fontWeight: 600,
