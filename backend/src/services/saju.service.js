@@ -656,9 +656,19 @@ async function generateAIPreview(childManseryeok, parentManseryeok = null, paren
     : '';
 
   // Language names for preview prompt (premium uses langNameMap defined later)
-  const previewLangNames = { en: 'English', ja: 'Japanese', zh: 'Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
+  // zh는 'Chinese'가 아니라 'Simplified Chinese'다. 그냥 'Chinese'라고 하면 모델이
+  // 실행마다 번체와 간체를 오간다(측정: 5건 중 2~5건이 번체). zh 로케일은 간체 기준으로
+  // 잡혀 있다 — 가격은 CNY, PDF 폰트는 NotoSansSC. 폰트가 번체 글자도 가지고 있어
+  // 빈 상자가 되지는 않지만, 본토 독자에게는 남의 나라 글로 읽힌다.
+  const previewLangNames = { en: 'English', ja: 'Japanese', zh: 'Simplified Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
   const previewOutputLang = previewLangNames[language] || 'English';
-  const languageInstruction = language !== 'ko' ? `\n**Write ALL output in ${previewOutputLang}. Translate Korean terms into ${previewOutputLang}. Show Chinese characters in parentheses. No Korean text in the output.**\n` : '';
+  // 한자를 괄호에 함께 쓰라는 지시는 라틴·태국 문자권에서만 뜻이 있다. 일본어·중국어는
+  // 한자가 본문 문자라서 그대로 시키면 `水（水）`, `四柱（四柱）`처럼 자기 자신을 괄호에
+  // 한 번 더 적는다(측정: ja·zh 5건 중 4건). 문자권에 따라 지시를 나눈다.
+  const usesHanScript = language === 'ja' || language === 'zh';
+  const languageInstruction = language === 'ko' ? '' : usesHanScript
+    ? `\n**Write ALL output in ${previewOutputLang}. Translate Korean terms into ${previewOutputLang}. Chinese characters are part of the script here — write each term once and never repeat a character in parentheses after itself (no 水（水）, no 四柱（四柱）). No Korean text in the output.**\n`
+    : `\n**Write ALL output in ${previewOutputLang}. Translate Korean terms into ${previewOutputLang}. Show Chinese characters in parentheses. No Korean text in the output.**\n`;
 
   // 기질/편중을 알려 주는 블록. 비한국어 출력에서는 **한글을 한 글자도 쓰지 않는다.**
   // 프롬프트에 한글 오행명("수", "토")을 넣었더니 모델이 그대로 베껴 인도네시아어
@@ -687,7 +697,9 @@ ${elementLines}
 ${elementLines}
 The most numerous element is ${dominantLabel}. That does NOT make this a "${dominantLabel} child": the temperament is ${coreLabel}, and ${dominantLabel} is the energy the child is surrounded by.
 **Use both, with distinct roles:** name the temperament ${coreLabel}, and mention the abundance of ${dominantLabel} once, as the environment that temperament sits in. Never use ${dominantLabel} as the name of the temperament.
-Write every element name in ${previewOutputLang} with the Chinese character in parentheses. No Korean.`;
+${usesHanScript
+  ? 'Write each element with its character only — 水, 火 — never repeated in parentheses after itself. No Korean.'
+  : `Write each element as the ${previewOutputLang} word with the character in parentheses — "Water (水)". No Korean.`}`;
 
   // 프롬프트 본문의 언어. 지금까지 열 개 언어 전부가 **한국어 프롬프트**를 받고
   // "출력만 다른 언어로 쓰라"는 지시 한 줄에 기대고 있었다. 측정해 보니 그 지시가
@@ -813,7 +825,23 @@ preview thinner than it should be. Two facts, two roles.
       temperature: 0.7,
     });
 
-    const previewText = result.content || '';
+    // `木（木）`, `四柱（四柱）` — 한자가 본문 문자인 일본어·중국어에서 모델이 한자를
+    // 괄호에 한 번 더 적는다. 프롬프트로 줄이긴 했지만(ja·zh 5건 중 4건 → 10건 중 1건)
+    // 확률적 지시라 0이 되지 않는다. 같은 글자가 자기 뒤 괄호에 그대로 반복될 때만
+    // 지운다 — 다른 글자가 들어 있으면 번역 병기라서 건드리지 않는다.
+    let previewText = (result.content || '').replace(/([一-鿿]{1,4})[（(]\1[)）]/g, '$1');
+
+    // 비한국어 출력에 한글 한두 글자가 끼는 일이 남아 있다(태국어 `วัน간` — 日干을
+    // 반쯤 한국어로 옮긴 흔적). **짧은 조각만** 지운다. 본문 전체가 한국어로 나오는
+    // 진짜 실패는 긴 덩어리라 그대로 남고, 측정과 로그에 계속 걸린다 — 조용히
+    // 지워서 문제를 안 보이게 만들면 안 된다.
+    if (language !== 'ko') {
+      previewText = previewText.replace(/[가-힣]{1,2}/g, (run, offset, whole) => {
+        const neighbourhood = whole.slice(Math.max(0, offset - 12), offset + 12);
+        const hangulAround = (neighbourhood.match(/[가-힣]/g) || []).length;
+        return hangulAround <= 3 ? '' : run;
+      });
+    }
 
     if (!previewText) {
       console.warn('[Saju Service] AI returned empty preview content, provider:', result.provider);
@@ -1106,7 +1134,7 @@ ${Object.entries(parentElements).map(([k, v]) => `- ${k}: ${v}개${v >= 3 ? ' �
   // 출력 언어 이름은 아래 라벨 계약과 이 지식 블록 양쪽이 쓰므로 먼저 정한다.
   // (지식 블록보다 뒤에 선언하면 TDZ ReferenceError가 나고, 아래 catch가 그것을 삼켜
   //  지식 주입이 조용히 꺼진 채로 돌아간다 — 실제로 한 번 그렇게 됐다.)
-  const langNameMap = { ko: 'Korean', en: 'English', ja: 'Japanese', zh: 'Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
+  const langNameMap = { ko: 'Korean', en: 'English', ja: 'Japanese', zh: 'Simplified Chinese', vi: 'Vietnamese', id: 'Indonesian', es: 'Spanish', pt: 'Portuguese', fr: 'French', th: 'Thai' };
   const outputLangName = langNameMap[language] || 'English';
 
   let knowledgeContext = '';
