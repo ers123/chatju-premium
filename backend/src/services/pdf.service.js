@@ -92,6 +92,7 @@ const LABELS = {
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: "Your Child's Temperament Map",
     calculatedProfileKicker: 'CALCULATED PROFILE',
+    pillarLegend: 'Each pillar is written in the traditional characters the calculation uses — one heavenly stem and one earthly branch. The smaller line beneath it names the two elements that pair carries; the element names are spelled out in the distribution below.',
     elementDistribution: 'Five Elements Distribution',
     howToReadTitle: 'How to Read These Calculations',
     howToReadCalcLabel: 'Calculated values',
@@ -242,6 +243,7 @@ const LABELS = {
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'Bản đồ khí chất của trẻ',
     calculatedProfileKicker: 'HỒ SƠ ĐÃ TÍNH',
+    pillarLegend: 'Mỗi trụ được viết bằng chữ truyền thống mà phép tính này dùng: một thiên can và một địa chi. Dòng nhỏ bên dưới cho biết hai hành mà cặp chữ đó mang; tên các hành có trong phần phân bố bên dưới.',
     elementDistribution: 'Phân bố Ngũ hành',
     howToReadTitle: 'Cách đọc các số liệu tính toán',
     howToReadCalcLabel: 'Giá trị tính toán',
@@ -292,6 +294,7 @@ const LABELS = {
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'Peta Temperamen Anak',
     calculatedProfileKicker: 'PROFIL TERHITUNG',
+    pillarLegend: 'Setiap pilar ditulis dengan aksara tradisional yang dipakai perhitungan ini: satu batang langit dan satu cabang bumi. Baris kecil di bawahnya menyebut dua unsur yang dibawa pasangan itu; namanya tertulis pada distribusi di bawah.',
     elementDistribution: 'Distribusi Lima Unsur',
     howToReadTitle: 'Cara Membaca Hasil Perhitungan Ini',
     howToReadCalcLabel: 'Nilai perhitungan',
@@ -342,6 +345,7 @@ const LABELS = {
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'Mapa del temperamento de tu hijo',
     calculatedProfileKicker: 'PERFIL CALCULADO',
+    pillarLegend: 'Cada pilar se escribe con los caracteres tradicionales que usa el cálculo: un tronco celeste y una rama terrestre. La línea más pequeña indica los dos elementos que aporta esa pareja; sus nombres aparecen en la distribución de abajo.',
     elementDistribution: 'Distribución de los Cinco Elementos',
     howToReadTitle: 'Cómo leer estos cálculos',
     howToReadCalcLabel: 'Valores calculados',
@@ -392,6 +396,7 @@ const LABELS = {
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'Mapa do temperamento da criança',
     calculatedProfileKicker: 'PERFIL CALCULADO',
+    pillarLegend: 'Cada pilar é escrito com os caracteres tradicionais usados no cálculo: um tronco celeste e um ramo terrestre. A linha menor indica os dois elementos que esse par carrega; os nomes aparecem na distribuição abaixo.',
     elementDistribution: 'Distribuição dos Cinco Elementos',
     howToReadTitle: 'Como ler estes cálculos',
     howToReadCalcLabel: 'Valores calculados',
@@ -442,6 +447,7 @@ const LABELS = {
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: "Carte du tempérament de l'enfant",
     calculatedProfileKicker: 'PROFIL CALCULÉ',
+    pillarLegend: 'Chaque pilier est écrit dans les caractères traditionnels utilisés pour le calcul : un tronc céleste et une branche terrestre. La ligne plus petite indique les deux éléments que ce couple porte ; leurs noms figurent dans la répartition ci-dessous.',
     elementDistribution: 'Répartition des Cinq Éléments',
     howToReadTitle: 'Comment lire ces calculs',
     howToReadCalcLabel: 'Valeurs calculées',
@@ -492,6 +498,7 @@ const LABELS = {
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'แผนที่ลักษณะนิสัยของลูก',
     calculatedProfileKicker: 'ข้อมูลที่คำนวณได้',
+    pillarLegend: 'แต่ละเสาเขียนด้วยอักษรดั้งเดิมที่ใช้ในการคำนวณ คือก้านฟ้าหนึ่งตัวและกิ่งดินหนึ่งตัว บรรทัดเล็กด้านล่างบอกธาตุสองธาตุที่คู่อักษรนั้นมี ชื่อธาตุดูได้จากการกระจายด้านล่าง',
     elementDistribution: 'การกระจายธาตุทั้งห้า',
     howToReadTitle: 'วิธีอ่านผลการคำนวณนี้',
     howToReadCalcLabel: 'ค่าที่คำนวณได้',
@@ -1126,6 +1133,15 @@ async function generateReportPDF(params) {
               .text(localizePillarElement(pillar?.element || pillar?.오행 || ''), x, y + 67, { width: pillarW, align: 'center' });
           });
           doc.y = y + 112;
+
+          // A French or Spanish reader sees four characters they cannot read and
+          // no clue what they are. Readers of Korean, Japanese and Chinese can
+          // read them, so those locales carry no legend and lose no space to one.
+          if (labels.pillarLegend) {
+            doc.font(fontRegular).fontSize(7.5).fillColor(COLORS.lightText)
+              .text(labels.pillarLegend, MARGIN_L, doc.y, { width: CONTENT_W, lineGap: 1.5 });
+            doc.y += 12;
+          }
         }
 
         if (elements) {
