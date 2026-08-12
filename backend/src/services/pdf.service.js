@@ -23,6 +23,14 @@ const FONT_MAP = {
     regular: path.join(FONTS_DIR, 'NotoSansThaiLooped-Regular.ttf'),
     bold: path.join(FONTS_DIR, 'NotoSansThaiLooped-Bold.ttf'),
   },
+  // Simplified Chinese had been riding on the Japanese font, which does not
+  // carry simplified-only forms: 时 报 读 说 话 计 结 观 译 and 23 others were
+  // blank in the Chinese PDF's own labels, before counting the body text.
+  zh: {
+    family: 'NotoSansSC',
+    regular: path.join(FONTS_DIR, 'NotoSansSC-Regular.otf'),
+    bold: path.join(FONTS_DIR, 'NotoSansSC-Bold.otf'),
+  },
 };
 
 // ─── i18n labels ────────────────────────────────────────────────────────────
@@ -727,7 +735,7 @@ async function generateReportPDF(params) {
 
       // Register both supported font families so pdfkit can switch cleanly per language.
       const registeredFonts = {};
-      for (const key of ['default', 'ja', 'th']) {
+      for (const key of ['default', 'ja', 'th', 'zh']) {
         const fontFiles = FONT_MAP[key];
         const hasFont = fs.existsSync(fontFiles.regular);
         const hasBoldFont = fs.existsSync(fontFiles.bold);
@@ -752,7 +760,9 @@ async function generateReportPDF(params) {
         };
       }
 
-      const activeFontKey = language === 'th' ? 'th' : (language === 'ja' || language === 'zh') ? 'ja' : 'default';
+      const activeFontKey = language === 'th' ? 'th'
+        : language === 'zh' ? (registeredFonts.zh.hasFont ? 'zh' : 'ja')
+          : language === 'ja' ? 'ja' : 'default';
       const fontRegular = registeredFonts[activeFontKey].regular;
       const fontBold = registeredFonts[activeFontKey].bold;
       const pillarCardFont = registeredFonts.ja.bold || registeredFonts.ja.regular || fontBold;

@@ -181,7 +181,10 @@ package:
     - 'package.json'
 
     # Exclude (reduce package size)
-    - '!assets/fonts/*.otf'
+    # No blanket .otf exclusion: it existed to keep the 32MB NotoSansCJKkr files
+    # out of the package. Those are gone, and the Simplified Chinese font ships
+    # as .otf — excluding it would deploy a Lambda that silently falls back to
+    # the Japanese font and prints blank boxes for simplified-only characters.
     - '!.git/**'
     - '!.env*'
     - '!.gitignore'
@@ -190,6 +193,13 @@ package:
     - '!*.test.js'
     - '!coverage/**'
     - '!docs/**'
+
+    # Ballast that node never loads at runtime: source maps, type declarations
+    # and package READMEs inside node_modules. 18.5MB uncompressed, and the
+    # package now carries two CJK font families, so the headroom is worth having.
+    - '!node_modules/**/*.map'
+    - '!node_modules/**/*.d.ts'
+    - '!node_modules/**/*.md'
 
 # ============================================
 # Custom Configuration
