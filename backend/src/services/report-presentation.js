@@ -3,6 +3,8 @@
 // opt into this small, validated structure without teaching the renderer to
 // guess at arbitrary prose.
 
+const { formatReportDate } = require('../utils/report-date');
+
 const REQUIRED_SECTION_NUMBERS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 const BLOCK_REQUIREMENTS = Object.freeze({
   text: ['title', 'text'],
@@ -594,7 +596,7 @@ function mergePresentationResult(baseInterpretation, presentationResult) {
   return { ...baseInterpretation, presentationStatus: presentationResult.presentationStatus, ...(presentationResult.presentationStatusReason ? { presentationStatusReason: presentationResult.presentationStatusReason } : {}), ...(presentationResult.presentation ? { presentation: presentationResult.presentation } : {}) };
 }
 
-function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = null, childName = '아이', generatedAt = new Date().toISOString(), language = 'ko' }) {
+function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = null, childName = '아이', generatedAt = new Date().toISOString(), language = 'ko', timeZone = undefined }) {
   const locale = getPremiumPresentationLocale(language);
   const label = locale.labels;
   const generated = locale.generated;
@@ -655,7 +657,7 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
     const presentation = {
       locale: language,
       ui: locale.ui,
-      cover: { kicker: locale.cover.kicker, title: locale.cover.title, child: childName, date: String(generatedAt).slice(0, 10) },
+      cover: { kicker: locale.cover.kicker, title: locale.cover.title, child: childName, date: formatReportDate(generatedAt, timeZone) },
       opening: { title: locale.opening.title, items: [{ title: locale.opening.items[0], text: s1[0][label.s1[0]] }, { title: locale.opening.items[1], text: s1[0][label.s1[3]] }, { title: locale.opening.items[2], text: s1[0][label.s1[4]] }], note: s1[0][label.s1[1]] },
       sections: [
         { number: 1, title: sections[0].title, blocks: [text(label.s1[0], s1[0][label.s1[0]]), { type: 'insight', title: generated.focus, basis, behavior: s1[0][label.s1[1]], action: s1[0][label.s1[3]] }, text(label.s1[2], s1[0][label.s1[2]])] },

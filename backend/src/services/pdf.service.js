@@ -2,6 +2,7 @@
 // Premium PDF report generation using pdfkit — text-based, ~200-500KB
 
 const path = require('path');
+const { formatReportDate } = require('../utils/report-date');
 const fs = require('fs');
 const { parseNumberedSections, normalizePresentation, sanitizePresentation } = require('./report-presentation');
 
@@ -40,6 +41,7 @@ const LABELS = {
     generatedOn: '생성일',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: '아이의 기질 지도',
+    calculatedProfileKicker: '계산된 프로필',
     elementDistribution: '오행 분포',
     howToReadTitle: '계산된 사실을 읽는 방법',
     howToReadCalcLabel: '계산값',
@@ -89,6 +91,7 @@ const LABELS = {
     generatedOn: 'Generated on',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: "Your Child's Temperament Map",
+    calculatedProfileKicker: 'CALCULATED PROFILE',
     elementDistribution: 'Five Elements Distribution',
     howToReadTitle: 'How to Read These Calculations',
     howToReadCalcLabel: 'Calculated values',
@@ -138,6 +141,7 @@ const LABELS = {
     generatedOn: '生成日',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: '子どもの気質マップ',
+    calculatedProfileKicker: '算出プロフィール',
     elementDistribution: '五行の分布',
     howToReadTitle: '算出された事実の読み方',
     howToReadCalcLabel: '算出値',
@@ -187,6 +191,7 @@ const LABELS = {
     generatedOn: '生成日期',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: '孩子的气质地图',
+    calculatedProfileKicker: '推算档案',
     elementDistribution: '五行分布',
     howToReadTitle: '如何阅读这些计算结果',
     howToReadCalcLabel: '计算值',
@@ -236,6 +241,7 @@ const LABELS = {
     generatedOn: 'Ngày tạo',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'Bản đồ khí chất của trẻ',
+    calculatedProfileKicker: 'HỒ SƠ ĐÃ TÍNH',
     elementDistribution: 'Phân bố Ngũ hành',
     howToReadTitle: 'Cách đọc các số liệu tính toán',
     howToReadCalcLabel: 'Giá trị tính toán',
@@ -285,6 +291,7 @@ const LABELS = {
     generatedOn: 'Dibuat pada',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'Peta Temperamen Anak',
+    calculatedProfileKicker: 'PROFIL TERHITUNG',
     elementDistribution: 'Distribusi Lima Unsur',
     howToReadTitle: 'Cara Membaca Hasil Perhitungan Ini',
     howToReadCalcLabel: 'Nilai perhitungan',
@@ -334,6 +341,7 @@ const LABELS = {
     generatedOn: 'Generado el',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'Mapa del temperamento de tu hijo',
+    calculatedProfileKicker: 'PERFIL CALCULADO',
     elementDistribution: 'Distribución de los Cinco Elementos',
     howToReadTitle: 'Cómo leer estos cálculos',
     howToReadCalcLabel: 'Valores calculados',
@@ -383,6 +391,7 @@ const LABELS = {
     generatedOn: 'Gerado em',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'Mapa do temperamento da criança',
+    calculatedProfileKicker: 'PERFIL CALCULADO',
     elementDistribution: 'Distribuição dos Cinco Elementos',
     howToReadTitle: 'Como ler estes cálculos',
     howToReadCalcLabel: 'Valores calculados',
@@ -432,6 +441,7 @@ const LABELS = {
     generatedOn: 'Généré le',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: "Carte du tempérament de l'enfant",
+    calculatedProfileKicker: 'PROFIL CALCULÉ',
     elementDistribution: 'Répartition des Cinq Éléments',
     howToReadTitle: 'Comment lire ces calculs',
     howToReadCalcLabel: 'Valeurs calculées',
@@ -481,6 +491,7 @@ const LABELS = {
     generatedOn: 'สร้างเมื่อ',
     footer: 'SoMyung | somyung.cc',
     calculatedProfileTitle: 'แผนที่ลักษณะนิสัยของลูก',
+    calculatedProfileKicker: 'ข้อมูลที่คำนวณได้',
     elementDistribution: 'การกระจายธาตุทั้งห้า',
     howToReadTitle: 'วิธีอ่านผลการคำนวณนี้',
     howToReadCalcLabel: 'ค่าที่คำนวณได้',
@@ -666,7 +677,7 @@ function parseInline(text) {
  * Generate a premium report PDF
  */
 async function generateReportPDF(params) {
-  const { childName, birthDate, gender, manseryeok, aiInterpretation, language, generatedAt } = params;
+  const { childName, birthDate, gender, manseryeok, aiInterpretation, language, generatedAt, timeZone } = params;
   const labels = getLabels(language || 'ko');
 
   // The calculator returns element names in Korean ("금 + 화"), and the pillar card
@@ -681,7 +692,9 @@ async function generateReportPDF(params) {
     return text.replace(/[목화토금수]/g, (m) => ELEMENT_HANJA[m] || m);
   };
   const reportDate = generatedAt ? new Date(generatedAt) : new Date();
-  const reportDateLabel = reportDate.toISOString().split('T')[0];
+  // toISOString() is UTC, so a KST/JST reader generating before 09:00 saw
+  // yesterday's date on the cover. See utils/report-date.js.
+  const reportDateLabel = formatReportDate(reportDate, timeZone);
 
   const PDFDocument = require('pdfkit');
 
@@ -1090,7 +1103,7 @@ async function generateReportPDF(params) {
         doc.addPage();
         doc.y = 68;
         doc.font(fontRegular).fontSize(9).fillColor(COLORS.gold)
-          .text('CALCULATED PROFILE', MARGIN_L, doc.y, { width: CONTENT_W });
+          .text(labels.calculatedProfileKicker || 'CALCULATED PROFILE', MARGIN_L, doc.y, { width: CONTENT_W });
         doc.font(fontBold).fontSize(21).fillColor(COLORS.darkText)
           .text(labels.calculatedProfileTitle, MARGIN_L, doc.y + 18, { width: CONTENT_W });
         doc.y += 66;
