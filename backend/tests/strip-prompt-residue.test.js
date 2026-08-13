@@ -66,3 +66,7 @@ describe('이름 보호', () => {
       .toBe('Like water, 민서 adapts. จากวันที่');
   });
 });
+
+it('겹괄호 변형(丁酉（（丁酉）））도 지운다 — ja 실측', () => {
+  expect(stripPromptResidue('丁酉（（丁酉））の圧', 'ja')).toBe('丁酉の圧');
+});

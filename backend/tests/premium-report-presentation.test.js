@@ -261,7 +261,7 @@ describe('premium report presentation contract', () => {
 
   test('unknown standalone labels keep provider drift on fallback', () => {
     const text = buildProviderMarkdown().replace('- **이번 달 양육 포커스:**', '- **임의 레이블:** 허용되지 않는 드리프트\n- **이번 달 양육 포커스:**');
-    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatusReason).toBe('partial_required_labels');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 10 }], seunList: [{ year: 2026 }] }, childName: '민서', generatedAt: '2026-07-22T00:00:00.000Z' }).presentationStatusReason).toMatch(/^partial_required_labels/);
   });
 
   test('allows natural colon-containing continuation lines', () => {
@@ -288,7 +288,7 @@ describe('premium report presentation contract', () => {
     expect(adaptMarkdownToPresentation({ fullText: `${buildProviderMarkdown()}\n[5 things to remember]`, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('localization_leak');
     expect(adaptMarkdownToPresentation({ fullText: buildProviderMarkdown(), manseryeok: { pillars: {}, elements: {} }, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('insufficient_calculated_basis');
     expect(adaptMarkdownToPresentation({ fullText: buildProviderMarkdown(), manseryeok: fixtureMansae, fortuneCycles: { daeunList: [], seunList: [] } }).presentationStatusReason).toBe('insufficient_calculated_basis');
-    expect(adaptMarkdownToPresentation({ fullText: buildProviderMarkdown(), manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] }, language: 'en' }).presentationStatusReason).toBe('partial_required_labels');
+    expect(adaptMarkdownToPresentation({ fullText: buildProviderMarkdown(), manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] }, language: 'en' }).presentationStatusReason).toMatch(/^partial_required_labels/);
   });
 
   test('semantic duplicate field returns duplicate_content', () => {
@@ -299,12 +299,12 @@ describe('premium report presentation contract', () => {
 
   test('extra section-8 list item returns partial_required_labels', () => {
     const text = buildProviderMarkdown().replace('5. 노력의 과정을 말합니다.', '5. 노력의 과정을 말합니다.\n6. 추가 항목은 허용되지 않습니다.');
-    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('partial_required_labels');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toMatch(/^partial_required_labels/);
   });
 
   test('missing required label returns partial_required_labels', () => {
     const text = buildProviderMarkdown().replace('# 1. 양육 포커스', '# 1. 양육 포커스\n- **가장 흔한 오해:** only');
-    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('partial_required_labels');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toMatch(/^partial_required_labels/);
   });
 
   test('provider-authored 산출 근거 returns unsafe_claim', () => {
@@ -319,11 +319,11 @@ describe('premium report presentation contract', () => {
 
   test('missing strength heading returns partial_required_labels', () => {
     const text = buildProviderMarkdown().replace('### 깊이 묻는 힘', '');
-    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('partial_required_labels');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toMatch(/^partial_required_labels/);
   });
   test('missing month heading returns partial_required_labels', () => {
     const text = buildProviderMarkdown().replace('### 10월', '');
-    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toBe('partial_required_labels');
+    expect(adaptMarkdownToPresentation({ fullText: text, manseryeok: fixtureMansae, fortuneCycles: { daeunList: [{ age: 1 }] } }).presentationStatusReason).toMatch(/^partial_required_labels/);
   });
 
   test('ignores orphan bold headings and preserves semantic field continuity', () => {

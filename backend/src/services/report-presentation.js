@@ -649,7 +649,21 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
     const stop = listGroup(sections[7].content, label.s8[1], 3);
     const start = listGroup(sections[7].content, label.s8[2], 3);
     const steps = listGroup(sections[7].content, label.s8[3], 3);
-    if (!complete(s1, label.s1) || !complete(s2, label.s2) || s2.length < 4 || s2.length > 6 || !complete(s3, label.s3) || s3.length < 5 || s3.length > 7 || !complete(s4, label.s4) || s4.length !== 6 || !complete(s5, label.s5) || s5.length !== 3 || !complete(s6, label.s6) || s6.length !== 4 || !complete(s7, label.s7) || s7.length !== 3 || !memory || !stop || !start || !steps || !complete(s9, label.s9) || s9.length !== 1) return { presentationStatus: 'fallback', presentationStatusReason: 'partial_required_labels' };
+    // 어느 섹션이 계약을 어겼는지 사유에 남긴다. 'partial_required_labels'만으로는
+    // 프롬프트를 고칠 때 무엇을 겨냥할지 알 수 없었다 — 재생성 한 번이 리포트 하나
+    // 값인데, 실패 지점을 모르면 그 비용으로 아무것도 배우지 못한다.
+    const contractFailures = [
+      !complete(s1, label.s1) && 's1',
+      (!complete(s2, label.s2) || s2.length < 4 || s2.length > 6) && 's2',
+      (!complete(s3, label.s3) || s3.length < 5 || s3.length > 7) && 's3',
+      (!complete(s4, label.s4) || s4.length !== 6) && 's4',
+      (!complete(s5, label.s5) || s5.length !== 3) && 's5',
+      (!complete(s6, label.s6) || s6.length !== 4) && 's6',
+      (!complete(s7, label.s7) || s7.length !== 3) && 's7',
+      (!memory || !stop || !start || !steps) && 's8',
+      (!complete(s9, label.s9) || s9.length !== 1) && 's9',
+    ].filter(Boolean);
+    if (contractFailures.length) return { presentationStatus: 'fallback', presentationStatusReason: `partial_required_labels:${contractFailures.join(',')}` };
     const semanticBodies = [...s2, ...s3, ...s4, ...s5, ...s6].flatMap((g) => Object.values(g));
     const longBodies = semanticBodies.map(normalizedBody).filter((body) => body.length >= 80);
     if (new Set(longBodies).size < longBodies.length || hasRepeatedContent(semanticBodies)) return { presentationStatus: 'fallback', presentationStatusReason: 'duplicate_content' };

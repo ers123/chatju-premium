@@ -63,7 +63,8 @@ function stripPromptResidue(text, language, keepWords = []) {
   if (!text) return text;
   const denumbered = text.replace(/^(\s*)(\d+)([).])\s+\2[.)]\s+/gm, '$1$2$3 ');
   if (language === 'ko') return denumbered;
-  let out = denumbered.replace(/([一-鿿]{1,4})\s*[（(]\s*\1\s*[)）]/g, '$1');
+  // 괄호가 겹으로 나오는 변형(丁酉（（丁酉））)도 실측에서 나왔다 — {1,2}로 받는다.
+  let out = denumbered.replace(/([一-鿿]{1,4})\s*[（(]{1,2}\s*\1\s*[)）]{1,2}/g, '$1');
   const keep = new Set(keepWords.filter((w) => typeof w === 'string' && /[가-힣]/.test(w)));
   out = out.replace(/[가-힣]{1,2}/g, (run, offset, whole) => {
     if (keep.has(run)) return run;
@@ -1366,6 +1367,10 @@ ${monthlyFortuneData}`;
 
 따뜻한 3문장으로 시작: 이 아이의 일간 기질(${deepProfile.image || ''})을 자연 비유로 소개하되, 바로 일상 행동으로 연결.
 
+**도입부 문체 예시 — 내용은 전혀 다른 아이입니다. 문장의 결(장면에서 시작, 부모의 순간을 짚음)만 가져오고 내용은 절대 베끼지 마세요:**
+"서연이는 아침마다 현관에서 한 번 멈춥니다. 신발을 신다 말고 오늘 하루를 머릿속으로 한 바퀴 돌려보는 아이 — 당신이 '빨리'라고 재촉하는 바로 그 순간, 아이는 이미 출발 준비의 마지막 점검을 하고 있었는지도 모릅니다. 이 리포트는 그 멈춤이 어디서 오는지부터 이야기하려 합니다."
+(예시는 여기까지입니다. **출력은 반드시 \`## 1. …\` 헤딩으로 시작**하고, 그 아래에 도입부 → 5개 라벨 항목 순서를 지키세요. 헤딩을 생략하면 리포트 전체가 무효가 됩니다.)
+
 그다음 아래 5개 항목으로 구조화. **각 볼드 레이블은 반드시 아래 지정된 리포트 언어 번역만 사용하고, 영어나 대괄호([])는 출력에 절대 포함하지 마세요.** (아래 한국어 예시는 리포트 언어에 맞게 번역해 사용)
 
 - **가장 흔한 오해:** (1문장, 구체적 상황)
@@ -1419,6 +1424,7 @@ ${monthlyFortuneData}`;
 - 진로 방향 힌트: 확정이 아닌 흥미·활동을 탐색하는 참고 문장 1개
 
 따뜻한 서사로 감싸되, 구체적 행동으로 마무리.
+**단, 위 3개 강점 각각의 라벨 4종(약점으로 오해받는 상황/이 강점이 빛나는 환경/키워줄 활동 1가지/진로 방향 힌트)은 문체와 무관하게 반드시 라벨 그대로 출력하세요. 서사가 라벨을 대체하면 리포트 전체가 무효가 됩니다.**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1712,6 +1718,12 @@ Step 3: render as markdown in the required format
 **용어 사용:** 명리학 용어는 쓰되, 바로 옆에 일상어로 풀어서 설명. 삼재/원진살/도화살 등 공포 유발 개념 금지. "좋은 사주/나쁜 사주" 이분법 금지.
 **한자 표기:** 천간/지지를 언급할 때 반드시 한자를 괄호 안에 표기하세요. 예: 신금(辛金), 을목(乙木), 갑오(甲午). 데이터의 '한자' 열을 참조하세요. 빈 괄호 ( ) 금지.
 
+**목소리 (이 리포트가 '보고서'가 아니라 '편지'로 읽히게 하는 규칙):**
+- 이 가족 한 곳에만 보내는 글입니다. 부모를 "부모님"이 아니라 **"당신"**으로 부르고, 아이는 이름으로 부르세요.
+- 라벨 뒤의 내용도 **완결된 자연스러운 문장**으로 쓰세요. 전보체 조각("일관성 필요. 루틴 제공.") 금지 — 상담사가 말하듯.
+- 섹션 도입부(라벨 밖 산문)는 그 섹션에서 가장 공들인 문장이어야 합니다. 리듬을 바꾸고, 부모가 자기 부엌에서 본 장면을 떠올리게 하세요.
+- 명리 용어(간지·오행 명칭)는 데이터 설명 자리에만. **가족의 일상을 말하는 문장 한가운데 끼워 넣지 마세요** — "丁酉의 압박" 같은 표현이 문장을 낯설게 만듭니다.
+
 **핵심 철학:** 기질은 지도이지 운명이 아닙니다. 같은 기질의 아이도 부모의 양육에 따라 전혀 다른 사람이 됩니다.`;
 
   // English version (for all non-ko locales — prompting in English produces
@@ -1745,6 +1757,12 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
 
 **Metaphor Rule:** If you use a nature metaphor, the very next sentence must connect to a concrete behavior.
 
+**Voice (what makes this read as a letter, not a report):**
+- You are writing to ONE family. Address the parent as "you"; call the child by name.
+- Content after a label must still be a complete, natural sentence — no telegraphic fragments ("Needs consistency. Provide routine."). Write as a counsellor speaks.
+- The prose that opens each section (outside labels) is the most crafted writing in that section: vary the rhythm, evoke a scene the parent recognizes from their own kitchen.
+- Keep chart terminology (stems, branches, element names) in data-explanation spots only. Never drop it mid-sentence into family life ("the pressure of 丁酉") — it makes the sentence feel foreign.
+
 **Terminology:** Use Myeongri terms but immediately explain in everyday language. No fear-inducing concepts (samjae/wonjinsal/dohwasal). No "good Saju / bad Saju" binary.
 **Chinese Characters:** When mentioning Heavenly Stems / Earthly Branches, always show Chinese characters in parentheses. Reference the 'hanja' column from the data. No empty parentheses.
 
@@ -1769,6 +1787,13 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
   const call1SectionsEn = `
 **This request is for Sections 1-5 of a 9-section report.**
 - Section 1: At a Glance (Executive Summary) — 3-sentence narrative + structured bullets
+  Voice exemplar for the opening — a DIFFERENT child entirely; borrow only the texture
+  (starts in a scene, names the parent's moment), never the content:
+  "Every morning, Seoyeon pauses at the front door. One shoe on, she is quietly walking
+  through her whole day in her head — and the moment you say 'hurry up' may be the exact
+  moment she was finishing her final check. This report starts with where that pause comes from."
+  (Exemplar ends here. The output must still OPEN with the "## 1." heading, then the
+  narrative, then the labelled items — omitting the heading voids the whole report.)
 - Section 2: This Child Is NOT... — directly confront common misconceptions, punchy tone
 - Section 3: Behavioral Signatures — everyday scenes + pattern analysis
 - Section 4: Situational Playbook — conversation scripts for 6 common situations
@@ -1933,8 +1958,10 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
       'partial_required_labels',
       'localization_leak',
     ]);
+    // 사유에 섹션 태그가 붙는다(`partial_required_labels:s5`) — 접두어로 비교한다.
+    const reasonBase = String(presentationResult.presentationStatusReason || '').split(':')[0];
     const shapeFailed = presentationResult.presentationStatus !== 'ready'
-      && RETRYABLE_FALLBACKS.has(presentationResult.presentationStatusReason);
+      && RETRYABLE_FALLBACKS.has(reasonBase);
     if (
       (shapeFailed || contamination > HANGUL_LIMIT)
       && process.env.SAJU_PRESENTATION_RETRY_DISABLED !== '1'
