@@ -128,6 +128,8 @@ provider:
     # 리포트 생성을 비동기 잡으로 띄울지. `0`이면 재배포 없이 예전(동기) 동작으로
     # 되돌아간다 — 30초를 넘기면 게이트웨이가 503을 내고 프론트가 폴링으로 줍는다.
     SAJU_ASYNC_REPORTS: ${env:SAJU_ASYNC_REPORTS, ''}
+    # 주간 신호 다이제스트 수신 주소. 비우면 support@somyung.cc로 간다.
+    OPS_EMAIL: ${env:OPS_EMAIL, ''}
 
   # IAM Role Statements (permissions for Lambda)
   iam:
@@ -176,6 +178,17 @@ functions:
       - httpApi:
           path: /
           method: ANY
+
+      # 주간 사용자 신호 — 월요일 09:00 KST(00:00 UTC). PayPal 결제 상태를 맞추고
+      # 별점·환불·전달 다이제스트를 운영자 메일로 보낸다. 사람이 매주 두 명령을
+      # 치는 대신이다. 주 1회 호출이라 비용은 사실상 0.
+      - schedule:
+          name: ${self:service}-${self:provider.stage}-weekly-signals
+          description: Weekly user-signal digest (ratings, refunds, delivery)
+          rate: cron(0 0 ? * MON *)
+          input:
+            __marker: somyung.weekly-signals
+            days: 90
 
 # ============================================
 # Plugins

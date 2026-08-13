@@ -491,7 +491,36 @@ async function sendReportLookupOtp(email, code, lang = 'en') {
   return data;
 }
 
+/**
+ * 운영자에게 보내는 주간 신호 다이제스트.
+ *
+ * 사용자에게 가는 메일이 아니다 — 수신자는 우리 지원 주소 하나뿐이고, 본문은
+ * 집계 숫자다. 실패해도 던지지 않는다: 다이제스트 메일 하나 때문에 주간 잡이
+ * 실패로 남으면, 정작 중요한 동기화 결과까지 놓친다.
+ */
+async function sendOpsDigest({ subject, text }) {
+  const to = process.env.OPS_EMAIL || REPLY_TO;
+  const resend = getResendClient();
+  const html = `<pre style="font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 1.55; white-space: pre-wrap;">${String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')}</pre>`;
+
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: [to],
+    reply_to: REPLY_TO,
+    subject,
+    text,
+    html,
+  });
+  if (error) throw new Error(error.message || 'Resend error');
+  logger.info('[Email Service] Ops digest sent', { to, id: data?.id });
+  return data;
+}
+
 module.exports = {
   sendReportEmail,
   sendReportLookupOtp,
+  sendOpsDigest,
 };

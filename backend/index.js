@@ -207,6 +207,20 @@ const httpHandler = serverless(app, {
 // 쓸 수 있다 — 30초 한도 때문에 정상 리포트가 503으로 보이던 문제의 해결책이다.
 // (src/services/report-job.js의 주석 참고)
 module.exports.handler = async (event, context) => {
+    // 주간 신호 잡 — EventBridge가 부른다(serverless.yml의 schedule).
+    // 사람이 매주 두 명령을 치는 대신 여기서 돌고 결과를 메일로 보낸다.
+    if (event && event.__marker === 'somyung.weekly-signals') {
+        const { runWeeklySignals } = require('./src/services/signals.service');
+        const result = await runWeeklySignals({ days: event.days || 90, apply: true, notify: true });
+        logger.info('[Weekly Signals] done', {
+            reports: result.digest.reports.total,
+            feedback: result.digest.feedback.responses ?? null,
+            statusChanges: result.sync.changes.length,
+            notified: result.notified,
+        });
+        return { ok: true, notified: result.notified, changes: result.sync.changes.length };
+    }
+
     const { isReportJobEvent, runReportJob } = require('./src/services/report-job');
     if (isReportJobEvent(event)) {
         try {
