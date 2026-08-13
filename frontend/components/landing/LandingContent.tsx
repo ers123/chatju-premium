@@ -558,6 +558,88 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Basis Section — 계산 근거 공개.
+          정밀도(518,400)를 주장한 바로 다음에 온다: "가짓수가 많다"는 주장은
+          검증할 수 없으면 광고 문구일 뿐이고, 이 섹션이 그 검증 경로를 준다.
+          The Pattern류 앱의 최대 비판이 블랙박스인데 우리는 원래 근거를 화면에
+          보여주고 있었다 — 다만 그 사실을 아무 데서도 말하지 않았다. */}
+      <section style={{
+        width: '100%',
+        background: '#FFFFFF',
+        padding: 'clamp(60px, 12vw, 120px) clamp(20px, 5vw, 40px)'
+      }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div data-reveal style={{ ...revealStyle, textAlign: 'center', marginBottom: '48px' }}>
+            <h2 style={{
+              fontSize: 'clamp(26px, 5vw, 36px)',
+              fontWeight: 700,
+              color: '#2C2420',
+              letterSpacing: '-0.03em',
+              fontFamily: serifFont,
+              lineHeight: 1.35,
+              marginBottom: '20px',
+            }}>
+              {t.basis.heading}
+            </h2>
+            <p style={{
+              fontSize: 'clamp(15px, 2.6vw, 17px)',
+              color: '#6B6560',
+              lineHeight: 1.75,
+              maxWidth: '640px',
+              margin: '0 auto',
+            }}>
+              {t.basis.lead}
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '20px',
+            marginBottom: '40px',
+          }}>
+            {t.basis.items.map((item, i) => (
+              <div key={i} data-reveal style={{
+                ...revealDelayStyle(i + 1),
+                background: '#FAF8F5',
+                border: '1px solid rgba(44, 36, 32, 0.08)',
+                borderRadius: '16px',
+                padding: '28px 24px',
+              }}>
+                <h3 style={{
+                  fontSize: '17px',
+                  fontWeight: 600,
+                  color: '#2C2420',
+                  marginBottom: '10px',
+                  lineHeight: 1.4,
+                  fontFamily: serifFont,
+                }}>{item.title}</h3>
+                <p style={{
+                  fontSize: '14.5px',
+                  color: '#6B6560',
+                  lineHeight: 1.7,
+                  margin: 0,
+                }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <p data-reveal style={{
+            ...revealDelayStyle(4),
+            textAlign: 'center',
+            fontSize: 'clamp(17px, 3vw, 21px)',
+            fontWeight: 600,
+            color: '#4A6354',
+            fontFamily: serifFont,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.5,
+            margin: 0,
+          }}>
+            {t.basis.closing}
+          </p>
+        </div>
+      </section>
+
       {/* Problem Section */}
       <section style={{
         width: '100%',
