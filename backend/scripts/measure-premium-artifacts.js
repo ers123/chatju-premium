@@ -76,6 +76,10 @@ async function generateOrLoad(fixture, lang) {
     fullText: interp.fullText,
     presentationStatus: interp.presentationStatus,
     presentationStatusReason: interp.presentationStatusReason || null,
+    // 렌더된 presentation 도 캐시에 남긴다. 문체 측정이 fullText 를 심판하면
+    // **파서가 버린 산문까지 점수에 들어간다** — 독자가 받지 않는 글을 재는 셈이다
+    // (2026-08-13 발견). 심판은 이쪽을 읽어야 한다.
+    presentation: interp.presentation || null,
   };
   fs.mkdirSync(CACHE_DIR, { recursive: true });
   fs.writeFileSync(cacheFile, JSON.stringify(slim, null, 2));

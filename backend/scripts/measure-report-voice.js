@@ -52,21 +52,66 @@ function formStats(text) {
   };
 }
 
-// ── 심판 ──────────────────────────────────────────────────────────────────
-// 심판에게는 독자가 보는 형태를 준다. 실제 독자는 마크다운이 아니라 presentation
-// 카드를 본다 — 라벨 마크업과 목록 기호를 벗기고 문장만 남긴다. 원시 마크다운을
-// 주면 심판이 양식 구조 자체에 warmth 감점을 주는데, 그 구조는 파서 계약이지
-// 독자 경험이 아니다.
-function readerView(text) {
+// ── 독자 뷰 ───────────────────────────────────────────────────────────────
+// 심판에게는 독자가 받는 것을 준다. 2026-08-13 이전 이 함수는 fullText 에서
+// 마크다운만 벗겼는데, 그 텍스트에는 **파서가 버리는 산문**이 그대로 들어 있었다.
+// 즉 심판은 독자가 한 번도 받은 적 없는 글을 채점하고 있었고, 그래서 점수가
+// 실제 독자 경험보다 후하게 나왔다. 이제 렌더된 presentation 을 선형화해서 준다 —
+// 웹/PDF 가 그리는 순서 그대로.
+function presentationReaderView(presentation, { stripProse = false } = {}) {
+  if (!presentation || !Array.isArray(presentation.sections)) return null;
+  const L = [];
+  const push = (v) => { if (v && String(v).trim()) L.push(String(v).trim()); };
+  for (const sec of presentation.sections) {
+    push(sec.title);
+    for (const b of sec.blocks || []) {
+      switch (b.type) {
+        case 'prose':
+          if (!stripProse) push(b.text);
+          break;
+        case 'text': case 'note': case 'close':
+          push(`${b.title} — ${b.text}`);
+          break;
+        case 'insight':
+          push(b.title);
+          (Array.isArray(b.rows) && b.rows.length
+            ? b.rows.map((r) => `${r.label} — ${r.text}`)
+            : [`${b.basis || ''}`, `${b.behavior || ''}`, `${b.action || ''}`]
+          ).forEach(push);
+          break;
+        case 'translator':
+          push(b.title); push(b.looksLike); push(b.actual); push(b.response);
+          break;
+        case 'script':
+          push(b.title); push(b.before); push(b.after); push(b.signal);
+          break;
+        case 'timeline': case 'checklist':
+          push(b.title);
+          (b.items || []).forEach((it) => push(`${it.label} — ${it.text}`));
+          break;
+        case 'parenting-card':
+          push(b.title); push(b.stop); push(b.start); push(b.steps);
+          break;
+        default: break;
+      }
+    }
+    L.push('');
+  }
+  return L.join('\n');
+}
+
+// fullText 폴백 — presentation 이 없는 옛 캐시 전용. 이 경로의 점수는 독자
+// 경험이 아니라 원문 마크다운의 점수임을 결과에 명시한다.
+function markdownFallbackView(text) {
   return text
-    .replace(/^#+\s*\d*\.?\s*/gm, '')            // 헤딩 마커
-    .replace(/^\s*(?:[-*]|\d+[).])\s*/gm, '')      // 목록 기호
-    .replace(/\*\*([^*]+)\*\*\s*[:：]\s*/g, '$1 — ') // **라벨:** → 라벨 —
+    .replace(/^#+\s*\d*\.?\s*/gm, '')
+    .replace(/^\s*(?:[-*]|\d+[).])\s*/gm, '')
+    .replace(/\*\*([^*]+)\*\*\s*[:：]\s*/g, '$1 — ')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\n{3,}/g, '\n\n');
 }
 
-function judgePrompt(text, lang) {
+function judgePrompt(readerText, lang) {
   const name = LANG_NAMES[lang] || 'English';
   return [
     `You are judging the WRITING VOICE of a paid parenting report written in ${name}.`,
@@ -82,16 +127,16 @@ function judgePrompt(text, lang) {
     'Return ONLY JSON: {"nativeness":N,"warmth":N,"specificity":N,"weakest":"<one short sentence>"}',
     '',
     '--- REPORT (opening portion) ---',
-    readerView(text).slice(0, 6000),
+    readerText.slice(0, 6000),
   ].join('\n');
 }
 
-async function judgeReport(ai, text, lang) {
+async function judgeReport(ai, readerText, lang) {
   const rounds = [];
   for (let i = 0; i < ROUNDS; i++) {
     const res = await ai.generateFortune([
       { role: 'system', content: 'Strict literary judge. JSON only.' },
-      { role: 'user', content: judgePrompt(text, lang) },
+      { role: 'user', content: judgePrompt(readerText, lang) },
     ], { maxTokens: 1200, temperature: 0 });
     try {
       const cleaned = res.content.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
@@ -114,14 +159,32 @@ async function judgeReport(ai, text, lang) {
     .filter((f) => /^\d{4}-\d{2}-\d{2}-[a-z]{2}\.json$/.test(f))
     .filter((f) => !langsFilter || langsFilter.includes(f.slice(11, 13)));
 
+  // AB=1 이면 같은 presentation 을 산문 블록 포함/제외 두 버전으로 심판한다.
+  // 어젯밤 산문 슬롯이 **독자 기준으로** 무엇을 바꿨는지 이것으로만 알 수 있다.
+  const AB = process.env.AB === '1';
+
   const rows = [];
   for (const f of files) {
     const lang = f.slice(11, 13);
-    const { fullText } = JSON.parse(fs.readFileSync(path.join(CACHE_DIR, f)));
+    const cached = JSON.parse(fs.readFileSync(path.join(CACHE_DIR, f)));
+    const { fullText, presentation } = cached;
     const form = formStats(fullText);
-    const scores = await judgeReport(ai, fullText, lang);
-    rows.push({ file: f, lang, ...form, ...scores });
-    console.log(`${f.replace('.json', '').padEnd(16)} 불릿 ${String(form.bullets).padStart(3)} 산문율 ${form.proseRatio} | nat ${scores?.nativeness} warm ${scores?.warmth} spec ${scores?.specificity}`);
+    const rendered = presentationReaderView(presentation);
+    const source = rendered ? 'rendered' : 'fullText-fallback';
+    const view = rendered || markdownFallbackView(fullText);
+    const proseBlocks = rendered
+      ? presentation.sections.reduce((n, s2) => n + (s2.blocks || []).filter((b) => b.type === 'prose').length, 0)
+      : 0;
+
+    const scores = await judgeReport(ai, view, lang);
+    const row = { file: f, lang, source, proseBlocks, ...form, ...scores };
+    if (AB && rendered && proseBlocks > 0) {
+      const stripped = presentationReaderView(presentation, { stripProse: true });
+      row.withoutProse = await judgeReport(ai, stripped, lang);
+    }
+    rows.push(row);
+    console.log(`${f.replace('.json', '').padEnd(16)} [${source}] 산문블록 ${proseBlocks} | nat ${scores?.nativeness} warm ${scores?.warmth} spec ${scores?.specificity}`
+      + (row.withoutProse ? `  || 산문 제거 시: nat ${row.withoutProse.nativeness} warm ${row.withoutProse.warmth} spec ${row.withoutProse.specificity}` : ''));
     if (scores?.weakest) console.log(`   약점: ${scores.weakest}`);
   }
 
