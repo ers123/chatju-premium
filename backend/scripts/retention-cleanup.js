@@ -4,7 +4,9 @@ require('dotenv').config();
 
 const { supabaseAdmin } = require('../src/config/supabase');
 
-const DRY_RUN = process.env.DRY_RUN !== 'false';
+// CLI 기본은 드라이런 — 손으로 돌릴 때 실수로 지우지 않게. 스케줄 경로는
+// runRetentionCleanup({ apply: true }) 로 명시적으로 켠다.
+let DRY_RUN = process.env.DRY_RUN !== 'false';
 const READING_RETENTION_DAYS = Number(process.env.READING_RETENTION_DAYS || 365);
 const PAYMENT_RETENTION_DAYS = Number(process.env.PAYMENT_RETENTION_DAYS || 1825);
 
@@ -91,7 +93,8 @@ async function anonymizeOldPayments() {
   return { cutoff, count: rows.length };
 }
 
-async function main() {
+async function main(options = {}) {
+  if (typeof options.apply === 'boolean') DRY_RUN = !options.apply;
   console.log('[Retention] Starting cleanup', {
     dryRun: DRY_RUN,
     readingRetentionDays: READING_RETENTION_DAYS,
@@ -102,15 +105,28 @@ async function main() {
   const promoUsage = await cleanupOldPromoUsage();
   const payments = await anonymizeOldPayments();
 
-  console.log('[Retention] Summary', {
-    readings,
-    promoUsage,
-    payments,
-    dryRun: DRY_RUN,
-  });
+  const summary = { readings, promoUsage, payments, dryRun: DRY_RUN };
+  console.log('[Retention] Summary', summary);
+  return summary;
 }
 
-main().catch(error => {
-  console.error('[Retention] Failed:', error.message);
-  process.exit(1);
-});
+/**
+ * 보존기간 초과 데이터 삭제. EventBridge 스케줄과 CLI가 **같은 코드**를 쓴다.
+ *
+ * 왜 스케줄인가: 보존기간 정책이 문서에만 있고 실행이 사람 기억에 달려 있으면
+ * 그건 정책이 아니다. 아동 생년월일이 무기한 쌓이는 쪽으로 조용히 실패한다.
+ * (2026-08-13 점검에서 실제로 그 상태였다 — 주간 신호만 스케줄에 있었다.)
+ */
+async function runRetentionCleanup(options = {}) {
+  return main(options);
+}
+
+module.exports = { runRetentionCleanup };
+
+// CLI로 직접 실행할 때만 돈다. require 되는 경우(Lambda)에는 돌지 않는다.
+if (require.main === module) {
+  main().catch(error => {
+    console.error('[Retention] Failed:', error.message);
+    process.exit(1);
+  });
+}

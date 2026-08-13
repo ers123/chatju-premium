@@ -221,6 +221,15 @@ module.exports.handler = async (event, context) => {
         return { ok: true, notified: result.notified, changes: result.sync.changes.length };
     }
 
+    // 보존기간 청소 — EventBridge가 부른다. 정책(365일)이 문서에만 있고 실행이
+    // 사람 기억에 달려 있으면, 아동 생년월일이 무기한 쌓이는 쪽으로 조용히 실패한다.
+    if (event && event.__marker === 'somyung.retention-cleanup') {
+        const { runRetentionCleanup } = require('./scripts/retention-cleanup');
+        const summary = await runRetentionCleanup({ apply: event.apply !== false });
+        logger.info('[Retention] scheduled run done', summary);
+        return { ok: true, ...summary };
+    }
+
     const { isReportJobEvent, runReportJob } = require('./src/services/report-job');
     if (isReportJobEvent(event)) {
         try {

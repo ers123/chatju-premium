@@ -190,6 +190,18 @@ functions:
             __marker: somyung.weekly-signals
             days: 90
 
+      # 보존기간 청소 — 매월 1일 09:00 KST. 365일 지난 리포트(아이 생년월일 포함)를
+      # 지우고 오래된 결제는 익명화한다. 이 정책은 privacy policy에 공개돼 있는데
+      # 2026-08-13 점검 전까지 **스케줄이 없어 사람이 기억해야 했다.** 지키지 못할
+      # 약속을 공개해 두는 것이 가장 나쁜 조합이라 스케줄로 옮겼다.
+      - schedule:
+          name: ${self:service}-${self:provider.stage}-retention-cleanup
+          description: Delete readings past their retention window; anonymize old payments
+          rate: cron(0 0 1 * ? *)
+          input:
+            __marker: somyung.retention-cleanup
+            apply: true
+
 # ============================================
 # Plugins
 # ============================================

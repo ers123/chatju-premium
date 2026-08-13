@@ -95,6 +95,14 @@ function validateConsent(consent, meta = {}) {
     normalized: {
       dataProcessing: true,
       guardian: true, // legal-representative consent for the child
+      // 국외이전(OpenAI·Anthropic·Google·AWS)은 법적으로 별도 동의 항목이다
+      // (PIPA 제28조의8, GDPR Art 13(1)(f)/49). 화면은 처음부터 따로 물어봤는데
+      // 클라이언트가 dataProcessing 에 AND 로 합쳐 보내는 바람에 증적에서 둘을
+      // 분리할 수 없었다 — "국외이전에 동의했는가"에 답할 수 없는 상태였다.
+      //
+      // null 은 "동의 안 함"이 아니라 **"이 필드를 보내지 않던 클라이언트"**다.
+      // false 로 적으면 거부한 사람과 구버전 사용자가 한 칸에 섞인다.
+      crossBorder: typeof consent.crossBorder === 'boolean' ? consent.crossBorder : null,
       userAge14: consent.userAge14 === true, // user's own 14+ attestation (distinct)
       marketing: consent.marketing === true,
       policyVersion: String(consent.policyVersion || '').slice(0, 50),
@@ -1149,3 +1157,6 @@ router.get('/reading/:id/pdf', readLimiter, async (req, res) => {
 });
 
 module.exports = router;
+// 동의 검증은 라우터를 세우지 않고도 계약을 검사할 수 있어야 한다
+// (tests/consent-record.test.js). 라우터 export 는 그대로 둔다.
+module.exports.validateConsent = validateConsent;

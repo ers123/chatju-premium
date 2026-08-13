@@ -184,7 +184,13 @@ export default function InputFormPage() {
         parentUnknownTime: hasParentProfile ? formData.parentUnknownTime : undefined,
         // Consent record (transmitted with /saju/calculate)
         consent: {
-          dataProcessing: formData.privacyAgreed && formData.overseasProcessingAgreed,
+          dataProcessing: formData.privacyAgreed,
+          // Cross-border transfer to AI/cloud processors is a SEPARATE consent
+          // in law (PIPA §28-8, GDPR Art 13(1)(f)/49) and the UI already asks
+          // for it separately. It used to be AND-ed into dataProcessing, which
+          // meant the record could not answer "did they consent to the transfer?"
+          // — the two were indistinguishable once merged.
+          crossBorder: formData.overseasProcessingAgreed,
           // Legal-representative consent for the child (PIPA/COPPA/GDPR basis).
           // Distinct from the user's own 14+ age attestation (userAge14).
           guardian: formData.guardianConfirmed,
