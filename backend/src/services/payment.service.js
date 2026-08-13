@@ -396,12 +396,27 @@ async function handlePayPalWebhook(webhookData) {
         // Update payment as failed/refunded
         const failedOrderId = resource.supplementary_data?.related_ids?.order_id;
         if (failedOrderId) {
+          // metadata를 통째로 갈아끼우면 안 된다. 여기에는 구매자 이메일과
+          // product_type이 들어 있고, 리포트 소유 확인(verifyLookupOwnership)과
+          // 상품 검증(assertPaymentMatchesProduct)이 그 값을 읽는다 — 덮어쓰면
+          // 환불한 사람이 자기 리포트를 다시 열지 못하게 된다. 병합한다.
+          const refunded = !event_type.includes('DENIED');
+          const { data: existing } = await supabaseAdmin
+            .from('payments')
+            .select('metadata')
+            .eq('payment_key', failedOrderId)
+            .maybeSingle();
+
           await supabaseAdmin
             .from('payments')
             .update({
-              status: event_type.includes('DENIED') ? 'failed' : 'refunded',
+              status: refunded ? 'refunded' : 'failed',
+              refunded_at: refunded ? new Date().toISOString() : null,
+              status_source: 'webhook',
+              status_checked_at: new Date().toISOString(),
               metadata: {
-                event_type: event_type,
+                ...(existing?.metadata || {}),
+                event_type,
                 failed_at: new Date().toISOString(),
               }
             })

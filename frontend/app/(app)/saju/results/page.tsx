@@ -12,6 +12,7 @@ import { formatBirthDateForDisplay } from '@/app/lib/date-display'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ShareableResultCard from '@/components/saju/ShareableResultCard'
+import ReportRating from '@/components/saju/ReportRating'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 import PremiumEditorialReport, {
   hasReadyPresentation,
@@ -1149,6 +1150,19 @@ export default function ResultsPage() {
               </div>
             </section>
             )}
+            {/* 리포트를 다 읽은 자리에서 별점을 묻는다. 소유 증명은 이미 들고 있는
+                리포트 토큰 또는 claim key — 새로 물어보는 것이 없다. */}
+            <ReportRating
+              token={reportAccessToken || (typeof window !== 'undefined' ? sessionStorage.getItem('report_access_token') : null)}
+              claimKey={(() => { try { const c = sessionStorage.getItem('completed_payment'); return c ? JSON.parse(c).claimKey : null } catch { return null } })()}
+              labels={{
+                prompt: (sr as any).ratingPrompt,
+                thanks: (sr as any).ratingThanks,
+                commentPlaceholder: (sr as any).ratingCommentPlaceholder,
+                send: (sr as any).ratingSend,
+                sent: (sr as any).ratingSent,
+              }}
+            />
           </>
         ) : premiumLoading ? (
           <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '2rem 1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>

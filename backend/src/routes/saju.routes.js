@@ -8,7 +8,7 @@ const sajuService = require('../services/saju.service');
 const authMiddleware = require('../middleware/auth');
 const promoService = require('../services/promo.service');
 const { validateBirthInfo, validateUUIDParam, sanitizeStrings } = require('../middleware/validation');
-const { sajuPreviewLimiter, sajuPremiumLimiter, readLimiter, otpRequestLimiter } = require('../middleware/rateLimit');
+const { sajuPreviewLimiter, sajuPremiumLimiter, readLimiter, otpRequestLimiter, feedbackLimiter } = require('../middleware/rateLimit');
 const reportLookupOtp = require('../services/reportLookupOtp.service');
 const { calculateMansae } = require('../utils/mansae-wrapper');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
@@ -853,6 +853,101 @@ router.post('/report-lookup-token', readLimiter, async (req, res) => {
  *   ?claim=<rawClaimKey>  — possession of the random secret is the authz (in-flow, no OTP)
  *   ?token=<accessToken>  — existing signed token branch (unchanged, back-compat)
  */
+/**
+ * POST /saju/feedback
+ * 리포트를 받은 사람이 남기는 별점(1-5)과 선택 코멘트.
+ *
+ * 인증: 리포트를 실제로 받은 사람만 — 이미 있는 두 가지 소유 증명을 그대로 쓴다.
+ *   - reportAccessToken (리포트 화면이 이미 들고 있다)
+ *   - claimKey (in-flow 폴링에 쓰는 그 열쇠)
+ * 새 로그인도, 새 개인정보도 만들지 않는다. 이메일을 받지 않는 이유이기도 하다 —
+ * 평가 하나 받자고 연락처를 새로 모으면 동의 범위가 넓어진다.
+ *
+ * Body: { rating: 1-5, comment?: string, readingId?, token?, claimKey? }
+ */
+router.post('/feedback', feedbackLimiter, async (req, res) => {
+  try {
+    const { rating, comment, token, claimKey } = req.body || {};
+    const { supabaseAdmin } = require('../config/supabase');
+
+    const parsedRating = Number(rating);
+    if (!Number.isInteger(parsedRating) || parsedRating < 1 || parsedRating > 5) {
+      return res.status(400).json({ error: 'rating must be an integer between 1 and 5', code: 'INVALID_RATING' });
+    }
+    if (comment != null && (typeof comment !== 'string' || comment.length > 2000)) {
+      return res.status(400).json({ error: 'comment must be a string of at most 2000 characters', code: 'INVALID_COMMENT' });
+    }
+
+    // ── 소유 증명 → reading 한 건 ─────────────────────────────────────────
+    let reading = null;
+    if (token) {
+      let payload;
+      try {
+        payload = verifyAccessToken(token, { purpose: 'report' });
+      } catch {
+        return res.status(401).json({ error: 'Invalid report access token', code: 'INVALID_REPORT_ACCESS_TOKEN' });
+      }
+      if (!payload.readingId) {
+        return res.status(401).json({ error: 'Invalid report access token', code: 'INVALID_REPORT_ACCESS_TOKEN' });
+      }
+      const { data } = await supabaseAdmin
+        .from('readings')
+        .select('id, language, product_type, ai_interpretation')
+        .eq('id', payload.readingId)
+        .maybeSingle();
+      reading = data;
+    } else if (claimKey) {
+      const validClaim = validateClaimKey(claimKey);
+      if (!validClaim) {
+        return res.status(401).json({ error: 'Invalid claim key', code: 'INVALID_CLAIM_KEY' });
+      }
+      const { data } = await supabaseAdmin
+        .from('readings')
+        .select('id, language, product_type, ai_interpretation')
+        .eq('claim_key_hash', hashClaimKey(validClaim))
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      reading = data;
+    } else {
+      return res.status(401).json({ error: 'Report access token or claim key required', code: 'MISSING_REPORT_PROOF' });
+    }
+
+    if (!reading) {
+      return res.status(404).json({ error: 'Reading not found', code: 'READING_NOT_FOUND' });
+    }
+
+    // 평가를 원인에 잇는 값들. 리포트가 보존기간으로 지워져도 집계는 남아야 하므로
+    // 조인 대신 복사한다.
+    const row = {
+      reading_id: reading.id,
+      rating: parsedRating,
+      comment: comment ? comment.trim() || null : null,
+      language: reading.language || null,
+      prompt_version: reading.ai_interpretation?.metadata?.promptVersion || 'unknown',
+      product_type: reading.product_type || null,
+    };
+
+    // 같은 리포트를 다시 평가하면 덮어쓴다(마음이 바뀌는 것은 정상이다).
+    const { error } = await supabaseAdmin
+      .from('report_feedback')
+      .upsert(row, { onConflict: 'reading_id' });
+
+    if (error) {
+      // 마이그레이션 008 미실행 등 — 평가 하나 때문에 사용자에게 에러를 보이지
+      // 않는다. 로그에는 남겨서 우리가 알아채게 한다.
+      console.error('[Saju Route] feedback upsert failed:', error.message);
+      return res.status(503).json({ error: 'Feedback storage unavailable', code: 'FEEDBACK_STORE_FAILED' });
+    }
+
+    console.log('[Saju Route] Feedback stored:', { readingId: reading.id, rating: parsedRating, hasComment: !!row.comment, promptVersion: row.prompt_version });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('[Saju Route] feedback error:', error);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 router.get('/reading-check', readLimiter, async (req, res) => {
   try {
     const { token, claim } = req.query;

@@ -75,6 +75,12 @@ function stripPromptResidue(text, language, keepWords = []) {
   return out;
 }
 
+// 유료 리포트 프롬프트의 세대. 리포트 metadata에 박혀 나가고, 별점·환불 집계가
+// 이 값으로 묶인다(scripts/report-signals.js). 문체·구조를 바꾸면 올릴 것.
+//   v1  ~2026-08-12  기준선
+//   v2   2026-08-13  이름 호명 + 목소리 지침 + 도입부 문체 예문
+const PROMPT_VERSION = 'v2-voice-2026-08-13';
+
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
 
@@ -2010,6 +2016,10 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
         model: result1.model,
         tokens: totalTokens,
         generatedAt,
+        // 이 리포트를 만든 프롬프트 세대. 별점·환불을 원인에 이으려면 필요하다 —
+        // 버전 없이 모인 평점은 "언젠가 어떤 프롬프트가 받은 점수"일 뿐이다.
+        // 프롬프트의 **문체나 구조**를 바꿀 때마다 올린다(오타 수정은 제외).
+        promptVersion: PROMPT_VERSION,
         reportType: 'relationship_focused',
         hasParentAnalysis: !!parentManseryeok,
         splitCalls: {

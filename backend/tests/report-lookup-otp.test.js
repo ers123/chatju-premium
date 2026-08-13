@@ -86,15 +86,10 @@ jest.mock('../src/services/pdf.service', () => ({
 // supertest requests originate from 127.0.0.1), throttling later tests and
 // suppressing OTP sends. Mock them to passthrough for deterministic isolation.
 jest.mock('../src/middleware/rateLimit', () => {
-  const passthrough = (req, res, next) => next();
-  return {
-    sajuPreviewLimiter: passthrough,
-    sajuPremiumLimiter: passthrough,
-    readLimiter: passthrough,
-    otpRequestLimiter: passthrough,
-    authLimiter: passthrough,
-    paymentLimiter: passthrough,
-  };
+  // 어떤 리미터 이름이 와도 통과 미들웨어를 준다. 이름을 하나씩 나열하면 리미터를
+  // 새로 만들 때마다 무관한 스위트가 "callback undefined"로 깨진다(실제로 3건 깨졌다).
+  const pass = (_req, _res, next) => next();
+  return new Proxy({}, { get: (_t, key) => (key === 'createRateLimiter' ? () => pass : pass) });
 });
 
 const sentOtps = [];

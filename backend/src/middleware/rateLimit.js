@@ -201,6 +201,23 @@ const otpRequestLimiter = rateLimit({
 });
 
 /**
+ * 리포트 평가 제출. 리포트를 실제로 받은 사람만 부를 수 있는 엔드포인트라
+ * 남용 여지가 작지만, 같은 IP에서 무한히 덮어쓰는 것은 막는다.
+ */
+const feedbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  message: {
+    success: false,
+    error: 'Too many feedback submissions, please try again later.',
+    code: 'FEEDBACK_RATE_LIMIT_EXCEEDED',
+    retryAfter: '1 hour'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
  * Create custom rate limiter with specific options
  * @param {Object} options - Rate limit options
  * @returns {Function} Rate limit middleware
@@ -232,5 +249,6 @@ module.exports = {
   webhookLimiter,
   readLimiter,
   otpRequestLimiter,
+  feedbackLimiter,
   createRateLimiter,
 };
