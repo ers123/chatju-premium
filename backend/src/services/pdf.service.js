@@ -1153,6 +1153,17 @@ async function generateReportPDF(params) {
       function writeStructuredBlock(block) {
         const ui = activePresentationUi;
         const type = block.type || 'text';
+        // 장 도입 산문. 카드가 아니라 **본문 문단**으로 그린다 — 카드로 그리면
+        // 라벨이 하나 더 늘어날 뿐이고, 이 블록의 목적은 독자가 라벨보다 먼저
+        // 사람 목소리를 만나게 하는 것이다.
+        if (type === 'prose') {
+          const body = String(block.text || '').trim();
+          if (!body) return;
+          ensureSpace(40);
+          renderRichText(body, MARGIN_L, doc.y, { fontSize: 10.5, color: COLORS.bodyText, lineGap: 6 });
+          doc.moveDown(0.6);
+          return;
+        }
         if (type === 'text' || type === 'note') {
           writePresentationCard(block.title || (type === 'note' ? labels.cardNote : labels.cardObservation), [{ text: block.text || '' }], type === 'note' ? ELEMENT_COLORS.water : COLORS.gold);
           return;

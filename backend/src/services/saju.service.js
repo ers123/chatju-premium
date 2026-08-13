@@ -1380,6 +1380,8 @@ ${monthlyFortuneData}`;
 
   // ── Call 1: Sections 1-5 (Executive summary, misconceptions, behavioral, playbook, strengths) ──
   const call1SectionInstructionsKo = `
+
+**모든 섹션은 라벨 항목 앞에 2~3문장의 산문으로 시작하세요.** 부모에게 직접 말을 거는 문장이어야 하고, 그 장에서 다룰 것을 아이의 구체적인 장면으로 열어 주세요. 라벨 목록으로 바로 시작하지 마세요 — 그러면 편지가 아니라 서식이 됩니다. (산문은 라벨을 대체하지 않습니다. 라벨 항목은 지정된 대로 전부 그대로 씁니다.)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 개인화된 양육 리포트 (섹션 1~5)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1463,6 +1465,8 @@ ${monthlyFortuneData}`;
 
   // ── Call 2: Sections 6-9 (Timeline, experiment, co-parent, lifestyle) ──
   const call2SectionInstructionsKo = `
+
+**모든 섹션은 라벨 항목 앞에 2~3문장의 산문으로 시작하세요.** 부모에게 직접 말을 거는 문장이어야 하고, 그 장에서 다룰 것을 아이의 구체적인 장면으로 열어 주세요. 라벨 목록으로 바로 시작하지 마세요 — 그러면 편지가 아니라 서식이 됩니다. (산문은 라벨을 대체하지 않습니다. 라벨 항목은 지정된 대로 전부 그대로 씁니다.)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 개인화된 양육 리포트 (섹션 6~9)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1545,6 +1549,8 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
   const bullet = (label) => `- **${label}:**`;
 
   const call1SectionInstructionsEn = `
+
+**Every section must open with two or three sentences of prose before its labelled items.** Speak to the parent directly and open with a concrete scene from this child's day. Never begin a section with the label list itself — that turns a letter into a form. (The prose does not replace the labels: write every labelled item exactly as specified underneath.)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 Personalized parenting report (Sections 1-5)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1630,6 +1636,8 @@ Step 3: render as markdown in the required format
 </execution_order>`;
 
   const call2SectionInstructionsEn = `
+
+**Every section must open with two or three sentences of prose before its labelled items.** Speak to the parent directly and open with a concrete scene from this child's day. Never begin a section with the label list itself — that turns a letter into a form. (The prose does not replace the labels: write every labelled item exactly as specified underneath.)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 Personalized parenting report (Sections 6-9)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

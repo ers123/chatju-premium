@@ -7,6 +7,10 @@ const { formatReportDate } = require('../utils/report-date');
 
 const REQUIRED_SECTION_NUMBERS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 const BLOCK_REQUIREMENTS = Object.freeze({
+  // 장 도입 산문. **title 이 없는 유일한 블록이다** — 제목을 요구하면 라벨이
+  // 하나 더 늘어날 뿐이고, 이 블록의 존재 이유는 독자가 라벨보다 먼저 사람
+  // 목소리를 만나게 하는 것이다.
+  prose: ['text'],
   text: ['title', 'text'],
   note: ['title', 'text'],
   insight: ['title', 'basis', 'behavior', 'action'],
@@ -563,6 +567,49 @@ function parseLabelGroups(content, labels) {
   if (Object.keys(current).length) groups.push(current);
   return groups;
 }
+/**
+ * 첫 라벨 앞에 놓인 산문을 꺼낸다.
+ *
+ * 왜: `parseLabelGroups`는 라벨을 만나기 전의 줄을 **조용히 버린다**
+ * (`appendContinuation`이 `lastLabel` 없이는 아무것도 붙이지 않는다). 그래서
+ * 모델이 장 첫머리에 부모에게 말을 거는 문장을 써도 독자는 그것을 본 적이 없다.
+ * 문체 점수(warmth)를 프롬프트로 올리려던 작업은, 산문을 지우는 렌더러와
+ * 싸우고 있었던 셈이다 — 2026-08-13 모델 비교에서 심판이 네 모델 모두에게
+ * 똑같이 "라벨 반복이 편지가 아니라 양식처럼 읽힌다"고 적은 이유이기도 하다.
+ *
+ * 계약을 넓히는 것이지 바꾸는 것이 아니다: 라벨 그룹은 그대로 파싱되고,
+ * 이 함수는 **버려지던 것만** 주워 온다. 산문이 없으면 빈 문자열이므로
+ * 기존 리포트의 렌더링은 한 글자도 달라지지 않는다.
+ */
+function extractSectionIntro(content, labels) {
+  const wanted = new Set(labels);
+  const lines = splitInlineLabels(String(content || ''), labels).split(/\r?\n/);
+  const prose = [];
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) { if (prose.length) break; continue; }
+    // 라벨/목록/헤딩을 만나면 도입부는 끝난 것이다.
+    if (/^#{1,6}\s/.test(t) || /^[-*]\s/.test(t) || /^\d+[.)]\s/.test(t) || /^-{2,}$/.test(t)) break;
+    const m = t.match(/^(?:\*\*([^*]+?)\s*[:：]\*\*|\*\*([^*]+?)\*\*\s*[:：]|([^:*\n]+?)\s*[:：])/);
+    if (m) {
+      const label = (m[1] || m[2] || m[3] || '').trim();
+      // 알려진 라벨이든 모르는 라벨이든, 라벨 모양이면 산문이 아니다.
+      if (wanted.has(label) || /^\*\*/.test(t)) break;
+    }
+    prose.push(t);
+    // 도입부는 도입부다. 장 전체를 산문으로 삼키지 않는다.
+    if (prose.join(' ').length > 600) break;
+  }
+  const joined = prose.join(' ').trim();
+  if (joined.length <= 600) return joined;
+  // 줄 단위 상한만으로는 한 줄에 몰아 쓴 경우를 못 막는다. 문장 경계에서 자른다 —
+  // 문장 중간에서 끊긴 도입부는 없느니만 못하다.
+  const cut = joined.slice(0, 600);
+  const lastEnd = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'),
+    cut.lastIndexOf('。'), cut.lastIndexOf('다.'), cut.lastIndexOf('요.'));
+  return (lastEnd > 100 ? cut.slice(0, lastEnd + 1) : cut).trim();
+}
+
 function parseTitledGroups(content, expectedCount, labels) {
   const parts = String(content).split(/^###\s+(.+)$/gm).slice(1);
   if (parts.length === expectedCount * 2) {
@@ -668,32 +715,43 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
     const longBodies = semanticBodies.map(normalizedBody).filter((body) => body.length >= 80);
     if (new Set(longBodies).size < longBodies.length || hasRepeatedContent(semanticBodies)) return { presentationStatus: 'fallback', presentationStatusReason: 'duplicate_content' };
     const text = (title, value) => ({ type: 'text', title, text: value });
+    // 장별 도입 산문. 지금까지 파서가 버리던 자리다 — 있으면 첫 블록으로 올린다.
+    const introFor = (idx, labels) => extractSectionIntro(sections[idx].content, labels);
+    const intros = [
+      introFor(0, label.s1), introFor(1, label.s2), introFor(2, label.s3),
+      introFor(3, label.s4), introFor(4, label.s5), introFor(5, label.s6),
+      introFor(6, label.s7), introFor(7, label.s8), introFor(8, label.s9),
+    ];
+    // 독자가 라벨보다 먼저 목소리를 만나게 한다. 산문이 없던 리포트는 이 블록이
+    // 아예 생기지 않으므로 기존 렌더링과 동일하다.
+    const withIntro = (n, blocks) => (intros[n - 1] ? [{ type: 'prose', text: intros[n - 1] }, ...blocks] : blocks);
+
     const presentation = {
       locale: language,
       ui: locale.ui,
       cover: { kicker: locale.cover.kicker, title: locale.cover.title, child: childName, date: formatReportDate(generatedAt, timeZone) },
       opening: { title: locale.opening.title, items: [{ title: locale.opening.items[0], text: s1[0][label.s1[0]] }, { title: locale.opening.items[1], text: s1[0][label.s1[3]] }, { title: locale.opening.items[2], text: s1[0][label.s1[4]] }], note: s1[0][label.s1[1]] },
       sections: [
-        { number: 1, title: sections[0].title, blocks: [text(label.s1[0], s1[0][label.s1[0]]), { type: 'insight', title: generated.focus, basis, behavior: s1[0][label.s1[1]], action: s1[0][label.s1[3]] }, text(label.s1[2], s1[0][label.s1[2]])] },
-        { number: 2, title: sections[1].title, blocks: s2.map((g, i) => ({ type: 'translator', title: generated.scene(i), looksLike: g[label.s2[0]], actual: g[label.s2[1]], response: g[label.s2[2]] })) },
-        { number: 3, title: sections[2].title, blocks: s3.map((g, i) => ({ type: 'insight', title: generated.signature(i), basis: `${generated.inferencePrefix}: ${g[label.s3[1]]}`, behavior: g[label.s3[0]], action: `${g[label.s3[3]]} ${label.s3[2]}: ${g[label.s3[2]]}` })) },
-        { number: 4, title: sections[3].title, blocks: s4.map((g, i) => ({ type: 'script', title: generated.script(i), before: `${g[label.s4[0]]} (${g[label.s4[1]]})`, after: g[label.s4[2]], signal: g[label.s4[3]] })) },
+        { number: 1, title: sections[0].title, blocks: withIntro(1, [text(label.s1[0], s1[0][label.s1[0]]), { type: 'insight', title: generated.focus, basis, behavior: s1[0][label.s1[1]], action: s1[0][label.s1[3]] }, text(label.s1[2], s1[0][label.s1[2]])]) },
+        { number: 2, title: sections[1].title, blocks: withIntro(2, s2.map((g, i) => ({ type: 'translator', title: generated.scene(i), looksLike: g[label.s2[0]], actual: g[label.s2[1]], response: g[label.s2[2]] }))) },
+        { number: 3, title: sections[2].title, blocks: withIntro(3, s3.map((g, i) => ({ type: 'insight', title: generated.signature(i), basis: `${generated.inferencePrefix}: ${g[label.s3[1]]}`, behavior: g[label.s3[0]], action: `${g[label.s3[3]]} ${label.s3[2]}: ${g[label.s3[2]]}` }))) },
+        { number: 4, title: sections[3].title, blocks: withIntro(4, s4.map((g, i) => ({ type: 'script', title: generated.script(i), before: `${g[label.s4[0]]} (${g[label.s4[1]]})`, after: g[label.s4[2]], signal: g[label.s4[3]] }))) },
         // Section 5 carries four fields into a three-slot insight block, so the card
         // was labelling an environment description as "계산된 근거" and gluing the
         // activity and the career hint together with a slash. basis/behavior/action
         // stay populated for any renderer that expects them; `rows` gives the PDF the
         // real labels and a fourth line. (The web renderer keeps its current shape —
         // it cannot be redeployed right now, see the Pages branch note.)
-        { number: 5, title: sections[4].title, blocks: s5.map((g, i) => ({ type: 'insight', title: titled5[i].title, basis: `${generated.referencePrefix}: ${g[label.s5[1]]}`, behavior: g[label.s5[0]], action: `${g[label.s5[2]]} / ${generated.careerHint}: ${g[label.s5[3]]}`, rows: [
+        { number: 5, title: sections[4].title, blocks: withIntro(5, s5.map((g, i) => ({ type: 'insight', title: titled5[i].title, basis: `${generated.referencePrefix}: ${g[label.s5[1]]}`, behavior: g[label.s5[0]], action: `${g[label.s5[2]]} / ${generated.careerHint}: ${g[label.s5[3]]}`, rows: [
           { label: label.s5[0], text: g[label.s5[0]] },
           { label: label.s5[1], text: g[label.s5[1]] },
           { label: label.s5[2], text: g[label.s5[2]] },
           { label: label.s5[3], text: g[label.s5[3]] },
-        ] })) },
-        { number: 6, title: sections[5].title, blocks: [{ type: 'timeline', title: generated.flow, items: s6.map((g, i) => ({ label: titled6[i].title, text: `${g[label.s6[0]]} ${g[label.s6[1]]} ${g[label.s6[2]]} ${generated.avoid}: ${g[label.s6[3]]}` })) }, text(generated.readingMethod, generated.readingMethodText)] },
-        { number: 7, title: sections[6].title, blocks: [{ type: 'checklist', title: generated.smallExperiment, items: s7.map((g, i) => ({ label: generated.day(i), text: `${g[label.s7[0]]} / ${generated.reaction}: ${g[label.s7[1]]} / ${generated.success}: ${g[label.s7[2]]}` })) }] },
-        { number: 8, title: sections[7].title, blocks: [{ type: 'checklist', title: generated.remember, items: memory.map((v, i) => ({ label: `${i + 1}`, text: v })) }, { type: 'parenting-card', title: generated.card, stop: stop.join(' '), start: start.join(' '), steps: steps.join(' ') }] },
-        { number: 9, title: sections[8].title, startOnNewPage: false, blocks: [text(generated.ideas, `${s9[0][label.s9[0]]} / ${s9[0][label.s9[1]]} / ${s9[0][label.s9[2]]}`), { type: 'close', title: generated.close, text: `${s9[0][label.s9[3]]} ${s9[0][label.s9[4]]}` }] },
+        ] }))) },
+        { number: 6, title: sections[5].title, blocks: withIntro(6, [{ type: 'timeline', title: generated.flow, items: s6.map((g, i) => ({ label: titled6[i].title, text: `${g[label.s6[0]]} ${g[label.s6[1]]} ${g[label.s6[2]]} ${generated.avoid}: ${g[label.s6[3]]}` })) }, text(generated.readingMethod, generated.readingMethodText)]) },
+        { number: 7, title: sections[6].title, blocks: withIntro(7, [{ type: 'checklist', title: generated.smallExperiment, items: s7.map((g, i) => ({ label: generated.day(i), text: `${g[label.s7[0]]} / ${generated.reaction}: ${g[label.s7[1]]} / ${generated.success}: ${g[label.s7[2]]}` })) }]) },
+        { number: 8, title: sections[7].title, blocks: withIntro(8, [{ type: 'checklist', title: generated.remember, items: memory.map((v, i) => ({ label: `${i + 1}`, text: v })) }, { type: 'parenting-card', title: generated.card, stop: stop.join(' '), start: start.join(' '), steps: steps.join(' ') }]) },
+        { number: 9, title: sections[8].title, startOnNewPage: false, blocks: withIntro(9, [text(generated.ideas, `${s9[0][label.s9[0]]} / ${s9[0][label.s9[1]]} / ${s9[0][label.s9[2]]}`), { type: 'close', title: generated.close, text: `${s9[0][label.s9[3]]} ${s9[0][label.s9[4]]}` }]) },
       ],
     };
     return { presentationStatus: 'ready', presentation: sanitizePresentation(normalizePresentation(presentation)) };
@@ -704,6 +762,9 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
 
 module.exports = {
   REQUIRED_SECTION_NUMBERS,
+  // 계약 테스트에서 직접 검사한다 — 이 함수가 되살리는 것(라벨 앞 산문)이
+  // 조용히 사라지던 동작이라, 공개해서 고정해 둔다.
+  extractSectionIntro,
   BLOCK_REQUIREMENTS,
   parseNumberedSections,
   normalizePresentation,

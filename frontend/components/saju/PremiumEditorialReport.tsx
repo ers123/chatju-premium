@@ -1,6 +1,8 @@
 import styles from './PremiumEditorialReport.module.css'
 
 export type PremiumBlock =
+  // 장 도입 산문 — 제목이 없다. 제목을 주면 또 하나의 라벨이 된다.
+  | { type: 'prose'; text: string }
   | { type: 'text' | 'note' | 'close'; title: string; text: string }
   | { type: 'insight'; title: string; basis: string; behavior: string; action: string }
   | { type: 'translator'; title: string; looksLike: string; actual: string; response: string }
@@ -83,6 +85,7 @@ function sanitizePresentationForDisplay(presentation: PremiumPresentation): Prem
 }
 
 const blockAccent: Record<PremiumBlock['type'], string> = {
+  prose: 'transparent',
   text: '#A47C3F',
   note: '#526977',
   close: '#24352F',
@@ -136,6 +139,18 @@ const defaultUiLabels = {
 }
 
 function EditorialBlock({ block, ui }: { block: PremiumBlock; ui: typeof defaultUiLabels }) {
+  // 장 도입 산문 — 제목 없는 본문 문단. 카드로 그리면 라벨이 하나 더 느는 셈이고,
+  // 이 블록의 존재 이유는 독자가 라벨보다 먼저 사람 목소리를 만나는 것이다.
+  // (파서가 지금까지 이 문장들을 버리고 있었다 — report-presentation.js 참고)
+  if (block.type === 'prose') {
+    if (!block.text?.trim()) return null
+    return (
+      <section className={styles.block}>
+        <p className={styles.prose}>{block.text}</p>
+      </section>
+    )
+  }
+
   if (block.type === 'text' || block.type === 'note' || block.type === 'close') {
     return (
       <section className={styles.block} style={{ '--block-accent': blockAccent[block.type] } as React.CSSProperties}>
@@ -234,7 +249,7 @@ export default function PremiumEditorialReport({ presentation }: { presentation:
           </header>
           <div className={styles.blocks}>
             {section.blocks.map((block, index) => (
-              <EditorialBlock block={block} ui={ui} key={`${block.type}-${block.title}-${index}`} />
+              <EditorialBlock block={block} ui={ui} key={`${block.type}-${'title' in block ? block.title : 'prose'}-${index}`} />
             ))}
           </div>
         </section>
