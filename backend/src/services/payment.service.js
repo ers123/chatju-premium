@@ -5,6 +5,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const axios = require('axios');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
 const { PREMIUM_SAJU_PRODUCT, getProduct, amountsMatch, formatPayPalAmount } = require('../config/products');
+const { recordFunnelEvent, normalizeLanguage, EVENTS: FUNNEL } = require('./funnel.service');
 
 function toSafeError(error) {
   return {
@@ -79,9 +80,13 @@ async function getPayPalAccessToken() {
  * @param {string} userId - User UUID
  * @param {number} amount - Client display amount. Server product price is authoritative.
  * @param {string} description - Payment description
+ * @param {string|null} email - Buyer email (receipt + report delivery)
+ * @param {string} productType - Server catalog id
+ * @param {string|null} language - UI language, for funnel attribution only. 통화는
+ *   언어를 못 대신한다(EUR 하나에 es·pt·fr가 걸려 있다). 없으면 'unknown'으로 센다.
  * @returns {object} Payment creation result
  */
-async function createPayPalPayment(userId, amount, description = PREMIUM_SAJU_PRODUCT.description, email = null, productType = PREMIUM_SAJU_PRODUCT.id) {
+async function createPayPalPayment(userId, amount, description = PREMIUM_SAJU_PRODUCT.description, email = null, productType = PREMIUM_SAJU_PRODUCT.id, language = null) {
   try {
     const product = getProduct(productType);
     if (!product) {
@@ -144,6 +149,8 @@ async function createPayPalPayment(userId, amount, description = PREMIUM_SAJU_PR
           expected_amount: product.amount,
           expected_currency: product.currency,
           client_amount: amount,
+          // 퍼널 귀속용. 캡처 시점에는 요청 본문에 언어가 없으므로 여기 남겨 둔다.
+          language: normalizeLanguage(language),
           created_at: new Date().toISOString(),
         }
       }])
@@ -163,6 +170,10 @@ async function createPayPalPayment(userId, amount, description = PREMIUM_SAJU_PR
       amount: product.amount,
       paypalOrderId: paypalOrder.id,
     });
+
+    // 퍼널: 가격을 보고 결제창까지 간 사람. pending 행으로도 셀 수 있지만, 프리뷰와
+    // 같은 단위·같은 표에 있어야 "어디서 끊겼는가"를 한 줄로 읽는다.
+    await recordFunnelEvent(FUNNEL.CHECKOUT_START, language);
 
     const paymentAccessToken = createAccessToken({
       purpose: 'payment',
@@ -280,6 +291,10 @@ async function capturePayPalPayment(paypalOrderId, paymentAccessToken) {
       paypalOrderId,
       status: payment.status,
     });
+
+    // 퍼널: 실제로 돈이 들어온 순간. 위쪽 idempotency 반환 경로(alreadyCaptured)는
+    // 여기까지 오지 않는다 — 재호출이 매출을 두 번 세지 않는다.
+    await recordFunnelEvent(FUNNEL.PURCHASE, existingPayment?.metadata?.language);
 
     return {
       success: true,

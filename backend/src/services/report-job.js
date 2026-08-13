@@ -88,6 +88,14 @@ async function runReportJob(job) {
     });
   }
 
+  // 프로모 리포트는 돈이 0원이라 payments에 흔적이 없다. 퍼널에서 빠지면 "리포트는
+  // 나갔는데 결제가 없다"로 보인다. 비동기·인라인 폴백 둘 다 이 함수를 지난다 —
+  // 동기 경로는 라우트에서 따로 센다(같은 요청이 두 경로를 타지는 않는다).
+  if (job.promo) {
+    const { recordFunnelEvent, EVENTS } = require('./funnel.service');
+    await recordFunnelEvent(EVENTS.PROMO_REPORT, params.language);
+  }
+
   console.log('[Report Job] Done:', { readingId: reading.readingId, promo: !!job.promo });
   // reading 본문은 인라인 폴백에서 쓴다. 비동기 호출의 반환값은 아무도 읽지 않는다.
   return { readingId: reading.readingId, reading };

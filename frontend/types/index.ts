@@ -220,6 +220,11 @@ export interface PayPalPaymentRequest {
   email?: string; // For receipt and PDF delivery
   /** Server catalog id (backend products.js); selects a fixed-price product */
   product_type?: string;
+  /**
+   * UI language — funnel attribution only, never price. Currency can't stand in
+   * for it: one EUR product covers es/pt, another covers fr.
+   */
+  language?: string;
 }
 
 export interface PayPalPaymentResponse {

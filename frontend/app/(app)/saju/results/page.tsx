@@ -298,7 +298,7 @@ export default function ResultsPage() {
             setPaymentError(t.payment.emailRequired)
             throw new Error('Email required')
           }
-          const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email: paymentEmailRef.current }
+          const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email: paymentEmailRef.current, language: lang }
           const response = await apiClient.createPayPalPayment(orderPayload)
           if (response.success && response.paypalOrderId && response.paymentAccessToken) {
             paymentAccessTokenRef.current = response.paymentAccessToken

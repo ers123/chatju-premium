@@ -13,6 +13,7 @@ const reportLookupOtp = require('../services/reportLookupOtp.service');
 const { calculateMansae } = require('../utils/mansae-wrapper');
 const { createAccessToken, verifyAccessToken } = require('../utils/accessToken');
 const { dispatchReportJob } = require('../services/report-job');
+const { recordFunnelEvent, EVENTS: FUNNEL } = require('../services/funnel.service');
 
 // Apply sanitization to all routes
 router.use(sanitizeStrings);
@@ -246,6 +247,10 @@ router.post('/preview', sajuPreviewLimiter, validateBirthInfo, async (req, res) 
       parentManseryeok,
       parentRole,
     });
+
+    // 퍼널 최상단. 프리뷰는 DB에 남지 않으므로 여기서 세지 않으면 영원히 안 보인다.
+    // 숫자만 올린다 — 생년월일도 IP도 가지 않는다. 응답을 기다리게 하지 않는다.
+    await recordFunnelEvent(FUNNEL.PREVIEW, language || 'ko');
 
     // Return preview with relationship context
     res.status(200).json({
@@ -653,6 +658,9 @@ router.post('/calculate-promo', sajuPremiumLimiter, validateBirthInfo, async (re
       ...promoConsumption,
       readingId: reading.readingId,
     });
+
+    // 동기 경로. 비동기·인라인 경로는 report-job에서 센다.
+    await recordFunnelEvent(FUNNEL.PROMO_REPORT, language);
 
     console.log('[Saju Route] Promo reading generated:', {
       readingId: reading.readingId,

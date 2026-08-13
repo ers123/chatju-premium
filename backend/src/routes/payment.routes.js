@@ -48,7 +48,7 @@ router.use(sanitizeStrings);
  */
 router.post('/paypal/create', paymentCreationLimiter, validatePaymentRequest, async (req, res) => {
   try {
-    const { amount, description, email, product_type } = req.body;
+    const { amount, description, email, product_type, language } = req.body;
     // Use authenticated user ID if available, otherwise use email as identifier
     const userId = req.user?.id || null;
 
@@ -59,7 +59,8 @@ router.post('/paypal/create', paymentCreationLimiter, validatePaymentRequest, as
       });
     }
 
-    const result = await paymentService.createPayPalPayment(userId, amount, description, email, product_type);
+    // language는 퍼널 귀속에만 쓴다(가격·상품은 서버 카탈로그가 정한다).
+    const result = await paymentService.createPayPalPayment(userId, amount, description, email, product_type, language);
 
     res.status(200).json(result);
 

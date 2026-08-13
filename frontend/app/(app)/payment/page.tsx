@@ -117,7 +117,7 @@ function PaymentContent() {
       window.paypal.Buttons({
         createOrder: async () => {
           try {
-            const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email }
+            const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email, language: lang }
             const response = await apiClient.createPayPalPayment(orderPayload)
             if (response.success && response.paypalOrderId && response.paymentAccessToken) {
               paymentAccessTokenRef.current = response.paymentAccessToken
@@ -175,7 +175,7 @@ function PaymentContent() {
         const btn = paymentsClient.createButton({
           onClick: async () => {
             try {
-              const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email }
+              const orderPayload = { amount: pricing.amount, currency: pricing.currency, product_type: pricing.productType, description: 'Premium Saju Reading', email, language: lang }
               const res = await apiClient.createPayPalPayment(orderPayload)
               if (!res.success || !res.paypalOrderId || !res.paymentAccessToken) throw new Error(t.payment.errorCreateOrder)
               sessionStorage.setItem('pending_order', JSON.stringify({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, paymentAccessToken: res.paymentAccessToken, amount: pricing.amount, currency: pricing.currency }))

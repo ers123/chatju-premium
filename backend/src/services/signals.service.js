@@ -8,6 +8,7 @@
 
 const axios = require('axios');
 const { supabaseAdmin } = require('../config/supabase');
+const { getFunnelSummary, renderFunnelText } = require('./funnel.service');
 
 const pct = (n, d) => (d ? `${((n / d) * 100).toFixed(1)}%` : '—');
 const mean = (xs) => (xs.length ? (xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(2) : '—');
@@ -119,7 +120,7 @@ async function syncPaymentStatuses({ apply = false, days = 180 } = {}) {
 async function buildDigest({ days = 90 } = {}) {
   const since = new Date(Date.now() - days * 86400000).toISOString();
 
-  const [readingsRes, paymentsRes, feedbackRes] = await Promise.all([
+  const [readingsRes, paymentsRes, feedbackRes, funnel] = await Promise.all([
     supabaseAdmin.from('readings')
       .select('id, language, product_type, created_at, email_status, ai_interpretation, delivery_email')
       .gte('created_at', since),
@@ -129,6 +130,9 @@ async function buildDigest({ days = 90 } = {}) {
     supabaseAdmin.from('report_feedback')
       .select('reading_id, rating, comment, language, prompt_version, created_at')
       .gte('created_at', since),
+    // 퍼널은 자체적으로 실패를 삼킨다(테이블 없으면 unavailable) — 다이제스트 전체를
+    // 넘어뜨리지 않는다.
+    getFunnelSummary({ days }).catch((e) => ({ unavailable: `퍼널 집계 실패: ${e.message}` })),
   ]);
 
   const readings = readingsRes.data || [];
@@ -147,6 +151,7 @@ async function buildDigest({ days = 90 } = {}) {
 
   return {
     window: { days, since },
+    funnel,
     reports: {
       total: enriched.length,
       byLanguage: Object.fromEntries(Object.entries(groupBy(enriched, 'language')).map(([k, v]) => [k, v.length])),
@@ -190,6 +195,9 @@ function renderDigestText(digest, sync = null) {
   const L = [];
   const d = digest;
   L.push(`SoMyung 사용자 신호 (최근 ${d.window.days}일)`);
+  L.push('');
+  // 퍼널이 먼저다. 리포트·결제 숫자만 보면 "적다"까지만 알고 어디서 끊겼는지는 모른다.
+  L.push(renderFunnelText(d.funnel));
   L.push('');
   L.push(`리포트 ${d.reports.total}건 · ready ${d.reports.readyRate} (계측 대상 ${d.reports.readyMeasured}건)`);
   if (Object.keys(d.reports.fallbackReasons).length) {
@@ -252,7 +260,10 @@ async function runWeeklySignals({ days = 90, apply = true, notify = true } = {})
       if (sync.changes.length) flags.push(`환불/실패 ${sync.changes.length}`);
       if (!digest.feedback.unavailable && digest.feedback.lowRatings) flags.push(`저평가 ${digest.feedback.lowRatings}`);
       if (digest.reports.emailFailed) flags.push(`메일실패 ${digest.reports.emailFailed}`);
-      const subject = `SoMyung 주간 신호 — 리포트 ${digest.reports.total} · 평가 ${digest.feedback.responses ?? 0}${flags.length ? ` · ⚠ ${flags.join(', ')}` : ''}`;
+      const funnelPart = digest.funnel && !digest.funnel.unavailable
+        ? ` · 프리뷰 ${digest.funnel.totals.preview}→구매 ${digest.funnel.totals.purchase}`
+        : '';
+      const subject = `SoMyung 주간 신호 — 리포트 ${digest.reports.total} · 평가 ${digest.feedback.responses ?? 0}${funnelPart}${flags.length ? ` · ⚠ ${flags.join(', ')}` : ''}`;
       await sendOpsDigest({ subject, text });
       notified = true;
     } catch (err) {
