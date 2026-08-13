@@ -57,12 +57,16 @@ function normalizeQuotes(text, language) {
 //    자기 번호를 하나 더 붙일 때가 있다(zh 유료 리포트 1건에서 6회). 두 번호가 같은
 //    숫자일 때만 안쪽 것을 지운다 — `1) 2.`는 중첩 목록일 수 있으므로 두지 않는다... 는
 //    보수적 판단이 아니라, 같은 숫자 반복만이 잔여물이라는 관찰이다.
-function stripPromptResidue(text, language) {
+// `keepWords`: 지우면 안 되는 한글 — 아이 이름이 여기 온다. "민서"는 두 글자라 조각
+// 규칙에 정확히 걸리는데, 이름은 잔여물이 아니라 **일부러 부르게 한 것**이다.
+function stripPromptResidue(text, language, keepWords = []) {
   if (!text) return text;
   const denumbered = text.replace(/^(\s*)(\d+)([).])\s+\2[.)]\s+/gm, '$1$2$3 ');
   if (language === 'ko') return denumbered;
   let out = denumbered.replace(/([一-鿿]{1,4})\s*[（(]\s*\1\s*[)）]/g, '$1');
+  const keep = new Set(keepWords.filter((w) => typeof w === 'string' && /[가-힣]/.test(w)));
   out = out.replace(/[가-힣]{1,2}/g, (run, offset, whole) => {
+    if (keep.has(run)) return run;
     const neighbourhood = whole.slice(Math.max(0, offset - 12), offset + 12);
     const hangulAround = (neighbourhood.match(/[가-힣]/g) || []).length;
     return hangulAround <= 3 ? '' : run;
@@ -1278,8 +1282,18 @@ ${transitionNote}
   // ── Data Context: split into 3 layers (core / fortune / remedy) ──
 
   // coreDataContext — used by BOTH Call 1 and Call 2
+  // 아이 이름. 지금까지 이름은 표지(presentation)에만 전달되고 프롬프트는 "이 아이"로만
+  // 말해서, **유료 리포트 15건의 본문 전부가 아이 이름을 0회 불렀다**(측정). 부모가 돈을
+  // 내고 받은 자기 아이의 리포트가 이름을 한 번도 안 부르면 범용 문서로 읽힌다 —
+  // 경쟁 서비스(The Pattern, STAR/CHILD)와 가장 크게 갈리는 지점이 이 호명이다.
+  const nameDirective = language === 'ko'
+    ? `**아이 이름: ${childName}** — 리포트 전체에서 아이를 "${childName}"(으)로 자연스럽게 부르세요. 첫 문단에서 반드시 한 번, 이후 섹션마다 자연스러운 자리에서. 매 문장 반복은 금물 — 부모가 편지를 읽듯 자연스럽게.`
+    : `**The child's name is ${childName}.** Call the child "${childName}" naturally throughout — once in the opening paragraph, then where it reads naturally in each section. Do not robotically repeat it in every sentence; write as if a counsellor who knows this family is speaking.`;
+
   const coreDataContext = `당신은 아동 기질 해석 전문가이자 개인화된 양육 전략가입니다.
 부모가 아이를 더 깊이 이해하고, 관계의 갈등을 줄이고 성장을 돕고 싶어서 찾아왔습니다.
+
+${nameDirective}
 
 **중요 전제:** 사주는 아이의 타고난 기질(命)을 보여주는 지도이지, 정해진 운명이 아닙니다. 같은 사주를 가진 아이도 부모의 양육(運)에 따라 전혀 다른 사람이 됩니다. 이 리포트는 아이에게 가장 잘 맞는 양육 방향을 찾는 나침반입니다.
 ${timeDisclaimer}
@@ -1855,7 +1869,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
       if (r1.content.trim().length < MIN_HALF_LENGTH || r2.content.trim().length < MIN_HALF_LENGTH) {
         return null;
       }
-      return stripPromptResidue(normalizeQuotes(`${r1.content}\n\n${r2.content}`, language), language);
+      return stripPromptResidue(normalizeQuotes(`${r1.content}\n\n${r2.content}`, language), language, [childName]);
     };
 
     let interpretationText = buildInterpretation(result1, result2);
@@ -1896,9 +1910,12 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
     // paragraphs of the report body in Korean. That ships to the reader even on the
     // fallback path, so treat it like a format failure and try again.
     const HANGUL_LIMIT = Number(process.env.SAJU_HANGUL_LIMIT || 0.005);
+    // 아이 이름이 한글이면(예: 민서) 오염이 아니라 호명이다 — 비율에서 빼고 센다.
+    // 안 빼면 이름을 열 번 부른 정상 리포트가 오염 한도에 걸려 재생성을 돈다.
     const hangulRatio = (text) => {
-      const t = String(text || '');
+      let t = String(text || '');
       if (!t.length) return 0;
+      if (childName && /[가-힣]/.test(childName)) t = t.split(childName).join('');
       return ((t.match(/[가-힣]/g) || []).length) / t.length;
     };
     const contamination = language === 'ko' ? 0 : hangulRatio(interpretationText);

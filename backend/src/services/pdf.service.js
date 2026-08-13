@@ -777,13 +777,37 @@ async function generateReportPDF(params) {
       // element counts, the percentages, and the pillar elements (火+金 came out
       // as "+"). Verified against the font's own glyph table, not inferred.
       //
-      // pdfkit has no font fallback, so the document's text() is wrapped for Thai
-      // only: Thai codepoints keep the Thai font, everything else is drawn with
-      // NotoSansJP, which covers Latin, digits, hanja and ☯. The two fonts are
-      // exactly complementary, so nothing is left without a glyph.
-      if (activeFontKey === 'th' && registeredFonts.ja.hasFont) {
-        const THAI_BLOCK = /[฀-๿]/;
-        const fallback = { regular: registeredFonts.ja.regular, bold: registeredFonts.ja.bold || registeredFonts.ja.regular };
+      // pdfkit has no font fallback, so the document's text() is wrapped where the
+      // active font cannot cover every script the report can contain:
+      //
+      // - th: NotoSansThaiLooped carries Thai and almost nothing else — Latin,
+      //   digits and hanja go to NotoSansJP (exactly complementary, verified
+      //   against the glyph tables).
+      // - ja/zh/th + 한글: 아이 이름이 한글일 수 있다(리포트가 본문에서 이름을
+      //   부른다). NotoSansJP·SC·Thai 어느 것에도 한글 글리프가 없어서, 한글 런은
+      //   NotoSansKR로 보낸다. 이름 호명을 넣기 전에도 표지의 이름이 이미 이
+      //   함정을 밟고 있었다 — fontkit 글리프 표로 확정하고 고친다.
+      //
+      // ko와 라틴 문자권 언어는 NotoSansKR이 활성 폰트라 래핑이 필요 없다.
+      const HANGUL = /[가-힣]/;
+      const THAI_BLOCK = /[฀-๿]/;
+      const krFallback = registeredFonts.default.hasFont
+        ? { regular: registeredFonts.default.regular, bold: registeredFonts.default.bold || registeredFonts.default.regular }
+        : null;
+      const jaFallback = registeredFonts.ja.hasFont
+        ? { regular: registeredFonts.ja.regular, bold: registeredFonts.ja.bold || registeredFonts.ja.regular }
+        : null;
+
+      // 글자 → 폰트 패밀리. null이면 활성 폰트 그대로.
+      const familyFor = (ch) => {
+        if (HANGUL.test(ch)) return krFallback;
+        if (activeFontKey === 'th' && !THAI_BLOCK.test(ch)) return jaFallback;
+        return null;
+      };
+
+      const needsScriptWrapper = (activeFontKey === 'th' && jaFallback) || ((activeFontKey === 'ja' || activeFontKey === 'zh') && krFallback);
+
+      if (needsScriptWrapper) {
         const rawFont = doc.font.bind(doc);
         const rawText = doc.text.bind(doc);
         let currentFont = fontRegular;
@@ -793,16 +817,19 @@ async function generateReportPDF(params) {
           return rawFont(name, ...rest);
         };
 
-        const fallbackFor = (name) => (name === fontBold ? fallback.bold : fallback.regular);
+        const fontForFamily = (family) => {
+          if (!family) return currentFont;
+          return currentFont === fontBold ? family.bold : family.regular;
+        };
 
-        // Whitespace is neutral — it joins the run in progress so a Thai sentence
+        // Whitespace is neutral — it joins the run in progress so a sentence
         // does not fragment at every space.
         const splitRuns = (str) => {
           const runs = [];
           for (const ch of Array.from(str)) {
-            const thai = /\s/.test(ch) && runs.length ? runs[runs.length - 1].thai : THAI_BLOCK.test(ch);
-            if (runs.length && runs[runs.length - 1].thai === thai) runs[runs.length - 1].text += ch;
-            else runs.push({ thai, text: ch });
+            const family = /\s/.test(ch) && runs.length ? runs[runs.length - 1].family : familyFor(ch);
+            if (runs.length && runs[runs.length - 1].family === family) runs[runs.length - 1].text += ch;
+            else runs.push({ family, text: ch });
           }
           return runs;
         };
@@ -813,8 +840,8 @@ async function generateReportPDF(params) {
 
           // One run: draw it whole, so x/y/width/align behave exactly as before.
           if (runs.length === 1) {
-            if (runs[0].thai) return rawText(str, ...rest);
-            rawFont(fallbackFor(currentFont));
+            if (!runs[0].family) return rawText(str, ...rest);
+            rawFont(fontForFamily(runs[0].family));
             const result = rawText(str, ...rest);
             rawFont(currentFont);
             return result;
@@ -828,7 +855,7 @@ async function generateReportPDF(params) {
           let result = doc;
           runs.forEach((run, i) => {
             const last = i === runs.length - 1;
-            rawFont(run.thai ? currentFont : fallbackFor(currentFont));
+            rawFont(fontForFamily(run.family));
             const runOpts = { ...opts, continued: !last };
             result = i === 0
               ? rawText(run.text, ...positional, runOpts)

@@ -54,3 +54,15 @@ describe('이중 번호', () => {
     expect(stripPromptResidue('1) 2. nested item', 'en')).toBe('1) 2. nested item');
   });
 });
+
+describe('이름 보호', () => {
+  it('keepWords에 든 한글 이름은 비한국어 본문에서도 남긴다', () => {
+    expect(stripPromptResidue('Like water, 민서 adapts quickly.', 'en', ['민서']))
+      .toBe('Like water, 민서 adapts quickly.');
+  });
+
+  it('이름이 아닌 조각은 여전히 지운다', () => {
+    expect(stripPromptResidue('Like water, 민서 adapts. จากวัน간ที่', 'en', ['민서']))
+      .toBe('Like water, 민서 adapts. จากวันที่');
+  });
+});

@@ -167,6 +167,9 @@ function traditionalCount(text) {
           hanjaDup: hanjaDupCount(text),
           // `1) 1. **…**` — 지시문의 번호 예시를 모델이 한 번 더 붙인 것.
           doubleNum: (text.match(/^\s*(\d+)[).]\s+\1[.)]\s/gm) || []).length,
+          // 아이 이름 호명 횟수. 0이면 범용 문서로 읽힌다 — 경쟁 서비스와 가장 크게
+          // 갈리는 지점이라 지표로 고정한다. 목표: 본문에서 3회 이상.
+          nameMentions: (text.match(/Minseo/g) || []).length,
           trad: lang === 'zh' ? traditionalCount(text) : 0,
           chars: text.length,
         };
@@ -179,6 +182,7 @@ function traditionalCount(text) {
           row.hanjaDup && `한자중복 ${row.hanjaDup}`,
           row.doubleNum && `이중번호 ${row.doubleNum}`,
           row.trad && `번체 ${row.trad}자`,
+          row.nameMentions < 3 && `이름 ${row.nameMentions}회`,
         ].filter(Boolean);
         console.log(`${flags.length ? 'X ' : 'OK'} ${lang.padEnd(3)} ${fixture.birthDate} ${flags.join(' | ')}`);
         if (row.hangul.length) console.log(`      한글: ${row.hangul.slice(0, 8).join(', ')}`);
@@ -197,6 +201,7 @@ function traditionalCount(text) {
   console.log(`영어 잔류 0    ${ok.filter((r) => r.english === 0).length}/${ok.length}`);
   console.log(`한자중복 0     ${ok.filter((r) => r.hanjaDup === 0).length}/${ok.length}`);
   console.log(`이중번호 0     ${ok.filter((r) => r.doubleNum === 0).length}/${ok.length}`);
+  console.log(`이름 3회 이상  ${ok.filter((r) => r.nameMentions >= 3).length}/${ok.length}`);
   const zh = ok.filter((r) => r.lang === 'zh');
   if (zh.length) console.log(`zh 번체 0      ${zh.filter((r) => r.trad === 0).length}/${zh.length}`);
 
