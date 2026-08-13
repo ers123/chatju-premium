@@ -70,19 +70,61 @@ function slugify(filename: string): string {
     .replace(/^-|-$/g, "");
 }
 
-function splitSentences(text: string): string[] {
+/**
+ * Strip Markdown syntax so nothing ships with `**`, `##`, or `- ` still in it.
+ *
+ * Why this exists: the first version fed raw Markdown straight into tweets, so
+ * real output looked like `**What works:** - Project-based learning where they`.
+ * Nobody can post that. Anything the engine emits must be publishable as-is —
+ * a draft that needs hand-cleaning is not a draft, it's homework.
+ */
+function stripMarkdown(text: string): string {
   return text
+    .replace(/```[\s\S]*?```/g, " ")   // fenced code
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ") // images
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1") // links → their text
+    .replace(/^#{1,6}\s+/gm, "")       // headings
+    .replace(/^\s*[-*+]\s+/gm, "")     // bullets
+    .replace(/^\s*\d+\.\s+/gm, "")     // numbered lists
+    .replace(/^\s*>\s?/gm, "")         // blockquotes
+    .replace(/\*\*(.+?)\*\*/g, "$1")   // bold
+    .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "$1") // italic
+    .replace(/`([^`]+)`/g, "$1")       // inline code
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+/** Is this a complete, quotable sentence — not a heading or a chopped clause? */
+function isCompleteSentence(s: string): boolean {
+  if (s.length < 40 || s.length > 240) return false;
+  if (!/[.!?]$/.test(s)) return false;           // must actually end
+  if (!/^[A-Z"'“]/.test(s)) return false;        // must actually begin
+  if (/[:|]$/.test(s)) return false;             // list lead-ins
+  if ((s.match(/,/g) || []).length > 4) return false; // run-on list dumps
+  return true;
+}
+
+function splitSentences(text: string): string[] {
+  return stripMarkdown(text)
     .replace(/\n+/g, " ")
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter(Boolean);
 }
 
+/** Sentences safe to publish verbatim. Used by every blog-derived strategy. */
+function extractQuotableSentences(md: string): string[] {
+  return splitSentences(md).filter(isCompleteSentence);
+}
+
 function extractParagraphs(md: string): string[] {
   return md
     .split(/\n{2,}/)
-    .map((p) => p.replace(/^#+\s+/gm, "").trim())
-    .filter((p) => p.length > 40 && !p.startsWith("![") && !p.startsWith("```"));
+    .filter((p) => !p.startsWith("![") && !p.startsWith("```"))
+    // A paragraph made of bullets reads as a fragment pile once flattened.
+    .filter((p) => !/^\s*[-*+]\s/m.test(p))
+    .map((p) => stripMarkdown(p))
+    .filter((p) => p.length > 80 && /[.!?]$/.test(p));
 }
 
 function extractHeadings(md: string): string[] {
@@ -114,6 +156,18 @@ function truncateTo(text: string, maxChars: number): string {
   return cut.slice(0, lastSpace > 0 ? lastSpace : maxChars - 3) + "...";
 }
 
+/**
+ * Cut to a length boundary WITHOUT ending mid-thought: drop whole sentences
+ * from the end until it fits. Threads were being sliced at an arbitrary
+ * character and ending on "...and how to me".
+ */
+function trimToLastSentence(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  const cut = text.slice(0, maxChars);
+  const lastEnd = Math.max(cut.lastIndexOf("."), cut.lastIndexOf("!"), cut.lastIndexOf("?"));
+  return lastEnd > 0 ? cut.slice(0, lastEnd + 1).trim() : truncateTo(text, maxChars);
+}
+
 function pickHashtags(count: number = 3): string[] {
   return pickRandom(DEFAULT_HASHTAGS, count);
 }
@@ -125,24 +179,34 @@ function pickHashtags(count: number = 3): string[] {
 function generateTweets(md: string, headings: string[], keyPhrases: string[]): TweetPost[] {
   const tweets: TweetPost[] = [];
   const paragraphs = extractParagraphs(md);
-  const sentences = splitSentences(md);
+  // Only whole sentences from here on. Truncating mid-thought to hit a char
+  // limit produced "...conducting experiments, acting out historical events "
+  // — technically under 280, unpostable in practice.
+  const sentences = extractQuotableSentences(md);
 
-  // Strategy 1: Key phrase hooks from blog
+  // Strategy 1: Key-phrase sentences — the bolded idea, quoted in full.
   for (const phrase of pickRandom(keyPhrases, 2)) {
-    const context = sentences.find((s) => s.includes(phrase));
-    if (context) {
-      const text = truncateTo(context, 250);
-      tweets.push({ id: tweets.length + 1, text, charCount: text.length, hashtags: pickHashtags() });
+    const clean = stripMarkdown(phrase);
+    const context = sentences.find((s) => s.includes(clean));
+    if (context && !tweets.find((t) => t.text === context)) {
+      tweets.push({ id: tweets.length + 1, text: context, charCount: context.length, hashtags: pickHashtags() });
     }
   }
 
-  // Strategy 2: Heading-based hooks
+  // Strategy 2: Heading as hook, a whole sentence as body.
   for (const heading of pickRandom(headings, 1)) {
-    const relatedPara = paragraphs.find((p) => p.toLowerCase().includes(heading.toLowerCase().split(" ")[0]));
-    const body = relatedPara ? splitSentences(relatedPara)[0] : sentences[0];
+    const hook = stripMarkdown(heading);
+    const firstWord = hook.toLowerCase().split(" ")[0];
+    const relatedPara = paragraphs.find((p) => p.toLowerCase().includes(firstWord));
+    const body = (relatedPara ? extractQuotableSentences(relatedPara)[0] : undefined) || sentences[0];
+    if (!body) continue;
     const template = pickRandom(TWEET_TEMPLATES, 1)[0];
-    const text = truncateTo(template.replace("{HOOK}", heading).replace("{BODY}", body || ""), 250);
-    tweets.push({ id: tweets.length + 1, text, charCount: text.length, hashtags: pickHashtags() });
+    const text = template.replace("{HOOK}", hook).replace("{BODY}", body);
+    // Built from whole parts — if the assembled tweet is too long, drop it
+    // rather than cut it. There are always bank snippets to fall back on.
+    if (text.length <= 250) {
+      tweets.push({ id: tweets.length + 1, text, charCount: text.length, hashtags: pickHashtags() });
+    }
   }
 
   // Strategy 3: Content bank matches — find snippets whose keywords overlap with the blog
@@ -159,8 +223,9 @@ function generateTweets(md: string, headings: string[], keyPhrases: string[]): T
         )
   );
   for (const snippet of pickRandom(relevant.length > 0 ? relevant : CONTENT_BANK.filter((s) => s.platform.includes("twitter")), 3)) {
-    const text = truncateTo(snippet.text, 250);
-    if (!tweets.find((t) => t.text === text)) {
+    // Bank snippets are hand-written and already fit. Never cut them.
+    const text = snippet.text;
+    if (text.length <= 250 && !tweets.find((t) => t.text === text)) {
       tweets.push({ id: tweets.length + 1, text, charCount: text.length, hashtags: pickHashtags() });
     }
   }
@@ -172,7 +237,8 @@ function generateTweets(md: string, headings: string[], keyPhrases: string[]): T
       1
     )[0];
     if (snippet) {
-      const text = truncateTo(snippet.text, 250);
+      const text = snippet.text; // hand-written and already within limits
+      if (text.length > 250) continue;
       tweets.push({ id: tweets.length + 1, text, charCount: text.length, hashtags: pickHashtags() });
     } else break;
   }
@@ -195,7 +261,7 @@ function generateThreads(md: string, headings: string[], keyPhrases: string[]): 
     const body = bodyParas.join("\n\n");
     let text = template.replace("{BODY}", body);
     // Ensure 500-1000 chars
-    if (text.length > 1000) text = truncateTo(text, 1000);
+    if (text.length > 1000) text = trimToLastSentence(text, 1000);
     if (text.length < 500) {
       // Pad with a CTA
       text += "\n\nUnderstanding your child's temperament changes everything.\n\nLearn more at somyung.cc";
@@ -218,19 +284,19 @@ function generateThreads(md: string, headings: string[], keyPhrases: string[]): 
     // Append blog-specific context
     const relevantPara = paragraphs.find((p) => p.length > 100);
     if (relevantPara) {
-      text += "\n\n" + truncateTo(relevantPara, 400);
+      text += "\n\n" + trimToLastSentence(relevantPara, 400);
     }
     while (text.length < 500) {
       // Keep appending blog paragraphs until we hit 500
       const unusedPara = paragraphs.find((p) => p.length > 80 && !text.includes(p.slice(0, 40)));
       if (unusedPara) {
-        text += "\n\n" + truncateTo(unusedPara, 300);
+        text += "\n\n" + trimToLastSentence(unusedPara, 300);
       } else {
         text += "\n\nDiscover your child's unique element balance — 518,400 profiles based on 1,000 years of Korean wisdom.\n\nTry the free preview at somyung.cc";
         break;
       }
     }
-    if (text.length > 1000) text = truncateTo(text, 1000);
+    if (text.length > 1000) text = trimToLastSentence(text, 1000);
     threads.push({
       id: threads.length + 1,
       text,
@@ -274,10 +340,10 @@ function generateNewsletter(md: string, headings: string[]): NewsletterExcerpt {
   let text = parts.join("\n\n");
   const wordCount = text.split(/\s+/).length;
 
-  // Trim if too long
+  // Trim if too long — on a sentence boundary, not a word count boundary.
   if (wordCount > 350) {
-    const words = text.split(/\s+/).slice(0, 300);
-    text = words.join(" ") + "...";
+    const words = text.split(/\s+/).slice(0, 300).join(" ");
+    text = trimToLastSentence(words, words.length);
   }
 
   return { text, wordCount: text.split(/\s+/).length };

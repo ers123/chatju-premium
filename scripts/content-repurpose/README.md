@@ -17,13 +17,24 @@ npx tsx scripts/content-repurpose/generate.ts <path-to-blog-post.md>
 - 3 Threads/LinkedIn posts (500-1000 chars each)
 - 1 newsletter excerpt (200-300 words)
 
+Everything it emits is meant to be postable as-is. Blog-derived posts are built
+only from complete sentences with Markdown stripped — the first version pasted
+raw Markdown into tweets (`**What works:** - Project-based learning where...`)
+and cut sentences mid-word to hit the character limit. Assembled posts that
+don't fit are now dropped rather than truncated; there are always bank snippets
+to fall back on.
+
 ### 2. Daily Content Calendar
 
 Generates 30 days of scheduled social media content from the content bank.
 
 ```bash
-# Default: 30 days starting today
+# Default: 30 days starting today, English
 npx tsx scripts/content-repurpose/daily-content.ts
+
+# Korean / Japanese
+npx tsx scripts/content-repurpose/daily-content.ts --lang ko
+npx tsx scripts/content-repurpose/daily-content.ts --lang ja
 
 # Custom start date
 npx tsx scripts/content-repurpose/daily-content.ts --start 2026-04-01
@@ -32,7 +43,23 @@ npx tsx scripts/content-repurpose/daily-content.ts --start 2026-04-01
 npx tsx scripts/content-repurpose/daily-content.ts --days 60
 ```
 
-**Output:** `output/daily-content.json` with date-keyed posts.
+**Output:** `output/daily-content.json` (en), `output/daily-content.ko.json`,
+`output/daily-content.ja.json` — date-keyed posts.
+
+### Languages
+
+`--lang` accepts `en`, `ko`, `ja` and nothing else. The other seven supported
+UI locales have zero real users, so copy for them would be inventory, not reach.
+
+ko/ja are **authored, not translated** (`templates.i18n.ts`). The two English
+content sources were compared against each other: hand-written bank snippets
+came out publishable, machine-sliced blog text came out as Markdown fragments.
+Translating the sliced text would have carried that defect into two more
+languages and stacked a translation-quality problem on top.
+
+`charCount` for ko/ja is **weighted**: X counts CJK as 2 units, so a
+200-character Korean post is over the 280 limit even though `.length` says it
+fits. Each run prints a warning naming any post that exceeds the limit.
 
 **Weekly schedule:**
 | Day | Content |
