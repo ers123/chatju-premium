@@ -22,17 +22,21 @@ export interface PremiumPricing {
   productType: string
 }
 
+// 2026-08-13 인상. 근거와 되돌리는 조건은 backend/src/config/products.js 상단에.
+// display 는 translations.ts 의 t.pricing.premium.price 와 반드시 같아야 한다 —
+// 표시가와 청구가가 다르면 사용자를 속이는 것이고, 한국 PG 카드사 심사도
+// "노출 금액 = 결제창 금액"을 요구한다.
 const PRICING_BY_LANG: Record<SupportedLanguage, PremiumPricing | null> = {
   ko: null, // Korea: free tier + promo only (PayPal cannot charge KRW)
-  en: { amount: 4.99, currency: 'USD', display: 'US$4.99', productType: 'premium_saju' },
-  ja: { amount: 490, currency: 'JPY', display: '¥490', productType: 'premium_saju_jpy' },
-  zh: { amount: 4.99, currency: 'USD', display: 'US$4.99', productType: 'premium_saju' }, // CNY unsupported for receiving
-  vi: { amount: 4.99, currency: 'USD', display: 'US$4.99', productType: 'premium_saju' }, // VND unsupported
-  id: { amount: 4.99, currency: 'USD', display: 'US$4.99', productType: 'premium_saju' }, // IDR unsupported
-  es: { amount: 3.49, currency: 'EUR', display: '€3.49', productType: 'premium_saju_eur_349' },
-  pt: { amount: 3.49, currency: 'EUR', display: '€3.49', productType: 'premium_saju_eur_349' }, // BRL deferred (no guest checkout)
-  fr: { amount: 3.99, currency: 'EUR', display: '€3.99', productType: 'premium_saju_eur_399' },
-  th: { amount: 89, currency: 'THB', display: '฿89', productType: 'premium_saju_thb' },
+  en: { amount: 19.99, currency: 'USD', display: 'US$19.99', productType: 'premium_saju_usd_1999' },
+  ja: { amount: 2480, currency: 'JPY', display: '¥2,480', productType: 'premium_saju_jpy_2480' },
+  zh: { amount: 19.99, currency: 'USD', display: 'US$19.99', productType: 'premium_saju_usd_1999' }, // CNY unsupported for receiving
+  vi: { amount: 19.99, currency: 'USD', display: 'US$19.99', productType: 'premium_saju_usd_1999' }, // VND unsupported
+  id: { amount: 19.99, currency: 'USD', display: 'US$19.99', productType: 'premium_saju_usd_1999' }, // IDR unsupported
+  es: { amount: 17.99, currency: 'EUR', display: '€17.99', productType: 'premium_saju_eur_1799' },
+  pt: { amount: 17.99, currency: 'EUR', display: '€17.99', productType: 'premium_saju_eur_1799' }, // BRL deferred (no guest checkout)
+  fr: { amount: 17.99, currency: 'EUR', display: '€17.99', productType: 'premium_saju_eur_1799' },
+  th: { amount: 449, currency: 'THB', display: '฿449', productType: 'premium_saju_thb_449' },
 }
 
 /**

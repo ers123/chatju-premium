@@ -16,6 +16,7 @@ const path = require('path');
 
 const {
   PRODUCTS,
+  LEGACY_PRODUCT_IDS,
   getProduct,
   amountsMatch,
   resolveProductByPricing,
@@ -23,6 +24,9 @@ const {
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const PRICING_TS = path.join(REPO_ROOT, 'frontend', 'lib', 'pricing.ts');
+const TRANSLATIONS_TS = path.join(REPO_ROOT, 'frontend', 'app', 'lib', 'i18n', 'translations.ts');
+const JSONLD_TS = path.join(REPO_ROOT, 'frontend', 'app', 'lib', 'i18n', 'jsonld.ts');
+const ROOT_LAYOUT = path.join(REPO_ROOT, 'frontend', 'app', '(app)', 'layout.tsx');
 const SCHEMA_SQL = path.join(__dirname, '..', 'database', 'schema.sql');
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
 
@@ -115,10 +119,66 @@ describe('contract: frontend pricing ↔ backend product catalog', () => {
     }
   );
 
-  test('every catalog product is reachable from some locale (no dead products)', () => {
+  test('every catalog product is reachable from some locale, except declared legacy', () => {
+    // 가격을 올리면 구 상품은 일시적으로 도달 불가능해진다. 그건 정상이지만
+    // **선언된 경우에만** 정상이다 — 목록에 없는 고아는 그냥 죽은 코드다.
     const usedTypes = new Set(entries.map((e) => e.productType));
     const orphans = Object.keys(PRODUCTS).filter((id) => !usedTypes.has(id));
-    expect(orphans).toEqual([]);
+    expect(orphans.sort()).toEqual([...LEGACY_PRODUCT_IDS].sort());
+  });
+
+  test('legacy ids still resolve — in-flight orders must still capture', () => {
+    // 배포 순간 결제창이 떠 있던 주문은 capture 에서 이 정의로 금액을 재검증한다.
+    for (const id of LEGACY_PRODUCT_IDS) {
+      expect(getProduct(id)).not.toBeNull();
+    }
+  });
+});
+
+// ── 1b. Charged price ↔ displayed price ───────────────────────────────────
+// 위 테스트는 "청구가 == 전송가"만 본다. 정작 사용자가 보는 숫자는 세 번째
+// 파일(translations.ts)에 있고, 실제로 어긋났다 — 인상 전 ja 배너는
+// "プレミアムレポートはUS$4.99"라고 광고하면서 결제는 ¥490을 받고 있었다.
+// 표시가와 청구가가 다르면 사용자를 속이는 것이고, 한국 PG 카드사 심사도
+// "노출 금액 = 결제창 금액"을 요구한다.
+describe('contract: charged price ↔ displayed price', () => {
+  const { entries } = parseFrontendPricing();
+  const src = fs.readFileSync(TRANSLATIONS_TS, 'utf8');
+
+  // 로케일 블록은 고정된 순서로 나오고, 각 블록에 premium.price 가 하나씩 있다.
+  const localeStarts = [...src.matchAll(/^  (\w{2}):\s*\{/gm)].map((m) => ({ lang: m[1], at: m.index }));
+  const priceHits = [...src.matchAll(/premium:\s*\{[\s\S]{0,400}?price:\s*'([^']*)'/g)];
+  const displayed = {};
+  for (const hit of priceHits) {
+    const owner = [...localeStarts].reverse().find((l) => l.at < hit.index);
+    if (owner && !(owner.lang in displayed)) displayed[owner.lang] = hit[1];
+  }
+
+  test('parser found a displayed price for every locale (guards silent drift)', () => {
+    expect(Object.keys(displayed).length).toBeGreaterThanOrEqual(10);
+  });
+
+  test.each(entries.map((e) => [e.lang, e]))(
+    '%s: the number shown equals the number charged',
+    (lang, entry) => {
+      // 구분자와 통화기호는 로케일마다 다르다(€17,99 vs US$19.99). 숫자만 본다.
+      // 비교 대상은 표시 문자열이 아니라 **실제 청구액**이다 — 표시끼리 비교하면
+      // 둘 다 틀린 경우를 통과시킨다.
+      const digits = (s) => String(s == null ? '' : s).replace(/[^\d]/g, '');
+      expect(displayed[lang]).toBeDefined();
+      expect(digits(displayed[lang])).toBe(digits(entry.amount));
+    }
+  );
+
+  test('schema.org Offer advertises the real USD price', () => {
+    // 검색엔진과 LLM이 읽는 값이다. 틀리면 우리가 지키지 않는 가격이 인용된다.
+    const usd = entries.find((e) => e.currency === 'USD');
+    expect(usd).toBeDefined();
+    for (const file of [JSONLD_TS, ROOT_LAYOUT]) {
+      const m = fs.readFileSync(file, 'utf8').match(/"price":\s*"([\d.]+)"/);
+      expect(m).not.toBeNull();
+      expect(amountsMatch(m[1], usd.amount)).toBe(true);
+    }
   });
 });
 

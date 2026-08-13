@@ -857,7 +857,7 @@ export default function GitanLandingPage() {
               </div>
               <h3 style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '8px' }}>프리미엄 리포트</h3>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
-                <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)', textDecoration: 'line-through' }}>$4.99</p>
+                <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)', textDecoration: 'line-through' }}>$19.99</p>
                 <p style={{ fontSize: '36px', fontWeight: 700, color: '#FFFFFF' }}>무료</p>
               </div>
               <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '32px' }}>제휴 코드 한정 혜택 예시</p>

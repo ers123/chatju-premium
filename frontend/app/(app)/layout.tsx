@@ -170,7 +170,7 @@ export default function RootLayout({
                     "name": "How is the paid version different?",
                     "acceptedAnswer": {
                       "@type": "Answer",
-                      "text": "The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report (US$4.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, career aptitude analysis, fortune cycle forecast, monthly fortune, and actionable weekly tasks. For the price of a cup of coffee, you get a complete guide to understanding your child."
+                      "text": "The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report (US$19.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, career aptitude analysis, fortune cycle forecast, monthly fortune, and actionable weekly tasks. Written to the standard of a certified Korean Saju practitioner — for a fraction of what one consultation costs."
                     }
                   }
                 ]
@@ -187,7 +187,7 @@ export default function RootLayout({
                 },
                 "offers": {
                   "@type": "Offer",
-                  "price": "4.99",
+                  "price": "19.99",
                   "priceCurrency": "USD",
                   "availability": "https://schema.org/InStock",
                   "url": "https://somyung.cc"

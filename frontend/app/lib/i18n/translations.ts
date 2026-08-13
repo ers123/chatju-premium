@@ -139,7 +139,7 @@ export const translations = {
     trust: ['명리심리상담사 1급 설계', '안전한 데이터 보호', '정통 만세력 기반', 'AI 전문 해석', '안심 결제'],
     pricing: {
       heading: '이용 요금',
-      subtitle: '미리보기는 무료, 상세 리포트는 커피 한 잔 가격',
+      subtitle: '미리보기는 무료. 상세 리포트는 명리심리상담사 1급이 설계한 8개 장 해석',
       free: {
         name: '미리보기',
         price: '무료',
@@ -149,7 +149,7 @@ export const translations = {
       premium: {
         name: '프리미엄 리포트',
         badge: 'BEST',
-        price: '₩4,900 (한국 결제 준비 중)',
+        price: '₩24,900 (한국 결제 준비 중)',
         originalPrice: '',
         note: '프리미엄 리포트 1회 결제',
         features: ['8섹션 심층 분석 리포트', '부모-자녀 관계 맞춤 가이드', '연령별 훈육법 + 대화 스크립트', '대운/세운 운세 흐름', '월별 운세 + 실천 과제'],
@@ -166,7 +166,7 @@ export const translations = {
         { q: '결과는 바로 확인되나요?', a: '네, 생년월일 입력 후 약 10초 이내에 분석 결과를 확인하실 수 있습니다. 만세력 계산과 AI 해석이 실시간으로 진행됩니다. 결과는 웹에서 바로 확인 가능하며, 카카오톡 공유 기능도 지원합니다.' },
         { q: '다른 아이도 분석할 수 있나요?', a: '물론이에요. 형제자매나 다른 자녀의 분석도 얼마든지 가능합니다. 결과 페이지에서 "다른 아이 분석하기" 버튼을 누르시면 됩니다. 아이마다 다른 기질을 비교해보시면 더 큰 인사이트를 얻으실 수 있어요.' },
         { q: '개인정보는 안전한가요?', a: '입력하신 정보는 분석 목적으로만 사용됩니다. 무료 미리보기 입력 정보는 데이터베이스에 저장되지 않으며, 유료 리포트의 경우 리포트 생성과 전달에 필요한 정보(아이 이름 또는 별명, 생년월일, 이메일)만 보관합니다. 모든 데이터는 암호화되어 전송되며, 언제든지 삭제를 요청하실 수 있습니다. 자세한 내용은 개인정보처리방침을 확인해주세요.' },
-        { q: '유료 서비스는 어떻게 다른가요?', a: '무료 미리보기에서는 오행 기질, 기본 성격, 학습 팁을 확인할 수 있습니다. 프리미엄 리포트(US$4.99)에서는 8섹션 심층 분석 — 부모-자녀 관계 가이드, 연령별 훈육법, 대화 스크립트, 진로·적성 분석, 대운/세운 운세 흐름, 월별 운세, 오행 개운법, 실천 과제까지 받으실 수 있습니다. 커피 한 잔 가격으로 아이와의 관계가 달라집니다.' },
+        { q: '유료 서비스는 어떻게 다른가요?', a: '무료 미리보기에서는 오행 기질, 기본 성격, 학습 팁을 확인할 수 있습니다. 프리미엄 리포트(₩24,900)에서는 8섹션 심층 분석 — 부모-자녀 관계 가이드, 연령별 훈육법, 대화 스크립트, 진로·적성 분석, 대운/세운 운세 흐름, 월별 운세, 오행 개운법, 실천 과제까지 받으실 수 있습니다. 명리심리상담사 1급이 설계한 해석을, 상담 한 번 값의 일부로 받아 보실 수 있습니다.' },
       ],
     },
     cta: {
@@ -616,7 +616,7 @@ export const translations = {
       backHome: '← Home',
       noticeBar: 'The content below is provided in Korean. Translation may be available in the future.',
     },
-    banner: 'Free Five Elements analysis — Premium report for US$4.99',
+    banner: 'Free Five Elements analysis — full Premium report US$19.99',
     sajuDef: {
       heading: 'What is Saju (사주)?',
       body: 'Saju (사주, Four Pillars of Destiny) is a Korean system of character analysis rooted in thousands of years of East Asian philosophy. It maps a person\'s birth year, month, day, and hour onto a framework of the Five Elements (오행: Wood, Fire, Earth, Metal, Water) and the 60-cycle Sexagenary calendar (만세력). The result is not a fortune — it is a temperament profile: a structured description of innate personality traits, learning styles, relational tendencies, and elemental balance. SoMyung applies this framework specifically to children, helping parents understand why each child is wired differently and how to communicate with them more effectively.',
@@ -711,7 +711,7 @@ export const translations = {
     trust: ['Designed by Certified Counselor', 'Your Data Stays Safe', 'Traditional Manseryeok', 'AI-Powered Analysis', 'Secure Checkout'],
     pricing: {
       heading: 'Pricing',
-      subtitle: 'Free preview, full report for the price of a coffee',
+      subtitle: 'Free preview. The full report is an 8-chapter reading, written to a certified practitioner\'s standard',
       free: {
         name: 'Preview',
         price: 'Free',
@@ -721,7 +721,7 @@ export const translations = {
       premium: {
         name: 'Premium Report',
         badge: 'Most Popular',
-        price: 'US$4.99',
+        price: 'US$19.99',
         originalPrice: '',
         note: 'One-time premium report payment',
         features: ['8-section deep analysis report', 'Parent-child relationship guide', 'Age-specific parenting + scripts', 'Life-cycle tendency overview', 'Monthly themes + action items'],
@@ -738,7 +738,7 @@ export const translations = {
         { q: 'Are results available immediately?', a: 'Yes, results are generated within about 10 seconds after entering the birth date. The Manseryeok calculation and AI interpretation happen in real-time. You can view results on the web and share via KakaoTalk.' },
         { q: 'Can I analyze other children too?', a: 'Absolutely. You can analyze siblings or other children anytime. Just click "Analyze Another Child" on the results page. Comparing different temperaments gives you even deeper insights.' },
         { q: 'Is my personal information safe?', a: 'We collect only the birth information needed to generate the analysis, plus — for paid reports — an email address and a name (or nickname) you choose to label the report. Free previews are not stored in our database. All data is encrypted in transit, and you can request deletion at any time. See our Privacy Policy for details.' },
-        { q: 'How is the paid version different?', a: 'The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report (US$4.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, aptitude tendencies, life-cycle themes, monthly guidance, and actionable weekly tasks. For less than a cup of coffee, you get a complete guide to understanding your child.' },
+        { q: 'How is the paid version different?', a: 'The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report (US$19.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, aptitude tendencies, life-cycle themes, monthly guidance, and actionable weekly tasks. Written to the standard of a certified Korean Saju practitioner — for a fraction of what one consultation costs.' },
       ],
     },
     cta: {
@@ -1186,7 +1186,7 @@ export const translations = {
       backHome: '← ホーム',
       noticeBar: '以下の内容は韓国語で提供されています。',
     },
-    banner: '五行気質分析を無料体験 — プレミアムレポートはUS$4.99',
+    banner: '五行気質分析を無料体験 — プレミアムレポートは¥2,480',
     sajuDef: {
       heading: '四柱（サジュ/사주）とは？',
       body: '四柱（사주、Four Pillars of Destiny）は、数千年の東アジア哲学に根ざした韓国の性格分析体系です。生まれた年・月・日・時を五行（오행：木・火・土・金・水）と六十干支暦（만세력）の枠組みに当てはめて分析します。その結果は占いではなく、気質プロフィール — 生まれ持った性格特性、学習スタイル、人間関係の傾向、五行バランスの体系的な記述です。SoMyungはこの枠組みをお子様に特化して適用し、それぞれのお子様がなぜ異なる気質を持つのか、どうすればより効果的にコミュニケーションできるかを保護者の皆さまにお伝えします。',
@@ -1281,7 +1281,7 @@ export const translations = {
     trust: ['命理心理カウンセラー1級設計', '安全なデータ保護', '伝統万歳暦基準', 'AI専門分析', '安心決済'],
     pricing: {
       heading: '料金プラン',
-      subtitle: 'プレビューは無料、詳細レポートはコーヒー1杯分',
+      subtitle: 'プレビューは無料。詳細レポートは有資格者の基準で書かれた全8章の解釈です',
       free: {
         name: 'プレビュー',
         price: '無料',
@@ -1291,7 +1291,7 @@ export const translations = {
       premium: {
         name: 'プレミアムレポート',
         badge: 'BEST',
-        price: '¥490',
+        price: '¥2,480',
         originalPrice: '',
         note: 'プレミアムレポートの1回払い',
         features: ['8セクション深層分析レポート', '親子関係ガイド', '年齢別育児法＋会話スクリプト', '大運・歳運の傾向整理', '月別テーマ＋実践課題'],
@@ -1308,7 +1308,7 @@ export const translations = {
         { q: '結果はすぐに確認できますか？', a: 'はい、生年月日入力後約10秒以内に分析結果を確認できます。万歳暦計算とAI解釈がリアルタイムで行われます。' },
         { q: '他の子供も分析できますか？', a: 'もちろんです。兄弟姉妹や他のお子様の分析もいつでも可能です。結果ページの「他の子供を分析する」ボタンを押してください。異なる気質を比較すると、より深い洞察が得られます。' },
         { q: '個人情報は安全ですか？', a: '入力された情報は分析目的のみに使用されます。無料プレビューの入力内容はデータベースに保存されません。有料レポートの場合のみ、レポートの生成と送付に必要な情報（お子様の名前またはニックネーム、生年月日、メールアドレス）を保管します。すべてのデータは暗号化されて送信され、いつでも削除を依頼できます。詳しくはプライバシーポリシーをご覧ください。' },
-        { q: '有料サービスはどう違いますか？', a: '無料分析では五行気質分析、基本性格タイプ、学習ヒントを確認できます。プレミアムレポート（US$4.99）では、親子相性分析、年齢別発達ガイド、進路・適性の深層分析など、より詳しい解釈を受けられます。' },
+        { q: '有料サービスはどう違いますか？', a: '無料分析では五行気質分析、基本性格タイプ、学習ヒントを確認できます。プレミアムレポート（¥2,480）では、親子相性分析、年齢別発達ガイド、進路・適性の深層分析など、より詳しい解釈を受けられます。' },
       ],
     },
     cta: {
@@ -1747,7 +1747,7 @@ export const translations = {
       backHome: '← 首页',
       noticeBar: '以下内容以韩文提供。',
     },
-    banner: '五行气质分析免费体验 — 高级报告 US$4.99',
+    banner: '五行气质分析免费体验 — 高级报告 US$19.99',
     sajuDef: {
       heading: '什么是四柱（사주）？',
       body: '四柱（사주，Four Pillars of Destiny）是一套植根于数千年东亚哲学的韩国性格分析体系。它将一个人的出生年、月、日、时对应到五行（오행：木、火、土、金、水）和六十甲子万年历（만세력）的框架中进行分析。其结果不是算命——而是气质档案：对先天性格特征、学习风格、人际关系倾向和五行平衡的系统化描述。SoMyung将这一体系专门应用于儿童，帮助家长理解每个孩子为何天生不同，以及如何更有效地与他们沟通。',
@@ -1842,7 +1842,7 @@ export const translations = {
     trust: ['命理心理咨询师一级设计', '数据安全保护', '传统万年历基础', 'AI专业分析', '安心支付'],
     pricing: {
       heading: '价格方案',
-      subtitle: '预览免费，详细报告只需一杯咖啡的价格',
+      subtitle: '预览免费。详细报告是按持证命理师标准撰写的八章解读',
       free: {
         name: '预览',
         price: '免费',
@@ -1852,7 +1852,7 @@ export const translations = {
       premium: {
         name: '高级报告',
         badge: 'BEST',
-        price: 'US$4.99',
+        price: 'US$19.99',
         originalPrice: '',
         note: '高级报告一次性付费',
         features: ['8部分深度分析报告', '亲子关系指南', '分年龄育儿法+对话脚本', '大运/流年运势分析', '月度运势+实践任务'],
@@ -1869,7 +1869,7 @@ export const translations = {
         { q: '结果能立即查看吗？', a: '是的，输入出生日期后约10秒内即可查看分析结果。万年历计算和AI解读实时进行。' },
         { q: '可以分析其他孩子吗？', a: '当然可以。兄弟姐妹或其他孩子的分析随时可以进行。在结果页面点击"分析其他孩子"按钮即可。比较不同气质可以获得更深入的见解。' },
         { q: '个人信息安全吗？', a: '您输入的信息仅用于分析。免费预览的输入信息不会保存到数据库；付费报告仅保留生成和发送报告所需的信息（孩子的姓名或昵称、出生信息、邮箱）。所有数据均加密传输，您可以随时申请删除。详情请参阅隐私政策。' },
-        { q: '付费服务有什么不同？', a: '免费预览提供五行气质分析、基本性格类型和学习建议。高级报告（US$4.99）包括亲子配合度分析、按年龄发展指南、深层职业倾向分析等更深入的解读。' },
+        { q: '付费服务有什么不同？', a: '免费预览提供五行气质分析、基本性格类型和学习建议。高级报告（US$19.99）包括亲子配合度分析、按年龄发展指南、深层职业倾向分析等更深入的解读。' },
       ],
     },
     cta: {
@@ -2311,7 +2311,7 @@ export const translations = {
     backHome: '← Trang chủ',
     noticeBar: 'Nội dung bên dưới được cung cấp bằng tiếng Hàn.',
   },
-  banner: 'Trải nghiệm phân tích Ngũ Hành miễn phí — Báo cáo Premium US$4.99',
+  banner: 'Trải nghiệm phân tích Ngũ Hành miễn phí — Báo cáo Premium US$19.99',
   sajuDef: {
     heading: 'Tứ Trụ (사주) là gì?',
     body: 'Tứ Trụ (사주, Four Pillars of Destiny) là hệ thống phân tích tính cách của Hàn Quốc, bắt nguồn từ hàng nghìn năm triết học Đông Á. Hệ thống này ánh xạ năm, tháng, ngày, giờ sinh của một người lên khung Ngũ Hành (오행: Mộc, Hỏa, Thổ, Kim, Thủy) và lịch Lục Thập Hoa Giáp (만세력). Kết quả không phải là bói toán — mà là hồ sơ khí chất: mô tả có hệ thống về đặc điểm tính cách bẩm sinh, phong cách học tập, xu hướng quan hệ và cân bằng ngũ hành. SoMyung áp dụng khung phân tích này đặc biệt cho trẻ em, giúp cha mẹ hiểu tại sao mỗi đứa trẻ lại có tính cách khác nhau và cách giao tiếp hiệu quả hơn với con.',
@@ -2406,7 +2406,7 @@ export const translations = {
   trust: ['Thiết kế bởi Chuyên gia', 'Dữ liệu an toàn', 'Vạn Niên Lịch truyền thống', 'Phân tích bằng AI', 'Thanh toán an toàn'],
   pricing: {
     heading: 'Bảng giá',
-    subtitle: 'Xem trước miễn phí, báo cáo đầy đủ chỉ bằng một ly cà phê',
+    subtitle: 'Xem trước miễn phí. Báo cáo đầy đủ gồm 8 chương, biên soạn theo chuẩn chuyên gia được chứng nhận',
     free: {
       name: 'Xem trước',
       price: 'Miễn phí',
@@ -2416,7 +2416,7 @@ export const translations = {
     premium: {
       name: 'Báo cáo Premium',
       badge: 'Phổ biến nhất',
-      price: 'US$4.99',
+      price: 'US$19.99',
       originalPrice: '',
       note: 'Thanh toán một lần cho báo cáo Premium',
       features: ['Báo cáo phân tích sâu 8 phần', 'Hướng dẫn quan hệ cha mẹ - con cái', 'Lời khuyên nuôi dạy theo độ tuổi + kịch bản giao tiếp', 'Dự báo chu kỳ vận mệnh', 'Vận mệnh hàng tháng + kế hoạch hành động'],
@@ -2433,7 +2433,7 @@ export const translations = {
       { q: 'Kết quả có ngay không?', a: 'Có, kết quả được tạo trong khoảng 10 giây sau khi nhập ngày sinh. Tính toán Vạn Niên Lịch và diễn giải AI được thực hiện theo thời gian thực. Bạn có thể xem kết quả trên web và chia sẻ qua WhatsApp.' },
       { q: 'Có thể phân tích cho các con khác không?', a: 'Hoàn toàn được. Bạn có thể phân tích cho anh chị em hoặc trẻ khác bất cứ lúc nào. Chỉ cần nhấn "Phân tích trẻ khác" trên trang kết quả. So sánh các tính cách khác nhau sẽ giúp bạn hiểu sâu hơn.' },
       { q: 'Thông tin cá nhân có an toàn không?', a: 'Thông tin bạn nhập chỉ được dùng cho mục đích phân tích. Dữ liệu của bản xem trước miễn phí không được lưu vào cơ sở dữ liệu; với báo cáo trả phí, chúng tôi chỉ lưu thông tin cần thiết để tạo và gửi báo cáo (tên hoặc biệt danh của trẻ, thông tin ngày sinh, email). Mọi dữ liệu đều được mã hóa khi truyền và bạn có thể yêu cầu xóa bất cứ lúc nào. Xem Chính sách quyền riêng tư để biết thêm chi tiết.' },
-      { q: 'Phiên bản trả phí khác gì?', a: 'Bản xem trước miễn phí hiển thị phân tích Ngũ Hành, tính cách cơ bản và gợi ý học tập. Báo cáo Premium (US$4.99) bao gồm phân tích sâu 8 phần: hướng dẫn quan hệ cha mẹ - con cái, lời khuyên nuôi dạy theo độ tuổi kèm kịch bản giao tiếp, năng lực nghề nghiệp, dự báo chu kỳ vận mệnh, vận mệnh hàng tháng và nhiệm vụ hành động hàng tuần. Với giá rẻ hơn một ly cà phê, bạn nhận được hướng dẫn toàn diện để hiểu con mình.' },
+      { q: 'Phiên bản trả phí khác gì?', a: 'Bản xem trước miễn phí hiển thị phân tích Ngũ Hành, tính cách cơ bản và gợi ý học tập. Báo cáo Premium (US$19.99) bao gồm phân tích sâu 8 phần: hướng dẫn quan hệ cha mẹ - con cái, lời khuyên nuôi dạy theo độ tuổi kèm kịch bản giao tiếp, năng lực nghề nghiệp, dự báo chu kỳ vận mệnh, vận mệnh hàng tháng và nhiệm vụ hành động hàng tuần. Được biên soạn theo chuẩn của chuyên gia Tứ Trụ được chứng nhận — với một phần nhỏ chi phí của một buổi tư vấn.' },
     ],
   },
   cta: {
@@ -2884,7 +2884,7 @@ export const translations = {
     backHome: '← Beranda',
     noticeBar: 'Konten di bawah ini disediakan dalam bahasa Korea.',
   },
-  banner: 'Analisis Lima Elemen gratis — Laporan Premium US$4.99',
+  banner: 'Analisis Lima Elemen gratis — Laporan Premium US$19.99',
   sajuDef: {
     heading: 'Apa itu Saju (사주)?',
     body: 'Saju (사주, Four Pillars of Destiny) adalah sistem analisis karakter dari Korea yang berakar pada ribuan tahun filosofi Asia Timur. Sistem ini memetakan tahun, bulan, hari, dan jam kelahiran seseorang ke dalam kerangka Lima Unsur (오행: Kayu, Api, Tanah, Logam, Air) dan kalender Sexagenary 60 siklus (만세력). Hasilnya bukan ramalan — melainkan profil temperamen: deskripsi terstruktur tentang sifat kepribadian bawaan, gaya belajar, kecenderungan relasional, dan keseimbangan unsur. SoMyung menerapkan kerangka ini khusus untuk anak-anak, membantu orang tua memahami mengapa setiap anak memiliki karakter berbeda dan bagaimana berkomunikasi dengan mereka secara lebih efektif.',
@@ -2979,7 +2979,7 @@ export const translations = {
   trust: ['Dirancang oleh Konselor Bersertifikat', 'Data Anda Aman', 'Manseryeok Tradisional', 'Analisis Berbasis AI', 'Pembayaran Aman'],
   pricing: {
     heading: 'Harga',
-    subtitle: 'Pratinjau gratis, laporan lengkap seharga secangkir kopi',
+    subtitle: 'Pratinjau gratis. Laporan lengkap berisi 8 bab, disusun sesuai standar praktisi bersertifikat',
     free: {
       name: 'Pratinjau',
       price: 'Gratis',
@@ -2989,7 +2989,7 @@ export const translations = {
     premium: {
       name: 'Laporan Premium',
       badge: 'Paling Populer',
-      price: 'US$4.99',
+      price: 'US$19.99',
       originalPrice: '',
       note: 'Pembayaran satu kali untuk Laporan Premium',
       features: ['Laporan analisis mendalam 8 bagian', 'Panduan hubungan orang tua-anak', 'Pola asuh sesuai usia + skrip percakapan', 'Prakiraan siklus keberuntungan', 'Keberuntungan bulanan + rencana aksi'],
@@ -3006,7 +3006,7 @@ export const translations = {
       { q: 'Apakah hasilnya langsung tersedia?', a: 'Ya, hasil dihasilkan dalam waktu sekitar 10 detik setelah memasukkan tanggal lahir. Perhitungan Manseryeok dan interpretasi AI dilakukan secara real-time. Anda dapat melihat hasil di web dan membagikannya melalui WhatsApp.' },
       { q: 'Bisakah saya menganalisis anak lain juga?', a: 'Tentu saja. Anda dapat menganalisis saudara kandung atau anak lain kapan saja. Cukup klik "Analisis Anak Lain" di halaman hasil. Membandingkan temperamen yang berbeda memberi wawasan yang lebih mendalam.' },
       { q: 'Apakah informasi pribadi saya aman?', a: 'Informasi yang Anda masukkan hanya digunakan untuk analisis. Input pratinjau gratis tidak disimpan di database; untuk laporan berbayar, kami hanya menyimpan informasi yang diperlukan untuk membuat dan mengirim laporan (nama atau panggilan anak, data kelahiran, email). Semua data dienkripsi saat dikirim, dan Anda dapat meminta penghapusan kapan saja. Lihat Kebijakan Privasi untuk detailnya.' },
-      { q: 'Apa bedanya versi berbayar?', a: 'Pratinjau gratis menampilkan analisis Lima Unsur, kepribadian dasar, dan tips belajar. Laporan Premium (US$4.99) mencakup analisis mendalam 8 bagian: panduan hubungan orang tua-anak, saran pola asuh sesuai usia dengan skrip percakapan, bakat karier, prakiraan siklus keberuntungan, keberuntungan bulanan, dan tugas aksi mingguan. Dengan harga kurang dari secangkir kopi, Anda mendapat panduan lengkap untuk memahami anak Anda.' },
+      { q: 'Apa bedanya versi berbayar?', a: 'Pratinjau gratis menampilkan analisis Lima Unsur, kepribadian dasar, dan tips belajar. Laporan Premium (US$19.99) mencakup analisis mendalam 8 bagian: panduan hubungan orang tua-anak, saran pola asuh sesuai usia dengan skrip percakapan, bakat karier, prakiraan siklus keberuntungan, keberuntungan bulanan, dan tugas aksi mingguan. Disusun sesuai standar praktisi Saju bersertifikat — dengan sebagian kecil dari biaya satu sesi konsultasi.' },
     ],
   },
   cta: {
@@ -3457,7 +3457,7 @@ export const translations = {
     backHome: '← Inicio',
     noticeBar: '',
   },
-  banner: 'Análisis de Cinco Elementos gratis — Informe Premium por US$4.99',
+  banner: 'Análisis de Cinco Elementos gratis — Informe Premium por €17,99',
   sajuDef: {
     heading: '¿Qué es el Saju (사주)?',
     body: 'Saju (사주, Four Pillars of Destiny) es un sistema coreano de análisis del carácter con raíces en miles de años de filosofía del Este de Asia. Mapea el año, mes, día y hora de nacimiento de una persona en un marco de los Cinco Elementos (오행: Madera, Fuego, Tierra, Metal, Agua) y el calendario sexagesimal de 60 ciclos (만세력). El resultado no es una adivinación — es un perfil de temperamento: una descripción estructurada de rasgos de personalidad innatos, estilos de aprendizaje, tendencias relacionales y equilibrio elemental. SoMyung aplica este marco específicamente a los niños, ayudando a los padres a comprender por qué cada hijo es diferente y cómo comunicarse con ellos de manera más efectiva.',
@@ -3552,7 +3552,7 @@ export const translations = {
   trust: ['Diseñado por Consejero Certificado', 'Tus Datos Seguros', 'Manseryeok Tradicional', 'Análisis con IA', 'Pago Seguro'],
   pricing: {
     heading: 'Precios',
-    subtitle: 'Vista previa gratuita, informe completo por el precio de un café',
+    subtitle: 'Vista previa gratuita. El informe completo son 8 capítulos, redactados con criterio profesional certificado',
     free: {
       name: 'Vista Previa',
       price: 'Gratis',
@@ -3562,7 +3562,7 @@ export const translations = {
     premium: {
       name: 'Informe Premium',
       badge: 'Más Popular',
-      price: '€3,49',
+      price: '€17,99',
       originalPrice: '',
       note: 'Pago único del Informe Premium',
       features: ['Informe profundo de 8 secciones', 'Guía de relación padre-hijo', 'Crianza por edades + guiones', 'Tendencias por ciclos de vida', 'Temas mensuales + acciones'],
@@ -3579,7 +3579,7 @@ export const translations = {
       { q: '¿Los resultados están disponibles inmediatamente?', a: 'Sí, los resultados se generan en unos 10 segundos después de ingresar la fecha de nacimiento. El cálculo Manseryeok y la interpretación con IA se realizan en tiempo real. Puedes ver los resultados en la web y compartirlos por WhatsApp.' },
       { q: '¿Puedo analizar a otros niños también?', a: 'Por supuesto. Puedes analizar hermanos u otros niños en cualquier momento. Solo haz clic en "Analizar Otro Niño" en la página de resultados. Comparar diferentes temperamentos te da aún más información.' },
       { q: '¿Mi información personal está segura?', a: 'La información que ingresas se usa únicamente para el análisis. Los datos de la vista previa gratuita no se guardan en nuestra base de datos; para los informes pagados solo conservamos la información necesaria para generar y entregar el informe (nombre o apodo del niño, datos de nacimiento, email). Todos los datos se cifran en tránsito y puedes solicitar su eliminación en cualquier momento. Consulta nuestra Política de Privacidad para más detalles.' },
-      { q: '¿En qué se diferencia la versión de pago?', a: 'La vista previa gratuita muestra el análisis de los Cinco Elementos, la personalidad básica y consejos de aprendizaje. El Informe Premium (US$4.99) incluye un análisis profundo de 8 secciones: guía de relación padre-hijo, consejos de crianza por edades con guiones de conversación, tendencias de aptitud, temas por ciclos de vida, guía mensual y tareas semanales prácticas. Por menos que un café, obtienes una guía completa para comprender a tu hijo/a.' },
+      { q: '¿En qué se diferencia la versión de pago?', a: 'La vista previa gratuita muestra el análisis de los Cinco Elementos, la personalidad básica y consejos de aprendizaje. El Informe Premium (€17,99) incluye un análisis profundo de 8 secciones: guía de relación padre-hijo, consejos de crianza por edades con guiones de conversación, tendencias de aptitud, temas por ciclos de vida, guía mensual y tareas semanales prácticas. Redactado con el criterio de una consultora certificada en Saju, por una fracción de lo que cuesta una sola consulta.' },
     ],
   },
   cta: {
@@ -4033,7 +4033,7 @@ export const translations = {
     backHome: '← Início',
     noticeBar: 'O conteúdo abaixo é fornecido em coreano.',
   },
-  banner: 'Análise dos Cinco Elementos grátis — Relatório Premium por US$4.99',
+  banner: 'Análise dos Cinco Elementos grátis — Relatório Premium por €17,99',
   sajuDef: {
     heading: 'O que é Saju (사주)?',
     body: 'Saju (사주, Four Pillars of Destiny) é um sistema coreano de análise de caráter enraizado em milhares de anos de filosofia do Leste Asiático. Ele mapeia o ano, mês, dia e hora de nascimento de uma pessoa em um framework dos Cinco Elementos (오행: Madeira, Fogo, Terra, Metal, Água) e o calendário sexagenário de 60 ciclos (만세력). O resultado não é uma previsão — é um perfil de temperamento: uma descrição estruturada de traços de personalidade inatos, estilos de aprendizagem, tendências relacionais e equilíbrio elemental. SoMyung aplica esse framework especificamente para crianças, ajudando os pais a entender por que cada filho é diferente e como se comunicar com eles de forma mais eficaz.',
@@ -4128,7 +4128,7 @@ export const translations = {
   trust: ['Projetado por Conselheiro Certificado', 'Seus Dados Seguros', 'Manseryeok Tradicional', 'Análise com IA', 'Pagamento Seguro'],
   pricing: {
     heading: 'Preços',
-    subtitle: 'Prévia gratuita, relatório completo pelo preço de um café',
+    subtitle: 'Prévia gratuita. O relatório completo tem 8 capítulos, escritos com rigor profissional certificado',
     free: {
       name: 'Prévia',
       price: 'Grátis',
@@ -4138,7 +4138,7 @@ export const translations = {
     premium: {
       name: 'Relatório Premium',
       badge: 'Mais Popular',
-      price: '€3,49',
+      price: '€17,99',
       originalPrice: '',
       note: 'Pagamento único do Relatório Premium',
       features: ['Relatório com 8 seções de análise profunda', 'Guia de relacionamento pais e filhos', 'Orientação por idade + roteiros de conversa', 'Previsão de ciclos de fortuna', 'Fortuna mensal + tarefas práticas'],
@@ -4155,7 +4155,7 @@ export const translations = {
       { q: 'Os resultados ficam disponíveis imediatamente?', a: 'Sim, os resultados são gerados em cerca de 10 segundos após inserir a data de nascimento. O cálculo do Manseryeok e a interpretação por IA acontecem em tempo real. Você pode ver os resultados na web e compartilhar via WhatsApp.' },
       { q: 'Posso analisar outros filhos também?', a: 'Com certeza. Você pode analisar irmãos ou outras crianças a qualquer momento. Basta clicar em "Analisar Outra Criança" na página de resultados. Comparar diferentes temperamentos traz insights ainda mais profundos.' },
       { q: 'Minhas informações pessoais estão seguras?', a: 'As informações que você insere são usadas apenas para a análise. Os dados da prévia gratuita não são salvos em nosso banco de dados; para relatórios pagos, guardamos apenas as informações necessárias para gerar e entregar o relatório (nome ou apelido da criança, dados de nascimento, email). Todos os dados são criptografados em trânsito e você pode solicitar a exclusão a qualquer momento. Veja nossa Política de Privacidade para mais detalhes.' },
-      { q: 'Qual a diferença da versão paga?', a: 'A prévia gratuita mostra a análise dos Cinco Elementos, personalidade básica e dicas de aprendizagem. O Relatório Premium (US$4.99) inclui uma análise profunda em 8 seções: guia de relacionamento pais e filhos, orientação por idade com roteiros de conversa, aptidão profissional, previsão de ciclos de fortuna, fortuna mensal e tarefas práticas semanais. Por menos que um café, você recebe um guia completo para entender seu filho.' },
+      { q: 'Qual a diferença da versão paga?', a: 'A prévia gratuita mostra a análise dos Cinco Elementos, personalidade básica e dicas de aprendizagem. O Relatório Premium (€17,99) inclui uma análise profunda em 8 seções: guia de relacionamento pais e filhos, orientação por idade com roteiros de conversa, aptidão profissional, previsão de ciclos de fortuna, fortuna mensal e tarefas práticas semanais. Escrito com o rigor de uma consultora certificada em Saju, por uma fração do custo de uma única consulta.' },
     ],
   },
   cta: {
@@ -4606,7 +4606,7 @@ export const translations = {
     backHome: '← Accueil',
     noticeBar: 'Le contenu ci-dessous est fourni en coréen.',
   },
-  banner: 'Analyse des Cinq Éléments gratuite — Rapport Premium à US$4.99',
+  banner: 'Analyse des Cinq Éléments gratuite — Rapport Premium à €17,99',
   sajuDef: {
     heading: 'Qu\'est-ce que le Saju (사주) ?',
     body: 'Le Saju (사주, Four Pillars of Destiny) est un système coréen d\'analyse du caractère enraciné dans des milliers d\'années de philosophie est-asiatique. Il projette l\'année, le mois, le jour et l\'heure de naissance d\'une personne sur un cadre des Cinq Éléments (오행 : Bois, Feu, Terre, Métal, Eau) et le calendrier sexagésimal à 60 cycles (만세력). Le résultat n\'est pas une divination — c\'est un profil de tempérament : une description structurée des traits de personnalité innés, des styles d\'apprentissage, des tendances relationnelles et de l\'équilibre élémentaire. SoMyung applique ce cadre spécifiquement aux enfants, aidant les parents à comprendre pourquoi chaque enfant est différent et comment communiquer avec eux plus efficacement.',
@@ -4701,7 +4701,7 @@ export const translations = {
   trust: ['Conçu par un Conseiller Certifié', 'Vos données protégées', 'Manseryeok traditionnel', 'Analyse par IA', 'Paiement sécurisé'],
   pricing: {
     heading: 'Tarifs',
-    subtitle: 'Aperçu gratuit, rapport complet au prix d\'un café',
+    subtitle: 'Aperçu gratuit. Le rapport complet compte 8 chapitres, rédigés selon des standards professionnels certifiés',
     free: {
       name: 'Aperçu',
       price: 'Gratuit',
@@ -4711,7 +4711,7 @@ export const translations = {
     premium: {
       name: 'Rapport Premium',
       badge: 'Le plus populaire',
-      price: '€3,99',
+      price: '€17,99',
       originalPrice: '',
       note: 'Paiement unique du Rapport Premium',
       features: ['Rapport d\'analyse approfondi en 8 sections', 'Guide de la relation parent-enfant', 'Conseils parentaux par âge + scripts', 'Prévisions des cycles de fortune', 'Fortune mensuelle + actions à mener'],
@@ -4728,7 +4728,7 @@ export const translations = {
       { q: 'Les résultats sont-ils disponibles immédiatement ?', a: 'Oui, les résultats sont générés en environ 10 secondes après avoir saisi la date de naissance. Le calcul du Manseryeok et l\'interprétation IA se font en temps réel. Vous pouvez consulter les résultats en ligne et les partager via WhatsApp.' },
       { q: 'Puis-je analyser d\'autres enfants ?', a: 'Absolument. Vous pouvez analyser des frères et sœurs ou d\'autres enfants à tout moment. Cliquez simplement sur « Analyser un autre enfant » sur la page des résultats. Comparer différents tempéraments vous donne des informations encore plus approfondies.' },
       { q: 'Mes informations personnelles sont-elles en sécurité ?', a: 'Les informations saisies sont utilisées uniquement pour l’analyse. Les données de l’aperçu gratuit ne sont pas enregistrées dans notre base de données ; pour les rapports payants, nous ne conservons que les informations nécessaires à la génération et à la livraison du rapport (nom ou surnom de l’enfant, données de naissance, email). Toutes les données sont chiffrées en transit et vous pouvez demander leur suppression à tout moment. Consultez notre Politique de Confidentialité pour plus de détails.' },
-      { q: 'En quoi la version payante est-elle différente ?', a: 'L\'aperçu gratuit montre l\'analyse des Cinq Éléments, la personnalité de base et des conseils d\'apprentissage. Le Rapport Premium (US$4.99) comprend une analyse approfondie en 8 sections : guide de la relation parent-enfant, conseils parentaux par âge avec scripts de conversation, aptitudes professionnelles, prévisions des cycles de fortune, fortune mensuelle et tâches hebdomadaires concrètes. Pour moins qu\'un café, vous obtenez un guide complet pour comprendre votre enfant.' },
+      { q: 'En quoi la version payante est-elle différente ?', a: 'L\'aperçu gratuit montre l\'analyse des Cinq Éléments, la personnalité de base et des conseils d\'apprentissage. Le Rapport Premium (€17,99) comprend une analyse approfondie en 8 sections : guide de la relation parent-enfant, conseils parentaux par âge avec scripts de conversation, aptitudes professionnelles, prévisions des cycles de fortune, fortune mensuelle et tâches hebdomadaires concrètes. Rédigé selon les standards d\'une praticienne certifiée en Saju, pour une fraction du prix d\'une seule consultation.' },
     ],
   },
   cta: {
@@ -5179,7 +5179,7 @@ export const translations = {
     backHome: '← หน้าแรก',
     noticeBar: 'เนื้อหาด้านล่างแสดงเป็นภาษาเกาหลี',
   },
-  banner: 'วิเคราะห์ธาตุทั้ง 5 ฟรี — รายงานพรีเมียม US$4.99',
+  banner: 'วิเคราะห์ธาตุทั้ง 5 ฟรี — รายงานพรีเมียม ฿449',
   sajuDef: {
     heading: 'ซาจู (사주) คืออะไร?',
     body: 'ซาจู (사주, Four Pillars of Destiny) เป็นระบบวิเคราะห์บุคลิกภาพของเกาหลีที่มีรากฐานจากปรัชญาเอเชียตะวันออกนับพันปี ระบบนี้จับคู่ปีเกิด เดือน วัน และชั่วโมงของบุคคลเข้ากับกรอบธาตุทั้ง 5 (오행: ไม้ ไฟ ดิน โลหะ น้ำ) และปฏิทินหกสิบวงจร (만세력) ผลลัพธ์ไม่ใช่การดูดวง — แต่เป็นโปรไฟล์นิสัย: คำอธิบายอย่างเป็นระบบเกี่ยวกับลักษณะบุคลิกภาพที่ติดตัวมาแต่กำเนิด รูปแบบการเรียนรู้ แนวโน้มความสัมพันธ์ และสมดุลธาตุ SoMyung นำกรอบนี้มาประยุกต์ใช้กับเด็กโดยเฉพาะ ช่วยให้ผู้ปกครองเข้าใจว่าทำไมลูกแต่ละคนถึงมีนิสัยต่างกัน และจะสื่อสารกับลูกอย่างไรให้มีประสิทธิภาพมากขึ้น',
@@ -5274,7 +5274,7 @@ export const translations = {
   trust: ['ออกแบบโดยที่ปรึกษาที่ได้รับการรับรอง', 'ข้อมูลปลอดภัย', 'มันเซรยอกแบบดั้งเดิม', 'วิเคราะห์ด้วย AI', 'ชำระเงินปลอดภัย'],
   pricing: {
     heading: 'ราคา',
-    subtitle: 'ดูตัวอย่างฟรี รายงานเต็มในราคาแก้วกาแฟ',
+    subtitle: 'ดูตัวอย่างฟรี รายงานฉบับเต็มมี 8 บท เรียบเรียงตามมาตรฐานผู้เชี่ยวชาญที่ได้รับการรับรอง',
     free: {
       name: 'ตัวอย่าง',
       price: 'ฟรี',
@@ -5284,7 +5284,7 @@ export const translations = {
     premium: {
       name: 'รายงานพรีเมียม',
       badge: 'ยอดนิยม',
-      price: '฿89',
+      price: '฿449',
       originalPrice: '',
       note: 'ชำระเงินครั้งเดียวสำหรับรายงานพรีเมียม',
       features: ['รายงานวิเคราะห์เชิงลึก 8 หมวด', 'คู่มือความสัมพันธ์พ่อแม่-ลูก', 'คำแนะนำเลี้ยงลูกตามช่วงวัย + บทสนทนา', 'พยากรณ์วงจรโชคชะตา', 'ดวงรายเดือน + สิ่งที่ควรทำ'],
@@ -5301,7 +5301,7 @@ export const translations = {
       { q: 'ได้ผลทันทีไหม?', a: 'ได้ครับ ผลลัพธ์จะสร้างภายในประมาณ 10 วินาทีหลังกรอกวันเกิด การคำนวณมันเซรยอกและการตีความ AI ทำแบบเรียลไทม์ สามารถดูผลบนเว็บและแชร์ผ่าน WhatsApp ได้' },
       { q: 'วิเคราะห์ลูกคนอื่นได้ไหม?', a: 'ได้แน่นอนครับ สามารถวิเคราะห์พี่น้องหรือเด็กคนอื่นได้ทุกเมื่อ แค่กด "วิเคราะห์เด็กคนอื่น" ในหน้าผลลัพธ์ การเปรียบเทียบนิสัยจะให้ข้อมูลเชิงลึกยิ่งขึ้น' },
       { q: 'ข้อมูลส่วนตัวปลอดภัยไหม?', a: 'ข้อมูลที่คุณกรอกใช้เพื่อการวิเคราะห์เท่านั้น ข้อมูลตัวอย่างฟรีจะไม่ถูกบันทึกในฐานข้อมูล ส่วนรายงานแบบชำระเงินเราเก็บเฉพาะข้อมูลที่จำเป็นต่อการสร้างและส่งรายงาน (ชื่อหรือชื่อเล่นของเด็ก ข้อมูลวันเกิด อีเมล) ข้อมูลทั้งหมดเข้ารหัสระหว่างส่ง และคุณสามารถขอลบได้ทุกเมื่อ ดูรายละเอียดในนโยบายความเป็นส่วนตัว' },
-      { q: 'เวอร์ชันเสียเงินต่างยังไง?', a: 'ตัวอย่างฟรีแสดงการวิเคราะห์ธาตุทั้ง 5 บุคลิกภาพเบื้องต้น และเคล็ดลับการเรียน รายงานพรีเมียม (US$4.99) มีการวิเคราะห์เชิงลึก 8 หมวด: คู่มือความสัมพันธ์พ่อแม่-ลูก คำแนะนำเลี้ยงลูกตามช่วงวัยพร้อมบทสนทนา ความถนัดอาชีพ พยากรณ์วงจรโชคชะตา ดวงรายเดือน และภารกิจรายสัปดาห์ที่ทำได้จริง ในราคาไม่ถึงแก้วกาแฟ ได้คู่มือเข้าใจลูกฉบับสมบูรณ์' },
+      { q: 'เวอร์ชันเสียเงินต่างยังไง?', a: 'ตัวอย่างฟรีแสดงการวิเคราะห์ธาตุทั้ง 5 บุคลิกภาพเบื้องต้น และเคล็ดลับการเรียน รายงานพรีเมียม (฿449) มีการวิเคราะห์เชิงลึก 8 หมวด: คู่มือความสัมพันธ์พ่อแม่-ลูก คำแนะนำเลี้ยงลูกตามช่วงวัยพร้อมบทสนทนา ความถนัดอาชีพ พยากรณ์วงจรโชคชะตา ดวงรายเดือน และภารกิจรายสัปดาห์ที่ทำได้จริง เรียบเรียงตามมาตรฐานผู้เชี่ยวชาญซาจูที่ได้รับการรับรอง ในราคาเพียงเศษเสี้ยวของการปรึกษาหนึ่งครั้ง' },
     ],
   },
   cta: {

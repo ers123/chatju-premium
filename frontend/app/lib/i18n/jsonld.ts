@@ -77,7 +77,7 @@ export function getJsonLdForLang(lang: Language) {
         "brand": { "@type": "Brand", "name": "SoMyung" },
         "offers": {
           "@type": "Offer",
-          "price": "4.99",
+          "price": "19.99",
           "priceCurrency": "USD",
           "availability": "https://schema.org/InStock",
           "url": BASE_URL
