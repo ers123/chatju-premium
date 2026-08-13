@@ -215,12 +215,26 @@ class AIService {
    * Generate with OpenAI Chat Completions.
    */
   async generateWithOpenAIModel(model, messages, maxTokens, temperature) {
-    const completion = await this.clients.openai.chat.completions.create({
-      model,
-      messages,
-      max_completion_tokens: maxTokens,
-      temperature,
-    });
+    // 일부 모델(gpt-5.6 계열 실측)은 temperature 를 기본값 1 외에는 거부한다:
+    //   400 Unsupported value: 'temperature' does not support 0.7 with this model.
+    // 이 400은 **폴백 체인에 그대로 삼켜진다** — openai 실패 → claude → gemini 로
+    // 조용히 넘어가서, 모델을 바꿔 놓고도 다른 제공자의 글을 받고 있게 된다.
+    // (2026-08-13 모델 비교에서 실제로 이렇게 오염된 표를 한 번 만들었다.)
+    // 그래서 이 특정 거부만 잡아서 temperature 없이 한 번 더 친다.
+    const call = (body) => this.clients.openai.chat.completions.create(body);
+    const base = { model, messages, max_completion_tokens: maxTokens };
+
+    let completion;
+    try {
+      completion = await call({ ...base, temperature });
+    } catch (err) {
+      const unsupportedTemperature = err?.status === 400
+        && /temperature/i.test(err?.message || '')
+        && /unsupported|does not support|only the default/i.test(err?.message || '');
+      if (!unsupportedTemperature) throw err;
+      logger.info('Model rejects custom temperature; retrying at its default', { model });
+      completion = await call(base);
+    }
 
     const message = completion.choices[0].message;
     const content = message.content || '';
