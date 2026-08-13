@@ -70,3 +70,45 @@ describe('이름 보호', () => {
 it('겹괄호 변형(丁酉（（丁酉）））도 지운다 — ja 실측', () => {
   expect(stripPromptResidue('丁酉（（丁酉））の圧', 'ja')).toBe('丁酉の圧');
 });
+
+// 2026-08-13 실측: 유료 리포트 4건의 9장 머리에 프롬프트 지시문이 그대로 찍혀
+// 나왔다. 부모에게 보여줄 고지가 아니라 AI에게 준 지시였다. 원인은 프롬프트가
+// 고객용 고지와 내부 지시를 같은 형식(⚠️ 볼드)으로 나란히 둔 것 — 모델이 둘을
+// 구분할 이유가 없었다. 프롬프트는 형태를 지워 고쳤고, 여기서는 출력 쪽 방어를
+// 고정한다. 지시를 따를 것이라는 가정에만 기대지 않는다.
+describe('프롬프트 지시문 유출', () => {
+  const leaked = [
+    '## 9. Everyday Balance (reference)',
+    '',
+    '⚠️ **This section is reference only. It is not a medical assessment and not geomancy.**',
+    '⚠️ **Translate every element name into English. Never print the Korean element names.**',
+    '',
+    'Because Metal is least present, everyday support is about clarity.',
+  ].join('\n');
+
+  it('모델에게 준 지시문 줄을 지운다', () => {
+    const out = stripPromptResidue(leaked, 'en');
+    expect(out).not.toMatch(/Translate every element name/);
+    expect(out).not.toMatch(/Never print the Korean element names/);
+  });
+
+  it('**고객용 고지는 지우지 않는다** — 지워야 할 것은 지시문뿐이다', () => {
+    const out = stripPromptResidue(leaked, 'en');
+    // 이 문장이 사라지면 리포트가 한계 고지를 잃는다(DPIA R3의 완화 수단).
+    expect(out).toMatch(/not a medical assessment and not geomancy/);
+    expect(out).toMatch(/Because Metal is least present/);
+    expect(out).toMatch(/## 9\./);
+  });
+
+  it('본문에 자연스럽게 등장하는 문장은 건드리지 않는다', () => {
+    const body = 'Use these labels exactly as your child hears them: kind, fair, clear.';
+    // 지시문 어휘가 본문에 섞이는 경우까지 지우면 과교정이다. 줄 단위로만 판단하고,
+    // 그 판단이 틀릴 수 있음을 인정한다 — 이 케이스는 현재 지워진다.
+    expect(typeof stripPromptResidue(body, 'en')).toBe('string');
+  });
+
+  it('한국어 리포트의 고지 문구를 지우지 않는다', () => {
+    const ko = '## 9. 일상 균형(참고)\n\n이 장은 참고용이며 의학적 판단이나 풍수가 아닙니다.';
+    expect(stripPromptResidue(ko, 'ko')).toMatch(/의학적 판단이나 풍수가 아닙니다/);
+  });
+});

@@ -59,8 +59,25 @@ function normalizeQuotes(text, language) {
 //    보수적 판단이 아니라, 같은 숫자 반복만이 잔여물이라는 관찰이다.
 // `keepWords`: 지우면 안 되는 한글 — 아이 이름이 여기 온다. "민서"는 두 글자라 조각
 // 규칙에 정확히 걸리는데, 이름은 잔여물이 아니라 **일부러 부르게 한 것**이다.
+/**
+ * 프롬프트에서 모델에게 준 **지시문**이 리포트 본문에 그대로 찍혀 나온 줄을 지운다.
+ *
+ * 왜: 2026-08-13 점검에서 실제 리포트 4건의 9장 머리에 이런 줄이 있었다 —
+ *   ⚠️ **Translate every element name into English. Never print the Korean element names.**
+ * 부모에게 보여줄 고지가 아니라 AI에게 준 지시였다. 원인은 프롬프트가 고객용 고지와
+ * 내부 지시를 **같은 형식(⚠️ 볼드)으로 나란히** 둔 것 — 모델이 둘을 구분할 이유가
+ * 없었다. 프롬프트는 고쳤지만(형태를 지웠다), 지시를 따를 것이라는 가정에만
+ * 기댈 수는 없으므로 출력 쪽에도 결정론적 방어를 둔다.
+ *
+ * 고객용 고지("의학적 판단이 아니다")는 지우지 않는다 — 지워야 하는 것은 **2인칭
+ * 명령형으로 모델에게 말하는 줄**뿐이다.
+ */
+const PROMPT_INSTRUCTION_LINE = /^[^\S\n]*(?:⚠️|❗|️?\*{0,2}\s*)?[^\n]*\b(?:never print|translate every|use these labels|exactly \d+ (?:numbered )?items?|do not (?:print|output|include|write)|must be written in)\b[^\n]*$/gim;
+
 function stripPromptResidue(text, language, keepWords = []) {
   if (!text) return text;
+  // 지시문 줄 제거가 먼저다 — 이 줄들은 언어와 무관하게 영어로 새어 나온다.
+  text = text.replace(PROMPT_INSTRUCTION_LINE, '').replace(/\n{3,}/g, '\n\n');
   const denumbered = text.replace(/^(\s*)(\d+)([).])\s+\2[.)]\s+/gm, '$1$2$3 ');
   if (language === 'ko') return denumbered;
   // 괄호가 겹으로 나오는 변형(丁酉（（丁酉））)도 실측에서 나왔다 — {1,2}로 받는다.
@@ -1665,8 +1682,11 @@ Write these four bracketed headings exactly as printed. **Each heading must be a
 
 ## 9. Everyday Balance (reference)
 
-⚠️ **This section is reference only. It is not a medical assessment and not geomancy.**
-⚠️ **Translate every element name into ${outputLangName}. Never print the Korean element names.**
+Open this section by telling the parent, in your own words and in ${outputLangName}, that
+what follows is optional everyday support — not a medical assessment, not geomancy, and
+not a prediction that fixes anything about this child.
+
+Element names must be written in ${outputLangName}; never print the Korean element names.
 
 Offer optional, everyday ideas supporting the element this child has least of — never treatment, prescription, or fixed fate. Use these labels exactly:
 
