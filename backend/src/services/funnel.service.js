@@ -22,6 +22,10 @@ const EVENTS = Object.freeze({
   CHECKOUT_START: 'checkout_start', // PayPal 주문 생성 성공(결제창까지 감)
   PURCHASE: 'purchase',             // 결제 캡처 성공
   PROMO_REPORT: 'promo_report',     // 프로모 코드로 받은 유료 리포트(돈은 0)
+  // 결제 수단이 없는 로케일(ko)에서 "결제하고 싶다" 버튼을 누른 횟수.
+  // 한국 결제 레일(KCP 재신청, 월 ~5만원 고정비)을 다시 열지의 판단 근거다 —
+  // 이 숫자 없이는 "한국 수요"가 영원히 느낌으로만 남는다.
+  PURCHASE_INTENT: 'purchase_intent',
 });
 
 const KNOWN_EVENTS = new Set(Object.values(EVENTS));
@@ -168,6 +172,8 @@ function renderFunnelText(funnel) {
   L.push(`퍼널 (계측 시작 ${funnel.measuringSince || '아직 없음'})`);
   L.push(`  프리뷰 ${t.preview} → 결제시작 ${t.checkout_start} → 결제완료 ${t.purchase}`
     + (t.promo_report ? ` · 프로모 리포트 ${t.promo_report}` : ''));
+  // ko 결제 레일 재개 판단 지표. EN/JA 유료 월 10건 트리거와 나란히 본다.
+  if (t.purchase_intent) L.push(`  결제 의향(결제수단 없는 로케일): ${t.purchase_intent}건`);
   L.push(`  전환: 프리뷰→결제시작 ${funnel.conversion.previewToCheckout}`
     + ` · 결제시작→완료 ${funnel.conversion.checkoutToPurchase}`
     + ` · 프리뷰→완료 ${funnel.conversion.previewToPurchase}`);

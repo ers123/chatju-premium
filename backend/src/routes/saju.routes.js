@@ -956,6 +956,26 @@ router.post('/feedback', feedbackLimiter, async (req, res) => {
   }
 });
 
+/**
+ * POST /saju/track
+ * 클라이언트발 퍼널 신호. 서버가 스스로 관측할 수 없는 이벤트만 받는다 —
+ * 지금은 purchase_intent 하나(결제 수단이 없는 ko에서 "결제하고 싶다" 클릭).
+ *
+ * 왜 화이트리스트가 서버 EVENTS보다 좁은가: preview/purchase 는 서버가 직접
+ * 세는 진실이다. 클라이언트가 그 이름으로 쏠 수 있게 두면 스팸 한 줄로
+ * 전환율 분모·분자가 오염된다. 여기서 받는 것은 "의향"뿐이고, 의향 카운터는
+ * 부풀려져 봐야 고정비 지출 판단이 빨라질 뿐 돈이 움직이지 않는다.
+ * PII 없음 — (날짜, 이벤트, 언어, +1)이 전부다.
+ */
+router.post('/track', readLimiter, async (req, res) => {
+  const { event, language } = req.body || {};
+  if (event !== 'purchase_intent') {
+    return res.status(400).json({ error: 'Unsupported event', code: 'INVALID_EVENT' });
+  }
+  await recordFunnelEvent(FUNNEL.PURCHASE_INTENT, language);
+  return res.status(200).json({ success: true });
+});
+
 router.get('/reading-check', readLimiter, async (req, res) => {
   try {
     const { token, claim } = req.query;

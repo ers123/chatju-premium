@@ -184,6 +184,16 @@ export const apiClient = {
   },
 
   /**
+   * PII-free funnel signal. Fire-and-forget: a lost beacon must never
+   * surface as a user-visible error. Currently only 'purchase_intent'
+   * (ko has no checkout; this click is the demand counter for reopening
+   * the Korean payment rail).
+   */
+  trackPurchaseIntent: (language: string): void => {
+    api.post('/saju/track', { event: 'purchase_intent', language }).catch(() => {});
+  },
+
+  /**
    * Get a specific Saju reading by ID (requires authentication)
    */
   getReadingById: async (readingId: string): Promise<SajuReading> => {

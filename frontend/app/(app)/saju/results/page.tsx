@@ -268,6 +268,8 @@ export default function ResultsPage() {
   // Promo code state
   const [promoCode, setPromoCode] = useState('')
   const [promoValidating, setPromoValidating] = useState(false)
+  // ko 수요 카운터 버튼의 눌림 상태 (세션 내 1회만 — 새로고침 중복은 하한 지표라 무해)
+  const [krIntentSent, setKrIntentSent] = useState(false)
   const [promoResult, setPromoResult] = useState<{ valid: boolean; promoCode?: { id: string; code: string } } | null>(null)
 
   // Track if email is valid (controls PayPal container visibility in JSX)
@@ -1294,6 +1296,21 @@ export default function ResultsPage() {
                           <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
                             {(t.payment as any).krUseFreeOrPromo || '무료 미리보기를 이용하시거나, 위의 프로모션 코드를 입력해 프리미엄 리포트를 받아보세요.'}
                           </p>
+                          {/* 수요 카운터. 한국 결제 레일(KCP 재신청 + 가상오피스 고정비)을
+                              다시 열지는 이 클릭 수가 결정한다 — PII 없이 숫자만 올라간다. */}
+                          {krIntentSent ? (
+                            <p style={{ fontSize: '0.75rem', color: '#C5A059', margin: '0.75rem 0 0' }}>
+                              {(t.payment as any).krIntentThanks || '의견 감사합니다. 결제 오픈 판단에 반영됩니다.'}
+                            </p>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => { apiClient.trackPurchaseIntent(lang); setKrIntentSent(true) }}
+                              style={{ marginTop: '0.75rem', padding: '0.5rem 0.875rem', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(197,160,89,0.5)', color: '#C5A059', fontSize: '0.75rem', cursor: 'pointer' }}
+                            >
+                              {(t.payment as any).krIntentButton || '카드 결제가 열리면 이용하고 싶어요'}
+                            </button>
+                          )}
                         </div>
                       )}
                     </>
