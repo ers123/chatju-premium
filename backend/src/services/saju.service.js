@@ -44,6 +44,32 @@ function normalizeQuotes(text, language) {
   return text.replace(/[“"]([^“”"\n]{1,400}?)[”"]/g, (_m, inner) => `«${NBSP}${inner.trim()}${NBSP}»`);
 }
 
+// 프롬프트가 한자·한국어를 담고 있어서 생기는 출력 잔여물 제거. 프리뷰에서 만들어
+// 검증한 것을 유료 리포트에도 적용한다 — 유료 zh 리포트의 대운 절에서 `丁酉（丁酉）`가
+// 실제로 나왔다(측정: 15건 중 1건, 한 리포트에 4회).
+//
+// 1. 한자 자기중복: 같은 글자가 자기 뒤 괄호에 그대로 반복될 때만 지운다. 다른
+//    글자가 들어 있으면 번역 병기라서 건드리지 않는다. 괄호 앞뒤 공백 형태 포함.
+// 2. 한글 조각: 비한국어 본문에 낱자 한둘이 끼는 경우(`วัน간`). **짧은 조각만**
+//    지운다 — 본문 전체가 한국어인 진짜 실패는 긴 덩어리라 그대로 남고, 오염율
+//    측정과 재생성 게이트에 계속 걸린다. 조용히 지워서 문제를 가리면 안 된다.
+// 3. 이중 번호: `1) 1. **"…"**` — 지시문이 "1. 2. 3."으로 예시를 보여주면 모델이
+//    자기 번호를 하나 더 붙일 때가 있다(zh 유료 리포트 1건에서 6회). 두 번호가 같은
+//    숫자일 때만 안쪽 것을 지운다 — `1) 2.`는 중첩 목록일 수 있으므로 두지 않는다... 는
+//    보수적 판단이 아니라, 같은 숫자 반복만이 잔여물이라는 관찰이다.
+function stripPromptResidue(text, language) {
+  if (!text) return text;
+  const denumbered = text.replace(/^(\s*)(\d+)([).])\s+\2[.)]\s+/gm, '$1$2$3 ');
+  if (language === 'ko') return denumbered;
+  let out = denumbered.replace(/([一-鿿]{1,4})\s*[（(]\s*\1\s*[)）]/g, '$1');
+  out = out.replace(/[가-힣]{1,2}/g, (run, offset, whole) => {
+    const neighbourhood = whole.slice(Math.max(0, offset - 12), offset + 12);
+    const hangulAround = (neighbourhood.match(/[가-힣]/g) || []).length;
+    return hangulAround <= 3 ? '' : run;
+  });
+  return out;
+}
+
 // Initialize AI service (supports OpenAI, Gemini, Claude)
 const aiService = getAIService();
 
@@ -835,20 +861,8 @@ preview thinner than it should be. Two facts, two roles.
     // 괄호에 한 번 더 적는다. 프롬프트로 줄이긴 했지만(ja·zh 5건 중 4건 → 10건 중 1건)
     // 확률적 지시라 0이 되지 않는다. 같은 글자가 자기 뒤 괄호에 그대로 반복될 때만
     // 지운다 — 다른 글자가 들어 있으면 번역 병기라서 건드리지 않는다.
-    // 괄호 앞 공백까지 본다. `水 (水)`처럼 한 칸 띄고 반복하는 경우가 태국어에서 나왔다.
-    let previewText = (result.content || '').replace(/([一-鿿]{1,4})\s*[（(]\s*\1\s*[)）]/g, '$1');
-
-    // 비한국어 출력에 한글 한두 글자가 끼는 일이 남아 있다(태국어 `วัน간` — 日干을
-    // 반쯤 한국어로 옮긴 흔적). **짧은 조각만** 지운다. 본문 전체가 한국어로 나오는
-    // 진짜 실패는 긴 덩어리라 그대로 남고, 측정과 로그에 계속 걸린다 — 조용히
-    // 지워서 문제를 안 보이게 만들면 안 된다.
-    if (language !== 'ko') {
-      previewText = previewText.replace(/[가-힣]{1,2}/g, (run, offset, whole) => {
-        const neighbourhood = whole.slice(Math.max(0, offset - 12), offset + 12);
-        const hangulAround = (neighbourhood.match(/[가-힣]/g) || []).length;
-        return hangulAround <= 3 ? '' : run;
-      });
-    }
+    // 자기중복 한자·한글 조각 제거 — 유료 리포트와 같은 규칙(stripPromptResidue 참고).
+    const previewText = stripPromptResidue(result.content || '', language);
 
     if (!previewText) {
       console.warn('[Saju Service] AI returned empty preview content, provider:', result.provider);
@@ -1841,7 +1855,7 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
       if (r1.content.trim().length < MIN_HALF_LENGTH || r2.content.trim().length < MIN_HALF_LENGTH) {
         return null;
       }
-      return normalizeQuotes(`${r1.content}\n\n${r2.content}`, language);
+      return stripPromptResidue(normalizeQuotes(`${r1.content}\n\n${r2.content}`, language), language);
     };
 
     let interpretationText = buildInterpretation(result1, result2);
@@ -2089,4 +2103,6 @@ module.exports = {
   // 측정/검증용 — 결제·DB를 거치지 않고 생성 품질만 재기 위해 노출한다.
   // (scripts/measure-localization.js가 언어별 근거 보존율을 잴 때 쓴다.)
   generateAIInterpretation,
+  // 테스트용 — 출력 잔여물 제거 규칙은 회귀가 잦아 단위 테스트로 고정한다.
+  stripPromptResidue,
 };
