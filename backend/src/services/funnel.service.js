@@ -26,6 +26,10 @@ const EVENTS = Object.freeze({
   // 한국 결제 레일(KCP 재신청, 월 ~5만원 고정비)을 다시 열지의 판단 근거다 —
   // 이 숫자 없이는 "한국 수요"가 영원히 느낌으로만 남는다.
   PURCHASE_INTENT: 'purchase_intent',
+  // 공유 루프 — 팔로워 0인 계정 대신 제품 자신이 배포 경로가 되는지 본다.
+  // 만든 링크(분모)와 그 링크로 들어온 조회(분자)를 나눠 세야 루프가 도는지 안다.
+  SHARE_CREATED: 'share_created',
+  SHARE_VIEW: 'share_view',
 });
 
 const KNOWN_EVENTS = new Set(Object.values(EVENTS));

@@ -184,6 +184,22 @@ export const apiClient = {
   },
 
   /**
+   * Create (or re-fetch) the public share link for a reading.
+   * Ownership is proven with the same report token / claim key the feedback
+   * endpoint uses — no new login, no new personal data. The resulting page
+   * carries the element result only: no child name, no birth date.
+   */
+  createShareLink: async (proof: { token?: string; claimKey?: string }): Promise<{ shareToken: string }> => {
+    const response = await api.post<{ success: boolean; shareToken: string }>('/saju/share', proof);
+    return { shareToken: response.data.shareToken };
+  },
+
+  /** Turn an existing share link off. The URL 404s immediately afterwards. */
+  revokeShareLink: async (proof: { token?: string; claimKey?: string }): Promise<void> => {
+    await api.post('/saju/share/revoke', proof);
+  },
+
+  /**
    * PII-free funnel signal. Fire-and-forget: a lost beacon must never
    * surface as a user-visible error. Currently only 'purchase_intent'
    * (ko has no checkout; this click is the demand counter for reopening

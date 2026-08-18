@@ -12,6 +12,7 @@ import { formatBirthDateForDisplay } from '@/app/lib/date-display'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ShareableResultCard from '@/components/saju/ShareableResultCard'
+import ShareLinkPanel from '@/components/saju/ShareLinkPanel'
 import ReportRating from '@/components/saju/ReportRating'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 import PremiumEditorialReport, {
@@ -1396,6 +1397,11 @@ export default function ResultsPage() {
                 />
               )
             })()}
+
+            {/* 공유 링크 — 이미지만 공유되던 것을 **눌러 들어올 수 있는 링크**로 만든다.
+                팔로워 0인 계정 대신 이 루프가 유일한 배포 경로다.
+                링크에는 아이 이름도 생년월일도 들어가지 않는다(오행 결과만). */}
+            <ShareLinkPanel copy={sr} />
 
             {/* Sibling comparison prompt */}
             <div style={{

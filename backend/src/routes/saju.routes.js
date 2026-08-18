@@ -984,6 +984,99 @@ router.post('/track', readLimiter, async (req, res) => {
   return res.status(200).json({ success: true });
 });
 
+/**
+ * 공유 링크 — 소유 증명 → 토큰 발급 / 철회.
+ *
+ * 인증은 평가(/feedback)와 **같은 두 가지 소유 증명**을 그대로 쓴다. 새 로그인도
+ * 새 개인정보도 만들지 않는다.
+ *
+ * 공유 페이지에는 아이 이름도 생년월일도 들어가지 않는다 — share.service.js 가
+ * 화이트리스트로 오행 결과만 뽑는다. 여기서 reading 을 통째로 넘기지만, 그
+ * 서비스가 읽는 필드는 saju_data.elements 와 language 뿐이다.
+ */
+async function resolveOwnedReading(req) {
+  const { token, claimKey } = req.body || {};
+  const { supabaseAdmin } = require('../config/supabase');
+  const columns = 'id, language, saju_data';
+
+  if (token) {
+    let payload;
+    try {
+      payload = verifyAccessToken(token, { purpose: 'report' });
+    } catch {
+      return { error: 'INVALID_REPORT_ACCESS_TOKEN' };
+    }
+    if (!payload.readingId) return { error: 'INVALID_REPORT_ACCESS_TOKEN' };
+    const { data } = await supabaseAdmin.from('readings').select(columns).eq('id', payload.readingId).maybeSingle();
+    return data ? { reading: data } : { error: 'READING_NOT_FOUND' };
+  }
+
+  const validClaim = validateClaimKey(claimKey);
+  if (!validClaim) return { error: 'MISSING_REPORT_PROOF' };
+  const { data } = await supabaseAdmin
+    .from('readings').select(columns)
+    .eq('claim_key_hash', hashClaimKey(validClaim))
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data ? { reading: data } : { error: 'READING_NOT_FOUND' };
+}
+
+router.post('/share', feedbackLimiter, async (req, res) => {
+  try {
+    const owned = await resolveOwnedReading(req);
+    if (owned.error) {
+      const status = owned.error === 'READING_NOT_FOUND' ? 404 : 401;
+      return res.status(status).json({ error: owned.error, code: owned.error });
+    }
+    const shareService = require('../services/share.service');
+    const { token: shareToken, reused } = await shareService.createShare(owned.reading);
+    // 링크를 만든 횟수. 공유 루프가 도는지 판단하는 분자다.
+    if (!reused) await recordFunnelEvent(FUNNEL.SHARE_CREATED, owned.reading.language);
+    return res.status(200).json({ success: true, shareToken, reused });
+  } catch (error) {
+    console.error('[Saju Route] share create error:', error.message);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+router.post('/share/revoke', feedbackLimiter, async (req, res) => {
+  try {
+    const owned = await resolveOwnedReading(req);
+    if (owned.error) {
+      const status = owned.error === 'READING_NOT_FOUND' ? 404 : 401;
+      return res.status(status).json({ error: owned.error, code: owned.error });
+    }
+    const shareService = require('../services/share.service');
+    await shareService.revokeShare(owned.reading.id);
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('[Saju Route] share revoke error:', error.message);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
+/**
+ * 공개 조회 — 인증 없음. 엣지(Cloudflare Pages Function)가 이걸 불러
+ * OG 태그가 박힌 HTML 을 만든다.
+ *
+ * **여기서 나가는 것은 오행 결과뿐이다.** 이름·생년월일·리포트 본문은 이 응답에
+ * 존재하지 않는다.
+ */
+router.get('/share/:token', readLimiter, async (req, res) => {
+  try {
+    const shareService = require('../services/share.service');
+    const share = await shareService.getShare(req.params.token);
+    if (!share) return res.status(404).json({ error: 'Not found', code: 'SHARE_NOT_FOUND' });
+    await shareService.countShareView(req.params.token);
+    await recordFunnelEvent(FUNNEL.SHARE_VIEW, share.language);
+    return res.status(200).json(share);
+  } catch (error) {
+    console.error('[Saju Route] share view error:', error.message);
+    return res.status(500).json({ error: 'Internal server error', code: 'INTERNAL_ERROR' });
+  }
+});
+
 router.get('/reading-check', readLimiter, async (req, res) => {
   try {
     const { token, claim } = req.query;

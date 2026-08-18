@@ -111,7 +111,7 @@ describe('집계', () => {
     mockSelectRows = rows;
     const s = await funnel.getFunnelSummary({ days: 90 });
 
-    expect(s.totals).toEqual({ preview: 150, checkout_start: 10, purchase: 9, promo_report: 2, purchase_intent: 0 });
+    expect(s.totals).toEqual({ preview: 150, checkout_start: 10, purchase: 9, promo_report: 2, purchase_intent: 0, share_created: 0, share_view: 0 });
     expect(s.conversion.previewToPurchase).toBe('6.0%');
     expect(s.conversion.checkoutToPurchase).toBe('90.0%');
     expect(s.byLanguage.en).toMatchObject({ preview: 100, checkout: 10, purchase: 4, previewToPurchase: '4.0%' });
