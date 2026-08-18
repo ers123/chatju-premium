@@ -102,6 +102,7 @@ export default function Footer() {
             </h4>
             <p style={{ fontSize: '14px', color: '#888888', lineHeight: 1.8 }}>
               {f.email}<br />
+              {(f as any).phone && (<><a href={`tel:${(f as any).phone.replace(/-/g, '')}`} style={{ color: '#888888', textDecoration: 'none' }}>{(f as any).phone}</a><br /></>)}
               {f.hours}
             </p>
           </div>
