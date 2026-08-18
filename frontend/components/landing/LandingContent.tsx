@@ -1148,6 +1148,53 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Sample excerpt — 리포트 실물 한 조각. 블러 대신 실제 두 항목을 그대로 보여준다.
+          출처는 측정 스크립트의 가상 원국(Minseo) 리포트, output/premium-artifacts. */}
+      {(t as any).sampleExcerpt && (
+        <section data-reveal style={{
+          ...revealStyle,
+          width: '100%',
+          background: '#F7F3EC',
+          padding: 'clamp(60px, 10vw, 100px) clamp(20px, 5vw, 40px)'
+        }}>
+          <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+              <span style={{ display: 'inline-block', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#B8922D', fontWeight: 600, marginBottom: '12px' }}>
+                {(t as any).sampleExcerpt.badge}
+              </span>
+              <h2 style={{ fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 700, color: '#2A2420', fontFamily: 'serif', margin: '0 0 12px' }}>
+                {(t as any).sampleExcerpt.heading}
+              </h2>
+              <p style={{ fontSize: '15px', color: '#6B5E52', lineHeight: 1.7, margin: 0 }}>
+                {(t as any).sampleExcerpt.sub}
+              </p>
+            </div>
+
+            <div style={{ background: '#FFFFFF', border: '1px solid rgba(184,146,45,0.18)', borderRadius: '14px', padding: 'clamp(20px, 4vw, 32px)', boxShadow: '0 8px 30px rgba(42,36,32,0.06)' }}>
+              <div style={{ fontSize: '13px', color: '#B8922D', fontWeight: 600, marginBottom: '18px' }}>
+                {(t as any).sampleExcerpt.section}
+              </div>
+              {(t as any).sampleExcerpt.items.map((it: { mis: string; real: string; better: string }, i: number) => (
+                <div key={i} style={{ paddingBottom: '18px', marginBottom: '18px', borderBottom: i === 0 ? '1px dashed rgba(42,36,32,0.12)' : 'none' }}>
+                  <p style={{ margin: '0 0 8px', fontSize: '15px', lineHeight: 1.7, color: '#2A2420' }}>
+                    <strong style={{ color: '#8A6D1F' }}>{(t as any).sampleExcerpt.mis}:</strong> {it.mis}
+                  </p>
+                  <p style={{ margin: '0 0 8px', fontSize: '15px', lineHeight: 1.7, color: '#2A2420' }}>
+                    <strong style={{ color: '#8A6D1F' }}>{(t as any).sampleExcerpt.real}:</strong> {it.real}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.7, color: '#2A2420' }}>
+                    <strong style={{ color: '#1A3D2E' }}>{(t as any).sampleExcerpt.better}:</strong> {it.better}
+                  </p>
+                </div>
+              ))}
+              <p style={{ margin: 0, fontSize: '13px', color: '#6B5E52', lineHeight: 1.6 }}>
+                {(t as any).sampleExcerpt.note}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Pricing */}
       <section id="pricing" style={{
         width: '100%',

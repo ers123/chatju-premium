@@ -231,7 +231,7 @@ function OhaengBalanceChart({ balance, ohaengElements, elementCount }: { balance
 
 export default function ResultsPage() {
   const router = useRouter()
-  const { t, lang, ready: langReady } = useLanguage()
+  const { t, lang, setLang, ready: langReady } = useLanguage()
   useEffect(() => { document.title = t.sajuResults.pageTitle }, [t])
   const sr = t.sajuResults
   // Per-locale chargeable pricing; null = no PayPal checkout (ko: free tier + promo only)
@@ -1199,7 +1199,15 @@ export default function ResultsPage() {
                 <LockIcon />
                 <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#B8922D' }}>{sr.premiumContent}</span>
               </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', marginBottom: '1.5rem' }}>{sr.premiumTitle}</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', marginBottom: '0.5rem' }}>{sr.premiumTitle}</h2>
+              {/* 브릿지. 미리보기가 어디서 끝나고 리포트가 어디서 시작하는지 한 줄로 긋는다.
+                  아래 항목은 실제 리포트 구조(8장)에서 세어 온 숫자다 — 캐시로 재검증 가능
+                  (output/premium-artifacts, 10언어 × 3원국 모두 6 스크립트·4개월·7일). */}
+              {(sr as any).premiumBridge && (
+                <p style={{ fontSize: '0.9375rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
+                  {(sr as any).premiumBridge}
+                </p>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
                 {sr.premiumItems.map((item, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '1rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.05)' }}>
@@ -1297,6 +1305,19 @@ export default function ResultsPage() {
                           <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
                             {(t.payment as any).krUseFreeOrPromo || '무료 미리보기를 이용하시거나, 위의 프로모션 코드를 입력해 프리미엄 리포트를 받아보세요.'}
                           </p>
+                          {/* 재외 한국인 우회로. ko:null 은 KRW 수취 불가에서 온 제약이지 언어의
+                              제약이 아니다 — 해외 카드·PayPal 사용자는 언어만 바꾸면 이 자리에서
+                              USD 결제가 열린다. 결과 상태를 유지하려고 페이지 이동 대신 setLang. */}
+                          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: '0.75rem 0 0' }}>
+                            {(t.payment as any).krAbroadHint || '해외에 거주 중이신가요? 해외 발급 카드·PayPal이라면 영어 페이지에서 US$19.99에 결제하실 수 있어요.'}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setLang('en')}
+                            style={{ marginTop: '0.5rem', padding: '0.5rem 0.875rem', borderRadius: '8px', background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.5)', color: '#C5A059', fontSize: '0.75rem', cursor: 'pointer' }}
+                          >
+                            {(t.payment as any).krAbroadButton || '영어로 전환해 결제하기'}
+                          </button>
                           {/* 수요 카운터. 한국 결제 레일(KCP 재신청 + 가상오피스 고정비)을
                               다시 열지는 이 클릭 수가 결정한다 — PII 없이 숫자만 올라간다. */}
                           {krIntentSent ? (
