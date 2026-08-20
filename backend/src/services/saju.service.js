@@ -1428,10 +1428,10 @@ ${monthlyFortuneData}`;
 
 ## 4. 상황별 대응 플레이북
 
-다음 6가지 상황을 다루세요:
+다음 6가지 상황을 순서대로, 전부 다루세요. 6개 모두 필수 — 합치거나 생략하지 마세요:
 ① 숙제 거부/미루기 ② 침묵/지연 반응 ③ 친구 관계 상처 ④ 스크린/게임 전환 ⑤ 방과후 감정 과부하 ⑥ 부모가 너무 몰아붙일 때
 
-각 상황:
+각 상황에 "### 1) 숙제 거부/미루기" 형태의 소제목을 먼저 붙이고, 그 아래 라벨을 채우세요:
 - **부모가 흔히 하는 말:** "..."
 - **왜 역효과인지:** ... (이 기질에서 어떻게 받아들여지는지)
 - **더 나은 스크립트:** "..."
@@ -1928,7 +1928,13 @@ You are NOT a fortune-teller. You are a personalized parenting interpretation ex
       if (r1.content.trim().length < MIN_HALF_LENGTH || r2.content.trim().length < MIN_HALF_LENGTH) {
         return null;
       }
-      return stripPromptResidue(normalizeQuotes(`${r1.content}\n\n${r2.content}`, language), language, [childName]);
+      // 헤딩 로컬라이즈는 여기(유일한 조립 지점)에서. 폴백 경로가 fullText를 그대로
+      // 보여주므로, ja/fr/th가 영어 섹션명을 새는 문제를 결정적으로 막는다.
+      const { localizeSectionHeadings } = require('./report-presentation');
+      return localizeSectionHeadings(
+        stripPromptResidue(normalizeQuotes(`${r1.content}\n\n${r2.content}`, language), language, [childName]),
+        language
+      );
     };
 
     let interpretationText = buildInterpretation(result1, result2);

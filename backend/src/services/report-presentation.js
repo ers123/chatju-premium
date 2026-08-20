@@ -760,6 +760,23 @@ function adaptMarkdownToPresentation({ fullText, manseryeok, fortuneCycles = nul
   }
 }
 
+
+// 폴백(마크다운) 경로의 언어 평등화. 모델은 "영어 섹션명은 식별용, 리포트 언어로
+// 제목을 새로 써라"는 지시를 ja/fr/th에서 상습적으로 어긴다 — 2026-08-13 캐시에서
+// ja 리포트 9개 헤딩 전부가 영어였다. ready 경로는 로케일 번들이 제목을 갈아끼우지만
+// 폴백은 fullText를 그대로 보여주므로, 여기서 결정적으로 갈아끼운다.
+// "## N." 꼴의 최상위 헤딩만 건드린다. "###" 월별 소제목·본문은 그대로 둔다.
+function localizeSectionHeadings(text, language = 'ko') {
+  if (!text) return text;
+  const titles = getPremiumPresentationLocale(language).sectionTitles;
+  if (!Array.isArray(titles) || titles.length < 9) return text;
+  return String(text).replace(/^(\s{0,3})##(?!#)\s*(\d)[.)]?\s*[^\n]*$/gm, (line, indent, num) => {
+    const idx = Number(num) - 1;
+    if (idx < 0 || idx >= titles.length) return line;
+    return `${indent}## ${num}. ${titles[idx]}`;
+  });
+}
+
 module.exports = {
   REQUIRED_SECTION_NUMBERS,
   // 계약 테스트에서 직접 검사한다 — 이 함수가 되살리는 것(라벨 앞 산문)이
@@ -775,4 +792,5 @@ module.exports = {
   mergePresentationResult,
   parseTitledGroups,
   getPremiumPresentationLocale,
+  localizeSectionHeadings,
 };

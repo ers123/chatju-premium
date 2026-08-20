@@ -972,8 +972,39 @@ export default function ResultsPage() {
                 <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(184,146,45,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem' }}>🔮</div>
                 <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1A3D2E' }}>{sr.aiInterpretation}</h3>
               </div>
-              <div style={{ lineHeight: 1.7, whiteSpace: 'pre-line', fontSize: '0.95rem', color: '#6B5E52' }}>
-                {result.preview}
+              {/* 프리뷰는 모델이 마크다운(**강조**)을 섞어 쓴다. 날것으로 찍으면 별표가 그대로
+                  보인다 — 리포트 본문과 같은 렌더러를 태워 강조는 강조로 보이게 한다. */}
+              <div style={{ lineHeight: 1.7, fontSize: '0.95rem', color: '#6B5E52' }}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => (
+                      <p style={{ margin: '0 0 0.75rem', lineHeight: 1.7, color: '#6B5E52' }}>{children}</p>
+                    ),
+                    strong: ({ children }) => (
+                      <strong style={{ fontWeight: 700, color: '#1A3D2E' }}>{children}</strong>
+                    ),
+                    em: ({ children }) => <em style={{ fontStyle: 'italic' }}>{children}</em>,
+                    ul: ({ children }) => (
+                      <ul style={{ margin: '0 0 0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol style={{ margin: '0 0 0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>{children}</ol>
+                    ),
+                    li: ({ children }) => <li style={{ lineHeight: 1.7 }}>{children}</li>,
+                    h1: ({ children }) => <p style={{ margin: '0 0 0.75rem', fontWeight: 700, color: '#1A3D2E' }}>{children}</p>,
+                    h2: ({ children }) => <p style={{ margin: '0 0 0.75rem', fontWeight: 700, color: '#1A3D2E' }}>{children}</p>,
+                    h3: ({ children }) => <p style={{ margin: '0 0 0.75rem', fontWeight: 700, color: '#1A3D2E' }}>{children}</p>,
+                  }}
+                >
+                  {/* 두 가지를 지킨다.
+                      1) 모델은 문단을 홑줄바꿈으로 끊는다 — 마크다운이 합치지 않게 하드 브레이크를 넣는다.
+                      2) "1)" 로 시작하는 줄을 마크다운이 번호목록으로 삼으면 번호를 제멋대로 다시 매긴다
+                         (모델이 쓴 5)가 4.로 바뀐다). 여는 번호를 이스케이프해 원문 번호를 그대로 보인다. */}
+                  {result.preview
+                    .replace(/^(\s*\d+)([).])(\s)/gm, '$1\\$2$3')
+                    .replace(/([^\n])\n(?!\n)/g, '$1  \n')}
+                </ReactMarkdown>
               </div>
             </div>
           )}
