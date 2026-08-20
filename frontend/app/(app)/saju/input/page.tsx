@@ -166,13 +166,29 @@ export default function InputFormPage() {
     }
   }
 
-  const nextStep = () => {
-    if (step < totalSteps) setStep(step + 1)
+  // Keep the wizard step in browser history so back/forward moves between
+  // steps instead of leaving the page (mobile back gesture included).
+  useEffect(() => {
+    window.history.replaceState({ ...window.history.state, sajuStep: 1 }, '')
+    const onPopState = (e: PopStateEvent) => {
+      const s = e.state?.sajuStep
+      if (typeof s === 'number' && s >= 1 && s <= totalSteps) {
+        setStep(s)
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  const goToStep = (target: number) => {
+    if (target < 1 || target > totalSteps || target === step) return
+    window.history.pushState({ ...window.history.state, sajuStep: target }, '')
+    setStep(target)
+    window.scrollTo(0, 0)
   }
 
-  const prevStep = () => {
-    if (step > 1) setStep(step - 1)
-  }
+  const nextStep = () => goToStep(step + 1)
+  const prevStep = () => goToStep(step - 1)
 
   const canProceedStep1 = formData.name && formData.gender
   const canProceedStep2 = formData.year && formData.month && formData.day && formData.calendar
@@ -1181,18 +1197,36 @@ export default function InputFormPage() {
                 <div style={{ padding: '0.75rem 1rem', background: '#F8F6F3', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
                   <h4 style={{ fontWeight: 600, color: '#1A3D2E', marginBottom: '0.75rem' }}>{s.summaryTitle}</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#6B7280' }}>{s.summaryChild}</span>
-                      <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formData.name} ({formData.gender === 'male' ? s.genderShortMale : s.genderShortFemale})</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#6B7280' }}>{s.summaryChildBirth}</span>
-                      <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formData.year}.{formData.month}.{formData.day}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#6B7280' }}>{s.summaryParentBirth(formData.parentRole === 'mother' ? s.mother : s.father)}</span>
-                      <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formData.parentYear}.{formData.parentMonth}.{formData.parentDay}</span>
-                    </div>
+                    {[
+                      { label: s.summaryChild, value: `${formData.name} (${formData.gender === 'male' ? s.genderShortMale : s.genderShortFemale})`, editStep: 1 },
+                      { label: s.summaryChildBirth, value: `${formData.year}.${formData.month}.${formData.day}${formData.unknownTime ? '' : ` ${formData.hour}:${formData.minute.padStart(2, '0')}`}`, editStep: 2 },
+                      { label: s.summaryParentBirth(formData.parentRole === 'mother' ? s.mother : s.father), value: `${formData.parentYear}.${formData.parentMonth}.${formData.parentDay}`, editStep: 4 }
+                    ].map(row => (
+                      <div key={row.editStep} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ color: '#6B7280', flexShrink: 0 }}>{row.label}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                          <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{row.value}</span>
+                          <button
+                            type="button"
+                            onClick={() => goToStep(row.editStep)}
+                            style={{
+                              flexShrink: 0,
+                              padding: '0.25rem 0.625rem',
+                              borderRadius: '9999px',
+                              border: '1px solid #E5E7EB',
+                              background: '#FFFFFF',
+                              color: '#B8922D',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {s.editLabel}
+                          </button>
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
