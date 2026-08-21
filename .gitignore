@@ -61,6 +61,11 @@ backend/somyung-deploy_accessKeys.csv
 # Local tooling / internal notes (not shipped)
 .omx/
 security-check-*.md
+# 벤더링된 스킬 사본. .claude/ 와 같은 성격이라 같은 규칙으로 다룬다.
+.agents/
+# 브라우저 QA 산출물. 콘솔 로그·페이지 덤프에 더해 실제 리포트 PDF가 떨어진다 —
+# 아이 이름·생년월일이 담길 수 있어 레포에 들어가면 안 된다.
+.playwright-cli/
 
 # 측정·생성 산출물 (재현 가능하므로 커밋하지 않는다)
 # output/localization 은 eval-localization.js 가 만드는 리포트·판정 캐시로,
