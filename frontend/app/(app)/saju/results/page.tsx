@@ -1230,7 +1230,7 @@ export default function ResultsPage() {
                 <LockIcon />
                 <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#B8922D' }}>{sr.premiumContent}</span>
               </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', marginBottom: '0.5rem' }}>{sr.premiumTitle}</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', marginBottom: '0.5rem', color: '#FFFFFF' }}>{sr.premiumTitle}</h2>
               {/* 브릿지. 미리보기가 어디서 끝나고 리포트가 어디서 시작하는지 한 줄로 긋는다.
                   아래 항목은 실제 리포트 구조(8장)에서 세어 온 숫자다 — 캐시로 재검증 가능
                   (output/premium-artifacts, 10언어 × 3원국 모두 6 스크립트·4개월·7일). */}
