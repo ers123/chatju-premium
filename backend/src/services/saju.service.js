@@ -1499,6 +1499,10 @@ ${fortuneCycles ? `현재 대운(${fortuneCycles.currentDaeun?.pillar?.korean ||
 - **성공 신호:** ... (이 방법이 통하고 있다는 증거)
 
 실험이므로 부담 없이 시작할 수 있어야 합니다. "하루 5분"이면 충분한 수준.
+3가지 실험은 **서로 다른 생활 영역**에서 하나씩 고르세요.
+숙제 거부·침묵/지연·친구 상처·스크린 전환·방과후 과부하·부모의 몰아붙임 — 이 6가지 장면은 리포트의 다른 섹션이 이미 다룹니다.
+실험은 이 6가지가 아닌 장면에서 고르세요(예: 아침 준비 / 잠들기 전 / 식사 / 형제·가족 시간 / 외출·전환 준비 / 주말 계획).
+표현 습관도 분산하세요: 세 실험이 모두 "질문 1개·10초 기다리기"류의 같은 기법이면 안 됩니다.
 
 ## 8. 함께 읽는 양육 카드
 
@@ -1677,6 +1681,12 @@ ${bullet(L.s7[2])} evidence that it is working
 Under these three labels, write plain prose only. Do not introduce any additional bold label followed by a colon anywhere inside this section.
 
 Keep them light enough to start without pressure — "five minutes a day" is the right scale.
+
+
+Pick each of the 3 experiments from a **different area of daily life**.
+Homework refusal, silence/delayed response, friendship hurt, screen transitions, after-school overload, and parental over-pushing are already covered elsewhere in the report.
+Choose experiment scenes OUTSIDE those six (e.g., morning preparation / bedtime / meals / sibling & family time / getting-out-the-door transitions / weekend planning).
+Vary the technique too: the three experiments must not all be variations of the same move (e.g., "one question + wait 10 seconds").
 
 ## 8. Parenting Card to Share
 
