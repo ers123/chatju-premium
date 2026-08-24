@@ -1330,6 +1330,13 @@ export default function LandingPage() {
                 color: 'rgba(255, 255, 255, 0.6)',
                 marginBottom: '32px'
               }}>{t.pricing.premium.note}</p>
+              {/* 실재 가격 앵커. 가짜 정가 취소선 대신 검증된 카테고리 비교만 쓴다
+                  (Etsy 사주 PDF $10~36 실측, CliftonStrengths 34 $59.99, 대면 상담 $30~300 — 2026-08). */}
+              {(t.pricing.premium as any).priceContext && (
+                <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.45)', lineHeight: 1.6, margin: '-24px 0 32px' }}>
+                  {(t.pricing.premium as any).priceContext}
+                </p>
+              )}
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', flex: 1 }}>
                 {t.pricing.premium.features.map((item, i) => (
                   <li key={i} style={{
