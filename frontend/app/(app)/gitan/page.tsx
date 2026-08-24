@@ -862,7 +862,7 @@ export default function GitanLandingPage() {
               </div>
               <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '32px' }}>제휴 코드 한정 혜택 예시</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px' }}>
-                {['8섹션 심층 기질 분석', '맞춤 학습 환경 가이드', '부모-자녀 궁합 분석', '월별 운세 + 실천 과제', 'PDF 리포트 + 이메일 발송'].map((item, i) => (
+                {['8개 장 심층 기질 분석', '흔한 오해 5가지 → 더 나은 반응', '상황별 대화 스크립트 6가지', '7일 양육 실험 + 양육 카드', 'PDF 리포트 + 이메일 발송'].map((item, i) => (
                   <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '16px', color: '#FFFFFF', marginBottom: '16px' }}>
                     <svg width="16" height="16" fill={colors.accent} viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

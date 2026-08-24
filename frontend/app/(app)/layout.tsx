@@ -170,7 +170,7 @@ export default function RootLayout({
                     "name": "How is the paid version different?",
                     "acceptedAnswer": {
                       "@type": "Answer",
-                      "text": "The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report (US$19.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, career aptitude analysis, fortune cycle forecast, monthly fortune, and actionable weekly tasks. Written to the standard of a certified Korean Saju practitioner — for a fraction of what one consultation costs."
+                      "text": "The free preview shows Five Elements analysis, basic personality, and learning tips. The Premium Report (US$19.99) includes an 8-section deep analysis: parent-child relationship guide, age-specific parenting advice with conversation scripts, aptitude tendencies, life-cycle themes with monthly guidance, a 7-day parenting experiment, and a shareable parenting card. Written to the standard of a certified Korean Saju practitioner — for a fraction of what one consultation costs."
                     }
                   }
                 ]
@@ -179,7 +179,7 @@ export default function RootLayout({
                 "@type": "Product",
                 "@id": "https://somyung.cc/#premium-report",
                 "name": "SoMyung Premium Saju Report",
-                "description": "An 8-section deep-dive child temperament analysis based on Saju (Four Pillars of Destiny). Includes parent-child relationship guide, age-specific parenting advice, career aptitude analysis, fortune cycle forecast, monthly fortune, and actionable weekly tasks.",
+                "description": "An 8-section deep-dive child temperament analysis based on Saju (Four Pillars of Destiny). Includes parent-child relationship guide, age-specific parenting advice with conversation scripts, aptitude tendencies, life-cycle themes with monthly guidance, a 7-day parenting experiment, and a shareable parenting card.",
                 "url": "https://somyung.cc",
                 "brand": {
                   "@type": "Brand",
