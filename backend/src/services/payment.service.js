@@ -558,7 +558,114 @@ async function getUserPayments(userId) {
   }
 }
 
+
+/**
+ * PortOne(국내 PG) V2 결제 검증 — 클라이언트가 결제창을 닫은 뒤 호출한다.
+ * 금액의 진실은 PortOne 서버 응답이다. 클라이언트가 보낸 값은 아무것도 믿지 않는다.
+ * 성공 시 PayPal capture와 같은 모양의 payments 행 + paymentAccessToken을 만들어
+ * 기존 /saju/calculate 경로(verifyPaymentForReading)가 수정 없이 동작한다.
+ */
+const PORTONE_PRODUCT_ID = 'premium_saju_krw_24900';
+
+async function verifyPortonePayment(portonePaymentId, email = null, language = null) {
+  if (!process.env.PORTONE_V2_API_SECRET) {
+    throw new Error('PortOne is not configured');
+  }
+  if (!portonePaymentId || typeof portonePaymentId !== 'string' || portonePaymentId.length > 128) {
+    throw new Error('Invalid PortOne payment id');
+  }
+
+  // 멱등: 같은 결제 id로 재호출되면(새로고침·더블클릭) 새 행을 만들지 않는다.
+  const existing = await getPaymentByPaymentKey(portonePaymentId);
+  if (existing && existing.status === 'completed') {
+    const paymentAccessToken = createAccessToken({
+      purpose: 'payment',
+      paymentId: existing.id,
+      orderId: existing.order_id,
+      paypalOrderId: portonePaymentId, // verifyPaymentForReading이 payment_key와 대조하는 필드
+      productType: existing.metadata?.product_type || PORTONE_PRODUCT_ID,
+      amount: existing.amount,
+      currency: existing.currency,
+      email: email ? email.toLowerCase().trim() : undefined,
+    });
+    return { success: true, payment: toClientPayment(existing), paymentAccessToken };
+  }
+
+  const product = getProduct(PORTONE_PRODUCT_ID);
+  const resp = await axios.get(
+    `https://api.portone.io/payments/${encodeURIComponent(portonePaymentId)}`,
+    { headers: { Authorization: `PortOne ${process.env.PORTONE_V2_API_SECRET}` }, timeout: 10000 }
+  );
+  const p = resp.data;
+
+  if (p.status !== 'PAID') {
+    throw new Error(`Payment not completed. Current status: ${p.status}`);
+  }
+  const paidTotal = p.amount?.total;
+  const paidCurrency = p.currency;
+  if (Number(paidTotal) !== Number(product.amount) || paidCurrency !== product.currency) {
+    // 위·변조된 결제창(금액 조작)을 여기서 자른다. 절대 통과시키지 않는다.
+    throw new Error(`Amount mismatch: paid ${paidTotal} ${paidCurrency}, expected ${product.amount} ${product.currency}`);
+  }
+
+  const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const { data: payment, error } = await supabaseAdmin
+    .from('payments')
+    .insert([{
+      user_id: null,
+      order_id: orderId,
+      amount: product.amount,
+      currency: product.currency,
+      status: 'completed',
+      payment_method: 'portone',
+      payment_key: portonePaymentId,
+      order_name: product.description,
+      metadata: {
+        portone_payment_id: portonePaymentId,
+        portone_status: p.status,
+        pg_provider: p.channel?.pgProvider || null,
+        // 테스트 채널 결제가 실결제로 집계되는 걸 막는 표식
+        is_test: p.channel?.type === 'TEST',
+        email,
+        product_type: product.id,
+        expected_amount: product.amount,
+        expected_currency: product.currency,
+        language: normalizeLanguage(language),
+        created_at: new Date().toISOString(),
+      },
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[Payment Service] PortOne DB error:', error);
+    throw new Error('Failed to create payment record');
+  }
+
+  if (p.channel?.type !== 'TEST') {
+    await recordFunnelEvent(FUNNEL.PURCHASE, language);
+  }
+
+  const paymentAccessToken = createAccessToken({
+    purpose: 'payment',
+    paymentId: payment.id,
+    orderId,
+    paypalOrderId: portonePaymentId,
+    productType: product.id,
+    amount: product.amount,
+    currency: product.currency,
+    email: email ? email.toLowerCase().trim() : undefined,
+  });
+
+  console.log('[Payment Service] PortOne payment verified:', {
+    orderId, portonePaymentId, test: p.channel?.type === 'TEST',
+  });
+
+  return { success: true, payment: toClientPayment(payment), paymentAccessToken };
+}
+
 module.exports = {
+  verifyPortonePayment,
   // PayPal
   createPayPalPayment,
   capturePayPalPayment,

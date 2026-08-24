@@ -131,6 +131,32 @@ router.post('/paypal/capture', paymentConfirmLimiter, validatePayPalCapture, asy
 });
 
 /**
+ * POST /payment/portone/verify
+ * PortOne(국내 PG) 결제 검증. 결제창 완료 후 클라이언트가 paymentId를 보내면
+ * 서버가 PortOne API로 실상태·금액을 대조한다. 인증 불요(이메일 기반 게스트 결제,
+ * PayPal capture와 동일 모델) — 신뢰 근거는 세션이 아니라 PortOne 서버 응답.
+ */
+router.post('/portone/verify', paymentConfirmLimiter, async (req, res) => {
+  try {
+    const { portonePaymentId, email, language } = req.body || {};
+    if (!portonePaymentId) {
+      return res.status(400).json({ error: 'PortOne payment id is required', code: 'MISSING_PAYMENT_ID' });
+    }
+    const result = await paymentService.verifyPortonePayment(portonePaymentId, email || null, language || null);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Payment Routes] PortOne verify error:', toSafeRouteError(error));
+    if (/not configured/.test(error.message)) {
+      return res.status(503).json({ error: 'PortOne is not configured', code: 'PORTONE_NOT_CONFIGURED' });
+    }
+    if (/Amount mismatch|not completed|Invalid PortOne/.test(error.message)) {
+      return res.status(402).json({ error: error.message, code: 'PORTONE_VERIFY_FAILED' });
+    }
+    res.status(500).json({ error: 'Payment verification failed', code: 'PORTONE_VERIFY_ERROR' });
+  }
+});
+
+/**
  * POST /payment/paypal/webhook
  * Webhook endpoint for PayPal
  * Called by PayPal when payment events occur

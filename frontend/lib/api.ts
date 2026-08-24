@@ -248,6 +248,14 @@ export const apiClient = {
     return response.data;
   },
 
+  /**
+   * PortOne(국내 PG) 결제 검증 — 결제창 성공 후 서버 대조.
+   */
+  verifyPortonePayment: async (portonePaymentId: string, email: string, language: string): Promise<{ success: boolean; payment: Record<string, unknown>; paymentAccessToken: string }> => {
+    const response = await api.post('/payment/portone/verify', { portonePaymentId, email, language });
+    return response.data;
+  },
+
   // ===========================================
   // Payment - Common
   // ===========================================

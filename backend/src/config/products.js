@@ -54,6 +54,15 @@ const PRODUCTS = {
     currency: 'THB',
     description: 'Premium Saju Reading',
   },
+  // PortOne(국내 PG) 전용 — PayPal은 KRW 수취 불가라 이 상품은 PayPal 경로에서
+  // 절대 쓰이면 안 된다. resolveProductByPricing이 KRW를 돌려줘도 PayPal 주문
+  // 생성은 통화 검증에서 실패하므로 안전하다.
+  premium_saju_krw_24900: {
+    id: 'premium_saju_krw_24900',
+    amount: 24900,
+    currency: 'KRW',
+    description: 'Premium Saju Reading',
+  },
 
   // 레거시 — 신규 주문에는 쓰이지 않는다. 인상 시점에 진행 중이던 주문과
   // 과거 결제 조회를 위해 남긴다. 되돌릴 때도 이 항목이 그대로 필요하다.

@@ -236,6 +236,47 @@ export default function ResultsPage() {
   const sr = t.sajuResults
   // Per-locale chargeable pricing; null = no PayPal checkout (ko: free tier + promo only)
   const pricing = getPremiumPricing(lang)
+  // PortOne(국내 PG) 테스트/실결제 — 키가 배포 env에 있을 때만 버튼이 뜬다.
+  // 심사(카드사·카카오페이)가 요구하는 "상품→카드선택→결제완료" 경로가 이 버튼이다.
+  const portoneStoreId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID
+  const portoneChannelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY
+  const [portonePaying, setPortonePaying] = useState(false)
+  const payWithPortone = async () => {
+    if (!portoneStoreId || !portoneChannelKey || portonePaying) return
+    setPortonePaying(true)
+    setPaymentError('')
+    try {
+      const PortOne = await import('@portone/browser-sdk/v2')
+      const paymentId = `somyung-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+      const rsp = await PortOne.requestPayment({
+        storeId: portoneStoreId,
+        channelKey: portoneChannelKey,
+        paymentId,
+        orderName: '소명 프리미엄 리포트',
+        totalAmount: 24900,
+        currency: 'CURRENCY_KRW',
+        payMethod: 'CARD',
+        customer: { email: paymentEmailRef.current || undefined },
+      })
+      if (!rsp || rsp.code !== undefined) {
+        throw new Error(rsp?.message || '결제가 취소되었습니다.')
+      }
+      const result = await apiClient.verifyPortonePayment(rsp.paymentId || paymentId, paymentEmailRef.current, lang)
+      if (result?.success && result.paymentAccessToken) {
+        const pay = result.payment as any
+        sessionStorage.setItem('completed_payment', JSON.stringify({ orderId: pay.order_id, paymentId: pay.id, amount: pay.amount, currency: pay.currency, paymentAccessToken: result.paymentAccessToken, completedAt: new Date().toISOString(), email: paymentEmailRef.current }))
+        setShowPayment(false)
+        window.location.reload()
+      } else {
+        throw new Error('결제 확인에 실패했습니다. 다시 시도해주세요.')
+      }
+    } catch (err: any) {
+      setPaymentErrorCode('PAYMENT_ERROR')
+      setPaymentError(err?.message || '결제 처리 중 오류가 발생했습니다.')
+    } finally {
+      setPortonePaying(false)
+    }
+  }
   const paypalSdkParams = pricing ? buildPayPalSdkParams(pricing.currency) : ''
   const [result, setResult] = useState<SajuResult | null>(null)
   const [inputData, setInputData] = useState<{ name: string; birthDate: string; birthTime: string } | null>(null)
@@ -1330,9 +1371,20 @@ export default function ResultsPage() {
                       ) : (
                         /* Korea: no PayPal checkout — free tier + promo code only */
                         <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', textAlign: 'center' }}>
+                          {portoneStoreId && portoneChannelKey ? (
+                            <button
+                              type="button"
+                              onClick={payWithPortone}
+                              disabled={portonePaying || !emailValid}
+                              style={{ width: '100%', padding: '0.875rem', borderRadius: '10px', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '0.9375rem', marginBottom: '0.75rem', opacity: (portonePaying || !emailValid) ? 0.6 : 1 }}
+                            >
+                              {portonePaying ? '결제창 여는 중…' : '카드로 결제하기 — ₩24,900'}
+                            </button>
+                          ) : (
                           <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, margin: '0 0 0.35rem' }}>
                             {(t.payment as any).krUnavailable || '한국에서는 카드 결제를 아직 지원하지 않습니다.'}
                           </p>
+                          )}
                           <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
                             {(t.payment as any).krUseFreeOrPromo || '무료 미리보기를 이용하시거나, 위의 프로모션 코드를 입력해 프리미엄 리포트를 받아보세요.'}
                           </p>
