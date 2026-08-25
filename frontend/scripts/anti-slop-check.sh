@@ -12,6 +12,8 @@ PATHS=(
   "$ROOT/components/doorframe"
   "$ROOT/components/ui/Button.tsx"
   "$ROOT/components/ui/pencil-icons.tsx"
+  "$ROOT/app/(app)/saju/input"
+  "$ROOT/app/lib/i18n/doorframe.ts"
 )
 
 check() {

@@ -5,9 +5,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
 import { localizedLegalPath } from '@/app/lib/i18n/routes'
+import { doorframeCopy } from '@/app/lib/i18n/doorframe'
 import { formatBirthDateForDisplay } from '@/app/lib/date-display'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
-// UI components (using native elements with inline styles)
+import { Rail, type RailMark } from '@/components/doorframe/Rail'
+import { Button } from '@/components/ui/Button'
+import { IconLock, IconArrow } from '@/components/ui/pencil-icons'
 
 // Consent policy version recorded with required agreements
 const POLICY_VERSION = '2026-06-12'
@@ -20,14 +23,7 @@ const getMinBirthDateStr = () => {
   return d.toISOString().split('T')[0]
 }
 
-// Check icon
-const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-)
-
-// Saju Helpers — language-independent data, display names come from translations
+// Saju helpers — language-independent data, display names come from translations
 const getZodiacInfo = (yearStr: string, monthStr?: string, dayStr?: string) => {
   const year = parseInt(yearStr)
   if (isNaN(year) || year < 1900 || year > 2100) return null
@@ -40,16 +36,18 @@ const getZodiacInfo = (yearStr: string, monthStr?: string, dayStr?: string) => {
   const stems = [
     { key: 'metal', colorCode: '#6B7578' },
     { key: 'metal', colorCode: '#6B7578' },
-    { key: 'water', colorCode: '#1A3D2E' },
-    { key: 'water', colorCode: '#1A3D2E' },
+    { key: 'water', colorCode: '#556B7E' },
+    { key: 'water', colorCode: '#556B7E' },
     { key: 'wood', colorCode: '#5A7A66' },
     { key: 'wood', colorCode: '#5A7A66' },
     { key: 'fire', colorCode: '#A85544' },
     { key: 'fire', colorCode: '#A85544' },
-    { key: 'earth', colorCode: '#B8922D' },
-    { key: 'earth', colorCode: '#B8922D' },
+    { key: 'earth', colorCode: '#BBA575' },
+    { key: 'earth', colorCode: '#BBA575' },
   ]
 
+  // Zodiac animals are content (the child's sign), not interface icons —
+  // they stay as emoji deliberately; the anti-slop gate bans icon emoji only.
   const branches = [
     { key: 'monkey', icon: '🐵' },
     { key: 'rooster', icon: '🐔' },
@@ -65,12 +63,8 @@ const getZodiacInfo = (yearStr: string, monthStr?: string, dayStr?: string) => {
     { key: 'sheep', icon: '🐑' },
   ]
 
-  const stem = stems[effectiveYear % 10]
-  const branch = branches[effectiveYear % 12]
-
-  return { stem, branch }
+  return { stem: stems[effectiveYear % 10], branch: branches[effectiveYear % 12] }
 }
-
 
 export default function InputFormPage() {
   const router = useRouter()
@@ -122,7 +116,6 @@ export default function InputFormPage() {
     || 'Birth date cannot be in the future.'
 
   const totalSteps = 5
-  const progress = (step / totalSteps) * 100
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -226,13 +219,8 @@ export default function InputFormPage() {
     }
   }
 
-  const nextStep = () => {
-    if (step < totalSteps) setStep(step + 1)
-  }
-
-  const prevStep = () => {
-    if (step > 1) setStep(step - 1)
-  }
+  const nextStep = () => { if (step < totalSteps) setStep(step + 1) }
+  const prevStep = () => { if (step > 1) setStep(step - 1) }
 
   const clearParentInfo = () => {
     setFormData(prev => ({
@@ -260,7 +248,7 @@ export default function InputFormPage() {
   const parentZodiacInfo = getZodiacInfo(formData.parentYear, formData.parentMonth, formData.parentDay)
 
   const s = t.sajuInput
-  const stepTitles = s.steps
+  const df = doorframeCopy(lang)
 
   // 비활성 버튼은 왜 눌리지 않는지 말해 주지 않는다. QA에서 부모 출생 시간을 비워 둔
   // 채 5단계에 도착한 사람이 회색 버튼 앞에서 멈췄고, 화면 어디에도 이유가 없었다.
@@ -287,1014 +275,482 @@ export default function InputFormPage() {
     const fields = missingFields[hintStep]
     if (!fields || fields.length === 0) return null
     return (
-      <p role="status" style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: '#8B8580', textAlign: 'center' }}>
+      <p role="status" className="mt-3 text-[13px] text-center [color:var(--df-muted)]">
         {s.missingRequired(fields.join(', '))}
       </p>
     )
   }
 
+  // --- Rail marks: the form's whole point — inputs leave a trace ------------
+  const childYm = formData.year
+    ? `${formData.year}${formData.month ? '.' + formData.month.padStart(2, '0') : ''}`
+    : '····'
+  const parentShort = formData.parentRole === 'mother' ? df.motherShort : df.fatherShort
+  const parentYm = formData.parentYear
+    ? `${formData.parentYear}${formData.parentMonth ? '.' + formData.parentMonth.padStart(2, '0') : ''}`
+    : '····'
+  const railMarks: RailMark[] = [
+    {
+      id: 'parent',
+      top: 26,
+      label: `${parentShort} — ${parentYm}`,
+      hidden: !formData.parentRole,
+    },
+    {
+      id: 'child',
+      top: 58,
+      label: `${formData.name || df.childFallback} — ${childYm}`,
+      isNew: true,
+      hidden: !formData.name && !formData.year,
+    },
+    {
+      id: 'twin',
+      top: 70,
+      label: `${formData.twinSiblingName || ''} — ${childYm}`,
+      hidden: !(formData.isTwin && formData.twinSiblingName),
+    },
+  ]
+
+  const q = df.q[step - 1]
+
+  const animalName = (key: string) =>
+    (s.animals as Record<string, string>)?.[key] || key
+  const elementName = (key: string) =>
+    (s.elements as Record<string, string>)?.[key] || key
+
   return (
-    <div style={{ minHeight: '100vh', background: '#FDFCFA' }}>
-      {/* Header */}
-      <header style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid #F3F4F6'
-      }}>
-        <div style={{
-          maxWidth: '36rem',
-          margin: '0 auto',
-          padding: '1rem 1.5rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <Link href="/" className="logo-link-dark" style={{ textDecoration: 'none', color: '#1A3D2E', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{
-              width: '2rem',
-              height: '2rem',
-              borderRadius: '50%',
-              background: '#1A3D2E',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <YinYangIcon size={18} color="#FFFFFF" />
-            </div>
-            <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
-          </Link>
-          <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-            {step} / {totalSteps} {s.stepOf}
-          </span>
-        </div>
-      </header>
-
-      {/* Progress Bar */}
-      <div style={{ maxWidth: '36rem', margin: '0 auto', padding: '0 1.5rem' }}>
-        <div style={{
-          height: '4px',
-          width: '100%',
-          background: '#F3F4F6',
-          borderRadius: '9999px',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            height: '100%',
-            background: '#B8922D',
-            transition: 'width 0.5s ease-out',
-            borderRadius: '9999px',
-            width: `${progress}%`
-          }} />
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main style={{ maxWidth: '36rem', margin: '0 auto', padding: '2rem 1.5rem 6rem' }}>
-        {/* Loading Overlay */}
-        {isSubmitting && (
-          <div style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 50,
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{ position: 'relative', width: '6rem', height: '6rem', marginBottom: '2rem' }}>
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                border: '4px solid #F3F4F6',
-                borderRadius: '50%'
-              }} />
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                border: '4px solid #B8922D',
-                borderRadius: '50%',
-                borderTopColor: 'transparent',
-                animation: 'spin 1s linear infinite'
-              }} />
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.875rem'
-              }}>✨</div>
-            </div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.5rem' }}>
-              {s.analyzing}
-            </h3>
-            <p style={{ color: '#6B7280' }}>
-              {s.analyzingDesc(formData.name)}
-            </p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {/* Step Header */}
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <div style={{
-              width: '3.5rem',
-              height: '3.5rem',
-              borderRadius: '1rem',
-              background: '#F8F6F3',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1rem',
-              fontSize: '1.5rem'
-            }}>
-              {stepTitles[step - 1].icon}
-            </div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.5rem' }}>
-              {stepTitles[step - 1].title}
-            </h1>
-            <p style={{ color: '#6B7280' }}>
-              {stepTitles[step - 1].subtitle}
-            </p>
-          </div>
-
-          {/* Step 1: Basic Info */}
-          {step === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              <div style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                border: '1px solid #F3F4F6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-              }}>
-                {/* Name */}
-                <div style={{ marginBottom: '2rem' }}>
-                  <label htmlFor="child-name" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                    {s.childName}
-                  </label>
-                  <input
-                    id="child-name"
-                    type="text"
-                    placeholder={s.childNamePlaceholder}
-                    value={formData.name}
-                    onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      fontSize: '1.125rem',
-                      padding: '1rem',
-                      borderRadius: '0.75rem',
-                      border: '1px solid #E5E7EB',
-                      background: '#F8F6F3',
-                      outline: 'none',
-                      transition: 'all 0.2s'
-                    }}
-                  />
-                </div>
-
-                {/* Gender */}
-                <div>
-                  <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                    {s.gender}
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, gender: 'male' }))}
-                      style={{
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '1.5rem',
-                        borderRadius: '10px',
-                        border: formData.gender === 'male' ? '2px solid #5A7A66' : '2px solid #E5E7EB',
-                        background: formData.gender === 'male' ? 'rgba(74, 99, 84, 0.05)' : '#FFFFFF',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👦</span>
-                      <span style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.male}</span>
-                      {formData.gender === 'male' && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '0.75rem',
-                          right: '0.75rem',
-                          width: '1.25rem',
-                          height: '1.25rem',
-                          borderRadius: '50%',
-                          background: '#5A7A66',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white'
-                        }}>
-                          <CheckIcon />
-                        </div>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, gender: 'female' }))}
-                      style={{
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '1.5rem',
-                        borderRadius: '10px',
-                        border: formData.gender === 'female' ? '2px solid #A85544' : '2px solid #E5E7EB',
-                        background: formData.gender === 'female' ? 'rgba(178, 94, 84, 0.05)' : '#FFFFFF',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👧</span>
-                      <span style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.female}</span>
-                      {formData.gender === 'female' && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '0.75rem',
-                          right: '0.75rem',
-                          width: '1.25rem',
-                          height: '1.25rem',
-                          borderRadius: '50%',
-                          background: '#A85544',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white'
-                        }}>
-                          <CheckIcon />
-                        </div>
-                      )}
-                    </button>
-                  </div>
-                </div>
+    <div className="min-h-dvh [background:var(--df-wall)]">
+      {/* Casting overlay — the four pillars are drawn, one by one */}
+      {isSubmitting && (
+        <div className="df-cast" role="status">
+          <div className="df-cast__marks" aria-hidden>
+            {df.pillars.map((p, i) => (
+              <div className="df-cast__pillar" key={p}>
+                <i className="df-cast__line" style={{ animationDelay: `${i * 0.35}s` }} />
+                <span className="df-cast__name">{p}</span>
               </div>
+            ))}
+          </div>
+          <h3 className="text-2xl font-black [color:var(--df-ink)]" style={{ fontFamily: 'Pretendard, sans-serif' }}>
+            {s.analyzing}
+          </h3>
+          <p className="[color:var(--df-muted)]">{s.analyzingDesc(formData.name)}</p>
+        </div>
+      )}
 
-              <button
-                type="button"
-                onClick={nextStep}
-                disabled={!canProceedStep1}
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  borderRadius: '10px',
-                  fontSize: '1.125rem',
-                  fontWeight: 700,
-                  border: 'none',
-                  cursor: canProceedStep1 ? 'pointer' : 'not-allowed',
-                  background: canProceedStep1 ? '#1A3D2E' : '#F3F4F6',
-                  color: canProceedStep1 ? '#FFFFFF' : '#9CA3AF',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {s.nextStep}
-              </button>
-              {missingHint(1)}
-            </div>
-          )}
+      <div className="df-form-grid">
+        <Rail marks={railMarks} />
 
-          {/* Step 2: Birth Date */}
-          {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              <div style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                border: '1px solid #F3F4F6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-              }}>
-                {/* Calendar Type */}
-                <div style={{ marginBottom: '2rem' }}>
-                  <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                    {s.calendarType}
-                  </label>
-                  <div style={{ display: 'flex', gap: '0.5rem', background: '#F8F6F3', padding: '0.25rem', borderRadius: '0.75rem' }}>
-                    {['solar', 'lunar'].map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, calendar: type }))}
-                        style={{
-                          flex: 1,
-                          textAlign: 'center',
-                          padding: '0.75rem',
-                          borderRadius: '0.5rem',
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          background: formData.calendar === type ? '#FFFFFF' : 'transparent',
-                          color: formData.calendar === type ? '#1A3D2E' : '#6B7280',
-                          fontWeight: formData.calendar === type ? 600 : 400,
-                          boxShadow: formData.calendar === type ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                        }}
-                      >
-                        {type === 'solar' ? s.solar : s.lunar}
-                      </button>
-                    ))}
-                  </div>
-                  <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.5rem' }}>{s.calendarHint}</p>
-                </div>
+        <div className="df-form-body">
+          {/* Header row */}
+          <div className="flex items-center justify-between mb-9">
+            <Link href="/" className="logo-link-dark flex items-center gap-2 no-underline">
+              <span className="w-8 h-8 rounded-full grid place-items-center [background:var(--df-ink)]">
+                <YinYangIcon size={18} color="#F7F4EE" />
+              </span>
+              <span className="text-xl [color:var(--df-ink)]" style={{ fontFamily: 'Nanum Myeongjo, serif' }}>SoMyung</span>
+            </Link>
+            <span className="df-mono text-[11.5px] tracking-[0.18em] [color:var(--df-wood-deep)]">
+              {df.markOf(step, totalSteps)}
+            </span>
+          </div>
 
-                {/* Birth Date */}
-                <div>
-                  <label htmlFor="child-birth-date" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                    {s.birthDate}
-                  </label>
-                  <input
-                    id="child-birth-date"
-                    type="date"
-                    value={formData.year && formData.month && formData.day
-                      ? `${formData.year}-${formData.month.padStart(2, '0')}-${formData.day.padStart(2, '0')}`
-                      : ''}
-                    onChange={e => {
-                      const value = e.target.value
-                      // Check both ends of the range. A native date input accepts a
-                      // two-digit year and stores it literally — typing "19" yields
-                      // 0019-06-30, which is earlier than today and so passed a
-                      // max-only check, then rendered as "0019.06.30" on the report.
-                      setDateError(value && (value > todayStr || value < minBirthDateStr) ? invalidDateMsg : '')
-                      const [year, month, day] = value.split('-')
-                      setFormData(prev => ({
-                        ...prev,
-                        year: year || '',
-                        month: month ? String(parseInt(month)) : '',
-                        day: day ? String(parseInt(day)) : ''
-                      }))
-                    }}
-                    min={minBirthDateStr}
-                    max={todayStr}
-                    aria-invalid={!!dateError}
-                    aria-describedby={dateError ? 'child-birth-date-error' : undefined}
-                    style={{
-                      width: '100%',
-                      fontSize: '1.125rem',
-                      padding: '1rem',
-                      borderRadius: '0.75rem',
-                      border: dateError ? '1px solid #A85544' : '1px solid #E5E7EB',
-                      background: '#F8F6F3',
-                      outline: 'none',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit'
-                    }}
-                  />
-                  {dateError && (
-                    <p id="child-birth-date-error" role="alert" style={{ fontSize: '0.8125rem', color: '#A85544', marginTop: '0.5rem', fontWeight: 600 }}>
-                      {dateError}
+          {/* Question headline (E-copy) */}
+          <div className="mb-8">
+            <h1 className="df-q" style={{ fontFamily: 'Pretendard, sans-serif' }}>{q.title}</h1>
+            <p className="df-q-sub">{q.sub}</p>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            {/* Step 1: name + gender */}
+            {step === 1 && (
+              <div className="flex flex-col gap-6">
+                <div className="df-panel">
+                  <div className="df-field">
+                    <label className="df-label" htmlFor="child-name">{s.childName}</label>
+                    <input
+                      id="child-name"
+                      type="text"
+                      className="df-input"
+                      placeholder={s.childNamePlaceholder}
+                      value={formData.name}
+                      onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                    <p className={`df-pencil-note mt-2 ${formData.name ? 'is-on' : ''}`} aria-live="polite">
+                      {formData.name ? df.noteNameReady(formData.name) : ''}
                     </p>
-                  )}
-                  <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.5rem' }}>
-                    {s.birthDateHint}
-                  </p>
+                  </div>
+
+                  <div>
+                    <span className="df-label">{s.gender}</span>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        className="df-tile"
+                        aria-pressed={formData.gender === 'male'}
+                        onClick={() => setFormData(prev => ({ ...prev, gender: 'male' }))}
+                      >
+                        <span className="df-tile__big">{s.male}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="df-tile"
+                        aria-pressed={formData.gender === 'female'}
+                        onClick={() => setFormData(prev => ({ ...prev, gender: 'female' }))}
+                      >
+                        <span className="df-tile__big">{s.female}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Zodiac Preview */}
-                {childZodiacInfo && (
-                  <div style={{
-                    marginTop: '2rem',
-                    padding: '1rem',
-                    background: '#F8F6F3',
-                    borderRadius: '0.75rem',
-                    border: '1px solid rgba(197, 160, 89, 0.2)'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '2.5rem' }}>{childZodiacInfo.branch.icon}</span>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.zodiacLabel}</div>
-                        <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{(s.animals as Record<string, string>)?.[childZodiacInfo.branch.key] || childZodiacInfo.branch.key}{s.zodiacSuffix}</div>
-                      </div>
-                      <div style={{ width: '1px', height: '2rem', background: '#E5E7EB' }} />
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.fiveElements}</div>
-                        <div style={{ fontWeight: 700, color: childZodiacInfo.stem.colorCode }}>
-                          {(s.elements as Record<string, string>)?.[childZodiacInfo.stem.key] || childZodiacInfo.stem.key}
-                        </div>
+                <Button type="button" onClick={nextStep} disabled={!canProceedStep1} className="w-full">
+                  {df.drawNext}
+                </Button>
+                {missingHint(1)}
+              </div>
+            )}
+
+            {/* Step 2: birth date */}
+            {step === 2 && (
+              <div className="flex flex-col gap-6">
+                <div className="df-panel">
+                  <div className="df-field">
+                    <span className="df-label">{s.calendarType}</span>
+                    <div className="df-seg">
+                      {(['solar', 'lunar'] as const).map(type => (
+                        <button
+                          key={type}
+                          type="button"
+                          aria-pressed={formData.calendar === type}
+                          onClick={() => setFormData(prev => ({ ...prev, calendar: type }))}
+                        >
+                          {type === 'solar' ? s.solar : s.lunar}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs [color:var(--df-muted)]">{s.calendarHint}</p>
+                  </div>
+
+                  <div className="df-field">
+                    <label className="df-label" htmlFor="child-birth-date">{s.birthDate}</label>
+                    <input
+                      id="child-birth-date"
+                      type="date"
+                      className="df-input"
+                      value={formData.year && formData.month && formData.day
+                        ? `${formData.year}-${formData.month.padStart(2, '0')}-${formData.day.padStart(2, '0')}`
+                        : ''}
+                      onChange={e => {
+                        const value = e.target.value
+                        // Check both ends of the range. A native date input accepts a
+                        // two-digit year and stores it literally — typing "19" yields
+                        // 0019-06-30, which is earlier than today and so passed a
+                        // max-only check, then rendered as "0019.06.30" on the report.
+                        setDateError(value && (value > todayStr || value < minBirthDateStr) ? invalidDateMsg : '')
+                        const [year, month, day] = value.split('-')
+                        setFormData(prev => ({
+                          ...prev,
+                          year: year || '',
+                          month: month ? String(parseInt(month)) : '',
+                          day: day ? String(parseInt(day)) : ''
+                        }))
+                      }}
+                      min={minBirthDateStr}
+                      max={todayStr}
+                      aria-invalid={!!dateError}
+                      aria-describedby={dateError ? 'child-birth-date-error' : undefined}
+                      style={dateError ? { borderColor: '#A85544' } : undefined}
+                    />
+                    {dateError && (
+                      <p id="child-birth-date-error" role="alert" className="mt-2 text-[13px] font-semibold" style={{ color: '#A85544' }}>
+                        {dateError}
+                      </p>
+                    )}
+                    <p className="mt-2 text-xs [color:var(--df-muted)]">{s.birthDateHint}</p>
+                  </div>
+
+                  {/* Zodiac — the mark's pencil annotation, not a separate card */}
+                  {childZodiacInfo && (
+                    <div className="flex items-center gap-3 rounded-xl border-[1.5px] border-dashed px-4 py-3 [border-color:var(--df-hair)] [background:var(--df-wall-deep)]">
+                      <span className="text-3xl leading-none" aria-hidden>{childZodiacInfo.branch.icon}</span>
+                      <div>
+                        <p className="df-pencil-note is-on" style={{ fontSize: '18px' }}>
+                          {df.noteZodiac(formData.name || df.childFallback, animalName(childZodiacInfo.branch.key) + s.zodiacSuffix)}
+                        </p>
+                        <p className="text-[12.5px] mt-0.5 [color:var(--df-muted)]">
+                          {s.fiveElements}: <b style={{ color: childZodiacInfo.stem.colorCode }}>{elementName(childZodiacInfo.stem.key)}</b>
+                          {' · '}{s.yearBornZodiac(formData.year, animalName(childZodiacInfo.branch.key))}
+                        </p>
                       </div>
                     </div>
-                    <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#4B5563' }}>
-                      {s.yearBornZodiac(formData.year, (s.animals as Record<string, string>)?.[childZodiacInfo.branch.key] || childZodiacInfo.branch.key)}
+                  )}
+                </div>
+
+                <div className="flex gap-3 items-center">
+                  <Button type="button" variant="secondary" onClick={prevStep}>{s.prevStep}</Button>
+                  <Button type="button" onClick={nextStep} disabled={!canProceedStep2} className="flex-1">
+                    {df.drawNext}
+                  </Button>
+                </div>
+                {missingHint(2)}
+              </div>
+            )}
+
+            {/* Step 3: birth time + place + twin */}
+            {step === 3 && (
+              <div className="flex flex-col gap-5">
+                <div className="df-panel">
+                  <div className="df-field">
+                    <label className="df-label" htmlFor="child-birth-time">{s.childBirthTime}</label>
+                    <input
+                      id="child-birth-time"
+                      type="time"
+                      className="df-input"
+                      value={formData.hour && formData.minute
+                        ? `${formData.hour.padStart(2, '0')}:${formData.minute.padStart(2, '0')}`
+                        : ''}
+                      onChange={e => {
+                        const [hour, minute] = e.target.value.split(':')
+                        setFormData(prev => ({
+                          ...prev,
+                          hour: hour ? String(parseInt(hour)) : '',
+                          minute: minute ? String(parseInt(minute)) : ''
+                        }))
+                      }}
+                      disabled={formData.unknownTime}
+                      style={{ opacity: formData.unknownTime ? 0.4 : 1 }}
+                    />
+                    <p className={`df-pencil-note mt-2 ${(formData.hour || formData.unknownTime) ? 'is-on' : ''}`} aria-live="polite">
+                      {formData.unknownTime ? '' : formData.hour ? df.noteHourSet : ''}
                     </p>
                   </div>
-                )}
-              </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  style={{
-                    flex: 1,
-                    padding: '1rem',
-                    borderRadius: '10px',
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    border: '2px solid #E5E7EB',
-                    background: 'transparent',
-                    color: '#4B5563',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {s.prevStep}
-                </button>
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  disabled={!canProceedStep2}
-                  style={{
-                    flex: 2,
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    fontSize: '1.125rem',
-                    fontWeight: 700,
-                    border: 'none',
-                    cursor: canProceedStep2 ? 'pointer' : 'not-allowed',
-                    background: canProceedStep2 ? '#1A3D2E' : '#F3F4F6',
-                    color: canProceedStep2 ? '#FFFFFF' : '#9CA3AF',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {s.nextStep}
-                </button>
-              </div>
-              {missingHint(2)}
-            </div>
-          )}
-
-          {/* Step 3: Child Birth Time */}
-          {step === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              <div style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                border: '1px solid #F3F4F6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-              }}>
-                {/* Time Input */}
-                <div>
-                  <label htmlFor="child-birth-time" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                    {s.childBirthTime}
-                  </label>
-                  <input
-                    id="child-birth-time"
-                    type="time"
-                    value={formData.hour && formData.minute
-                      ? `${formData.hour.padStart(2, '0')}:${formData.minute.padStart(2, '0')}`
-                      : ''}
-                    onChange={e => {
-                      const [hour, minute] = e.target.value.split(':')
-                      setFormData(prev => ({
-                        ...prev,
-                        hour: hour ? String(parseInt(hour)) : '',
-                        minute: minute ? String(parseInt(minute)) : ''
-                      }))
-                    }}
-                    disabled={formData.unknownTime}
-                    style={{
-                      width: '100%',
-                      fontSize: '1.125rem',
-                      padding: '1rem',
-                      borderRadius: '0.75rem',
-                      border: '1px solid #E5E7EB',
-                      background: '#F8F6F3',
-                      outline: 'none',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      opacity: formData.unknownTime ? 0.4 : 1,
-                      marginBottom: '1rem'
-                    }}
-                  />
-
-                  {/* Unknown Time */}
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    border: formData.unknownTime ? '2px solid #B8922D' : '2px solid #E5E7EB',
-                    background: formData.unknownTime ? 'rgba(197, 160, 89, 0.05)' : 'transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}>
+                  <label className="df-consent">
                     <input
                       type="checkbox"
                       checked={formData.unknownTime}
                       onChange={e => handleUnknownTime(e.target.checked, false)}
-                      style={{ width: '1.25rem', height: '1.25rem', accentColor: '#B8922D' }}
                     />
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.unknownTime}</div>
-                      <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.unknownTimeDesc}</div>
-                    </div>
+                    <span>
+                      <span className="df-consent__title">{s.unknownTime}</span>
+                      <span className="df-consent__desc block">{s.unknownTimeDesc}</span>
+                    </span>
                   </label>
-
-                  <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.75rem' }}>
-                    {s.timeHint}
-                  </p>
+                  <p className="mt-3 text-xs [color:var(--df-muted)]">{s.timeHint}</p>
                 </div>
-              </div>
 
-              {/* Birth Place (optional) */}
-              <div style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                border: '1px solid #F3F4F6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-              }}>
-                <label htmlFor="birth-place" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                  {s.birthPlace} <span style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 400 }}>{s.optional}</span>
-                </label>
-                <select
-                  id="birth-place"
-                  value={formData.birthPlace}
-                  onChange={e => setFormData(prev => ({ ...prev, birthPlace: e.target.value, birthPlaceCustom: '' }))}
-                  style={{
-                    width: '100%',
-                    fontSize: '1rem',
-                    padding: '0.875rem',
-                    borderRadius: '0.75rem',
-                    border: '1px solid #E5E7EB',
-                    background: '#F8F6F3',
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                    cursor: 'pointer',
-                    color: formData.birthPlace ? '#1A3D2E' : '#9CA3AF'
-                  }}
-                >
-                  {s.birthPlaceOptions.map((opt: { value: string; label: string }) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                {formData.birthPlace === 'other' && (
-                  <input
-                    id="birth-place-custom"
-                    type="text"
-                    aria-label={s.birthPlaceCustom}
-                    placeholder={s.birthPlaceCustom}
-                    value={formData.birthPlaceCustom}
-                    onChange={e => setFormData(prev => ({ ...prev, birthPlaceCustom: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      fontSize: '1rem',
-                      padding: '0.875rem',
-                      borderRadius: '0.75rem',
-                      border: '1px solid #E5E7EB',
-                      background: '#F8F6F3',
-                      outline: 'none',
-                      marginTop: '0.75rem'
-                    }}
-                  />
-                )}
-                <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.5rem' }}>
-                  {s.birthPlaceHint}
-                </p>
-              </div>
-
-              {/* Twin (optional) */}
-              <div style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                border: '1px solid #F3F4F6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-              }}>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.75rem',
-                  borderRadius: '0.75rem',
-                  border: formData.isTwin ? '2px solid #B8922D' : '2px solid #E5E7EB',
-                  background: formData.isTwin ? 'rgba(197, 160, 89, 0.05)' : 'transparent',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.isTwin}
-                    onChange={e => setFormData(prev => ({
-                      ...prev,
-                      isTwin: e.target.checked,
-                      twinOrder: e.target.checked ? prev.twinOrder : '',
-                      twinSiblingName: e.target.checked ? prev.twinSiblingName : ''
-                    }))}
-                    style={{ width: '1.25rem', height: '1.25rem', accentColor: '#B8922D' }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.twinYes}</div>
-                  </div>
-                </label>
-
-                {formData.isTwin && (
-                  <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <label style={{ display: 'block', color: '#1A3D2E', fontWeight: 600, fontSize: '0.875rem' }}>
-                      {s.twinOrder}
-                    </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, twinOrder: '1' }))}
-                        style={{
-                          padding: '0.875rem',
-                          borderRadius: '0.75rem',
-                          border: formData.twinOrder === '1' ? '2px solid #B8922D' : '2px solid #E5E7EB',
-                          background: formData.twinOrder === '1' ? 'rgba(197, 160, 89, 0.05)' : '#FFFFFF',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem',
-                          fontWeight: formData.twinOrder === '1' ? 600 : 400,
-                          color: '#1A3D2E',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        {s.twinFirst}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, twinOrder: '2' }))}
-                        style={{
-                          padding: '0.875rem',
-                          borderRadius: '0.75rem',
-                          border: formData.twinOrder === '2' ? '2px solid #B8922D' : '2px solid #E5E7EB',
-                          background: formData.twinOrder === '2' ? 'rgba(197, 160, 89, 0.05)' : '#FFFFFF',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem',
-                          fontWeight: formData.twinOrder === '2' ? 600 : 400,
-                          color: '#1A3D2E',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        {s.twinSecond}
-                      </button>
-                    </div>
+                <div className="df-panel">
+                  <label className="df-label" htmlFor="birth-place">
+                    {s.birthPlace} <span className="font-normal opacity-70">{s.optional}</span>
+                  </label>
+                  <select
+                    id="birth-place"
+                    className="df-input cursor-pointer"
+                    value={formData.birthPlace}
+                    onChange={e => setFormData(prev => ({ ...prev, birthPlace: e.target.value, birthPlaceCustom: '' }))}
+                    style={{ color: formData.birthPlace ? undefined : '#B9B29F' }}
+                  >
+                    {s.birthPlaceOptions.map((opt: { value: string; label: string }) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  {formData.birthPlace === 'other' && (
                     <input
-                      id="twin-sibling-name"
+                      id="birth-place-custom"
                       type="text"
-                      aria-label={s.twinSiblingNamePlaceholder}
-                      placeholder={s.twinSiblingNamePlaceholder}
-                      value={formData.twinSiblingName}
-                      onChange={e => setFormData(prev => ({ ...prev, twinSiblingName: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        fontSize: '1rem',
-                        padding: '0.875rem',
-                        borderRadius: '0.75rem',
-                        border: '1px solid #E5E7EB',
-                        background: '#F8F6F3',
-                        outline: 'none'
-                      }}
+                      className="df-input mt-3"
+                      aria-label={s.birthPlaceCustom}
+                      placeholder={s.birthPlaceCustom}
+                      value={formData.birthPlaceCustom}
+                      onChange={e => setFormData(prev => ({ ...prev, birthPlaceCustom: e.target.value }))}
                     />
-                    <p style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>{s.twinHint}</p>
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  style={{
-                    flex: 1,
-                    padding: '1rem',
-                    borderRadius: '10px',
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    border: '2px solid #E5E7EB',
-                    background: 'transparent',
-                    color: '#4B5563',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {s.prevStep}
-                </button>
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  disabled={!canProceedStep3}
-                  style={{
-                    flex: 2,
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    fontSize: '1.125rem',
-                    fontWeight: 700,
-                    border: 'none',
-                    cursor: canProceedStep3 ? 'pointer' : 'not-allowed',
-                    background: canProceedStep3 ? '#1A3D2E' : '#F3F4F6',
-                    color: canProceedStep3 ? '#FFFFFF' : '#9CA3AF',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {s.nextStep}
-                </button>
-              </div>
-              {missingHint(3)}
-            </div>
-          )}
-
-          {/* Step 4: Parent Info */}
-          {step === 4 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              <div style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                border: '1px solid #F3F4F6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-              }}>
-                {/* Parent Role Selection */}
-                <div style={{ marginBottom: '2rem' }}>
-                  <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                    {s.parentRoleQuestion} <span style={{ color: '#8B8580', fontWeight: 400 }}>{s.optional}</span>
-                  </label>
-                  <p style={{ margin: '-0.25rem 0 1rem', color: '#6B7280', fontSize: '0.875rem', lineHeight: 1.6 }}>
-                    {s.parentOptionalHint}
-                  </p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, parentRole: 'mother' }))}
-                      style={{
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '1.5rem',
-                        borderRadius: '10px',
-                        border: formData.parentRole === 'mother' ? '2px solid #A85544' : '2px solid #E5E7EB',
-                        background: formData.parentRole === 'mother' ? 'rgba(178, 94, 84, 0.05)' : '#FFFFFF',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👩</span>
-                      <span style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.mother}</span>
-                      {formData.parentRole === 'mother' && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '0.75rem',
-                          right: '0.75rem',
-                          width: '1.25rem',
-                          height: '1.25rem',
-                          borderRadius: '50%',
-                          background: '#A85544',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white'
-                        }}>
-                          <CheckIcon />
-                        </div>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, parentRole: 'father' }))}
-                      style={{
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '1.5rem',
-                        borderRadius: '10px',
-                        border: formData.parentRole === 'father' ? '2px solid #5A7A66' : '2px solid #E5E7EB',
-                        background: formData.parentRole === 'father' ? 'rgba(74, 99, 84, 0.05)' : '#FFFFFF',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👨</span>
-                      <span style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.father}</span>
-                      {formData.parentRole === 'father' && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '0.75rem',
-                          right: '0.75rem',
-                          width: '1.25rem',
-                          height: '1.25rem',
-                          borderRadius: '50%',
-                          background: '#5A7A66',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white'
-                        }}>
-                          <CheckIcon />
-                        </div>
-                      )}
-                    </button>
-                  </div>
-                  {formData.parentRole && (
-                    <button
-                      type="button"
-                      onClick={clearParentInfo}
-                      style={{
-                        marginTop: '0.75rem',
-                        width: '100%',
-                        padding: '0.75rem',
-                        borderRadius: '0.75rem',
-                        border: '1px solid #D8D1C8',
-                        background: '#FFFFFF',
-                        color: '#6B5E52',
-                        fontWeight: 600,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {s.skipParentInfo}
-                    </button>
                   )}
+                  <p className="mt-2 text-xs [color:var(--df-muted)]">{s.birthPlaceHint}</p>
                 </div>
 
-                {/* Parent Birth Date */}
-                {formData.parentRole && (
-                  <>
-                    <div style={{ height: '1px', width: '100%', background: '#F3F4F6', margin: '1.5rem 0' }} />
+                <div className="df-panel">
+                  <label className="df-consent">
+                    <input
+                      type="checkbox"
+                      checked={formData.isTwin}
+                      onChange={e => setFormData(prev => ({
+                        ...prev,
+                        isTwin: e.target.checked,
+                        twinOrder: e.target.checked ? prev.twinOrder : '',
+                        twinSiblingName: e.target.checked ? prev.twinSiblingName : ''
+                      }))}
+                    />
+                    <span className="df-consent__title">{s.twinYes}</span>
+                  </label>
 
-                    {/* Calendar Type */}
-                    <div style={{ marginBottom: '1.5rem' }}>
-                      <label style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                        {s.calendarType}
-                      </label>
-                      <div style={{ display: 'flex', gap: '0.5rem', background: '#F8F6F3', padding: '0.25rem', borderRadius: '0.75rem' }}>
-                        {['solar', 'lunar'].map((type) => (
+                  {formData.isTwin && (
+                    <div className="mt-4 flex flex-col gap-3">
+                      <span className="df-label">{s.twinOrder}</span>
+                      <div className="grid grid-cols-2 gap-3">
+                        {(['1', '2'] as const).map(order => (
                           <button
-                            key={type}
+                            key={order}
                             type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, parentCalendar: type }))}
-                            style={{
-                              flex: 1,
-                              textAlign: 'center',
-                              padding: '0.75rem',
-                              borderRadius: '0.5rem',
-                              border: 'none',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              background: formData.parentCalendar === type ? '#FFFFFF' : 'transparent',
-                              color: formData.parentCalendar === type ? '#1A3D2E' : '#6B7280',
-                              fontWeight: formData.parentCalendar === type ? 600 : 400,
-                              boxShadow: formData.parentCalendar === type ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                            }}
+                            className="df-tile"
+                            aria-pressed={formData.twinOrder === order}
+                            onClick={() => setFormData(prev => ({ ...prev, twinOrder: order }))}
                           >
-                            {type === 'solar' ? s.solar : s.lunar}
+                            <span className="df-tile__big">{order === '1' ? s.twinFirst : s.twinSecond}</span>
                           </button>
                         ))}
                       </div>
-                    </div>
-
-                    {/* Parent Birth Date */}
-                    <div>
-                      <label htmlFor="parent-birth-date" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
-                        {s.parentBirthDate(formData.parentRole === 'mother' ? s.mother : s.father)}
-                      </label>
                       <input
-                        id="parent-birth-date"
-                        type="date"
-                        value={formData.parentYear && formData.parentMonth && formData.parentDay
-                          ? `${formData.parentYear}-${formData.parentMonth.padStart(2, '0')}-${formData.parentDay.padStart(2, '0')}`
-                          : ''}
-                        onChange={e => {
-                          const value = e.target.value
-                          // Always keep what was typed. Dropping out-of-range values
-                          // here made the field fight the user: a native date input
-                          // emits every intermediate state, so a half-typed year is
-                          // briefly year 0002 and the field appeared to snap back.
-                          // Range is reported below and gates the submit instead.
-                          setParentDateError(value && (value < '1945-01-01' || value > '2005-12-31') ? invalidDateMsg : '')
-                          const [year, month, day] = value.split('-')
-                          setFormData(prev => ({
-                            ...prev,
-                            parentYear: year || '',
-                            parentMonth: month ? String(parseInt(month)) : '',
-                            parentDay: day ? String(parseInt(day)) : ''
-                          }))
-                        }}
-                        min="1945-01-01"
-                        max="2005-12-31"
-                        style={{
-                          width: '100%',
-                          fontSize: '1.125rem',
-                          padding: '1rem',
-                          borderRadius: '0.75rem',
-                          border: parentDateError ? '1px solid #A85544' : '1px solid #E5E7EB',
-                          background: '#F8F6F3',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          fontFamily: 'inherit'
-                        }}
-                        aria-invalid={!!parentDateError}
+                        id="twin-sibling-name"
+                        type="text"
+                        className="df-input"
+                        aria-label={s.twinSiblingNamePlaceholder}
+                        placeholder={s.twinSiblingNamePlaceholder}
+                        value={formData.twinSiblingName}
+                        onChange={e => setFormData(prev => ({ ...prev, twinSiblingName: e.target.value }))}
                       />
-                      {parentDateError && (
-                        <p style={{ color: '#A85544', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                          {parentDateError}
-                        </p>
-                      )}
+                      <p className="text-xs [color:var(--df-muted)]">{s.twinHint}</p>
                     </div>
+                  )}
+                </div>
 
-                    {/* Parent Zodiac Preview */}
-                    {parentZodiacInfo && (
-                      <div style={{
-                        marginTop: '1.5rem',
-                        padding: '1rem',
-                        background: '#F8F6F3',
-                        borderRadius: '0.75rem',
-                        border: '1px solid rgba(197, 160, 89, 0.2)'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                          <span style={{ fontSize: '1.875rem' }}>{parentZodiacInfo.branch.icon}</span>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.zodiacLabel}</div>
-                            <div style={{ fontWeight: 700, color: '#1A3D2E' }}>{(s.animals as Record<string, string>)?.[parentZodiacInfo.branch.key] || parentZodiacInfo.branch.key}{s.zodiacSuffix}</div>
-                          </div>
-                          <div style={{ width: '1px', height: '2rem', background: '#E5E7EB' }} />
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.fiveElements}</div>
-                            <div style={{ fontWeight: 700, color: parentZodiacInfo.stem.colorCode }}>
-                              {(s.elements as Record<string, string>)?.[parentZodiacInfo.stem.key] || parentZodiacInfo.stem.key}
-                            </div>
-                          </div>
+                <div className="flex gap-3 items-center">
+                  <Button type="button" variant="secondary" onClick={prevStep}>{s.prevStep}</Button>
+                  <Button type="button" onClick={nextStep} disabled={!canProceedStep3} className="flex-1">
+                    {df.drawNext}
+                  </Button>
+                </div>
+                {missingHint(3)}
+              </div>
+            )}
+
+            {/* Step 4: parent info */}
+            {step === 4 && (
+              <div className="flex flex-col gap-6">
+                <div className="df-panel">
+                  <span className="df-label">
+                    {s.parentRoleQuestion} <span className="font-normal opacity-70">{s.optional}</span>
+                  </span>
+                  <p className="mb-4 text-[13px] leading-relaxed [color:var(--df-muted)]">{s.parentOptionalHint}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      className="df-tile"
+                      aria-pressed={formData.parentRole === 'mother'}
+                      onClick={() => setFormData(prev => ({ ...prev, parentRole: 'mother' }))}
+                    >
+                      <span className="df-tile__big">{s.mother}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="df-tile"
+                      aria-pressed={formData.parentRole === 'father'}
+                      onClick={() => setFormData(prev => ({ ...prev, parentRole: 'father' }))}
+                    >
+                      <span className="df-tile__big">{s.father}</span>
+                    </button>
+                  </div>
+                  {formData.parentRole && (
+                    <Button type="button" variant="ghost" onClick={clearParentInfo} className="mt-3 w-full">
+                      {s.skipParentInfo}
+                    </Button>
+                  )}
+
+                  {formData.parentRole && (
+                    <>
+                      <div className="h-px w-full my-6 [background:var(--df-hair)]" />
+
+                      <div className="df-field">
+                        <span className="df-label">{s.calendarType}</span>
+                        <div className="df-seg">
+                          {(['solar', 'lunar'] as const).map(type => (
+                            <button
+                              key={type}
+                              type="button"
+                              aria-pressed={formData.parentCalendar === type}
+                              onClick={() => setFormData(prev => ({ ...prev, parentCalendar: type }))}
+                            >
+                              {type === 'solar' ? s.solar : s.lunar}
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    )}
-                  </>
-                )}
-              </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  style={{
-                    flex: 1,
-                    padding: '1rem',
-                    borderRadius: '10px',
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    border: '2px solid #E5E7EB',
-                    background: 'transparent',
-                    color: '#4B5563',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {s.prevStep}
-                </button>
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  disabled={!canProceedStep4}
-                  style={{
-                    flex: 2,
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    fontSize: '1.125rem',
-                    fontWeight: 700,
-                    border: 'none',
-                    cursor: canProceedStep4 ? 'pointer' : 'not-allowed',
-                    background: canProceedStep4 ? '#1A3D2E' : '#F3F4F6',
-                    color: canProceedStep4 ? '#FFFFFF' : '#9CA3AF',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {s.nextStep}
-                </button>
-              </div>
-              {missingHint(4)}
-            </div>
-          )}
+                      <div className="df-field">
+                        <label className="df-label" htmlFor="parent-birth-date">
+                          {s.parentBirthDate(formData.parentRole === 'mother' ? s.mother : s.father)}
+                        </label>
+                        <input
+                          id="parent-birth-date"
+                          type="date"
+                          className="df-input"
+                          value={formData.parentYear && formData.parentMonth && formData.parentDay
+                            ? `${formData.parentYear}-${formData.parentMonth.padStart(2, '0')}-${formData.parentDay.padStart(2, '0')}`
+                            : ''}
+                          onChange={e => {
+                            const value = e.target.value
+                            // Always keep what was typed. Dropping out-of-range values
+                            // here made the field fight the user: a native date input
+                            // emits every intermediate state, so a half-typed year is
+                            // briefly year 0002 and the field appeared to snap back.
+                            // Range is reported below and gates the submit instead.
+                            setParentDateError(value && (value < '1945-01-01' || value > '2005-12-31') ? invalidDateMsg : '')
+                            const [year, month, day] = value.split('-')
+                            setFormData(prev => ({
+                              ...prev,
+                              parentYear: year || '',
+                              parentMonth: month ? String(parseInt(month)) : '',
+                              parentDay: day ? String(parseInt(day)) : ''
+                            }))
+                          }}
+                          min="1945-01-01"
+                          max="2005-12-31"
+                          aria-invalid={!!parentDateError}
+                          style={parentDateError ? { borderColor: '#A85544' } : undefined}
+                        />
+                        {parentDateError && (
+                          <p className="mt-2 text-[13px]" style={{ color: '#A85544' }}>{parentDateError}</p>
+                        )}
+                        <p className={`df-pencil-note mt-2 ${parentDateComplete ? 'is-on' : ''}`} aria-live="polite">
+                          {parentDateComplete ? df.noteParentMark(formData.parentRole === 'mother' ? s.mother : s.father) : ''}
+                        </p>
+                      </div>
 
-          {/* Step 5: Parent Time & Agreements */}
-          {step === 5 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {/* Parent Birth Time */}
-              <div style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '1.25rem',
-                border: '1px solid #F3F4F6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-              }}>
+                      {parentZodiacInfo && (
+                        <div className="flex items-center gap-3 rounded-xl border-[1.5px] border-dashed px-4 py-3 [border-color:var(--df-hair)] [background:var(--df-wall-deep)]">
+                          <span className="text-2xl leading-none" aria-hidden>{parentZodiacInfo.branch.icon}</span>
+                          <p className="text-[13px] [color:var(--df-muted)]">
+                            {s.zodiacLabel}: <b className="[color:var(--df-ink)]">{animalName(parentZodiacInfo.branch.key)}{s.zodiacSuffix}</b>
+                            {' · '}{s.fiveElements}: <b style={{ color: parentZodiacInfo.stem.colorCode }}>{elementName(parentZodiacInfo.stem.key)}</b>
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div className="flex gap-3 items-center">
+                  <Button type="button" variant="secondary" onClick={prevStep}>{s.prevStep}</Button>
+                  <Button type="button" onClick={nextStep} disabled={!canProceedStep4} className="flex-1">
+                    {df.drawNext}
+                  </Button>
+                </div>
+                {missingHint(4)}
+              </div>
+            )}
+
+            {/* Step 5: parent time + summary + consent */}
+            {step === 5 && (
+              <div className="flex flex-col gap-5">
                 {parentDateComplete && (
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <label htmlFor="parent-birth-time" style={{ display: 'block', color: '#1A3D2E', marginBottom: '0.75rem', fontWeight: 600 }}>
+                  <div className="df-panel">
+                    <label className="df-label" htmlFor="parent-birth-time">
                       {s.parentBirthTime(formData.parentRole === 'mother' ? s.mother : s.father)}
                     </label>
                     <input
                       id="parent-birth-time"
                       type="time"
+                      className="df-input mb-3"
                       value={formData.parentHour && formData.parentMinute
                         ? `${formData.parentHour.padStart(2, '0')}:${formData.parentMinute.padStart(2, '0')}`
                         : ''}
@@ -1307,282 +763,140 @@ export default function InputFormPage() {
                         }))
                       }}
                       disabled={formData.parentUnknownTime}
-                      style={{
-                        width: '100%',
-                        fontSize: '1.125rem',
-                        padding: '1rem',
-                        borderRadius: '0.75rem',
-                        border: '1px solid #E5E7EB',
-                        background: '#F8F6F3',
-                        outline: 'none',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                        opacity: formData.parentUnknownTime ? 0.4 : 1,
-                        marginBottom: '1rem'
-                      }}
+                      style={{ opacity: formData.parentUnknownTime ? 0.4 : 1 }}
                     />
-
-                    {/* Unknown Time */}
-                    <label style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                      padding: '1rem',
-                      borderRadius: '0.75rem',
-                      border: formData.parentUnknownTime ? '2px solid #B8922D' : '2px solid #E5E7EB',
-                      background: formData.parentUnknownTime ? 'rgba(197, 160, 89, 0.05)' : 'transparent',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}>
+                    <label className="df-consent">
                       <input
                         type="checkbox"
                         checked={formData.parentUnknownTime}
                         onChange={e => handleUnknownTime(e.target.checked, true)}
-                        style={{ width: '1.25rem', height: '1.25rem', accentColor: '#B8922D' }}
                       />
-                      <div>
-                        <div style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.unknownTime}</div>
-                        <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>{s.unknownTimeDesc}</div>
-                      </div>
+                      <span>
+                        <span className="df-consent__title">{s.unknownTime}</span>
+                        <span className="df-consent__desc block">{s.unknownTimeDesc}</span>
+                      </span>
                     </label>
                   </div>
                 )}
 
-                {/* Summary */}
-                <div style={{ padding: '0.75rem 1rem', background: '#F8F6F3', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
-                  <h4 style={{ fontWeight: 600, color: '#1A3D2E', marginBottom: '0.75rem' }}>{s.summaryTitle}</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#6B7280' }}>{s.summaryChild}</span>
-                      <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formData.name} ({formData.gender === 'male' ? s.genderShortMale : s.genderShortFemale})</span>
+                {/* Summary — what is written on the frame */}
+                <div className="df-panel">
+                  <h4 className="df-label mb-3" style={{ fontFamily: 'Pretendard, sans-serif', color: 'var(--df-muted)' }}>{s.summaryTitle}</h4>
+                  <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex justify-between gap-4">
+                      <span className="[color:var(--df-muted)]">{s.summaryChild}</span>
+                      <span className="font-medium [color:var(--df-ink)]">
+                        {formData.name} ({formData.gender === 'male' ? s.genderShortMale : s.genderShortFemale})
+                      </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#6B7280' }}>{s.summaryChildBirth}</span>
-                      <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formatBirthDateForDisplay(`${formData.year}.${formData.month.padStart(2, '0')}.${formData.day.padStart(2, '0')}`, lang)}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="[color:var(--df-muted)]">{s.summaryChildBirth}</span>
+                      <span className="df-mono font-medium [color:var(--df-ink)]">
+                        {formatBirthDateForDisplay(`${formData.year}.${formData.month.padStart(2, '0')}.${formData.day.padStart(2, '0')}`, lang)}
+                      </span>
                     </div>
                     {parentDateComplete && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#6B7280' }}>{s.summaryParentBirth(formData.parentRole === 'mother' ? s.mother : s.father)}</span>
-                        <span style={{ color: '#1A3D2E', fontWeight: 500 }}>{formatBirthDateForDisplay(`${formData.parentYear}.${formData.parentMonth.padStart(2, '0')}.${formData.parentDay.padStart(2, '0')}`, lang)}</span>
+                      <div className="flex justify-between gap-4">
+                        <span className="[color:var(--df-muted)]">{s.summaryParentBirth(formData.parentRole === 'mother' ? s.mother : s.father)}</span>
+                        <span className="df-mono font-medium [color:var(--df-ink)]">
+                          {formatBirthDateForDisplay(`${formData.parentYear}.${formData.parentMonth.padStart(2, '0')}.${formData.parentDay.padStart(2, '0')}`, lang)}
+                        </span>
                       </div>
                     )}
                   </div>
+                  <p className={`df-pencil-note mt-3 ${parentDateComplete ? 'is-on' : ''}`}>
+                    {parentDateComplete ? df.noteFamilyDone(formData.name || df.childFallback) : ''}
+                  </p>
                 </div>
 
-                <div style={{ height: '1px', width: '100%', background: '#F3F4F6', margin: '1rem 0' }} />
-
                 {/* Agreements */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {/* Age Verification */}
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    padding: '0.75rem',
-                    borderRadius: '0.75rem',
-                    border: formData.ageVerified ? '2px solid #5A7A66' : '2px solid #E5E7EB',
-                    background: formData.ageVerified ? 'rgba(74, 99, 84, 0.05)' : 'transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}>
+                <div className="df-panel flex flex-col gap-2">
+                  <label className="df-consent">
                     <input
                       type="checkbox"
                       checked={formData.ageVerified}
                       onChange={e => setFormData(prev => ({ ...prev, ageVerified: e.target.checked }))}
-                      style={{ width: '1.25rem', height: '1.25rem', accentColor: '#5A7A66', marginTop: '0.125rem' }}
                     />
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#1A3D2E' }}>
-                        {s.ageVerification} <span style={{ color: '#A85544' }}>*</span>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                        {s.ageVerificationDesc}
-                      </div>
-                    </div>
+                    <span>
+                      <span className="df-consent__title">{s.ageVerification} <span className="df-consent__req">*</span></span>
+                      <span className="df-consent__desc block">{s.ageVerificationDesc}</span>
+                    </span>
                   </label>
 
-                  {/* Guardian Confirmation (legal-representative consent for the child) */}
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    padding: '0.75rem',
-                    borderRadius: '0.75rem',
-                    border: formData.guardianConfirmed ? '2px solid #5A7A66' : '2px solid #E5E7EB',
-                    background: formData.guardianConfirmed ? 'rgba(74, 99, 84, 0.05)' : 'transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}>
+                  <label className="df-consent">
                     <input
                       type="checkbox"
                       checked={formData.guardianConfirmed}
                       onChange={e => setFormData(prev => ({ ...prev, guardianConfirmed: e.target.checked }))}
-                      style={{ width: '1.25rem', height: '1.25rem', accentColor: '#5A7A66', marginTop: '0.125rem' }}
                     />
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#1A3D2E' }}>
-                        {s.guardianConfirmation} <span style={{ color: '#A85544' }}>*</span>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: '#6B7280', lineHeight: 1.6 }}>
-                        {s.guardianConfirmationDesc}
-                      </div>
-                    </div>
+                    <span>
+                      <span className="df-consent__title">{s.guardianConfirmation} <span className="df-consent__req">*</span></span>
+                      <span className="df-consent__desc block">{s.guardianConfirmationDesc}</span>
+                    </span>
                   </label>
 
-                  {/* Privacy Agreement */}
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    padding: '0.75rem',
-                    borderRadius: '0.75rem',
-                    border: formData.privacyAgreed ? '2px solid #5A7A66' : '2px solid #E5E7EB',
-                    background: formData.privacyAgreed ? 'rgba(74, 99, 84, 0.05)' : 'transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}>
+                  <label className="df-consent">
                     <input
                       type="checkbox"
                       checked={formData.privacyAgreed}
                       onChange={e => setFormData(prev => ({ ...prev, privacyAgreed: e.target.checked }))}
-                      style={{ width: '1.25rem', height: '1.25rem', accentColor: '#5A7A66', marginTop: '0.125rem' }}
                     />
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#1A3D2E' }}>
-                        {s.privacyAgreement} <span style={{ color: '#A85544' }}>*</span>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: '#6B7280', lineHeight: 1.6 }}>
+                    <span>
+                      <span className="df-consent__title">{s.privacyAgreement} <span className="df-consent__req">*</span></span>
+                      <span className="df-consent__desc block">
                         {s.privacyAgreementDesc}
-                        <Link href={localizedLegalPath(lang, 'privacy')} style={{ color: '#B8922D', textDecoration: 'underline', marginLeft: '0.25rem' }}>{s.privacyLink}</Link>
-                      </div>
-                    </div>
+                        <Link href={localizedLegalPath(lang, 'privacy')} className="ml-1 underline [color:var(--df-wood-deep)]">{s.privacyLink}</Link>
+                      </span>
+                    </span>
                   </label>
 
-                  {/* Overseas Processing Agreement */}
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    padding: '0.75rem',
-                    borderRadius: '0.75rem',
-                    border: formData.overseasProcessingAgreed ? '2px solid #5A7A66' : '2px solid #E5E7EB',
-                    background: formData.overseasProcessingAgreed ? 'rgba(74, 99, 84, 0.05)' : 'transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}>
+                  <label className="df-consent">
                     <input
                       type="checkbox"
                       checked={formData.overseasProcessingAgreed}
                       onChange={e => setFormData(prev => ({ ...prev, overseasProcessingAgreed: e.target.checked }))}
-                      style={{ width: '1.25rem', height: '1.25rem', accentColor: '#5A7A66', marginTop: '0.125rem' }}
                     />
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#1A3D2E' }}>
-                        {s.overseasProcessingAgreement} <span style={{ color: '#A85544' }}>*</span>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: '#6B7280', lineHeight: 1.6 }}>
-                        {s.overseasProcessingAgreementDesc}
-                      </div>
-                    </div>
+                    <span>
+                      <span className="df-consent__title">{s.overseasProcessingAgreement} <span className="df-consent__req">*</span></span>
+                      <span className="df-consent__desc block">{s.overseasProcessingAgreementDesc}</span>
+                    </span>
                   </label>
 
-                  {/* Marketing (Optional) */}
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    padding: '0.75rem',
-                    borderRadius: '0.75rem',
-                    border: formData.marketingAgreed ? '2px solid #B8922D' : '2px solid #E5E7EB',
-                    background: formData.marketingAgreed ? 'rgba(197, 160, 89, 0.05)' : 'transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}>
+                  <label className="df-consent">
                     <input
                       type="checkbox"
                       checked={formData.marketingAgreed}
                       onChange={e => setFormData(prev => ({ ...prev, marketingAgreed: e.target.checked }))}
-                      style={{ width: '1.25rem', height: '1.25rem', accentColor: '#B8922D', marginTop: '0.125rem' }}
                     />
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#1A3D2E' }}>{s.marketingAgreement}</div>
-                      <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                        {s.marketingAgreementDesc}
-                      </div>
-                    </div>
+                    <span>
+                      <span className="df-consent__title">{s.marketingAgreement}</span>
+                      <span className="df-consent__desc block">{s.marketingAgreementDesc}</span>
+                    </span>
                   </label>
                 </div>
-              </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  style={{
-                    flex: 1,
-                    padding: '1rem',
-                    borderRadius: '10px',
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    border: '2px solid #E5E7EB',
-                    background: 'transparent',
-                    color: '#4B5563',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {s.prevStep}
-                </button>
-                <button
-                  type="submit"
-                  disabled={!canProceedStep5 || isSubmitting}
-                  style={{
-                    flex: 2,
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    fontSize: '1.125rem',
-                    fontWeight: 700,
-                    border: 'none',
-                    cursor: (canProceedStep5 && !isSubmitting) ? 'pointer' : 'not-allowed',
-                    background: (canProceedStep5 && !isSubmitting) ? '#B8922D' : '#F3F4F6',
-                    color: (canProceedStep5 && !isSubmitting) ? '#FFFFFF' : '#9CA3AF',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  {s.analyzeButton}
-                  <span>✨</span>
-                </button>
+                <div className="flex gap-3 items-center">
+                  <Button type="button" variant="secondary" onClick={prevStep}>{s.prevStep}</Button>
+                  <Button type="submit" disabled={!canProceedStep5 || isSubmitting} className="flex-1">
+                    {df.drawLast} <IconArrow size={17} />
+                  </Button>
+                </div>
+                {missingHint(5)}
               </div>
-              {missingHint(5)}
-            </div>
-          )}
-        </form>
+            )}
+          </form>
 
-        {/* Trust Indicators */}
-        <div style={{ marginTop: '3rem', textAlign: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', fontSize: '0.75rem', color: '#9CA3AF', flexWrap: 'wrap' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <svg style={{ width: '1rem', height: '1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+          {/* Trust indicators */}
+          <div className="mt-10 flex items-center justify-center gap-3 flex-wrap text-xs [color:var(--df-muted)]">
+            <span className="flex items-center gap-1.5">
+              <IconLock size={15} />
               {s.trustSecure}
             </span>
-            <span>·</span>
+            <span aria-hidden>·</span>
             <span>{s.trustBeta}</span>
           </div>
         </div>
-      </main>
-
-      <style jsx global>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+      </div>
     </div>
   )
 }

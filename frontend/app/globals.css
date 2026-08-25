@@ -679,6 +679,214 @@ h4 {
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Saju input form (Phase 1) ------------------------------ */
+
+.df-form-grid {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  min-height: 100dvh;
+}
+.df-form-body {
+  padding: 40px 24px 96px 150px;
+  max-width: 720px;
+}
+@media (max-width: 700px) {
+  .df-form-grid { grid-template-columns: 52px minmax(0, 1fr); }
+  .df-form-body { padding: 28px 18px 80px 96px; }
+  .df-mark__label {
+    font-size: 12.5px;
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* panel: a plain plastered section, hairline only — no floating card shadow */
+.df-panel {
+  background: var(--df-paper);
+  border: 1px solid var(--df-hair);
+  border-radius: 12px;
+  padding: 22px 22px 24px;
+}
+
+/* choice tile — 남/여, 엄마/아빠, 첫째/둘째: a pencil circle, not an emoji card */
+.df-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 18px 12px 15px;
+  background: var(--df-paper);
+  border: 1.5px dashed var(--df-hair);
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--df-muted);
+  transition: transform var(--df-t-fast) var(--df-ease-out),
+              border-color var(--df-t-base) ease, color var(--df-t-base) ease;
+}
+.df-tile__big {
+  font-family: var(--df-font-pencil);
+  font-size: 21px;
+  line-height: 1.2;
+  color: inherit;
+}
+.df-tile__small { font-size: 12.5px; font-weight: 500; }
+@media (hover: hover) and (pointer: fine) {
+  .df-tile:hover { transform: translateY(-2px); }
+}
+.df-tile:active { transform: scale(0.97); }
+.df-tile[aria-pressed="true"] {
+  border: 2px solid var(--df-pencil);
+  border-radius: 12px;
+  color: var(--df-ink);
+  transform: rotate(-1deg);
+}
+.df-tile[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--df-morning);
+  transform: rotate(45deg);
+}
+.df-tile:focus-visible {
+  outline: 2px solid var(--df-morning);
+  outline-offset: 2px;
+}
+
+/* segmented — 양력/음력 */
+.df-seg {
+  display: flex;
+  gap: 6px;
+  background: var(--df-wall-deep);
+  border-radius: 10px;
+  padding: 4px;
+}
+.df-seg button {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--df-muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--df-t-fast) ease, background var(--df-t-fast) ease;
+}
+.df-seg button[aria-pressed="true"] {
+  background: var(--df-paper);
+  color: var(--df-ink);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(51, 48, 42, 0.08);
+}
+.df-seg button:focus-visible {
+  outline: 2px solid var(--df-morning);
+  outline-offset: 1px;
+}
+
+/* consent / toggle row — checkbox with pencil tick */
+.df-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--df-hair);
+  background: var(--df-paper);
+  cursor: pointer;
+  transition: border-color var(--df-t-base) ease;
+}
+.df-consent input[type="checkbox"] {
+  appearance: none;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border: 1.5px solid var(--df-pencil);
+  border-radius: 5px;
+  background: var(--df-paper);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background var(--df-t-fast) ease;
+}
+.df-consent input[type="checkbox"]::after {
+  content: "";
+  width: 12px;
+  height: 7px;
+  border-left: 2.5px solid var(--df-wall);
+  border-bottom: 2.5px solid var(--df-wall);
+  transform: rotate(-48deg) translate(1px, -1px) scale(0);
+  transition: transform var(--df-t-fast) var(--df-ease-out);
+}
+.df-consent input[type="checkbox"]:checked {
+  background: var(--df-ink);
+  border-color: var(--df-ink);
+}
+.df-consent input[type="checkbox"]:checked::after { transform: rotate(-48deg) translate(1px, -1px) scale(1); }
+.df-consent input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--df-morning);
+  outline-offset: 2px;
+}
+.df-consent:has(input:checked) { border-color: var(--df-pencil); }
+.df-consent__title { font-weight: 700; font-size: 14.5px; color: var(--df-ink); }
+.df-consent__req { color: var(--df-morning); font-weight: 700; }
+.df-consent__desc { font-size: 13px; color: var(--df-muted); line-height: 1.6; margin-top: 2px; }
+
+/* question headline of each step */
+.df-q {
+  font-size: clamp(21px, 3.4vw, 26px);
+  font-weight: 900;
+  color: var(--df-ink);
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+.df-q-sub { color: var(--df-muted); font-size: 13.5px; margin-top: 6px; }
+
+/* loading overlay — four pillars being drawn */
+.df-cast {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--df-wall);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.df-cast__marks {
+  display: flex;
+  gap: 26px;
+  margin-bottom: 26px;
+}
+.df-cast__pillar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.df-cast__line {
+  width: 54px;
+  height: 3px;
+  background: var(--df-morning);
+  transform-origin: left;
+  animation: df-draw var(--df-t-draw) var(--df-ease-out) both;
+}
+.df-cast__name {
+  font-family: var(--df-font-pencil);
+  font-size: 15px;
+  color: var(--df-pencil);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .df-btn--primary,
   .df-btn--primary::before,
