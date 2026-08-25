@@ -6,7 +6,7 @@ import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 import { Rail } from '@/components/doorframe/Rail'
 import { IconArrow } from '@/components/ui/pencil-icons'
-import { doorframeCopy } from '@/app/lib/i18n/doorframe'
+import { doorframeCopy, pencilFontStyle } from '@/app/lib/i18n/doorframe'
 
 /**
  * Doorframe landing hero (Phase 2, docs/redesign-plan-doorframe.md).
@@ -55,7 +55,7 @@ export default function DoorframeHero() {
       </div>
 
       {/* Hero — doorframe on the left, the promise on the right */}
-      <section className="df-hero-grid" style={{ paddingTop: '118px' }}>
+      <section className="df-hero-grid" style={{ paddingTop: '118px', ...pencilFontStyle(lang) }}>
         <Rail marks={heroMarks} className="df-hero-rail" />
         <div className="df-hero-body">
           <h1 className="df-hero-title">

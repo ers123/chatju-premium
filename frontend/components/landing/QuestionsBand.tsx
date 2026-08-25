@@ -1,7 +1,7 @@
 'use client'
 
 import { useLanguage } from '@/app/lib/i18n/context'
-import { doorframeCopy } from '@/app/lib/i18n/doorframe'
+import { doorframeCopy, pencilFontStyle } from '@/app/lib/i18n/doorframe'
 
 /**
  * The E-copy questions band: a parent's late-night questions drift in
@@ -24,7 +24,7 @@ export default function QuestionsBand() {
   ] as const
 
   return (
-    <section className="df-questions" aria-label={df.band.sub}>
+    <section className="df-questions" aria-label={df.band.sub} style={pencilFontStyle(lang)}>
       {q.map((text, i) => {
         const s = spots[i % spots.length]
         return (

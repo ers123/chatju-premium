@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useLanguage } from '@/app/lib/i18n/context'
 import { localizedLegalPath } from '@/app/lib/i18n/routes'
-import { doorframeCopy } from '@/app/lib/i18n/doorframe'
+import { doorframeCopy, pencilFontStyle } from '@/app/lib/i18n/doorframe'
 import { formatBirthDateForDisplay } from '@/app/lib/date-display'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 import { Rail, type RailMark } from '@/components/doorframe/Rail'
@@ -319,7 +319,7 @@ export default function InputFormPage() {
     (s.elements as Record<string, string>)?.[key] || key
 
   return (
-    <div className="min-h-dvh [background:var(--df-wall)]">
+    <div className="min-h-dvh [background:var(--df-wall)]" style={pencilFontStyle(lang)}>
       {/* Casting overlay — the four pillars are drawn, one by one */}
       {isSubmitting && (
         <div className="df-cast" role="status">

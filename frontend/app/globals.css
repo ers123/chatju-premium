@@ -1,4 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Gaegu:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+/* Pencil-role handwriting families per language (subset coverage verified
+   against google/fonts METADATA.pb): ko Gaegu · ja Yomogi · zh Long Cang ·
+   th Mali · vi Patrick Hand (Caveat has NO vietnamese subset) ·
+   en/es/pt/fr/id Caveat. Google serves per-script unicode-range slices, so
+   a locale only downloads the families its page actually renders. */
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Gaegu:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Yomogi&family=Long+Cang&family=Mali:wght@400;600&family=Patrick+Hand&family=Caveat:wght@400..700&display=swap');
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 @import "tailwindcss";
 
