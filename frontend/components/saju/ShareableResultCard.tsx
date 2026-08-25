@@ -21,7 +21,7 @@ interface ShareableCardProps {
 const elementVisuals: Record<string, { emoji: string; color: string; bgImage: string }> = {
   '목': { emoji: '🌿', color: '#5A7A66', bgImage: '/assets/images/marketing/element-wood.png' },
   '화': { emoji: '🔥', color: '#A85544', bgImage: '/assets/images/marketing/element-fire.png' },
-  '토': { emoji: '🏔️', color: '#B8922D', bgImage: '/assets/images/marketing/element-earth.png' },
+  '토': { emoji: '🏔️', color: '#8A6A45', bgImage: '/assets/images/marketing/element-earth.png' },
   '금': { emoji: '⚔️', color: '#6B7578', bgImage: '/assets/images/marketing/element-metal.png' },
   '수': { emoji: '💧', color: '#556B7E', bgImage: '/assets/images/marketing/element-water.png' },
 }
@@ -58,7 +58,7 @@ export default function ShareableResultCard({
       scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#FEFDFB',
+      backgroundColor: '#F7F4EE',
       width: 540,
       height: 540,
     })
@@ -113,7 +113,7 @@ export default function ShareableResultCard({
           style={{
             width: '540px',
             height: '540px',
-            background: '#FEFDFB',
+            background: '#F7F4EE',
             fontFamily: '"Pretendard", -apple-system, sans-serif',
             display: 'flex',
             flexDirection: 'column',
@@ -138,7 +138,7 @@ export default function ShareableResultCard({
           {/* Top accent bar */}
           <div style={{
             height: '4px',
-            background: `linear-gradient(90deg, ${elementColor}, #B8922D)`,
+            background: `linear-gradient(90deg, ${elementColor}, #8A6A45)`,
             position: 'relative',
             zIndex: 1,
           }} />
@@ -153,10 +153,10 @@ export default function ShareableResultCard({
             <span style={{
               fontSize: '16px',
               fontWeight: 700,
-              color: '#2C2420',
+              color: '#33302A',
               letterSpacing: '-0.03em',
             }}>
-              <YinYangIcon size={16} color="#2C2420" /> SoMyung
+              <YinYangIcon size={16} color="#33302A" /> SoMyung
             </span>
             <span style={{
               fontSize: '11px',
@@ -196,7 +196,7 @@ export default function ShareableResultCard({
               <p style={{
                 fontSize: '24px',
                 fontWeight: 700,
-                color: '#2C2420',
+                color: '#33302A',
                 fontFamily: '"Nanum Myeongjo", serif',
                 marginBottom: '4px',
                 letterSpacing: '-0.03em',
@@ -293,7 +293,7 @@ export default function ShareableResultCard({
             </span>
             <span style={{
               fontSize: '11px',
-              color: '#B8922D',
+              color: '#8A6A45',
               fontWeight: 600,
             }}>
               Discover yours at somyung.cc
@@ -308,10 +308,10 @@ export default function ShareableResultCard({
         disabled={generating}
         style={{
           padding: '0.75rem 1.5rem',
-          borderRadius: '10px',
+          borderRadius: '6px',
           fontWeight: 600,
-          border: '2px solid #B8922D',
-          color: '#B8922D',
+          border: '2px solid #8A6A45',
+          color: '#8A6A45',
           background: 'none',
           cursor: generating ? 'wait' : 'pointer',
           fontSize: '1rem',

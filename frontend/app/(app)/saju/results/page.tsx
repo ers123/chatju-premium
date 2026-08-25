@@ -59,7 +59,7 @@ const LockIcon = () => (
 )
 
 const StarIcon = ({ filled = true }: { filled?: boolean }) => (
-  <svg viewBox="0 0 20 20" fill={filled ? "#B8922D" : "#E2DDD6"} style={{ width: '1rem', height: '1rem' }}>
+  <svg viewBox="0 0 20 20" fill={filled ? "#8A6A45" : "#E2DDD6"} style={{ width: '1rem', height: '1rem' }}>
     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
   </svg>
 )
@@ -68,7 +68,7 @@ const StarIcon = ({ filled = true }: { filled?: boolean }) => (
 const elementVisuals: Record<string, { emoji: string; color: string; bgColor: string }> = {
   '목': { emoji: '🌿', color: '#5A7A66', bgColor: '#E8F5E9' },
   '화': { emoji: '🔥', color: '#A85544', bgColor: '#FFEBEE' },
-  '토': { emoji: '🏔️', color: '#B8922D', bgColor: '#FFF8E1' },
+  '토': { emoji: '🏔️', color: '#8A6A45', bgColor: '#FFF8E1' },
   '금': { emoji: '⚔️', color: '#6B7578', bgColor: '#F5F5F5' },
   '수': { emoji: '💧', color: '#556B7E', bgColor: '#E3F2FD' },
 }
@@ -177,14 +177,14 @@ function FourPillarsDisplay({ pillars, t, lang }: { pillars: SajuResult['fourPil
         return (
           <div key={key} style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.75rem', marginBottom: '0.5rem', color: '#8B8580' }}>{pillarLabels[key]}</div>
-            <div style={{ background: '#1A3D2E', borderRadius: '0.75rem', overflow: 'hidden' }}>
+            <div style={{ background: '#33302A', borderRadius: '0.75rem', overflow: 'hidden' }}>
               <div style={{ padding: '0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                 <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{translateStem(pillar.천간, lang)}</div>
-                <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{translateElement(pillar.천간오행, lang)}</div>
+                <div style={{ fontSize: '0.75rem', color: '#8A6A45', marginTop: '0.25rem' }}>{translateElement(pillar.천간오행, lang)}</div>
               </div>
               <div style={{ padding: '0.75rem 0' }}>
                 <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF' }}>{translateBranch(pillar.지지, lang)}</div>
-                <div style={{ fontSize: '0.75rem', color: '#B8922D', marginTop: '0.25rem' }}>{translateElement(pillar.지지오행, lang)}</div>
+                <div style={{ fontSize: '0.75rem', color: '#8A6A45', marginTop: '0.25rem' }}>{translateElement(pillar.지지오행, lang)}</div>
               </div>
             </div>
           </div>
@@ -217,7 +217,7 @@ function OhaengBalanceChart({ balance, ohaengElements, elementCount }: { balance
               </div>
               <div style={{ height: '0.5rem', borderRadius: '9999px', overflow: 'hidden', backgroundColor: '#EBE5DF' }}>
                 <div
-                  style={{ height: '100%', borderRadius: '9999px', transition: 'all 1s', width: `${percentage}%`, backgroundColor: visual.color }}
+                  style={{ height: '100%', borderRadius: '9999px', transition: 'width 1s cubic-bezier(0.23, 1, 0.32, 1)', width: `${percentage}%`, backgroundColor: visual.color }}
                 />
               </div>
             </div>
@@ -788,7 +788,7 @@ export default function ResultsPage() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: '#FDFCFA',
+        background: '#F7F4EE',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -804,7 +804,7 @@ export default function ResultsPage() {
             <div style={{
               position: 'absolute',
               inset: 0,
-              border: '4px solid #B8922D',
+              border: '4px solid #8A6A45',
               borderRadius: '50%',
               borderTopColor: 'transparent',
               animation: 'spin 1s linear infinite'
@@ -818,7 +818,7 @@ export default function ResultsPage() {
               fontSize: '1.5rem'
             }}>✨</div>
           </div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#33302A', marginBottom: '0.5rem' }}>
             {sr.loading}
           </h2>
           <p style={{ color: '#6B7280' }}>{sr.loadingDesc}</p>
@@ -837,7 +837,7 @@ export default function ResultsPage() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: '#FDFCFA',
+        background: '#F7F4EE',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -852,7 +852,7 @@ export default function ResultsPage() {
           boxShadow: '0 4px 24px rgba(0,0,0,0.06)'
         }}>
           <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>😢</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.75rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#33302A', marginBottom: '0.75rem' }}>
             {sr.errorTitle}
           </h2>
           <p style={{ color: '#6B7280', marginBottom: '0.5rem', lineHeight: 1.6 }}>
@@ -867,13 +867,13 @@ export default function ResultsPage() {
             onClick={() => router.push('/saju/input')}
             style={{
               padding: '1rem 2rem',
-              background: '#1A3D2E',
+              background: '#33302A',
               color: '#FFFFFF',
-              borderRadius: '10px',
+              borderRadius: '6px',
               fontWeight: 700,
               border: 'none',
               cursor: 'pointer',
-              transition: 'all 0.2s',
+              transition: 'background 0.2s ease, border-color 0.2s ease',
               fontSize: '1rem'
             }}
           >
@@ -942,21 +942,21 @@ export default function ResultsPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FDFCFA' }}>
+    <div style={{ minHeight: '100vh', background: '#F7F4EE' }}>
       {/* Header */}
       <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(235,229,223,0.6)' }}>
         <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" className="logo-link-dark" style={{ textDecoration: 'none', color: '#1A3D2E', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: '#1A3D2E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Link href="/" className="logo-link-dark" style={{ textDecoration: 'none', color: '#33302A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: '#33302A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <YinYangIcon size={18} color="#FFFFFF" />
             </div>
-            <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#1A3D2E' }}>SoMyung</span>
+            <span style={{ fontFamily: 'serif', fontSize: '1.25rem', color: '#33302A' }}>SoMyung</span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {readingId && reportAccessToken && (
               <button
                 onClick={handlePdfExport}
-                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: '10px', border: '1px solid #EBE5DF', background: 'none', cursor: 'pointer' }}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, borderRadius: '6px', border: '1px solid #EBE5DF', background: 'none', cursor: 'pointer' }}
               >
                 {sr.savePdf}
               </button>
@@ -969,10 +969,10 @@ export default function ResultsPage() {
         {/* Hero Result Card */}
         <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)' }}>
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '6px', background: 'rgba(184,146,45,0.1)', color: '#B8922D', fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '6px', background: 'rgba(184,146,45,0.1)', color: '#8A6A45', fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>
               ✨ {sr.freeBadge}
             </div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginBottom: '0.5rem' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', color: '#33302A', marginBottom: '0.5rem' }}>
               {inputData?.name}{sr.analysisTitle}
             </h1>
             <p style={{ color: '#8B8580' }}>
@@ -1008,10 +1008,10 @@ export default function ResultsPage() {
 
           {/* AI Interpretation */}
           {result.preview && (
-            <div style={{ borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', background: 'linear-gradient(to bottom right, #F8F6F3, #FFF8E1)', border: '1px solid rgba(184,146,45,0.2)' }}>
+            <div style={{ borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', background: 'linear-gradient(to bottom right, #F0EBE1, #FFF8E1)', border: '1px solid rgba(184,146,45,0.2)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(184,146,45,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem' }}>🔮</div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1A3D2E' }}>{sr.aiInterpretation}</h3>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#33302A' }}>{sr.aiInterpretation}</h3>
               </div>
               {/* 프리뷰는 모델이 마크다운(**강조**)을 섞어 쓴다. 날것으로 찍으면 별표가 그대로
                   보인다 — 리포트 본문과 같은 렌더러를 태워 강조는 강조로 보이게 한다. */}
@@ -1023,7 +1023,7 @@ export default function ResultsPage() {
                       <p style={{ margin: '0 0 0.75rem', lineHeight: 1.7, color: '#6B5E52' }}>{children}</p>
                     ),
                     strong: ({ children }) => (
-                      <strong style={{ fontWeight: 700, color: '#1A3D2E' }}>{children}</strong>
+                      <strong style={{ fontWeight: 700, color: '#33302A' }}>{children}</strong>
                     ),
                     em: ({ children }) => <em style={{ fontStyle: 'italic' }}>{children}</em>,
                     ul: ({ children }) => (
@@ -1033,9 +1033,9 @@ export default function ResultsPage() {
                       <ol style={{ margin: '0 0 0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>{children}</ol>
                     ),
                     li: ({ children }) => <li style={{ lineHeight: 1.7 }}>{children}</li>,
-                    h1: ({ children }) => <p style={{ margin: '0 0 0.75rem', fontWeight: 700, color: '#1A3D2E' }}>{children}</p>,
-                    h2: ({ children }) => <p style={{ margin: '0 0 0.75rem', fontWeight: 700, color: '#1A3D2E' }}>{children}</p>,
-                    h3: ({ children }) => <p style={{ margin: '0 0 0.75rem', fontWeight: 700, color: '#1A3D2E' }}>{children}</p>,
+                    h1: ({ children }) => <p style={{ margin: '0 0 0.75rem', fontWeight: 700, color: '#33302A' }}>{children}</p>,
+                    h2: ({ children }) => <p style={{ margin: '0 0 0.75rem', fontWeight: 700, color: '#33302A' }}>{children}</p>,
+                    h3: ({ children }) => <p style={{ margin: '0 0 0.75rem', fontWeight: 700, color: '#33302A' }}>{children}</p>,
                   }}
                 >
                   {/* 두 가지를 지킨다.
@@ -1052,7 +1052,7 @@ export default function ResultsPage() {
 
           {/* Four Pillars */}
           <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginBottom: '1rem' }}>{sr.fourPillars}</h3>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, fontFamily: 'serif', color: '#33302A', marginBottom: '1rem' }}>{sr.fourPillars}</h3>
             <FourPillarsDisplay pillars={result.fourPillars} t={sr} lang={lang} />
 
             {/* Solar Time Correction Note */}
@@ -1088,7 +1088,7 @@ export default function ResultsPage() {
 
           {/* Ohaeng Balance */}
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E', marginBottom: '1rem' }}>{sr.ohaengBalance}</h3>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, fontFamily: 'serif', color: '#33302A', marginBottom: '1rem' }}>{sr.ohaengBalance}</h3>
             <OhaengBalanceChart balance={result.ohaengBalance} ohaengElements={sr.ohaengElements} elementCount={sr.elementCount} />
           </div>
         </section>
@@ -1100,7 +1100,7 @@ export default function ResultsPage() {
             <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>📚</div>
             <div>
               <div style={{ fontSize: '0.75rem', color: '#5A7A66', fontWeight: 700 }}>{sr.learningFree}</div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'serif', color: '#1A3D2E' }}>{sr.learningTitle}</h2>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'serif', color: '#33302A' }}>{sr.learningTitle}</h2>
             </div>
           </div>
 
@@ -1121,7 +1121,7 @@ export default function ResultsPage() {
             </div>
 
             {/* Weak Element Supplement */}
-            <div style={{ padding: '1.25rem', borderRadius: '12px', backgroundColor: '#F8F6F3' }}>
+            <div style={{ padding: '1.25rem', borderRadius: '12px', backgroundColor: '#F0EBE1' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <span style={{ fontSize: '1.125rem' }}>{weakVisual.emoji}</span>
                 <h4 style={{ fontWeight: 700, color: '#6B5E52' }}>
@@ -1136,23 +1136,23 @@ export default function ResultsPage() {
 
             {/* Quick Tips */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-              <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#F8F6F3', textAlign: 'center' }}>
+              <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#F0EBE1', textAlign: 'center' }}>
                 <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🕐</div>
-                <div style={{ fontWeight: 700, color: '#1A3D2E', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{sr.optimalTime}</div>
+                <div style={{ fontWeight: 700, color: '#33302A', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{sr.optimalTime}</div>
                 <div style={{ fontSize: '0.875rem', color: '#6B5E52' }}>
                   {getTimeText(dominantElement)}
                 </div>
               </div>
-              <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#F8F6F3', textAlign: 'center' }}>
+              <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#F0EBE1', textAlign: 'center' }}>
                 <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📍</div>
-                <div style={{ fontWeight: 700, color: '#1A3D2E', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{sr.recommendedEnv}</div>
+                <div style={{ fontWeight: 700, color: '#33302A', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{sr.recommendedEnv}</div>
                 <div style={{ fontSize: '0.875rem', color: '#6B5E52' }}>
                   {getEnvText(dominantElement)}
                 </div>
               </div>
-              <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#F8F6F3', textAlign: 'center' }}>
+              <div style={{ padding: '1rem', borderRadius: '0.75rem', background: '#F0EBE1', textAlign: 'center' }}>
                 <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🎯</div>
-                <div style={{ fontWeight: 700, color: '#1A3D2E', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{sr.motivation}</div>
+                <div style={{ fontWeight: 700, color: '#33302A', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{sr.motivation}</div>
                 <div style={{ fontSize: '0.875rem', color: '#6B5E52' }}>
                   {getMotiveText(dominantElement)}
                 </div>
@@ -1243,11 +1243,11 @@ export default function ResultsPage() {
           <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '2rem 1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
             <div style={{ position: 'relative', width: '4rem', height: '4rem', margin: '0 auto 1.25rem' }}>
               <div style={{ position: 'absolute', inset: 0, border: '4px solid #EBE5DF', borderRadius: '50%' }} />
-              <div style={{ position: 'absolute', inset: 0, border: '4px solid #B8922D', borderRadius: '50%', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
+              <div style={{ position: 'absolute', inset: 0, border: '4px solid #8A6A45', borderRadius: '50%', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
             </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A3D2E', marginBottom: '0.75rem' }}>{sr.premiumGenerating}</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#33302A', marginBottom: '0.75rem' }}>{sr.premiumGenerating}</h3>
             <p style={{ color: '#6B5E52', fontSize: '1rem', lineHeight: 1.6, marginBottom: '1rem' }}>{sr.premiumGeneratingDesc}</p>
-            <div style={{ background: '#F8F6F3', borderRadius: '10px', padding: '1rem', border: '1px solid #EBE5DF' }}>
+            <div style={{ background: '#F0EBE1', borderRadius: '6px', padding: '1rem', border: '1px solid #EBE5DF' }}>
               <p style={{ color: '#C5A059', fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>✉ {(() => { try { const c = sessionStorage.getItem('completed_payment'); return c ? JSON.parse(c).email : '' } catch { return '' } })()}</p>
               <p style={{ color: '#6B5E52', fontSize: '0.9375rem' }}>
                 {t.payment.emailAlsoSent}
@@ -1257,19 +1257,19 @@ export default function ResultsPage() {
         ) : premiumError ? (
           <section style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(235,229,223,0.6)', borderRadius: '12px', padding: '2rem 1.5rem', marginBottom: '2rem', boxShadow: '0 4px 20px -4px rgba(45,58,53,0.06)', textAlign: 'center' }}>
             <p style={{ color: '#C67B6F', fontSize: '1rem', marginBottom: '1rem' }}>{premiumError}</p>
-            <div style={{ background: '#F8F6F3', borderRadius: '10px', padding: '1rem', border: '1px solid #EBE5DF' }}>
+            <div style={{ background: '#F0EBE1', borderRadius: '6px', padding: '1rem', border: '1px solid #EBE5DF' }}>
               <p style={{ color: '#6B5E52', fontSize: '0.9375rem' }}>
                 {t.payment.emailAlsoSent}
               </p>
             </div>
           </section>
         ) : (
-          <section style={{ background: 'linear-gradient(to bottom right, #1A3D2E, #2D4A3E)', borderRadius: '12px', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
+          <section style={{ background: 'linear-gradient(to bottom right, #33302A, #2D4A3E)', borderRadius: '12px', padding: '1.5rem', color: '#FFFFFF', marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: '10rem', height: '10rem', background: 'rgba(184,146,45,0.1)', borderRadius: '50%', filter: 'blur(48px)' }} />
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <LockIcon />
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#B8922D' }}>{sr.premiumContent}</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#8A6A45' }}>{sr.premiumContent}</span>
               </div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'serif', marginBottom: '0.5rem', color: '#FFFFFF' }}>{sr.premiumTitle}</h2>
               {/* 브릿지. 미리보기가 어디서 끝나고 리포트가 어디서 시작하는지 한 줄로 긋는다.
@@ -1295,13 +1295,13 @@ export default function ResultsPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <button
                     onClick={() => setShowPayment(true)}
-                    style={{ flex: 1, padding: '1rem', borderRadius: '10px', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
+                    style={{ flex: 1, padding: '1rem', borderRadius: '6px', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
                   >
                     {sr.premiumStartCta} — {t.pricing.premium.price}
                   </button>
                 </div>
               ) : (
-                <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '1.25rem', marginTop: '0.5rem' }}>
+                <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '6px', padding: '1.25rem', marginTop: '0.5rem' }}>
                   {/* Step 1: Email */}
                   <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>
                     {t.payment.emailLabel} <span style={{ color: '#C5A059' }}>*</span>
@@ -1376,7 +1376,7 @@ export default function ResultsPage() {
                               type="button"
                               onClick={payWithPortone}
                               disabled={portonePaying || !emailValid}
-                              style={{ width: '100%', padding: '0.875rem', borderRadius: '10px', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '0.9375rem', marginBottom: '0.75rem', opacity: (portonePaying || !emailValid) ? 0.6 : 1 }}
+                              style={{ width: '100%', padding: '0.875rem', borderRadius: '6px', fontWeight: 700, color: '#2D3A35', backgroundColor: '#C5A059', border: 'none', cursor: 'pointer', fontSize: '0.9375rem', marginBottom: '0.75rem', opacity: (portonePaying || !emailValid) ? 0.6 : 1 }}
                             >
                               {portonePaying ? '결제창 여는 중…' : '카드로 결제하기 — ₩24,900'}
                             </button>
@@ -1509,13 +1509,13 @@ export default function ResultsPage() {
 
             {/* Sibling comparison prompt */}
             <div style={{
-              background: 'linear-gradient(135deg, rgba(184, 146, 45, 0.06) 0%, rgba(90, 122, 102, 0.06) 100%)',
+              background: 'linear-gradient(135deg, rgba(233, 184, 76, 0.06) 0%, rgba(90, 122, 102, 0.06) 100%)',
               borderRadius: '12px',
               padding: '1.5rem',
-              border: '1px solid rgba(184, 146, 45, 0.15)',
+              border: '1px solid rgba(233, 184, 76, 0.15)',
               textAlign: 'center',
             }}>
-              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#2C2420', marginBottom: '0.5rem', fontFamily: 'serif' }}>
+              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#33302A', marginBottom: '0.5rem', fontFamily: 'serif' }}>
                 {sr.siblingHeading || 'Want to understand why they\'re so different?'}
               </p>
               <p style={{ fontSize: '0.875rem', color: '#6B5E52', marginBottom: '1rem', lineHeight: 1.6 }}>
@@ -1523,10 +1523,10 @@ export default function ResultsPage() {
               </p>
               <Link href={`/saju/input?from=sibling&siblingName=${encodeURIComponent(inputData?.name || '')}&siblingElement=${result ? getCoreElement(result) : ''}`} style={{
                   padding: '0.75rem 1.5rem',
-                  borderRadius: '10px',
+                  borderRadius: '6px',
                   fontWeight: 600,
                   color: '#FFFFFF',
-                  background: '#1A3D2E',
+                  background: '#33302A',
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: '0.95rem',
@@ -1558,7 +1558,7 @@ export default function ResultsPage() {
           left: 0,
           right: 0,
           zIndex: 20,
-          background: 'linear-gradient(to right, #1A3D2E, #2D4A3E)',
+          background: 'linear-gradient(to right, #33302A, #2D4A3E)',
           padding: '0.75rem 1.5rem',
           display: 'flex',
           alignItems: 'center',
@@ -1592,7 +1592,7 @@ export default function ResultsPage() {
       )}
 
       {/* Footer */}
-      <footer style={{ padding: !premiumReport ? '2rem 0 5rem' : '2rem 0', borderTop: '1px solid #EBE5DF', backgroundColor: '#FEFDFB' }}>
+      <footer style={{ padding: !premiumReport ? '2rem 0 5rem' : '2rem 0', borderTop: '1px solid #EBE5DF', backgroundColor: '#F7F4EE' }}>
         <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '0 1.5rem', textAlign: 'center' }}>
           <p style={{ fontSize: '0.75rem', color: '#8B8580' }}>
             {sr.footerDisclaimer}
