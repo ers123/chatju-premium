@@ -188,6 +188,65 @@ const KNOWN_LOCATIONS = {
   'santiago':   { lat: -33.45, lng: -70.67, tz: -4 },
   'lima':       { lat: -12.05, lng: -77.04, tz: -5 },
   'jakarta':    { lat: -6.21, lng: 106.85, tz: 7 },
+  // Per-locale dropdown expansion (2026-08-25) — the input form now shows each
+  // language's own region first, so every listed city must resolve here.
+  // Standard time only, no DST, matching the rest of this table.
+  // Japan
+  'yokohama':   { lat: 35.44, lng: 139.64, tz: 9 },
+  'nagoya':     { lat: 35.18, lng: 136.91, tz: 9 },
+  'sapporo':    { lat: 43.06, lng: 141.35, tz: 9 },
+  'fukuoka':    { lat: 33.59, lng: 130.40, tz: 9 },
+  'sendai':     { lat: 38.27, lng: 140.87, tz: 9 },
+  'hiroshima':  { lat: 34.39, lng: 132.46, tz: 9 },
+  // China
+  'guangzhou':  { lat: 23.13, lng: 113.26, tz: 8 },
+  'shenzhen':   { lat: 22.54, lng: 114.06, tz: 8 },
+  'chengdu':    { lat: 30.57, lng: 104.07, tz: 8 },
+  'chongqing':  { lat: 29.56, lng: 106.55, tz: 8 },
+  'wuhan':      { lat: 30.59, lng: 114.31, tz: 8 },
+  "xi'an":      { lat: 34.34, lng: 108.94, tz: 8 },
+  // Vietnam
+  'ho chi minh': { lat: 10.82, lng: 106.63, tz: 7 },
+  'da nang':    { lat: 16.05, lng: 108.22, tz: 7 },
+  'hai phong':  { lat: 20.86, lng: 106.68, tz: 7 },
+  'can tho':    { lat: 10.05, lng: 105.75, tz: 7 },
+  // Indonesia (WIB/WITA)
+  'surabaya':   { lat: -7.26, lng: 112.75, tz: 7 },
+  'bandung':    { lat: -6.92, lng: 107.61, tz: 7 },
+  'medan':      { lat: 3.59, lng: 98.67, tz: 7 },
+  'semarang':   { lat: -6.99, lng: 110.42, tz: 7 },
+  'makassar':   { lat: -5.15, lng: 119.43, tz: 8 },
+  // Thailand
+  'chiang mai': { lat: 18.79, lng: 98.98, tz: 7 },
+  'khon kaen':  { lat: 16.44, lng: 102.84, tz: 7 },
+  'hat yai':    { lat: 7.01, lng: 100.47, tz: 7 },
+  'nakhon ratchasima': { lat: 14.98, lng: 102.10, tz: 7 },
+  // Spain / Latin America (es)
+  'madrid':     { lat: 40.42, lng: -3.70, tz: 1 },
+  'barcelona':  { lat: 41.39, lng: 2.17, tz: 1 },
+  'valencia':   { lat: 39.47, lng: -0.38, tz: 1 },
+  'sevilla':    { lat: 37.39, lng: -5.99, tz: 1 },
+  'mexico city': { lat: 19.43, lng: -99.13, tz: -6 },
+  'guadalajara': { lat: 20.66, lng: -103.35, tz: -6 },
+  'bogota':     { lat: 4.71, lng: -74.07, tz: -5 },
+  // Brazil / Portugal (pt)
+  'rio de janeiro': { lat: -22.91, lng: -43.17, tz: -3 },
+  'belo horizonte': { lat: -19.92, lng: -43.94, tz: -3 },
+  'brasilia':   { lat: -15.79, lng: -47.88, tz: -3 },
+  'salvador':   { lat: -12.97, lng: -38.51, tz: -3 },
+  'fortaleza':  { lat: -3.73, lng: -38.53, tz: -3 },
+  'porto alegre': { lat: -30.03, lng: -51.23, tz: -3 },
+  'lisbon':     { lat: 38.72, lng: -9.14, tz: 0 },
+  'porto':      { lat: 41.15, lng: -8.61, tz: 0 },
+  // France / francophone (fr)
+  'lyon':       { lat: 45.76, lng: 4.84, tz: 1 },
+  'marseille':  { lat: 43.30, lng: 5.37, tz: 1 },
+  'toulouse':   { lat: 43.60, lng: 1.44, tz: 1 },
+  'bordeaux':   { lat: 44.84, lng: -0.58, tz: 1 },
+  'nice':       { lat: 43.70, lng: 7.27, tz: 1 },
+  'montreal':   { lat: 45.50, lng: -73.57, tz: -5 },
+  'brussels':   { lat: 50.85, lng: 4.35, tz: 1 },
+  'geneva':     { lat: 46.20, lng: 6.14, tz: 1 },
 };
 
 /**

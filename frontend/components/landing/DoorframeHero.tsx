@@ -57,7 +57,8 @@ export default function DoorframeHero() {
       {/* Hero — doorframe on the left, the promise on the right */}
       <section className="df-hero-grid" style={{ paddingTop: '118px', ...pencilFontStyle(lang) }}>
         <Rail marks={heroMarks} className="df-hero-rail" />
-        <div className="df-hero-body">
+        <div className="df-hero-body df-hero-cols">
+          <div>
           <h1 className="df-hero-title">
             {t.hero.title1}<br />
             <span className="df-hero-accent">{t.hero.titleAccent}</span><br />
@@ -82,6 +83,17 @@ export default function DoorframeHero() {
             <span>✓ {t.hero.check2}</span>
             <span>✓ {t.hero.check3}</span>
           </p>
+          </div>
+
+          {/* A parent's late-night diary note — the emotional proof of the promise */}
+          <aside className="df-journal" aria-hidden>
+            <p className="df-journal__date">{df.journal.date}</p>
+            <p className="df-journal__line">{df.journal.line1}</p>
+            <p className="df-journal__line">{df.journal.line2}</p>
+            <p className="df-journal__line df-journal__underline">{df.journal.underline}</p>
+            <p className="df-journal__line">{df.journal.line3}</p>
+            <span className="df-journal__margin">{df.journal.margin}</span>
+          </aside>
         </div>
       </section>
     </>

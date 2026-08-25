@@ -36,6 +36,15 @@ export interface DoorframeCopy {
     title2: string
     sub: string
   }
+  /** hero journal note — a parent's late-night diary entry */
+  journal: {
+    date: string
+    line1: string
+    line2: string
+    underline: string
+    line3: string
+    margin: string
+  }
 }
 
 const ko: DoorframeCopy = {
@@ -75,6 +84,7 @@ const ko: DoorframeCopy = {
     title2: '는 뜻입니다',
     sub: '그 질문들에, 태어난 순간의 기록으로 답해 드립니다.',
   },
+  journal: { date: '10월 3일, 밤 11시 40분', line1: '오늘도 블록이 무너지자 울지 않고', line2: '처음부터 다시 쌓았다.', underline: '이 고집은 대체 어디서 온 걸까.', line3: '나를 닮은 걸까, 원래 그런 걸까.', margin: '← 이 질문에 답해 드려요' },
 }
 
 const en: DoorframeCopy = {
@@ -114,6 +124,7 @@ const en: DoorframeCopy = {
     title2: '',
     sub: 'We answer those questions with the record of the moment they were born.',
   },
+  journal: { date: 'Oct 3, 11:40 pm', line1: 'The blocks fell again tonight.', line2: 'No tears — she just rebuilt them.', underline: 'Where does this stubbornness come from?', line3: 'Is it me in her, or just who she is?', margin: '← we answer this question' },
 }
 
 
@@ -154,6 +165,7 @@ const ja: DoorframeCopy = {
     title2: 'ということです',
     sub: 'その問いに、生まれた瞬間の記録でお答えします。',
   },
+  journal: { date: '10月3日、夜11時40分', line1: '積み木が崩れても泣かず', line2: '黙ってまた積み直した。', underline: 'この頑固さはどこから来たんだろう。', line3: '私に似たのか、生まれつきなのか。', margin: '← この問いにお答えします' },
 }
 
 const zh: DoorframeCopy = {
@@ -193,6 +205,7 @@ const zh: DoorframeCopy = {
     title2: '',
     sub: '我们用孩子出生那一刻的记录，回答这些问题。',
   },
+  journal: { date: '10月3日 深夜11:40', line1: '积木倒了，他没哭，', line2: '默默地又搭了起来。', underline: '这股倔强到底从哪来的？', line3: '是像我，还是他本来就这样？', margin: '← 我们来回答这个问题' },
 }
 
 const vi: DoorframeCopy = {
@@ -232,6 +245,7 @@ const vi: DoorframeCopy = {
     title2: '',
     sub: 'Chúng tôi trả lời những câu hỏi đó bằng chính khoảnh khắc con chào đời.',
   },
+  journal: { date: '3/10, 11:40 tối', line1: 'Tháp gỗ đổ, con không khóc,', line2: 'lặng lẽ xếp lại từ đầu.', underline: 'Cái bướng bỉnh này từ đâu ra vậy?', line3: 'Giống mình, hay vốn dĩ con đã vậy?', margin: '← câu trả lời có ở đây' },
 }
 
 const id: DoorframeCopy = {
@@ -271,6 +285,7 @@ const id: DoorframeCopy = {
     title2: '',
     sub: 'Kami menjawab pertanyaan itu dengan catatan saat ia dilahirkan.',
   },
+  journal: { date: '3 Okt, 23.40', line1: 'Menaranya roboh lagi malam ini.', line2: 'Tanpa nangis, ia susun ulang sendiri.', underline: 'Dari mana ya keras kepala ini?', line3: 'Menurun dariku, atau memang bawaannya?', margin: '← jawabannya ada di sini' },
 }
 
 const es: DoorframeCopy = {
@@ -310,6 +325,7 @@ const es: DoorframeCopy = {
     title2: '',
     sub: 'Respondemos esas preguntas con el registro del momento en que nació.',
   },
+  journal: { date: '3 de oct, 11:40 pm', line1: 'Se cayeron los bloques otra vez.', line2: 'Sin llorar, los volvió a apilar.', underline: '¿De dónde sacó esta terquedad?', line3: '¿Se parece a mí, o es solo así?', margin: '← aquí respondemos eso' },
 }
 
 const pt: DoorframeCopy = {
@@ -349,6 +365,7 @@ const pt: DoorframeCopy = {
     title2: '',
     sub: 'Respondemos essas perguntas com o registro do momento em que ele nasceu.',
   },
+  journal: { date: '3 de out, 23h40', line1: 'A torre caiu de novo hoje.', line2: 'Sem chorar, ela montou tudo outra vez.', underline: 'De onde vem essa teimosia?', line3: 'Puxou a mim, ou já nasceu assim?', margin: '← a resposta está aqui' },
 }
 
 const fr: DoorframeCopy = {
@@ -388,6 +405,7 @@ const fr: DoorframeCopy = {
     title2: '',
     sub: 'Nous répondons à ces questions avec la trace du moment de sa naissance.',
   },
+  journal: { date: '3 oct, 23h40', line1: 'La tour est encore tombée ce soir.', line2: "Sans pleurer, elle l'a reconstruite.", underline: "D'où lui vient cette obstination ?", line3: "Elle me ressemble, ou c'est juste elle ?", margin: '← on répond à cette question' },
 }
 
 const th: DoorframeCopy = {
@@ -427,6 +445,7 @@ const th: DoorframeCopy = {
     title2: '',
     sub: 'เราตอบคำถามเหล่านั้นด้วยบันทึกช่วงเวลาที่ลูกลืมตาดูโลก',
   },
+  journal: { date: '3 ต.ค. 23:40 น.', line1: 'ตึกบล็อกล้มอีกแล้วคืนนี้', line2: 'ไม่ร้องไห้ แค่ค่อยๆ ต่อใหม่', underline: 'ความดื้อแบบนี้มาจากไหนกันนะ', line3: 'เหมือนแม่ หรือเป็นแบบนี้อยู่แล้ว', margin: '← เราตอบคำถามนี้ให้คุณ' },
 }
 
 const byLang: Partial<Record<Language, DoorframeCopy>> = { ko, en, ja, zh, vi, id, es, pt, fr, th }

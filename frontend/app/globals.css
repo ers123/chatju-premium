@@ -942,6 +942,61 @@ h4 {
   }
 }
 
+/* hero journal note — D-direction's diary card, filling the hero's right half */
+.df-hero-cols {
+  display: flex;
+  align-items: center;
+  gap: clamp(32px, 5vw, 72px);
+}
+/* the journal column needs room — widen the body only when it is present */
+.df-hero-body.df-hero-cols { max-width: 1240px; }
+.df-hero-cols > div:first-child { flex: 1 1 auto; min-width: 0; }
+.df-journal {
+  flex: 0 0 340px;
+  position: relative;
+  background: var(--df-paper);
+  border: 1px solid var(--df-hair);
+  border-radius: 4px;
+  padding: 30px 26px 34px;
+  box-shadow: 0 14px 30px -18px rgba(51, 48, 42, 0.35);
+  transform: rotate(0.8deg);
+  font-family: var(--df-font-pencil);
+  color: #2F4858;
+  font-size: 19px;
+  line-height: 1.75;
+}
+.df-journal::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 104px;
+  height: 24px;
+  background: rgba(240, 214, 138, 0.55);
+}
+.df-journal__date { font-size: 15px; opacity: 0.65; margin-bottom: 4px; }
+.df-journal__line { margin: 0; }
+.df-journal__underline {
+  font-weight: 700;
+  border-bottom: 2px solid #C4553B;
+  display: inline-block;
+  line-height: 1.5;
+  margin: 2px 0 4px;
+}
+.df-journal__margin {
+  position: absolute;
+  right: 10px;
+  bottom: -22px;
+  font-size: 14px;
+  color: #C4553B;
+  transform: rotate(-3deg);
+  white-space: nowrap;
+}
+@media (max-width: 1020px) {
+  .df-journal { display: none; }
+}
+
 /* floating questions band (E-copy) */
 .df-questions {
   position: relative;
