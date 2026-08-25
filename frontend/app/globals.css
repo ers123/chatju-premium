@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Gaegu:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 @import "tailwindcss";
 
@@ -82,6 +82,31 @@ a:visited {
   --shadow-soft: 0 8px 32px rgba(26, 47, 35, 0.03);
   --shadow-card: 0 4px 24px rgba(26, 47, 35, 0.05);
   --shadow-hover: 0 16px 48px rgba(26, 47, 35, 0.1);
+
+  /* ==========================================================
+     Doorframe design system (redesign 2026-08 · docs/redesign-plan-doorframe.md)
+     Legacy tokens above remain until every page migrates.
+     ========================================================== */
+  --df-wall: #F7F4EE;        /* 회벽 — page ground */
+  --df-wall-deep: #F0EBE1;   /* recessed panels */
+  --df-wood: #B08D62;        /* 문설주 rail */
+  --df-wood-deep: #8A6A45;   /* rail shadow edge */
+  --df-pencil: #4A453C;      /* 눈금·라벨·보조 텍스트 */
+  --df-ink: #33302A;         /* 본문·버튼 */
+  --df-morning: #E9B84C;     /* the only accent — 새 눈금, 진행, 포커스 */
+  --df-hair: #E6E0D4;        /* hairline */
+  --df-paper: #FFFDF8;       /* input surfaces */
+  --df-muted: #78715F;       /* secondary text on wall */
+
+  /* Motion — emilkowalski rules, fixed */
+  --df-ease-out: cubic-bezier(0.23, 1, 0.32, 1);   /* entrances, hovers */
+  --df-ease-move: cubic-bezier(0.77, 0, 0.175, 1); /* on-screen movement */
+  --df-t-fast: 140ms;   /* button feedback */
+  --df-t-base: 220ms;   /* reveals, small transitions */
+  --df-t-draw: 500ms;   /* 눈금 그어지기 */
+
+  --df-font-pencil: 'Gaegu', 'Nanum Pen Script', cursive; /* per-language remap in Phase 4 */
+  --df-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
 @theme inline {
@@ -459,9 +484,220 @@ h4 {
 /* btn-glow removed — AI slop pattern */
 
 /* ============================================
+   Doorframe components (redesign 2026-08)
+   Scope: every class is df-* — cannot collide with legacy styles.
+   ============================================ */
+
+/* --- Buttons -------------------------------------------------
+   Spec (docs/redesign-plan-doorframe.md §2):
+   primary   ink block + morning inset stroke that widens on hover
+   secondary pencil underline that draws itself on hover
+   ghost     quiet text action
+   disabled  "아직 안 그어진 눈금" — dashed, never grey-washed        */
+
+.df-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: none;
+  letter-spacing: 0.01em;
+  -webkit-tap-highlight-color: transparent;
+}
+.df-btn:focus-visible {
+  outline: 2px solid var(--df-morning);
+  outline-offset: 2px;
+}
+
+.df-btn--primary {
+  position: relative;
+  background: var(--df-ink);
+  color: var(--df-wall);
+  font-size: 15.5px;
+  padding: 15px 32px 15px 36px;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: transform var(--df-t-fast) var(--df-ease-out);
+}
+.df-btn--primary::before {
+  /* morning stroke — a pencil line living inside the button */
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--df-morning);
+  transform-origin: left;
+  transition: transform var(--df-t-fast) var(--df-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .df-btn--primary:hover { transform: translateY(-1px); }
+  .df-btn--primary:hover::before { transform: scaleX(1.75); }
+}
+.df-btn--primary:active { transform: translateY(1px); }
+
+.df-btn--secondary {
+  position: relative;
+  color: var(--df-ink);
+  font-size: 14.5px;
+  padding: 10px 4px 12px;
+  border-radius: 0;
+}
+.df-btn--secondary::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  height: 2px;
+  background: var(--df-pencil);
+  transform: scaleX(0.35);
+  transform-origin: left;
+  transition: transform var(--df-t-base) var(--df-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .df-btn--secondary:hover::after { transform: scaleX(1); }
+}
+.df-btn--secondary:active::after { background: var(--df-morning); }
+
+.df-btn--ghost {
+  color: var(--df-muted);
+  font-weight: 500;
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  transition: color var(--df-t-fast) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .df-btn--ghost:hover { color: var(--df-ink); }
+}
+
+.df-btn:disabled,
+.df-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  transform: none;
+}
+.df-btn--primary:disabled {
+  background: transparent;
+  color: var(--df-pencil);
+  opacity: 0.6;
+  outline: 1.5px dashed var(--df-hair);
+  outline-offset: -1.5px;
+}
+.df-btn--primary:disabled::before { transform: scaleX(0); }
+
+/* --- Rail & marks ------------------------------------------- */
+
+.df-rail {
+  position: relative;
+  background: linear-gradient(90deg, var(--df-wood) 0 70%, var(--df-wood-deep) 70% 100%);
+  min-width: 56px;
+}
+.df-mark {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  transition: top var(--df-t-draw) var(--df-ease-out), opacity var(--df-t-base) ease;
+}
+.df-mark__line {
+  position: absolute;
+  left: 12%;
+  right: 18%;
+  top: 0;
+  height: 2px;
+  background: rgba(51, 48, 42, 0.75);
+  transform-origin: left;
+}
+.df-mark--new .df-mark__line {
+  background: var(--df-morning);
+  height: 3px;
+}
+.df-mark--drawing .df-mark__line {
+  animation: df-draw var(--df-t-draw) var(--df-ease-out) both;
+}
+@keyframes df-draw {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.df-mark__label {
+  position: absolute;
+  left: 112%;
+  top: -12px;
+  white-space: nowrap;
+  font-family: var(--df-font-pencil);
+  font-size: 15.5px;
+  color: var(--df-pencil);
+}
+.df-mark--new .df-mark__label { font-weight: 700; color: var(--df-wood-deep); }
+
+/* --- Inputs ------------------------------------------------- */
+
+.df-field { margin-bottom: 22px; }
+.df-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--df-muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+.df-input {
+  width: 100%;
+  background: var(--df-paper);
+  border: 1.5px solid var(--df-hair);
+  border-radius: 10px;
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  font-size: 16px;
+  color: var(--df-ink);
+  padding: 13px 15px;
+  outline: none;
+  transition: border-color var(--df-t-base) ease, box-shadow var(--df-t-base) ease;
+}
+.df-input:focus {
+  border-color: var(--df-morning);
+  box-shadow: 0 0 0 3px rgba(233, 184, 76, 0.2);
+}
+.df-input::placeholder { color: #B9B29F; }
+
+.df-pencil-note {
+  font-family: var(--df-font-pencil);
+  font-size: 17px;
+  color: var(--df-wood-deep);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--df-t-base) var(--df-ease-out), transform var(--df-t-base) var(--df-ease-out);
+}
+.df-pencil-note.is-on { opacity: 1; transform: none; }
+
+.df-mono {
+  font-family: var(--df-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .df-btn--primary,
+  .df-btn--primary::before,
+  .df-btn--secondary::after,
+  .df-mark,
+  .df-pencil-note {
+    transition-duration: 1ms;
+  }
+  .df-mark--drawing .df-mark__line { animation-duration: 1ms; }
+}
+
+/* ============================================
    Responsive - Mobile First
    ============================================ */
 
+/* DEPRECATED (redesign 2026-08): the attribute-selector overrides below rewrite
+   inline styles with !important. They exist only for legacy inline-styled pages
+   (landing v1, saju/input v1, blog, legal). Remove in Phase 2 once those pages
+   use classes — new df-* components must NEVER rely on them. */
 @media (max-width: 768px) {
   body {
     font-size: 15px;
