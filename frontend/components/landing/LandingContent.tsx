@@ -5,33 +5,50 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import Footer from '@/components/Footer'
 import { useLanguage } from '@/app/lib/i18n/context'
-import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
+import DoorframeHero from '@/components/landing/DoorframeHero'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
+import QuestionsBand from '@/components/landing/QuestionsBand'
 
 
-// Scroll reveal hook
+// Scroll reveal hook. The one-time querySelectorAll ran before the localized
+// content had rendered, so every [data-reveal] stayed at opacity 0 — sections
+// past the fold never appeared. A MutationObserver picks up nodes added after
+// mount and hands them to the same IntersectionObserver.
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const node = ref.current
     if (!node) return
-    const observer = new IntersectionObserver(
+    const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const el = entry.target as HTMLElement
             el.style.opacity = '1'
             el.style.transform = 'translateY(0)'
-            observer.unobserve(entry.target)
+            io.unobserve(entry.target)
           }
         })
       },
       { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
     )
-    const elements = node.querySelectorAll('[data-reveal]')
-    elements.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
+    const seen = new WeakSet<Element>()
+    const observeAll = () => {
+      node.querySelectorAll('[data-reveal]').forEach((el) => {
+        if (!seen.has(el)) {
+          seen.add(el)
+          io.observe(el)
+        }
+      })
+    }
+    observeAll()
+    const mo = new MutationObserver(observeAll)
+    mo.observe(node, { childList: true, subtree: true })
+    return () => {
+      mo.disconnect()
+      io.disconnect()
+    }
   }, [])
 
   return ref
@@ -88,9 +105,8 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const pageRef = useScrollReveal()
   const { lang, setLang, t } = useLanguage()
-  // Nanum Myeongjo only covers Korean glyphs — accented Latin chars (à, ù, é)
-  // fall back to system serif with mismatched metrics. Use Georgia for non-KO.
-  const serifFont = lang === 'ko' ? '"Nanum Myeongjo", serif' : 'Georgia, "Times New Roman", serif'
+  // Doorframe redesign: one family, hierarchy by weight (900/700/400).
+  const serifFont = '"Pretendard", -apple-system, sans-serif'
   const sajuCounter = useAnimatedCounter(518400, 2400)
   const multiplierCounter = useAnimatedCounter(32400, 2000)
 
@@ -120,172 +136,12 @@ export default function LandingPage() {
   return (
     <div ref={pageRef} style={{
       minHeight: '100vh',
-      background: '#FEFDFB',
+      background: '#F7F4EE',
       fontFamily: '"Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Navigation */}
-      <nav style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        background: 'rgba(254, 253, 251, 0.92)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0, 0, 0, 0.04)'
-      }}>
-        <div style={{
-          maxWidth: '1100px',
-          margin: '0 auto',
-          padding: '0 40px',
-          height: '72px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <Link href="/" className="logo-link" style={{ textDecoration: 'none', color: '#2C2420', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <YinYangIcon size={22} color="#2C2420" />
-            <span style={{
-              fontSize: '24px',
-              fontWeight: 700,
-              color: '#2C2420',
-              letterSpacing: '-0.04em'
-            }}>
-              SoMyung
-            </span>
-          </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <LanguageSwitcher currentLang={lang} onSelect={setLang} mode="navigate" />
-            <Link href="/saju/input" className="nav-cta" style={{
-                height: '44px',
-                padding: '0 28px',
-                fontSize: '15px',
-                fontWeight: 600,
-                color: '#FFFFFF',
-                background: '#2C2420',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                whiteSpace: 'nowrap' as const,
-              }}>
-                {t.nav.start}
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <DoorframeHero />
 
-      {/* Free Beta Banner */}
-      <div style={{
-        position: 'fixed',
-        top: '72px',
-        left: 0,
-        right: 0,
-        zIndex: 49,
-        background: 'linear-gradient(90deg, #1A3D2E, #2C5238)',
-        padding: '10px 20px',
-        textAlign: 'center'
-      }}>
-        <span style={{
-          fontSize: '14px',
-          color: '#FFFFFF',
-          fontWeight: 500
-        }}>
-          {t.banner}
-        </span>
-      </div>
-
-      {/* Hero Section */}
-      <section style={{
-        width: '100%',
-        padding: 'clamp(160px, 25vw, 220px) clamp(20px, 5vw, 40px) clamp(60px, 10vw, 100px)',
-        textAlign: 'center'
-      }}>
-        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-          <h1 style={{
-            fontSize: 'clamp(36px, 5.5vw, 52px)',
-            fontWeight: 700,
-            color: '#2C2420',
-            lineHeight: 1.2,
-            letterSpacing: '-0.04em',
-            marginBottom: '28px',
-            fontFamily: serifFont
-          }}>
-            {t.hero.title1}<br />
-            <span style={{ color: '#B8922D' }}>{t.hero.titleAccent}</span><br />
-            {t.hero.title2}
-          </h1>
-
-          <p style={{
-            fontSize: 'clamp(16px, 4vw, 19px)',
-            color: '#666666',
-            lineHeight: 1.7,
-            marginBottom: '20px',
-            fontWeight: 400
-          }}>
-            {t.hero.subtitle}<br />
-            {t.hero.subtitle2}
-          </p>
-
-          <p style={{
-            fontSize: 'clamp(14px, 3.5vw, 16px)',
-            color: '#9B8B7A',
-            lineHeight: 1.8,
-            fontStyle: 'italic',
-            marginBottom: 'clamp(32px, 6vw, 48px)',
-            fontFamily: serifFont,
-            whiteSpace: 'pre-line',
-          }}>
-            &ldquo;{t.coreInsight}&rdquo;
-          </p>
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            alignItems: 'center',
-            marginBottom: '28px'
-          }}>
-            <Link href="/saju/input" style={{
-                height: 'clamp(52px, 8vw, 60px)',
-                padding: '0 clamp(28px, 6vw, 44px)',
-                fontSize: 'clamp(15px, 3.5vw, 17px)',
-                fontWeight: 600,
-                color: '#FFFFFF',
-                background: '#1A3D2E',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 20px rgba(26, 61, 46, 0.25)',
-                transition: 'all 0.2s ease',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {t.hero.cta}
-            </Link>
-          </div>
-
-          <p style={{
-            fontSize: 'clamp(12px, 3vw, 14px)',
-            color: '#767676',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexWrap: 'wrap' as const,
-            gap: 'clamp(10px, 3vw, 20px)'
-          }}>
-            <span>✓ {t.hero.check1}</span>
-            <span>✓ {t.hero.check2}</span>
-            <span>✓ {t.hero.check3}</span>
-          </p>
-        </div>
-      </section>
+      <QuestionsBand />
 
       {/* Feature Cards */}
       <section style={{
@@ -300,7 +156,7 @@ export default function LandingPage() {
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
-              color: '#2C2420',
+              color: '#33302A',
               letterSpacing: '-0.03em',
               fontFamily: serifFont
             }}>
@@ -322,7 +178,7 @@ export default function LandingPage() {
               }}>
                 <div style={{
                   width: '100%',
-                  background: '#F5F0EB',
+                  background: '#F0EBE1',
                   overflow: 'hidden',
                 }}>
                   <Image
@@ -338,11 +194,11 @@ export default function LandingPage() {
                   />
                 </div>
                 <div style={{ padding: '28px 24px' }}>
-                  <div style={{ width: '24px', height: '2px', background: '#B8922D', marginBottom: '16px' }} />
+                  <div style={{ width: '24px', height: '2px', background: '#8A6A45', marginBottom: '16px' }} />
                   <h3 style={{
                     fontSize: '20px',
                     fontWeight: 600,
-                    color: '#2C2420',
+                    color: '#33302A',
                     marginBottom: '10px',
                     letterSpacing: '-0.01em',
                     fontFamily: serifFont
@@ -376,7 +232,7 @@ export default function LandingPage() {
           <h2 style={{
             fontSize: '13px',
             fontWeight: 600,
-            color: '#9B8B7A',
+            color: '#8A6A45',
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             marginBottom: '16px',
@@ -407,7 +263,7 @@ export default function LandingPage() {
             <p style={{
               fontSize: '13px',
               fontWeight: 600,
-              color: '#B8922D',
+              color: '#8A6A45',
               letterSpacing: '0.15em',
               textTransform: 'uppercase',
               marginBottom: '16px',
@@ -417,7 +273,7 @@ export default function LandingPage() {
             <h2 style={{
               fontSize: 'clamp(28px, 5vw, 40px)',
               fontWeight: 700,
-              color: '#F5F0EB',
+              color: '#F0EBE1',
               letterSpacing: '-0.03em',
               fontFamily: serifFont,
               lineHeight: 1.3,
@@ -482,7 +338,7 @@ export default function LandingPage() {
               <p style={{
                 fontSize: 'clamp(44px, 10vw, 72px)',
                 fontWeight: 800,
-                color: '#B8922D',
+                color: '#8A6A45',
                 fontFamily: serifFont,
                 lineHeight: 1,
                 marginBottom: '12px',
@@ -493,7 +349,7 @@ export default function LandingPage() {
               <p style={{
                 fontSize: '16px',
                 fontWeight: 600,
-                color: '#F5F0EB',
+                color: '#F0EBE1',
                 marginBottom: '12px',
               }}>
                 {t.precision.sajuLabel}
@@ -522,7 +378,7 @@ export default function LandingPage() {
               <span style={{
                 fontSize: 'clamp(48px, 10vw, 72px)',
                 fontWeight: 800,
-                color: '#B8922D',
+                color: '#8A6A45',
                 fontFamily: serifFont,
                 letterSpacing: '-0.04em',
                 lineHeight: 1,
@@ -547,7 +403,7 @@ export default function LandingPage() {
             <p style={{
               fontSize: 'clamp(18px, 4vw, 24px)',
               fontWeight: 600,
-              color: '#F5F0EB',
+              color: '#F0EBE1',
               fontFamily: serifFont,
               letterSpacing: '-0.02em',
               lineHeight: 1.5,
@@ -573,7 +429,7 @@ export default function LandingPage() {
             <h2 style={{
               fontSize: 'clamp(26px, 5vw, 36px)',
               fontWeight: 700,
-              color: '#2C2420',
+              color: '#33302A',
               letterSpacing: '-0.03em',
               fontFamily: serifFont,
               lineHeight: 1.35,
@@ -609,7 +465,7 @@ export default function LandingPage() {
                 <h3 style={{
                   fontSize: '17px',
                   fontWeight: 600,
-                  color: '#2C2420',
+                  color: '#33302A',
                   marginBottom: '10px',
                   lineHeight: 1.4,
                   fontFamily: serifFont,
@@ -651,7 +507,7 @@ export default function LandingPage() {
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
-              color: '#2C2420',
+              color: '#33302A',
               letterSpacing: '-0.03em',
               fontFamily: serifFont
             }}>
@@ -675,7 +531,7 @@ export default function LandingPage() {
                 <h3 style={{
                   fontSize: '18px',
                   fontWeight: 600,
-                  color: '#2C2420',
+                  color: '#33302A',
                   marginBottom: '8px',
                   letterSpacing: '-0.02em'
                 }}>
@@ -683,7 +539,7 @@ export default function LandingPage() {
                 </h3>
                 <p style={{
                   fontSize: '15px',
-                  color: '#666666',
+                  color: '#78715F',
                   lineHeight: 1.7,
                   margin: 0
                 }}>
@@ -708,21 +564,7 @@ export default function LandingPage() {
             }}>
               {t.problems.bridge || '아이의 타고난 기질을 알면, 답이 보입니다.'}
             </p>
-            <Link href="/saju/input" style={{
-                padding: '14px 36px',
-                fontSize: '16px',
-                fontWeight: 600,
-                color: '#FFFFFF',
-                background: '#1A3D2E',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(26, 61, 46, 0.12)',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+            <Link href="/saju/input" className="df-btn df-btn--primary" style={{ padding: '15px 36px', fontSize: '16px' }}>
                 {t.problems.cta || '3분 무료 분석 시작하기'}
             </Link>
           </div>
@@ -732,7 +574,7 @@ export default function LandingPage() {
       {/* Founder Story */}
       <section style={{
         width: '100%',
-        background: '#FEFDFB',
+        background: '#F7F4EE',
         padding: 'clamp(48px, 10vw, 100px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
@@ -763,7 +605,7 @@ export default function LandingPage() {
             <h2 style={{
               fontSize: 'clamp(24px, 3.5vw, 32px)',
               fontWeight: 700,
-              color: '#2C2420',
+              color: '#33302A',
               letterSpacing: '-0.03em',
               marginBottom: '24px',
               fontFamily: serifFont,
@@ -801,7 +643,7 @@ export default function LandingPage() {
                 width: '48px',
                 height: '48px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #1A3D2E, #2C5238)',
+                background: 'linear-gradient(135deg, #33302A, #2C5238)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -814,7 +656,7 @@ export default function LandingPage() {
                 <p style={{
                   fontSize: '16px',
                   fontWeight: 700,
-                  color: '#2C2420',
+                  color: '#33302A',
                   margin: '0 0 4px'
                 }}>
                   {t.founder.name}
@@ -844,7 +686,7 @@ export default function LandingPage() {
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
-              color: '#2C2420',
+              color: '#33302A',
               letterSpacing: '-0.03em',
               fontFamily: serifFont
             }}>
@@ -870,7 +712,7 @@ export default function LandingPage() {
                     width: '40px',
                     height: '40px',
                     borderRadius: '50%',
-                    background: '#1A3D2E',
+                    background: '#33302A',
                     color: '#FFFFFF',
                     fontSize: '14px',
                     fontWeight: 700,
@@ -931,22 +773,7 @@ export default function LandingPage() {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '64px' }}>
-            <Link href="/saju/input" style={{
-                height: '60px',
-                padding: '0 48px',
-                fontSize: '17px',
-                fontWeight: 600,
-                color: '#FFFFFF',
-                background: '#1A3D2E',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 20px rgba(26, 61, 46, 0.25)',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+            <Link href="/saju/input" className="df-btn df-btn--primary" style={{ padding: '15px 36px', fontSize: '16px' }}>
                 {t.howItWorks.cta}
             </Link>
           </div>
@@ -964,7 +791,7 @@ export default function LandingPage() {
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
-              color: '#2C2420',
+              color: '#33302A',
               letterSpacing: '-0.03em',
               fontFamily: serifFont
             }}>
@@ -995,7 +822,7 @@ export default function LandingPage() {
                 </span>
                 <p style={{
                   fontSize: '20px',
-                  color: '#2C2420',
+                  color: '#33302A',
                   lineHeight: 1.8,
                   fontFamily: serifFont,
                   marginBottom: '16px',
@@ -1003,7 +830,7 @@ export default function LandingPage() {
                 }}>
                   &ldquo;{t.testimonials.items[0].quote}&rdquo;
                 </p>
-                <p style={{ fontSize: '14px', color: '#9B8B7A' }}>
+                <p style={{ fontSize: '14px', color: '#8A6A45' }}>
                   — {t.testimonials.items[0].author}
                 </p>
               </div>
@@ -1045,7 +872,7 @@ export default function LandingPage() {
                     }}>
                       &ldquo;{item.quote}&rdquo;
                     </p>
-                    <p style={{ fontSize: '13px', color: '#9B8B7A', margin: 0 }}>
+                    <p style={{ fontSize: '13px', color: '#8A6A45', margin: 0 }}>
                       — {item.author}
                     </p>
                   </div>
@@ -1073,7 +900,7 @@ export default function LandingPage() {
           <h2 style={{
             fontSize: '28px',
             fontWeight: 700,
-            color: '#2C2420',
+            color: '#33302A',
             marginBottom: '14px',
             letterSpacing: '-0.02em',
             fontFamily: serifFont
@@ -1082,7 +909,7 @@ export default function LandingPage() {
           </h2>
           <p style={{
             fontSize: '16px',
-            color: '#666666',
+            color: '#78715F',
             marginBottom: '32px',
             lineHeight: 1.6,
             whiteSpace: 'pre-line'
@@ -1097,15 +924,15 @@ export default function LandingPage() {
               fontSize: '15px',
               fontWeight: 600,
               color: '#FFFFFF',
-              background: '#2D3A35',
+              background: '#33302A',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '6px',
               cursor: 'pointer',
-              boxShadow: '0 2px 12px rgba(45, 58, 53, 0.2)',
+              boxShadow: '0 2px 12px rgba(51, 48, 42, 0.15)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '10px',
-              transition: 'all 0.2s ease'
+              transition: 'background 0.2s ease, transform 0.2s ease'
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -1118,7 +945,7 @@ export default function LandingPage() {
       <section data-reveal style={{
         ...revealStyle,
         width: '100%',
-        background: '#FEFDFB',
+        background: '#F7F4EE',
         padding: 'clamp(40px, 8vw, 60px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -1159,7 +986,7 @@ export default function LandingPage() {
         }}>
           <div style={{ maxWidth: '720px', margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-              <span style={{ display: 'inline-block', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#B8922D', fontWeight: 600, marginBottom: '12px' }}>
+              <span style={{ display: 'inline-block', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8A6A45', fontWeight: 600, marginBottom: '12px' }}>
                 {(t as any).sampleExcerpt.badge}
               </span>
               <h2 style={{ fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 700, color: '#2A2420', fontFamily: 'serif', margin: '0 0 12px' }}>
@@ -1171,7 +998,7 @@ export default function LandingPage() {
             </div>
 
             <div style={{ background: '#FFFFFF', border: '1px solid rgba(184,146,45,0.18)', borderRadius: '14px', padding: 'clamp(20px, 4vw, 32px)', boxShadow: '0 8px 30px rgba(42,36,32,0.06)' }}>
-              <div style={{ fontSize: '13px', color: '#B8922D', fontWeight: 600, marginBottom: '18px' }}>
+              <div style={{ fontSize: '13px', color: '#8A6A45', fontWeight: 600, marginBottom: '18px' }}>
                 {(t as any).sampleExcerpt.section}
               </div>
               {(t as any).sampleExcerpt.items.map((it: { mis: string; real: string; better: string }, i: number) => (
@@ -1183,7 +1010,7 @@ export default function LandingPage() {
                     <strong style={{ color: '#8A6D1F' }}>{(t as any).sampleExcerpt.real}:</strong> {it.real}
                   </p>
                   <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.7, color: '#2A2420' }}>
-                    <strong style={{ color: '#1A3D2E' }}>{(t as any).sampleExcerpt.better}:</strong> {it.better}
+                    <strong style={{ color: '#33302A' }}>{(t as any).sampleExcerpt.better}:</strong> {it.better}
                   </p>
                 </div>
               ))}
@@ -1255,7 +1082,7 @@ export default function LandingPage() {
                     color: '#AAAAAA',
                     marginBottom: '16px'
                   }}>
-                    <span style={{ color: '#1A3D2E', fontSize: '18px' }}>✓</span> {item}
+                    <span style={{ color: '#33302A', fontSize: '18px' }}>✓</span> {item}
                   </li>
                 ))}
               </ul>
@@ -1268,7 +1095,7 @@ export default function LandingPage() {
                   color: '#FFFFFF',
                   background: 'transparent',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '10px',
+                  borderRadius: '6px',
                   cursor: 'pointer',
                   textDecoration: 'none',
                   alignItems: 'center',
@@ -1281,7 +1108,7 @@ export default function LandingPage() {
             {/* Premium */}
             <div data-reveal style={{
               ...revealDelayStyle(2),
-              background: '#1A3D2E',
+              background: '#33302A',
               borderRadius: '24px',
               padding: '40px 32px',
               position: 'relative',
@@ -1293,7 +1120,7 @@ export default function LandingPage() {
                 top: '-14px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                background: '#B8922D',
+                background: '#8A6A45',
                 color: '#FFFFFF',
                 fontSize: '12px',
                 fontWeight: 600,
@@ -1358,10 +1185,10 @@ export default function LandingPage() {
                   height: '52px',
                   fontSize: '15px',
                   fontWeight: 600,
-                  color: '#1A3D2E',
+                  color: '#33302A',
                   background: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '10px',
+                  borderRadius: '6px',
                   cursor: 'pointer',
                   textDecoration: 'none',
                   alignItems: 'center',
@@ -1372,7 +1199,7 @@ export default function LandingPage() {
             </div>
           </div>
           {t.pricing.currencyNote && (
-            <p data-reveal style={{ ...revealStyle, textAlign: 'center', fontSize: '12px', color: '#9B8B7A', marginTop: '16px' }}>
+            <p data-reveal style={{ ...revealStyle, textAlign: 'center', fontSize: '12px', color: '#8A6A45', marginTop: '16px' }}>
               {t.pricing.currencyNote}
             </p>
           )}
@@ -1382,7 +1209,7 @@ export default function LandingPage() {
       {/* FAQ */}
       <section style={{
         width: '100%',
-        background: '#FEFDFB',
+        background: '#F7F4EE',
         padding: 'clamp(60px, 12vw, 120px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '640px', margin: '0 auto' }}>
@@ -1390,7 +1217,7 @@ export default function LandingPage() {
             <h2 style={{
               fontSize: '36px',
               fontWeight: 700,
-              color: '#2C2420',
+              color: '#33302A',
               letterSpacing: '-0.03em',
               fontFamily: serifFont
             }}>
@@ -1423,20 +1250,20 @@ export default function LandingPage() {
                   <span style={{
                     fontSize: '16px',
                     fontWeight: 500,
-                    color: '#2C2420'
+                    color: '#33302A'
                   }}>{item.q}</span>
                   <span style={{
                     width: '28px',
                     height: '28px',
                     borderRadius: '8px',
-                    background: openFaq === idx ? '#1A3D2E' : '#F5EFED',
+                    background: openFaq === idx ? '#33302A' : '#F5EFED',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: openFaq === idx ? '#FFFFFF' : '#666666',
+                    color: openFaq === idx ? '#FFFFFF' : '#78715F',
                     fontSize: '18px',
                     fontWeight: 600,
-                    transition: 'all 0.2s',
+                    transition: 'color 0.2s ease, transform 0.2s ease',
                     flexShrink: 0
                   }}>
                     {openFaq === idx ? '−' : '+'}
@@ -1446,7 +1273,7 @@ export default function LandingPage() {
                   <div style={{ padding: '0 28px 24px' }}>
                     <p style={{
                       fontSize: '15px',
-                      color: '#666666',
+                      color: '#78715F',
                       lineHeight: 1.8,
                       margin: 0
                     }}>
@@ -1464,7 +1291,7 @@ export default function LandingPage() {
       <section data-reveal style={{
         ...revealStyle,
         width: '100%',
-        background: '#1A3D2E',
+        background: '#33302A',
         padding: 'clamp(48px, 10vw, 100px) clamp(20px, 5vw, 40px)'
       }}>
         <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
@@ -1497,12 +1324,12 @@ export default function LandingPage() {
                 padding: '0 48px',
                 fontSize: '17px',
                 fontWeight: 600,
-                color: '#1A3D2E',
+                color: '#33302A',
                 background: '#FFFFFF',
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                boxShadow: 'none',
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1518,14 +1345,14 @@ export default function LandingPage() {
                 fontSize: '17px',
                 fontWeight: 600,
                 color: '#FFFFFF',
-                background: '#2D3A35',
+                background: '#33302A',
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: '6px',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: '0 4px 20px rgba(45, 58, 53, 0.2)'
+                boxShadow: '0 4px 20px rgba(51, 48, 42, 0.15)'
               }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>

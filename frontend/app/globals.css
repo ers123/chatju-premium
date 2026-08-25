@@ -887,6 +887,86 @@ h4 {
   color: var(--df-pencil);
 }
 
+/* --- Landing hero (Phase 2) --------------------------------- */
+
+.df-hero-grid {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  min-height: 560px;
+  background: var(--df-wall);
+}
+.df-hero-rail { min-height: 100%; }
+.df-hero-body {
+  align-self: center;
+  padding: 56px 40px 64px 200px;
+  max-width: 860px;
+}
+.df-hero-title {
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  font-size: clamp(32px, 4.8vw, 48px);
+  font-weight: 900;
+  color: var(--df-ink);
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+  margin-bottom: 22px;
+  word-break: keep-all;
+}
+.df-hero-accent { box-shadow: inset 0 -14px 0 rgba(233, 184, 76, 0.38); }
+.df-hero-sub {
+  font-size: clamp(15px, 1.8vw, 18px);
+  color: var(--df-muted);
+  line-height: 1.75;
+  margin-bottom: 16px;
+}
+.df-hero-quote {
+  font-family: var(--df-font-pencil);
+  font-size: clamp(15px, 1.9vw, 19px);
+  color: var(--df-wood-deep);
+  line-height: 1.8;
+  white-space: pre-line;
+  margin-bottom: clamp(26px, 4vw, 40px);
+}
+@media (max-width: 700px) {
+  .df-hero-grid { grid-template-columns: 44px minmax(0, 1fr); }
+  .df-hero-body { padding: 40px 20px 48px 88px; }
+  .df-hero-rail .df-mark__label {
+    font-size: 12px;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* floating questions band (E-copy) */
+.df-questions {
+  position: relative;
+  padding: clamp(56px, 9vw, 96px) 24px;
+  background: var(--df-wall-deep);
+  overflow: hidden;
+}
+.df-qfloat {
+  position: absolute;
+  font-family: var(--df-font-pencil);
+  color: #B4AC9A;
+  white-space: nowrap;
+  user-select: none;
+  animation: df-drift 8s ease-in-out infinite alternate;
+}
+@keyframes df-drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-10px); }
+}
+.df-questions__core {
+  position: relative;
+  z-index: 2;
+  max-width: 620px;
+  margin: 0 auto;
+  text-align: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .df-qfloat { animation: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .df-btn--primary,
   .df-btn--primary::before,

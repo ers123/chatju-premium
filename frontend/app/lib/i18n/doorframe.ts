@@ -28,6 +28,14 @@ export interface DoorframeCopy {
   drawLast: string
   /** casting overlay pillar names */
   pillars: [string, string, string, string]
+  /** landing questions band (E-copy) */
+  band: {
+    floats: string[]
+    title1: string
+    titleAccent: string
+    title2: string
+    sub: string
+  }
 }
 
 const ko: DoorframeCopy = {
@@ -52,6 +60,21 @@ const ko: DoorframeCopy = {
   drawNext: '눈금 긋고 다음으로',
   drawLast: '이제 풀이를 시작할게요',
   pillars: ['년주', '월주', '일주', '시주'],
+  band: {
+    floats: [
+      '왜 이렇게 낯을 가릴까',
+      '누굴 닮은 걸까',
+      '혼자 노는 걸 좋아하는 게 괜찮은 걸까',
+      '왜 한 가지에만 저렇게 빠져들까',
+      '내가 잘 키우고 있는 걸까',
+      '뭘 좋아하는 아이로 자랄까',
+      '동생이랑은 왜 이렇게 다를까',
+    ],
+    title1: '아이에 대한 질문이 많다는 건,',
+    titleAccent: '그만큼 깊이 보고 있다',
+    title2: '는 뜻입니다',
+    sub: '그 질문들에, 태어난 순간의 기록으로 답해 드립니다.',
+  },
 }
 
 const en: DoorframeCopy = {
@@ -76,6 +99,21 @@ const en: DoorframeCopy = {
   drawNext: 'Draw the mark, continue',
   drawLast: 'Begin the reading',
   pillars: ['Year', 'Month', 'Day', 'Hour'],
+  band: {
+    floats: [
+      'Why so shy with strangers?',
+      'Who do they take after?',
+      'Is it okay that they love playing alone?',
+      'Why do they fixate on one thing?',
+      'Am I raising them well?',
+      'What will they grow to love?',
+      'Why are they so different from their sibling?',
+    ],
+    title1: 'Having many questions about your child means',
+    titleAccent: 'you are watching them closely',
+    title2: '',
+    sub: 'We answer those questions with the record of the moment they were born.',
+  },
 }
 
 const byLang: Partial<Record<Language, DoorframeCopy>> = { ko, en }
