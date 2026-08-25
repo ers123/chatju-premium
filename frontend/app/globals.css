@@ -518,6 +518,23 @@ h4 {
   outline-offset: 2px;
 }
 
+/* CTAs are <Link>s: the global `a:visited { color: inherit }` (mobile-Safari
+   purple guard) made visited primary buttons render ink-on-ink. Pin the text
+   color across every link state, same technique as .logo-link above. */
+a.df-btn--primary,
+a.df-btn--primary:visited,
+a.df-btn--primary:active,
+a.df-btn--primary:hover {
+  color: var(--df-wall) !important;
+  -webkit-text-fill-color: var(--df-wall) !important;
+}
+a.df-btn--secondary,
+a.df-btn--secondary:visited,
+a.df-btn--secondary:active {
+  color: var(--df-ink) !important;
+  -webkit-text-fill-color: var(--df-ink) !important;
+}
+
 .df-btn--primary {
   position: relative;
   background: var(--df-ink);
@@ -933,13 +950,12 @@ h4 {
 }
 @media (max-width: 700px) {
   .df-hero-grid { grid-template-columns: 44px minmax(0, 1fr); }
-  .df-hero-body { padding: 40px 20px 48px 88px; }
-  .df-hero-rail .df-mark__label {
-    font-size: 12px;
-    max-width: 140px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  /* The hero rail keeps its presence but drops its labels: at phone widths the
+     pencil captions overlapped the headline column. The input form's rail still
+     shows labels — there the marks ARE the feedback. */
+  .df-hero-body { padding: 40px 20px 48px 26px; }
+  .df-hero-rail .df-mark__label { display: none; }
+  .df-journal { margin-left: -10px; margin-right: -10px; }
 }
 
 /* hero journal note — D-direction's diary card, filling the hero's right half */
@@ -952,18 +968,18 @@ h4 {
 .df-hero-body.df-hero-cols { max-width: 1240px; }
 .df-hero-cols > div:first-child { flex: 1 1 auto; min-width: 0; }
 .df-journal {
-  flex: 0 0 340px;
+  flex: 0 0 420px;
   position: relative;
   background: var(--df-paper);
   border: 1px solid var(--df-hair);
   border-radius: 4px;
-  padding: 30px 26px 34px;
+  padding: 38px 34px 42px;
   box-shadow: 0 14px 30px -18px rgba(51, 48, 42, 0.35);
   transform: rotate(0.8deg);
   font-family: var(--df-font-pencil);
   color: #2F4858;
-  font-size: 19px;
-  line-height: 1.75;
+  font-size: 22px;
+  line-height: 1.8;
 }
 .df-journal::before {
   content: "";
@@ -975,7 +991,7 @@ h4 {
   height: 24px;
   background: rgba(240, 214, 138, 0.55);
 }
-.df-journal__date { font-size: 15px; opacity: 0.65; margin-bottom: 4px; }
+.df-journal__date { font-size: 16px; opacity: 0.65; margin-bottom: 6px; }
 .df-journal__line { margin: 0; }
 .df-journal__underline {
   font-weight: 700;
@@ -994,7 +1010,20 @@ h4 {
   white-space: nowrap;
 }
 @media (max-width: 1020px) {
-  .df-journal { display: none; }
+  /* stack under the hero copy instead of hiding — the note is the emotional
+     proof, mobile parents should see it too */
+  .df-hero-cols { flex-direction: column; align-items: flex-start; }
+  .df-journal {
+    flex: none;
+    /* escape the rail gutter the hero body reserves — the note needs the
+       full column width to stay readable at phone sizes */
+    width: auto;
+    align-self: stretch;
+    margin: 30px -8px 14px -88px;
+    font-size: 19px;
+    padding: 28px 24px 30px;
+  }
+  .df-journal__margin { right: 4px; }
 }
 
 /* floating questions band (E-copy) */
