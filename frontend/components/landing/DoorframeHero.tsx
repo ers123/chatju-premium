@@ -32,8 +32,14 @@ export default function DoorframeHero() {
 
   return (
     <>
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b [border-color:var(--df-hair)]"
+      {/* Nav + banner as one sticky stack. They used to be two `fixed` bars with
+          the banner pinned at a hard-coded top:72px and the hero compensating
+          with a fixed 118px padding — on mobile the legacy CSS shrinks the nav
+          to 56px and the banner wraps to two lines, so the headline ended up
+          underneath the bars. Sticky occupies real layout space, so the hero
+          starts below them no matter how tall the banner grows. */}
+      <div className="df-topbar">
+      <nav className="border-b [border-color:var(--df-hair)]"
         style={{ background: 'rgba(247, 244, 238, 0.94)', backdropFilter: 'blur(16px)' }}>
         <div className="mx-auto max-w-[1100px] h-[72px] px-5 sm:px-10 flex items-center justify-between">
           <Link href="/" className="logo-link flex items-center gap-1.5 no-underline">
@@ -50,12 +56,13 @@ export default function DoorframeHero() {
       </nav>
 
       {/* Free beta banner */}
-      <div className="fixed top-[72px] left-0 right-0 z-40 py-2.5 px-5 text-center [background:var(--df-wood-deep)]">
+      <div className="py-2.5 px-5 text-center [background:var(--df-wood-deep)]">
         <span className="text-sm font-medium" style={{ color: '#F7F4EE' }}>{t.banner}</span>
+      </div>
       </div>
 
       {/* Hero — doorframe on the left, the promise on the right */}
-      <section className="df-hero-grid" style={{ paddingTop: '118px', ...pencilFontStyle(lang) }}>
+      <section className="df-hero-grid" style={pencilFontStyle(lang)}>
         <Rail marks={heroMarks} className="df-hero-rail" />
         <div className="df-hero-body df-hero-cols">
           <div>

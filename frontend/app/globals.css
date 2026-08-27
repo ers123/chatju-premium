@@ -911,6 +911,11 @@ a.df-btn--secondary:active {
 
 /* --- Landing hero (Phase 2) --------------------------------- */
 
+.df-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
 .df-hero-grid {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr);
@@ -953,9 +958,8 @@ a.df-btn--secondary:active {
   /* The hero rail keeps its presence but drops its labels: at phone widths the
      pencil captions overlapped the headline column. The input form's rail still
      shows labels — there the marks ARE the feedback. */
-  .df-hero-body { padding: 40px 20px 48px 26px; }
+  .df-hero-body { padding: 36px 20px 44px 22px; }
   .df-hero-rail .df-mark__label { display: none; }
-  .df-journal { margin-left: -10px; margin-right: -10px; }
 }
 
 /* hero journal note — D-direction's diary card, filling the hero's right half */
@@ -1013,17 +1017,19 @@ a.df-btn--secondary:active {
   /* stack under the hero copy instead of hiding — the note is the emotional
      proof, mobile parents should see it too */
   .df-hero-cols { flex-direction: column; align-items: flex-start; }
+  /* the journal note carries the handwritten voice here; running the pull
+     quote as well put two pencil blocks back to back and pushed the CTA down */
+  .df-hero-quote { display: none; }
   .df-journal {
     flex: none;
-    /* escape the rail gutter the hero body reserves — the note needs the
-       full column width to stay readable at phone sizes */
-    width: auto;
+    width: 100%;
     align-self: stretch;
-    margin: 30px -8px 14px -88px;
-    font-size: 19px;
-    padding: 28px 24px 30px;
+    margin: 26px 0 20px;
+    font-size: 18px;
+    padding: 26px 22px 28px;
+    transform: rotate(0.5deg);
   }
-  .df-journal__margin { right: 4px; }
+  .df-journal__margin { right: 2px; bottom: -20px; font-size: 13px; }
 }
 
 /* floating questions band (E-copy) */
@@ -1118,7 +1124,10 @@ a.df-btn--secondary:active {
   }
 
   /* Hero section - enough room for fixed nav + banner */
-  section:first-of-type {
+  /* Was compensating for the old fixed nav+banner. The doorframe hero is a
+     sticky-stack page now, so this would double the gap — scope it to legacy
+     inline-styled pages (blog, legal) that still use fixed bars. */
+  section:first-of-type:not(.df-hero-grid) {
     padding-top: 150px !important;
   }
 
