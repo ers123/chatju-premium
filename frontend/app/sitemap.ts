@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getAllPosts } from '@/lib/blog'
+import { BLOG_LANGS, getAllPosts, getLangsForSlug, postUrl, blogIndexUrl } from '@/lib/blog'
 
 // Required for output: export — the sitemap is generated at build time.
 export const dynamic = 'force-static'
@@ -40,19 +40,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
   }
 
-  entries.push({
-    url: `${SITE}/blog/`,
-    changeFrequency: 'weekly',
-    priority: 0.8,
-  })
-
-  for (const post of getAllPosts()) {
+  // Blog index, per published language.
+  for (const lang of BLOG_LANGS) {
+    if (getAllPosts(lang).length === 0) continue
     entries.push({
-      url: `${SITE}/blog/${post.slug}/`,
-      lastModified: post.date ? new Date(post.date) : undefined,
-      changeFrequency: 'monthly',
-      priority: 0.7,
+      url: `${SITE}${blogIndexUrl(lang)}`,
+      changeFrequency: 'weekly',
+      priority: 0.8,
     })
+  }
+
+  // Posts, per language, each carrying hreflang for the translations that
+  // actually exist — never for one that is only planned.
+  for (const lang of BLOG_LANGS) {
+    for (const post of getAllPosts(lang)) {
+      const langs = getLangsForSlug(post.slug)
+      const languages: Record<string, string> = {}
+      for (const l of langs) languages[l] = `${SITE}${postUrl(post.slug, l)}`
+      if (langs.includes('en')) languages['x-default'] = `${SITE}${postUrl(post.slug, 'en')}`
+
+      entries.push({
+        url: `${SITE}${postUrl(post.slug, lang)}`,
+        lastModified: post.date ? new Date(post.date) : undefined,
+        changeFrequency: 'monthly',
+        priority: lang === 'en' ? 0.7 : 0.65,
+        ...(langs.length > 1 ? { alternates: { languages } } : {}),
+      })
+    }
   }
 
   return entries
