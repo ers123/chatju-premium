@@ -59,7 +59,13 @@ function buildFullGraph(lang: Language) {
           "addressCountry": "KR"
         },
         "taxID": "341-15-02349",
-        "sameAs": [BASE_URL, "mailto:support@somyung.cc"],
+        // Real external profiles, not the self URL and a mailto — see the note
+        // in jsonld-site.ts. Entity disambiguation is the whole point here.
+        "sameAs": [
+          "https://github.com/ers123/somyung-saju-mcp",
+          "https://www.npmjs.com/package/somyung-saju-mcp",
+          "https://smithery.ai/servers/harmonyon24/somyung-saju"
+        ],
         "knowsAbout": ["Saju", "Four Pillars of Destiny", "사주팔자", "Korean Astrology", "Child Temperament Analysis", "Myeongri Psychology"],
         "founder": {
           "@type": "Person",

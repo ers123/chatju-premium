@@ -19,9 +19,15 @@ export const organizationNode = {
     "addressCountry": "KR"
   },
   "taxID": "341-15-02349",
+  // sameAs exists to tie this entity to its profiles on OTHER sites, which is
+  // what lets a search engine or model tell this SoMyung apart from the
+  // manufacturer, the two churches and the webtoon character that share the
+  // name. The self URL and the mailto did neither — `url` and `email` already
+  // carry those — so they are replaced with the real external profiles.
   "sameAs": [
-    "https://somyung.cc",
-    "mailto:support@somyung.cc"
+    "https://github.com/ers123/somyung-saju-mcp",
+    "https://www.npmjs.com/package/somyung-saju-mcp",
+    "https://smithery.ai/servers/harmonyon24/somyung-saju"
   ],
   "knowsAbout": ["Saju", "Four Pillars of Destiny", "사주팔자", "Korean Astrology", "Child Temperament Analysis", "Myeongri Psychology"],
   "founder": {
