@@ -2,6 +2,13 @@ import { Language, translations } from './translations'
 
 const BASE_URL = 'https://somyung.cc'
 
+// Only ko and ja have their own market artwork; everything else uses the English hero.
+const PRODUCT_IMAGE: Partial<Record<Language, string>> & { en: string } = {
+  en: '/assets/images/marketing/og-hero-en.png',
+  ko: '/assets/images/marketing/og-hero-ko.png',
+  ja: '/assets/images/marketing/og-hero-ja.png',
+}
+
 function langUrl(lang: Language, path: string = '/'): string {
   return `${BASE_URL}/${lang}${path === '/' ? '/' : path}`
 }
@@ -101,6 +108,10 @@ function buildFullGraph(lang: Language) {
         "@type": "Product",
         "@id": `${BASE_URL}/#premium-report`,
         "name": "SoMyung Premium Saju Report",
+        // Required by Google for Product structured data — its absence was the
+        // one critical issue in the Merchant listings report. Matches the
+        // per-market OG art where one exists.
+        "image": [`${BASE_URL}${PRODUCT_IMAGE[lang] || PRODUCT_IMAGE.en}`],
         "description": "An 8-section deep-dive child temperament analysis based on Saju (Four Pillars of Destiny).",
         "url": BASE_URL,
         "brand": { "@type": "Brand", "name": "SoMyung" },

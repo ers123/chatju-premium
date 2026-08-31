@@ -125,6 +125,9 @@ export const productNode = {
   "@type": "Product",
   "@id": "https://somyung.cc/#premium-report",
   "name": "SoMyung Premium Saju Report",
+  // Required by Google for Product structured data — its absence was the one
+  // critical issue in the Merchant listings report.
+  "image": ["https://somyung.cc/assets/images/marketing/og-hero-en.png"],
   "description": "An 8-section deep-dive child temperament analysis based on Saju (Four Pillars of Destiny). Includes parent-child relationship guide, age-specific parenting advice with conversation scripts, aptitude tendencies, life-cycle themes with monthly guidance, a 7-day parenting experiment, and a shareable parenting card.",
   "url": "https://somyung.cc",
   "brand": {
