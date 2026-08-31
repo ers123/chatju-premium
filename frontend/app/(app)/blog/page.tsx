@@ -1,6 +1,21 @@
 import Link from 'next/link'
 import { getAllPosts } from '@/lib/blog'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Blog — SoMyung',
+  description: 'Articles on Saju, the Five Elements, and understanding a child\'s innate temperament.',
+  alternates: { canonical: 'https://somyung.cc/blog/' },
+  openGraph: {
+    title: 'SoMyung Blog',
+    description: 'Articles on Saju, the Five Elements, and understanding a child\'s innate temperament.',
+    url: 'https://somyung.cc/blog/',
+    siteName: 'SoMyung',
+    type: 'website',
+  },
+}
+
 
 export default function BlogIndex() {
   const posts = getAllPosts()

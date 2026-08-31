@@ -11,7 +11,13 @@ Created by a certified professional and parent of three.
 Supported languages: ko, en, ja, zh, vi, id, es, pt, fr, th
 Language-specific pages: /en, /ja, /zh, /vi, /id, /es, /pt, /fr, /th
 About page: /about (also /en/about, /ja/about, etc.)
-Price: Free preview + Premium report $4.99
+Pricing: Free preview for everyone. Premium report is a one-time purchase,
+priced per market (no subscription, no recurring charge):
+  en, zh, vi, id : US$19.99
+  ja             : JPY 2,480
+  es, pt, fr     : EUR 17.99
+  th             : THB 449
+  ko             : paid checkout unavailable in Korea — free preview and promo codes only
 
 ## Permissions
 Indexing: allowed

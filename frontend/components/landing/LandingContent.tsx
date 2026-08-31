@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import Footer from '@/components/Footer'
 import { useLanguage } from '@/app/lib/i18n/context'
@@ -67,11 +67,31 @@ function revealDelayStyle(delay: number): React.CSSProperties {
   }
 }
 
-// Animated counter hook — counts from 0 to target on scroll
+// useLayoutEffect on the client, useEffect on the server (avoids the SSR warning).
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
+
+// Animated counter hook — counts from 0 to target on scroll.
+//
+// Seeded with `target`, NOT 0. These counters hold the two most quotable numbers
+// on the site (518,400 combinations / 32,400x). Seeding at 0 meant the server
+// rendered a literal "0" into the HTML, so crawlers, AI models and no-JS users
+// all saw "0 Saju combinations". The client resets to 0 in a layout effect —
+// before paint, so the animation still starts from zero with no visible flash.
 function useAnimatedCounter(target: number, duration: number = 2000) {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(target)
   const [triggered, setTriggered] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  useIsomorphicLayoutEffect(() => {
+    // Only zero out when we can actually animate back up. If the observer can
+    // never fire (no IntersectionObserver) or the user asked for reduced
+    // motion, keep the real number rather than stranding the page at "0".
+    const canAnimate =
+      typeof IntersectionObserver !== 'undefined' &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (canAnimate && !triggered) setCount(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const node = ref.current

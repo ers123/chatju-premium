@@ -1,10 +1,50 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import { getAllSlugs, getPostBySlug } from '@/lib/blog'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
+const SITE = 'https://somyung.cc'
+
 export function generateStaticParams() {
   return getAllSlugs().map(slug => ({ slug }))
+}
+
+// Without an explicit canonical here, posts inherit the (app) layout's
+// canonical (the Korean homepage), which tells crawlers every article is a
+// duplicate of the homepage and must not be indexed on its own.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const post = getPostBySlug(slug)
+  if (!post) return { title: 'Post not found — SoMyung', robots: { index: false, follow: false } }
+
+  const url = `${SITE}/blog/${post.slug}/`
+  return {
+    title: `${post.title} — SoMyung`,
+    description: post.description,
+    keywords: post.tags,
+    authors: [{ name: 'SungHa' }],
+    alternates: { canonical: url },
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      url,
+      siteName: 'SoMyung',
+      type: 'article',
+      publishedTime: post.date,
+      authors: ['SungHa'],
+      tags: post.tags,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.description,
+    },
+  }
 }
 
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
@@ -13,6 +53,30 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
 
   if (!post) {
     return <div style={{ padding: '100px', textAlign: 'center' }}>Post not found</div>
+  }
+
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': `${SITE}/blog/${post.slug}/#article`,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE}/blog/${post.slug}/` },
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.date,
+    keywords: post.tags.join(', '),
+    inLanguage: 'en',
+    author: {
+      '@type': 'Person',
+      name: 'SungHa',
+      jobTitle: 'Certified Myeongri Psychology Counselor (Level 1)',
+      url: `${SITE}/about`,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'SoMyung',
+      url: SITE,
+    },
   }
 
   return (
@@ -47,9 +111,14 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
         </div>
       </header>
 
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+
       {/* Article */}
       <article style={{ maxWidth: '720px', margin: '0 auto', padding: '60px 24px 80px' }}>
-        <time style={{ fontSize: '13px', color: '#9B8B7A', letterSpacing: '0.05em' }}>
+        <time dateTime={post.date} style={{ fontSize: '13px', color: '#9B8B7A', letterSpacing: '0.05em' }}>
           {new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
         </time>
 
