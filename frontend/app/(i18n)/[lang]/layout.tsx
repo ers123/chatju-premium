@@ -3,7 +3,7 @@ import '../../globals.css'
 import { LanguageProvider } from '../../lib/i18n/context'
 import { Language } from '../../lib/i18n/translations'
 import { getMetadataForLang } from '../../lib/i18n/metadata'
-import { getJsonLdForLang, getSpeakableJsonLd } from '../../lib/i18n/jsonld'
+import { getSiteJsonLdForLang } from '../../lib/i18n/jsonld'
 import GoogleAnalytics from '../../../components/GoogleAnalytics'
 import CookieConsent from '../../../components/CookieConsent'
 
@@ -31,8 +31,7 @@ export default async function I18nLayout({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
-  const jsonLd = getJsonLdForLang(lang as Language)
-  const speakable = getSpeakableJsonLd(lang as Language)
+  const jsonLd = getSiteJsonLdForLang(lang as Language)
 
   return (
     <html lang={lang} suppressHydrationWarning>
@@ -40,10 +39,6 @@ export default async function I18nLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(speakable) }}
         />
       </head>
       <body className="antialiased" suppressHydrationWarning>

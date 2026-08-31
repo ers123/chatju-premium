@@ -6,7 +6,32 @@ function langUrl(lang: Language, path: string = '/'): string {
   return `${BASE_URL}/${lang}${path === '/' ? '/' : path}`
 }
 
-export function getJsonLdForLang(lang: Language) {
+/**
+ * Site-wide entity nodes (Organization + WebSite) for a locale.
+ *
+ * FAQPage and Product describe the LANDING PAGE, not every localized route.
+ * Emitting them from the [lang] layout put the sales FAQ and a $19.99 Offer
+ * on all 30 localized about/privacy/terms pages — a Product Offer on a terms
+ * of service page is simply wrong markup.
+ */
+export function getSiteJsonLdForLang(lang: Language) {
+  const full = buildFullGraph(lang)
+  return {
+    "@context": "https://schema.org",
+    "@graph": full.filter(n => n["@type"] === "Organization" || n["@type"] === "WebSite"),
+  }
+}
+
+/** Landing-page-only nodes (FAQPage + Product) for a locale. */
+export function getLandingJsonLdForLang(lang: Language) {
+  const full = buildFullGraph(lang)
+  return {
+    "@context": "https://schema.org",
+    "@graph": full.filter(n => n["@type"] === "FAQPage" || n["@type"] === "Product"),
+  }
+}
+
+function buildFullGraph(lang: Language) {
   const t = translations[lang]
 
   const graph = {
@@ -91,7 +116,7 @@ export function getJsonLdForLang(lang: Language) {
     ]
   }
 
-  return graph
+  return graph["@graph"] as Array<Record<string, unknown> & { "@type": string }>
 }
 
 export function getSpeakableJsonLd(lang: Language) {
