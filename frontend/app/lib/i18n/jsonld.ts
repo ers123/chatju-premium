@@ -94,6 +94,10 @@ function buildFullGraph(lang: Language) {
         }))
       },
       {
+        // No `review` here: Google requires reviewRating on every Review, and
+        // these were self-authored anonymous testimonials without ratings —
+        // reported as invalid items, and self-serving reviews on your own
+        // Product are not eligible for review snippets anyway.
         "@type": "Product",
         "@id": `${BASE_URL}/#premium-report`,
         "name": "SoMyung Premium Saju Report",
@@ -106,12 +110,7 @@ function buildFullGraph(lang: Language) {
           "priceCurrency": "USD",
           "availability": "https://schema.org/InStock",
           "url": BASE_URL
-        },
-        "review": t.testimonials.items.map(item => ({
-          "@type": "Review",
-          "reviewBody": item.quote,
-          "author": { "@type": "Person", "name": item.author }
-        }))
+        }
       }
     ]
   }

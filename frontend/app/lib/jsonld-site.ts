@@ -116,6 +116,11 @@ export const faqNode = {
   ]
 }
 
+// No `review` nodes here. Google requires reviewRating on every Review, and
+// these were self-authored, anonymous testimonials with no ratings — 3 invalid
+// items in Search Console, and self-serving reviews on your own Product are
+// not eligible for review snippets in the first place. The legitimate path to
+// review rich results is aggregateRating built from the real rating widget.
 export const productNode = {
   "@type": "Product",
   "@id": "https://somyung.cc/#premium-report",
@@ -132,24 +137,7 @@ export const productNode = {
     "priceCurrency": "USD",
     "availability": "https://schema.org/InStock",
     "url": "https://somyung.cc"
-  },
-  "review": [
-    {
-      "@type": "Review",
-      "reviewBody": "My son and I fought every day. Once I learned we have completely opposite temperaments and took a step back first, real conversations finally started.",
-      "author": { "@type": "Person", "name": "Mom of a 8th-grader" }
-    },
-    {
-      "@type": "Review",
-      "reviewBody": "We tried three math tutoring centers. Turned out my daughter is a self-study type. Switching to online lessons made things so much easier for her.",
-      "author": { "@type": "Person", "name": "Mom of a 5th-grade girl" }
-    },
-    {
-      "@type": "Review",
-      "reviewBody": "I blamed myself for how sensitive my child was. Knowing it's an innate temperament gave me such peace of mind.",
-      "author": { "@type": "Person", "name": "Mom of a 7-year-old boy" }
-    }
-  ]
+  }
 }
 
 export const homeWebPageNode = {
@@ -173,11 +161,11 @@ export const homeWebPageNode = {
 /** Emitted on every (app) route. */
 export const siteGraph = {
   '@context': 'https://schema.org',
-  '@graph': [organizationNode, webSiteNode],
+  '@graph': [organizationNode, webSiteNode]
 }
 
 /** Emitted on the landing page only. */
 export const landingGraph = {
   '@context': 'https://schema.org',
-  '@graph': [faqNode, productNode, homeWebPageNode],
+  '@graph': [faqNode, productNode, homeWebPageNode]
 }
