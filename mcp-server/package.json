@@ -1,6 +1,6 @@
 {
   "name": "somyung-saju-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for Korean Saju (Four Pillars of Destiny) child temperament analysis",
   "type": "module",
   "main": "dist/index.js",
@@ -25,6 +25,10 @@
   ],
   "author": "SoMyung <support@somyung.cc>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ers123/somyung-saju-mcp.git"
+  },
   "homepage": "https://somyung.cc",
   "bugs": {
     "email": "support@somyung.cc"

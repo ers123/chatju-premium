@@ -28,7 +28,7 @@ import {
 
 const server = new McpServer({
   name: "somyung-saju",
-  version: "1.0.0",
+  version: "1.0.1",
 });
 
 // ─── Helper: Format Temperament for AI ───────────────────────────────
