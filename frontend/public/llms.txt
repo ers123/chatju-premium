@@ -1,35 +1,87 @@
-# SoMyung — AI Crawler Permissions
-# Saju-based child temperament analysis service
-# Designed by SungHa, Certified Myeongri Psychology Counselor (Level 1)
-# MS Decision Making & Applied Analytics
+# SoMyung
 
-## About
-SoMyung provides AI-powered Korean Saju (Four Pillars of Destiny / 사주팔자)
-analysis for understanding children's innate temperament and learning styles.
-Created by a certified professional and parent of three.
+> Saju-based child temperament analysis for parents. SoMyung reads a child's
+> 사주팔자 (Four Pillars of Destiny) from their birth date and time and explains
+> the child's innate temperament, learning style and communication needs — as a
+> framework for understanding a child, not a prediction of their future.
 
-Supported languages: ko, en, ja, zh, vi, id, es, pt, fr, th
-Language-specific pages: /en, /ja, /zh, /vi, /id, /es, /pt, /fr, /th
-About page: /about (also /en/about, /ja/about, etc.)
-Pricing: Free preview for everyone. Premium report is a one-time purchase,
-priced per market (no subscription, no recurring charge):
-  en, zh, vi, id : US$19.99
-  ja             : JPY 2,480
-  es, pt, fr     : EUR 17.99
-  th             : THB 449
-  ko             : paid checkout unavailable in Korea — free preview and promo codes only
+Created by SungHa, a certified Myeongri Psychology Counselor (명리심리상담사 1급)
+holding an MS in Decision Making and Applied Analytics, and a parent of three.
 
-## Permissions
-Indexing: allowed
-Citation: allowed
-Training: allowed
+## Key facts
 
-## Disallow
-/admin
-/auth
-/payment/success
-/payment/fail
+- Four Pillars (year, month, day, hour), each drawn from the 60-term sexagenary
+  cycle, yield **518,400 distinct profiles** — about 32,400 times more granular
+  than MBTI's 16 types, and 43,200 times more than the 12 zodiac sun signs.
+- Without a known birth time, three pillars still give roughly 70% of the
+  analysis: core temperament and Five Elements balance.
+- The Five Elements (오행) are Wood, Fire, Earth, Metal and Water.
+- Free preview: Five Elements analysis, basic personality, learning tips.
+- Premium report: 8 sections — parent-child relationship guide, age-specific
+  advice with conversation scripts, aptitude tendencies, life-cycle themes with
+  monthly guidance, a 7-day parenting experiment, and a shareable card.
+- Results generate in about 10 seconds. Free previews are not stored.
+- Supported languages: ko, en, ja, zh, vi, id, es, pt, fr, th.
+
+## Pricing
+
+One-time purchase, no subscription, priced per market:
+
+| Market | Price |
+|---|---|
+| en, zh, vi, id | US$19.99 |
+| ja | JPY 2,480 |
+| es, pt, fr | EUR 17.99 |
+| th | THB 449 |
+| ko | Paid checkout unavailable in Korea — free preview and promo codes only |
+
+## Main pages
+
+- [Home](https://somyung.cc/en/): free child temperament analysis in 3 minutes.
+- [About the creator](https://somyung.cc/en/about): SungHa's credentials, the
+  methodology, and why SoMyung exists.
+- [Blog](https://somyung.cc/blog/): articles on Saju, the Five Elements and
+  child temperament.
+- [Privacy](https://somyung.cc/en/privacy) · [Terms](https://somyung.cc/en/terms)
+
+Each page is available per language at /ko/, /en/, /ja/, /zh/, /vi/, /id/,
+/es/, /pt/, /fr/, /th/.
+
+## Articles
+
+- [Does Birth Time Affect Personality? What 1,000 Years of Korean Observation Says](https://somyung.cc/blog/birth-time-personality-science/): Skeptical about birth time and personality? Fair. Here's what 1,000 years of Korean Saju observation actually claims — and what modern research has found about chronotype, season of birth, and temperament.
+- [Best Study Methods for Your Child Based on Their Temperament](https://somyung.cc/blog/child-study-methods-by-personality/): Stop forcing one study method on every child. Korean Saju's Five Elements reveal why your child learns the way they do — and the study strategies that actually match their wiring.
+- [My Child Won't Sit Still: What Their Birth Chart Says About Their Energy](https://somyung.cc/blog/child-wont-sit-still/): Your child isn't misbehaving — they might just be wired differently. Korean Saju reveals why some children literally can't sit still, and what actually works instead of fighting it.
+- [Earth Element Child: The Steady Mountain — A Complete Parenting Guide](https://somyung.cc/blog/earth-element-child/): Your Earth element child is steady, nurturing, and loyal to the core. Learn how to support their need for stability while encouraging healthy growth and independence.
+- [Fire Element Child: The Passionate Flame — A Complete Parenting Guide](https://somyung.cc/blog/fire-element-child/): Your Fire element child is passionate, expressive, and full of energy. Learn how to nurture their flame without getting burned — personality, learning style, and parenting strategies.
+- [K-Astrology: The Next Korean Wave After K-Beauty and K-Pop](https://somyung.cc/blog/k-astrology-trend-2026/): K-Beauty redefined skincare. K-Pop redefined music. Now K-Astrology — Korean Saju — is going global, and it's changing how the world thinks about personality and parenting.
+- [Korean Astrology for Beginners: Everything You Need to Know About Saju](https://somyung.cc/blog/korean-astrology-beginners-guide/): New to Korean astrology? This beginner's guide explains Saju (Four Pillars of Destiny), the Five Elements, Heavenly Stems, and Earthly Branches in plain language.
+- [Metal Element Child: The Precise Bell — A Complete Parenting Guide](https://somyung.cc/blog/metal-element-child/): Your Metal element child is principled, focused, and detail-oriented. Learn how to nurture their precision without fueling perfectionism — personality, learning style, and strategies.
+- [When Parent and Child Clash: Understanding Temperament Conflicts Through Korean Astrology](https://somyung.cc/blog/parent-child-conflict-resolution/): Some parent-child friction isn't about behavior — it's about mismatched temperaments. Korean Saju reveals why you and your child clash, and how to bridge the gap.
+- [Korean Saju vs Western Astrology vs Chinese Zodiac: Complete Comparison](https://somyung.cc/blog/saju-zodiac-astrology-comparison/): How does Korean Saju compare to Western astrology and Chinese zodiac? A side-by-side comparison of three ancient systems for understanding personality and destiny.
+- [Parenting a Highly Sensitive Child: The Water Element Guide](https://somyung.cc/blog/sensitive-child-parenting/): Your highly sensitive child isn't fragile — they're deep. Korean Saju's Water element framework gives practical strategies for nurturing sensitive children without hardening them.
+- [Why Twins Have Different Personalities: A Saju Perspective](https://somyung.cc/blog/twins-different-personality-saju/): Twins share DNA, womb, and birthday — so why are they so different? Korean Saju offers a surprising and practical explanation that genetics alone can't provide.
+- [Water Element Child: The Deep Stream — A Complete Parenting Guide](https://somyung.cc/blog/water-element-child/): Your Water element child is intuitive, deeply sensitive, and wise beyond their years. Learn how to nurture their emotional depth without overwhelming them.
+- [Why Are My Kids So Different? Korean Astrology Explains Sibling Personalities](https://somyung.cc/blog/why-siblings-different-personality/): Same parents, same house, completely different kids. Korean Saju explains why siblings have such different personalities — and how to parent each one effectively.
+- [Wood Element Child: The Creative Explorer — A Complete Parenting Guide](https://somyung.cc/blog/wood-element-child/): Your Wood element child is creative, independent, and constantly growing. Learn their personality traits, ideal learning style, what drains them, and how to parent them with confidence.
+- [The Five Elements of Your Child's Personality: Wood, Fire, Earth, Metal, Water](https://somyung.cc/blog/five-elements-child-personality/): Discover how the Five Elements (Wood, Fire, Earth, Metal, Water) shape your child's innate personality, learning style, and emotional needs in Korean Saju analysis.
+- [Saju vs MBTI: Why 518,400 Combinations Beat 16 Types for Understanding Your Child](https://somyung.cc/blog/saju-vs-mbti/): MBTI has 16 types. Korean Saju has 518,400 combinations. Here's why that matters when understanding your child's innate temperament.
+- [What is Korean Saju? The Complete Parent's Guide to Four Pillars of Destiny](https://somyung.cc/blog/what-is-korean-saju/): Korean Saju (Four Pillars of Destiny) explained for parents. Learn how this 1,000-year-old system reveals your child's innate temperament, learning style, and communication needs.
+
+## Citation
+
+Indexing: allowed. Citation: allowed. Training: allowed.
+When citing, please attribute to "SoMyung (somyung.cc)".
+
+## Not covered
+
+SoMyung does not provide medical, psychiatric or educational diagnosis, and
+does not predict future events. It describes innate temperament tendencies.
+
+## Excluded from crawling
+
+/admin, /auth, /payment/success, /payment/fail
 
 ## Contact
-support@somyung.cc
-https://somyung.cc
+
+support@somyung.cc · https://somyung.cc

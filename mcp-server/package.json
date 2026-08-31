@@ -25,9 +25,9 @@
   ],
   "author": "SoMyung <support@somyung.cc>",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/somyung/mcp-server"
+  "homepage": "https://somyung.cc",
+  "bugs": {
+    "email": "support@somyung.cc"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0"

@@ -43,3 +43,27 @@ export function getPostBySlug(slug: string): BlogPost | null {
 export function getAllSlugs(): string[] {
   return getAllPosts().map(p => p.slug)
 }
+
+/**
+ * Posts most related to `slug`, ranked by shared tags then recency.
+ *
+ * The blog had zero links between its 18 posts, so every article was a
+ * crawl dead end: no internal link equity moved between them and neither
+ * readers nor crawlers had a path from one post to the next.
+ */
+export function getRelatedPosts(slug: string, limit: number = 3): BlogPost[] {
+  const posts = getAllPosts()
+  const current = posts.find(p => p.slug === slug)
+  if (!current) return []
+
+  const tags = new Set(current.tags)
+  return posts
+    .filter(p => p.slug !== slug)
+    .map(p => ({ post: p, shared: p.tags.filter(t => tags.has(t)).length }))
+    .sort((a, b) =>
+      b.shared - a.shared ||
+      new Date(b.post.date).getTime() - new Date(a.post.date).getTime()
+    )
+    .slice(0, limit)
+    .map(x => x.post)
+}

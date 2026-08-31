@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
-import { getAllSlugs, getPostBySlug } from '@/lib/blog'
+import { getAllSlugs, getPostBySlug, getRelatedPosts } from '@/lib/blog'
 import { YinYangIcon } from '@/components/ui/YinYangIcon'
 
 const SITE = 'https://somyung.cc'
@@ -54,6 +54,8 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
   if (!post) {
     return <div style={{ padding: '100px', textAlign: 'center' }}>Post not found</div>
   }
+
+  const related = getRelatedPosts(slug, 3)
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -222,6 +224,51 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
             {post.content}
           </ReactMarkdown>
         </div>
+
+        {/* Related posts — internal links so each article is reachable from
+            its neighbours instead of being a crawl dead end. */}
+        {related.length > 0 && (
+          <nav
+            aria-label="Related articles"
+            style={{ marginTop: '64px', paddingTop: '32px', borderTop: '1px solid rgba(0,0,0,0.08)' }}
+          >
+            <h2 style={{
+              fontSize: '14px',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#9B8B7A',
+              marginBottom: '20px',
+            }}>
+              Keep reading
+            </h2>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '16px' }}>
+              {related.map(r => (
+                <li key={r.slug}>
+                  <Link
+                    href={`/blog/${r.slug}`}
+                    style={{ textDecoration: 'none', display: 'block' }}
+                  >
+                    <span style={{
+                      display: 'block',
+                      fontSize: '17px',
+                      fontWeight: 700,
+                      color: '#2C2420',
+                      fontFamily: '"Nanum Myeongjo", serif',
+                      lineHeight: 1.4,
+                      marginBottom: '4px',
+                    }}>
+                      {r.title}
+                    </span>
+                    <span style={{ display: 'block', fontSize: '14px', color: '#6B5E52', lineHeight: 1.6 }}>
+                      {r.description}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
         {/* CTA */}
         <div style={{
