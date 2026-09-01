@@ -12,7 +12,7 @@ tags: ["saju", "mbti", "child temperament", "korean astrology", "parenting"]
 
 Saju and MBTI are both systems for describing personality, but Saju maps innate temperament from birth data while MBTI self-reports based on a questionnaire. You've probably taken an MBTI test. Maybe you're an INFJ, or an ENTP. It's fun, it feels accurate, and it gives you a four-letter label that fits neatly in your Instagram bio.
 
-But here's the thing most people don't realize: **your MBTI type is shared with roughly 400 million other people.**
+But here's the thing most people don't realize: **sixteen types split across eight billion people leaves an average of 500 million per type.** The types are not evenly distributed, so your own is not exactly that — but it is that order of magnitude.
 
 ## How many personality types does each system have?
 

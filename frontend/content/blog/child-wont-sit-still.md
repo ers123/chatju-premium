@@ -64,7 +64,7 @@ Fire children peak in late morning. Wood children peak in early morning. Schedul
 
 ## Why does my high-energy child struggle at school?
 
-Most classrooms are designed for Earth and Metal temperaments: sit still, follow instructions, work quietly, move in an orderly fashion. This works for roughly 40% of children and slowly tortures the other 60%.
+Most classrooms are designed for Earth and Metal temperaments: sit still, follow instructions, work quietly, move in an orderly fashion. It suits some children and slowly wears down the ones it does not.
 
 If your Fire/Wood child is struggling at school, the problem might not be the child. It might be the environment.
 

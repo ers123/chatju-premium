@@ -30,7 +30,7 @@ Three converging trends are driving it: a global astrology boom, a gap in Wester
 
 ### 1. The Global Astrology Boom
 
-Astrology is experiencing a massive revival worldwide. The global astrology market is projected to exceed $22 billion by 2031. Co-Star, an astrology app, had over 30 million downloads. Astrology memes are the lingua franca of social media.
+Astrology is experiencing a massive revival worldwide. Allied Market Research put the global astrology market at $12.8 billion in 2021 and projected $22.8 billion by 2031, a 5.7% compound annual growth rate. The astrology app Co-Star passed 30 million registered users in 2023, up from 7.5 million in 2020. Astrology memes are the lingua franca of social media.
 
 But here's the gap: most Western astrology gives you 12 types. Twelve. For 8 billion people. Users are hungry for something more precise, more personal, more actionable.
 
@@ -42,7 +42,7 @@ Western astrology is primarily about self-knowledge for adults. Korean Saju has 
 
 There's currently no Western equivalent. No mainstream personality system is designed to help parents understand children before those children can self-report their preferences. Saju fills this gap.
 
-For the global parenting market — estimated at over $700 billion — this is a new product category.
+For the parenting market — already large, and served by a crowded field of books, apps and courses — this is a new product category.
 
 ### 3. K-Culture Credibility
 

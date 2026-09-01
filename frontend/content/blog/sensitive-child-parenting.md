@@ -20,7 +20,7 @@ They don't. Here's why.
 
 ## What does "highly sensitive" actually mean?
 
-About 15-20% of children (and adults) have what psychologist Dr. Elaine Aron calls Sensory Processing Sensitivity. These children process everything more deeply: sounds, textures, emotions, social dynamics, subtle changes in their environment.
+About 15–20% of children and adults have what the psychologists Elaine and Arthur Aron named Sensory-Processing Sensitivity — the trait they introduced in *Journal of Personality and Social Psychology* 73(2), 345–368, [doi:10.1037/0022-3514.73.2.345](https://doi.org/10.1037/0022-3514.73.2.345) (1997). These children process everything more deeply: sounds, textures, emotions, social dynamics, subtle changes in their environment.
 
 This isn't a disorder. It's a trait. And it's been observed across species — sensitive individuals exist in over 100 animal species, because sensitivity serves a survival function. Someone in the group needs to notice the subtle warning signs.
 

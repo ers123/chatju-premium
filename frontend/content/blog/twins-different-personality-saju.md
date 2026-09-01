@@ -22,7 +22,7 @@ Genetics can't fully explain this. Korean Saju offers a perspective that fills t
 
 ## Why can't genetics fully explain twins' personality differences?
 
-Genetics can't fully explain it: twin studies — the cornerstone of behavioral genetics — consistently show that identical twins, despite sharing all their DNA, are not identical in personality. Research suggests genetics accounts for roughly 40-60% of personality variation, with the rest attributed to "non-shared environment" — experiences unique to each individual.
+Genetics can't fully explain it: twin studies — the cornerstone of behavioral genetics — consistently show that identical twins, despite sharing all their DNA, are not identical in personality. The largest meta-analysis to date — Vukasović & Bratko (2015), *Psychological Bulletin* 141(4), 769–785, [doi:10.1037/bul0000017](https://doi.org/10.1037/bul0000017), pooling 62 effect sizes from over 100,000 people — puts the heritability of personality at about 40% in twin studies, and closer to 20% in family and adoption designs. The remainder is attributed largely to "non-shared environment": experiences unique to each individual.
 
 But here's the problem: in infancy and early childhood, twins share nearly all their environment too. Same parents, same home, same food, same routines. So where do the personality differences come from?
 
@@ -76,7 +76,7 @@ Understanding this through Saju gives parents language and framework to:
 
 ## Why are twin births increasing, and why does it matter now?
 
-Twin births have increased significantly worldwide. In the US, the twin birth rate rose 76% between 1980 and 2009, driven by fertility treatments and later maternal age. In Korea, twin births have followed a similar trend.
+Twin births have increased significantly worldwide. In the US, the twin birth rate rose 76% between 1980 and 2009 — from 18.9 to 33.2 per 1,000 births — driven by fertility treatments and later maternal age ([CDC/NCHS Data Brief No. 80](https://www.cdc.gov/nchs/products/databriefs/db80.htm), Martin, Hamilton & Osterman, 2012). In Korea, twin births have followed a similar trend.
 
 This means more parents than ever are navigating the challenge of raising two same-age children with different temperaments — often without adequate tools for understanding the differences.
 
