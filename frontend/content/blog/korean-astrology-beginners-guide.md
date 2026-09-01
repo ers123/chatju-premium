@@ -10,6 +10,8 @@ tags: ["korean astrology", "saju beginners", "four pillars of destiny", "five el
 
 # Korean Astrology for Beginners: Everything You Need to Know
 
+Saju (사주) is Korea's centuries-old system for reading a person's innate nature from their birth data — a structured temperament map, not fortune-telling.
+
 You've heard the word "Saju." Maybe a Korean friend mentioned it, or you stumbled across it while reading about K-culture. It sounded like fortune-telling, but also like personality analysis, and also like something your friend's mother consulted before naming their baby.
 
 All of those are right. And none of them capture the full picture.
@@ -22,7 +24,9 @@ Here's the complete beginner's guide — no jargon, no mysticism, just clear exp
 
 The "four pillars" are year, month, day, and hour of birth. The "eight characters" are the two characters (Heavenly Stem + Earthly Branch) assigned to each pillar. Together, they create a unique profile.
 
-## The Building Blocks
+## What are the building blocks of a Saju chart?
+
+A Saju chart is built from two components — ten Heavenly Stems and twelve Earthly Branches — that combine into eight characters across four pillars.
 
 ### Heavenly Stems (천간/天干) — 10 Types
 
@@ -68,9 +72,9 @@ Each Heavenly Stem pairs with an Earthly Branch in a rotating 60-combination cyc
 
 Each of your four pillars is assigned one of these 60 pairs. The total combinations: 60 x 12 x 60 x 12 = **518,400 unique profiles**.
 
-## The Five Elements (오행/五行)
+## What are the Five Elements in Saju?
 
-Everything in Saju connects back to five elements. These aren't just labels — they describe fundamental patterns of energy:
+The Five Elements — Wood, Fire, Earth, Metal, and Water — are the fundamental patterns of energy that everything in Saju connects back to. These aren't just labels:
 
 **Wood (목/木)** — Growth, expansion, creativity
 - Season: Spring
@@ -112,9 +116,9 @@ The elements have two key relationship cycles:
 
 These cycles explain why certain personality combinations create harmony (generating) or tension (controlling) — both in individuals and between people.
 
-## How Saju Is Used in Modern Korea
+## How is Saju used in modern Korea?
 
-Saju isn't fringe in Korea. It's mainstream. Here's how Koreans actually use it:
+Saju is used for children's temperaments, career direction, relationship compatibility, and timing decisions. It isn't fringe in Korea — it's mainstream. Here's how Koreans actually use it:
 
 **For babies and children:**
 - Understanding innate temperament before the child can self-report
@@ -135,17 +139,17 @@ Saju isn't fringe in Korea. It's mainstream. Here's how Koreans actually use it:
 - Choosing favorable dates for major decisions
 - Understanding annual and seasonal energy shifts
 
-## Saju Is Not Fortune-Telling
+## Is Saju fortune-telling?
 
-This is the most important point for beginners.
+No — modern Saju focuses on temperament analysis, not predicting the future. This is the most important point for beginners.
 
 Traditional Saju included predictive elements — reading the future based on cyclical patterns. Modern Myeongri Psychology (명리심리학) has deliberately shifted the focus toward temperament analysis and psychological understanding.
 
 Think of it this way: Saju doesn't tell you what will happen to you. It tells you what you're working with. Like a terrain map, it shows the landscape — the hills, valleys, and rivers of your personality. Where you walk is still your choice.
 
-## How SoMyung Makes Saju Accessible
+## How does SoMyung make Saju accessible?
 
-Traditionally, getting a Saju reading meant visiting a practitioner in Korea, communicating in Korean, and interpreting results that could be cryptic and prediction-heavy.
+SoMyung makes Saju accessible through AI-powered interpretation in 10 languages, with results in three minutes and no appointment needed. Traditionally, getting a Saju reading meant visiting a practitioner in Korea, communicating in Korean, and interpreting results that could be cryptic and prediction-heavy.
 
 SoMyung changes this:
 - **Available in 10 languages** worldwide

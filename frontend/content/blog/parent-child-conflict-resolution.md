@@ -10,19 +10,21 @@ tags: ["parent child conflict", "temperament clash", "saju compatibility", "pare
 
 # When Parent and Child Clash: Understanding Temperament Conflicts
 
-There's a specific kind of parenting frustration that no book seems to address. It's not about tantrums or homework resistance or screen time negotiations. It's deeper than that.
+A temperament mismatch is when a parent's and child's dominant Saju elements pull in different directions, creating friction that has nothing to do with love or effort. There's a specific kind of parenting frustration that no book seems to address. It's not about tantrums or homework resistance or screen time negotiations. It's deeper than that.
 
 It's the feeling that you and your child are speaking different languages. That no matter how hard you try, something fundamental isn't connecting. That other parents seem to "get" their kids in a way that feels effortless, while every interaction with yours requires conscious effort.
 
 If this resonates, you're not a bad parent. You might just have a temperament mismatch.
 
-## The Temperament Mismatch Problem
+## What is a temperament mismatch?
 
-Korean Saju assigns each person a dominant element based on their four pillars of birth. You have one. Your child has one. And some combinations create natural harmony, while others create natural friction.
+It's when your dominant Saju element and your child's pull in opposite directions, so approaches that work for other parents don't land with your child. Korean Saju assigns each person a dominant element based on their four pillars of birth. You have one. Your child has one. And some combinations create natural harmony, while others create natural friction.
 
 This isn't destiny. It's awareness. Knowing the source of friction is the first step to dissolving it.
 
-## The Five Most Common Parent-Child Clashes
+## What are the five most common parent-child clashes?
+
+The five most common clashes pair opposite temperaments: Metal parents with Wood children, Earth with Fire, Water with Metal, Fire with Water, and Wood with Earth. Each pairing has a predictable pattern — and a specific way through it.
 
 ### 1. Metal Parent + Wood Child
 
@@ -86,9 +88,9 @@ You're not losing authority. You're earning their respect, which is the only cur
 
 **The bridge:** Earth children aren't resistant to growth — they need a stable launch pad. Introduce change gradually: "We're going to try the new restaurant, but we're ordering the same kind of food you like. If you hate it, we'll go to our usual place next week." Safety first, adventure second.
 
-## The Guilt Factor
+## Why do I feel guilty about connecting more easily with one child?
 
-Here's what no one says out loud: **some parents feel guilty because they connect more easily with one child than another.**
+Many parents feel this way because they do connect more easily with one child than another — and Saju offers a non-blaming explanation for why. **Some parents feel guilty because they connect more easily with one child than another.**
 
 If you have two children and one shares your element while the other clashes with it, the difference is palpable. The matching child feels easy. The clashing child feels like work.
 
@@ -96,7 +98,9 @@ This is normal. It doesn't mean you love one more. It means one relationship ope
 
 Saju removes the guilt by providing an explanation that has nothing to do with effort, love, or worthiness. The friction is elemental, not personal.
 
-## The Five-Element Communication Cheat Sheet
+## What does each element need from a parent?
+
+Each element responds to a different communication style — the table below maps what each one needs from you and what shuts them down.
 
 | Your Child's Element | They Need You To... | They Shut Down When... |
 |---|---|---|
@@ -106,15 +110,15 @@ Saju removes the guilt by providing an explanation that has nothing to do with e
 | **Metal** | Be fair. Be precise. Follow through. | You're inconsistent or vague. |
 | **Water** | Be gentle. Listen without fixing. Protect their space. | You push too hard or call them "too sensitive." |
 
-## It Gets Better
+## Does the clash get better?
 
-The most powerful thing about understanding temperament clashes is this: once you see the pattern, you stop taking it personally. And once you stop taking it personally, you have room to respond instead of react.
+Yes — once you see the pattern behind the friction, you stop taking it personally, and that alone changes the dynamic. The most powerful thing about understanding temperament clashes is this: once you see the pattern, you stop taking it personally. And once you stop taking it personally, you have room to respond instead of react.
 
 The Metal parent who understands their Wood child isn't being defiant can take a breath before escalating. The Fire parent who understands their Water child isn't being antisocial can stop pushing and start protecting.
 
 The clash doesn't disappear. But it transforms from a source of daily frustration into an opportunity for daily understanding.
 
-## Map Your Parent-Child Dynamic
+## How do I map my parent-child dynamic?
 
 SoMyung can analyze both your chart and your child's chart — showing you where your elements harmonize, where they clash, and specific strategies for bridging the gap.
 

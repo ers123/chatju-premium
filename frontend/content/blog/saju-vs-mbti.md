@@ -10,13 +10,13 @@ tags: ["saju", "mbti", "child temperament", "korean astrology", "parenting"]
 
 # Saju vs MBTI: Why 518,400 Combinations Beat 16 Types
 
-You've probably taken an MBTI test. Maybe you're an INFJ, or an ENTP. It's fun, it feels accurate, and it gives you a four-letter label that fits neatly in your Instagram bio.
+Saju and MBTI are both systems for describing personality, but Saju maps innate temperament from birth data while MBTI self-reports based on a questionnaire. You've probably taken an MBTI test. Maybe you're an INFJ, or an ENTP. It's fun, it feels accurate, and it gives you a four-letter label that fits neatly in your Instagram bio.
 
 But here's the thing most people don't realize: **your MBTI type is shared with roughly 400 million other people.**
 
-## The Numbers
+## How many personality types does each system have?
 
-**MBTI: 16 types.** Four binary dimensions (Introvert/Extrovert, Sensing/Intuition, Thinking/Feeling, Judging/Perceiving). That's it. 2 x 2 x 2 x 2 = 16.
+MBTI has 16 types; Korean Saju has 518,400 combinations. **MBTI: 16 types.** Four binary dimensions (Introvert/Extrovert, Sensing/Intuition, Thinking/Feeling, Judging/Perceiving). That's it. 2 x 2 x 2 x 2 = 16.
 
 **Korean Saju: 518,400 combinations.** Four pillars (year, month, day, hour), each mapped to a pair from the 60-cycle Sexagenary system (천간지지), crossed with the Five Elements framework. The math produces 518,400 unique profiles.
 
@@ -32,7 +32,7 @@ But when you're trying to understand **your child** — a small person who can't
 
 Consider two "Fire element" children in Saju. One might be born in a year that tempers the fire with water, creating a passionate but emotionally deep child. Another might have fire reinforced across all four pillars, resulting in a child who literally cannot sit still. MBTI would call them both "ESFP" or something similar. Saju sees them as fundamentally different.
 
-## "But Isn't Saju Just Fortune-Telling?"
+## Is Saju just fortune-telling?
 
 No. This is the most common misconception.
 
@@ -42,24 +42,24 @@ SoMyung's founder, SungHa, holds a Level 1 certification in Myeongri Psychology 
 
 Think of it this way: MBTI asks you 93 questions about your preferences. Saju reads the conditions of your birth. One measures who you've become. The other maps who you were born to be.
 
-## The Parent's Dilemma
+## Why doesn't the same parenting approach work for every child?
 
-Here's what every parent of multiple children knows: **the same approach doesn't work for every kid.**
+Because each child has a different dominant element from birth, and MBTI can't measure that until they're old enough to take the test. Here's what every parent of multiple children knows: **the same approach doesn't work for every kid.**
 
 Your firstborn thrives with structure. Your second child rebels against it. Your third does something entirely unexpected.
 
 MBTI can't explain this until your children are old enough to take the test (typically 14+). Saju can offer insights from birth.
 
-## What Korean Parents Have Known for 1,000 Years
+## Why do Korean parents consult Saju at a child's birth?
 
-In Korea, consulting a Saju expert at a child's birth is as normal as choosing a pediatrician. It's not about predicting the future — it's about understanding the child's innate temperament so you can:
+To understand the child's innate temperament, not to predict the future. In Korea, consulting a Saju expert at a child's birth is as normal as choosing a pediatrician. It's not about predicting the future — it's about understanding the child's innate temperament so you can:
 
 - Choose the right **communication style** (some children need direct talk, others need gentle guidance)
 - Find the right **learning environment** (self-study vs. group, morning vs. evening)
 - Understand **sibling dynamics** (why Fire and Water children clash, and how to mediate)
 - Reduce **parent-child friction** (when your temperament is opposite to your child's)
 
-## Try It Yourself
+## How do I try Saju for myself?
 
 SoMyung brings this 1,000-year-old Korean wisdom to parents worldwide, powered by AI. The free preview takes 3 minutes and shows your child's dominant element, personality traits, and learning style.
 

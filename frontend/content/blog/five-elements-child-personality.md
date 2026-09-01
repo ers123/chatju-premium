@@ -14,7 +14,9 @@ In Korean Saju, every child is born with a unique balance of five elements. Unde
 
 This isn't abstract philosophy. It's practical. Once you know your child's element, you'll understand why certain approaches work and others backfire.
 
-## Wood (목/木) — The Growing Tree
+## What is a Wood element child like?
+
+A Wood element child is creative, independent, and growth-oriented — the energy of a tree always pushing upward toward the light.
 
 **Core nature:** Creative, independent, growth-oriented
 
@@ -40,7 +42,9 @@ This isn't abstract philosophy. It's practical. Once you know your child's eleme
 
 ---
 
-## Fire (화/火) — The Bright Flame
+## What is a Fire element child like?
+
+A Fire element child is passionate, expressive, and warm-hearted — the loudest, brightest energy in any room.
 
 **Core nature:** Passionate, expressive, warm-hearted
 
@@ -66,7 +70,9 @@ This isn't abstract philosophy. It's practical. Once you know your child's eleme
 
 ---
 
-## Earth (토/土) — The Steady Mountain
+## What is an Earth element child like?
+
+An Earth element child is stable, nurturing, and reliable — the one who holds the group together.
 
 **Core nature:** Stable, nurturing, reliable
 
@@ -92,7 +98,9 @@ This isn't abstract philosophy. It's practical. Once you know your child's eleme
 
 ---
 
-## Metal (금/金) — The Polished Bell
+## What is a Metal element child like?
+
+A Metal element child is precise, principled, and focused — driven by fairness and high standards.
 
 **Core nature:** Precise, principled, focused
 
@@ -118,7 +126,9 @@ This isn't abstract philosophy. It's practical. Once you know your child's eleme
 
 ---
 
-## Water (수/水) — The Deep Stream
+## What is a Water element child like?
+
+A Water element child is intuitive, sensitive, and adaptable — deeply attuned to the moods of everyone around them.
 
 **Core nature:** Intuitive, sensitive, adaptable
 
@@ -144,7 +154,7 @@ This isn't abstract philosophy. It's practical. Once you know your child's eleme
 
 ---
 
-## The Real Power: Understanding Combinations
+## How do the five elements combine in one child?
 
 No child is purely one element. Your child has a unique balance of all five, with one or two dominant.
 
@@ -152,9 +162,9 @@ A child who is **Fire + Water** is passionate but deeply sensitive — their emo
 
 This is where Saju's 518,400 combinations shine. It doesn't just tell you the dominant element — it shows you the full picture.
 
-## Discover Your Child's Elements
+## How do I find my child's Five Elements profile?
 
-Want to see your child's exact elemental balance? SoMyung analyzes all four pillars and shows you the complete Five Elements profile in 3 minutes.
+SoMyung analyzes all four pillars and shows you the complete Five Elements profile in 3 minutes — for free.
 
 [Free analysis — no signup required](https://somyung.cc)
 

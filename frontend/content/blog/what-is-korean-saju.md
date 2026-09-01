@@ -10,11 +10,11 @@ tags: ["saju", "four pillars", "korean astrology", "parenting guide", "child tem
 
 # What is Korean Saju? The Complete Parent's Guide
 
-If you've heard of Chinese astrology, you already know the foundation. Korean Saju (사주, literally "four pillars") is Korea's own system for understanding a person's innate nature based on their birth time. But unlike horoscopes that offer vague daily predictions, Saju creates a detailed temperament profile.
+Korean Saju (사주, literally "four pillars") is Korea's system for understanding a person's innate nature based on their exact birth year, month, day, and hour. If you've heard of Chinese astrology, you already know the foundation — but unlike horoscopes that offer vague daily predictions, Saju creates a detailed temperament profile.
 
-## The Four Pillars, Explained Simply
+## What are the four pillars in Saju?
 
-When your child is born, four "pillars" are established:
+Four pillars are set at the exact moment your child is born, and each one reveals a different layer of their temperament:
 
 | Pillar | Based On | What It Reveals |
 |--------|----------|-----------------|
@@ -25,9 +25,9 @@ When your child is born, four "pillars" are established:
 
 Each pillar is assigned a pair from the Sexagenary cycle (60 combinations of Heavenly Stems and Earthly Branches), which maps to the Five Elements.
 
-## The Five Elements
+## What are the Five Elements in Saju?
 
-Every child has a unique balance of five elements:
+The Five Elements — Wood, Fire, Earth, Metal, and Water — are the five temperament categories a Saju chart is built from, and every child carries a unique balance of all five:
 
 **Wood (목/木)** — Growth, creativity, flexibility
 - Wood children are imaginative, independent, and always growing. They need freedom to explore and hate being confined.
@@ -44,9 +44,9 @@ Every child has a unique balance of five elements:
 **Water (수/水)** — Wisdom, sensitivity, adaptability
 - Water children are intuitive, deep thinkers, and emotionally perceptive. They need gentle handling and quiet time.
 
-## Why Saju Matters for Parenting
+## Why does Saju matter for parenting?
 
-The core insight is simple but transformative: **your child is not a blank slate, and they're not a smaller version of you.**
+Saju matters because it starts from the premise that **your child is not a blank slate, and they're not a smaller version of you.**
 
 Every parent of multiple children discovers this. The approach that works perfectly for one child backfires completely with another. Saju explains why: each child arrives with a different elemental balance, a different temperament blueprint.
 
@@ -55,17 +55,17 @@ Understanding this changes everything:
 - You stop blaming your child for being "difficult"
 - You start adapting your approach to match their nature
 
-## Saju vs. Fortune-Telling
+## Is Saju the same as fortune-telling?
 
-Let's be direct: Saju is not about predicting the future.
+No — Saju is not about predicting the future.
 
 Modern Myeongri Psychology (명리심리학) uses the Saju framework the same way Western psychology uses the MBTI or Big Five — as a structured vocabulary for describing personality. The difference is precision: while MBTI offers 16 types, Saju produces 518,400 unique combinations.
 
 The question isn't "what will happen to my child?" It's "who is my child, at the deepest level, and how can I communicate with them in a way that actually lands?"
 
-## How SoMyung Makes This Accessible
+## How does SoMyung make Saju accessible?
 
-Traditionally, getting a Saju reading meant visiting a 사주 master — an experience that could be intimidating, expensive, and hard to find outside Korea.
+SoMyung turns a traditional Saju reading into a free, AI-powered report you get in about 3 minutes. Traditionally, getting a Saju reading meant visiting a 사주 master — an experience that could be intimidating, expensive, and hard to find outside Korea.
 
 SoMyung changes this:
 - **3 minutes**: Enter your child's birth date and time
@@ -74,9 +74,9 @@ SoMyung changes this:
 - **Free preview**: See your child's dominant element, traits, and learning style at no cost
 - **Premium report**: 8-section deep analysis including parent-child compatibility, age-specific advice, and actionable weekly tasks
 
-## Start Here
+## How do I get my child's Saju reading?
 
-Your child came with an instruction manual — it was just written in a language you hadn't learned yet. Saju is that language.
+Enter your child's birth date and time at SoMyung for a free reading in about 3 minutes. Your child came with an instruction manual — it was just written in a language you hadn't learned yet. Saju is that language.
 
 [Discover your child's temperament](https://somyung.cc) — free, 3 minutes, no signup required.
 
