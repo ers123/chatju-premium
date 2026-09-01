@@ -70,6 +70,22 @@ function revealDelayStyle(delay: number): React.CSSProperties {
 // useLayoutEffect on the client, useEffect on the server (avoids the SSR warning).
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
+/** Digits of a localized number string: "43.200" / "43 200" / "43,200" -> 43200. */
+function parseLocalizedNumber(s: string): number {
+  return Number(s.replace(/\D/g, '')) || 0
+}
+
+/**
+ * Format `value` with the same grouping separator the source string uses.
+ *
+ * toLocaleString() formats for the RUNTIME locale, not the page's, so a French
+ * page rendered "518,400" where its own copy says "518 400".
+ */
+function formatLike(value: number, sample: string): string {
+  const sep = sample.includes(' ') ? ' ' : sample.includes('.') ? '.' : ','
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, sep)
+}
+
 // Animated counter hook — counts from 0 to target on scroll.
 //
 // Seeded with `target`, NOT 0. These counters hold the two most quotable numbers
@@ -127,8 +143,13 @@ export default function LandingPage() {
   const { lang, setLang, t } = useLanguage()
   // Doorframe redesign: one family, hierarchy by weight (900/700/400).
   const serifFont = '"Pretendard", -apple-system, sans-serif'
-  const sajuCounter = useAnimatedCounter(518400, 2400)
-  const multiplierCounter = useAnimatedCounter(32400, 2000)
+  // Both figures come from the copy, never hardcoded. The multiplier is
+  // market-specific — Korea compares against MBTI's 16 types (32,400x), Japan
+  // against the four blood types (129,600x), everywhere else against the 12
+  // zodiac signs (43,200x) — so a single hardcoded 32,400 was the wrong number
+  // on nine of the ten locales.
+  const sajuCounter = useAnimatedCounter(parseLocalizedNumber(t.precision.sajuCount), 2400)
+  const multiplierCounter = useAnimatedCounter(parseLocalizedNumber(t.precision.multiplier), 2000)
 
   const handleShare = useCallback(async () => {
     const url = 'https://somyung.cc'
@@ -364,7 +385,7 @@ export default function LandingPage() {
                 marginBottom: '12px',
                 letterSpacing: '-0.04em',
               }}>
-                {sajuCounter.count.toLocaleString()}
+                {formatLike(sajuCounter.count, t.precision.sajuCount)}
               </p>
               <p style={{
                 fontSize: '16px',
@@ -403,7 +424,7 @@ export default function LandingPage() {
                 letterSpacing: '-0.04em',
                 lineHeight: 1,
               }}>
-                {multiplierCounter.count.toLocaleString()}{t.precision.multiplierSuffix}
+                {formatLike(multiplierCounter.count, t.precision.multiplier)}{t.precision.multiplierSuffix}
               </span>
             </div>
             <p style={{

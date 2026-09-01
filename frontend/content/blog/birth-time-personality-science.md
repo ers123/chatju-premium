@@ -46,15 +46,16 @@ Here's where it gets interesting. While mainstream science doesn't validate astr
 
 Multiple peer-reviewed studies have found statistical correlations between season of birth and personality traits:
 
-- A 2012 study in the journal *Comprehensive Psychiatry* found that people born in spring and summer scored higher on hyperthymic temperament (positive, energetic) compared to those born in winter.
-- Research published in *Nature Neuroscience* (2010) found that season of birth affects the biological clock in mice — and that these effects persist into adulthood.
-- A large-scale study from the University of Budapest (2014) analyzing 366 subjects found statistically significant associations between birth season and temperament as measured by the TEMPS-A assessment.
+- Rihmer Z., Erdos P., Ormos M., Fountoulakis K., et al. (2011), "Association between affective temperaments and season of birth in a general student population," *Journal of Affective Disorders* 132(1–2), 64–70. [doi:10.1016/j.jad.2011.01.015](https://doi.org/10.1016/j.jad.2011.01.015) — 366 Hungarian students assessed with TEMPS-A. Significant associations emerged for the hyperthymic, cyclothymic, irritable and depressive temperaments; none for the anxious temperament. Summer-born subjects scored higher on hyperthymic (upbeat, energetic) temperament; autumn-born subjects scored lower on depressive temperament than winter-born.
+- Ciarleglio C., Axley J., Strauss B., Gamble K., McMahon D. (2011), "Perinatal photoperiod imprints the circadian clock," *Nature Neuroscience* 14(1), 25–27. [doi:10.1038/nn.2699](https://doi.org/10.1038/nn.2699) — in mice, the day length experienced around birth leaves a lasting imprint on the biological clock, still measurable in adulthood.
 
-These aren't Saju studies. They're Western research, published in mainstream journals, using standard scientific methods. And they're finding what Saju practitioners have observed for centuries: birth timing and temperament are not independent.
+What these do **not** show is equally important. The temperament study is a single cohort of university students in one country, and its effect sizes are modest — season of birth explains only a small share of the variation between people. The circadian imprinting result is in mice, and does not transfer to humans by assumption. Neither study tests Saju's elemental framework, and neither supports predicting anything about an individual.
+
+What they do establish is narrower and still worth saying: birth timing and temperament are not statistically independent, which is the premise Saju has worked from for centuries.
 
 ### Chronotype and Birth Season
 
-Your chronotype (whether you're naturally a morning person or night person) shows statistical correlation with birth season. A 2009 study in *Sleep* found that people born in autumn and winter are more likely to be morning types, while spring and summer births trend toward evening types.
+Your chronotype — whether you are naturally a morning person or a night person — correlates with birth season. Natale V., Adan A., Fabbri M. (2009), "Season of birth, gender, and social-cultural effects on sleep timing preferences in humans," *Sleep* 32(3), 423–426, [doi:10.5665/sleep/32.3.423](https://doi.org/10.5665/sleep/32.3.423), surveyed 5,720 Italian and Spanish university students. Those born in spring and summer went to bed later, and reached the midpoint of their sleep later, than those born in autumn and winter.
 
 Korean Saju assigns different peak-energy times to different elements. Wood children peak in the morning. Fire peaks at midday. Water peaks at night. These are traditional observations that map onto chronotype research in ways that are, at minimum, worth noting.
 

@@ -20,9 +20,11 @@ But here's the thing most people don't realize: **your MBTI type is shared with 
 
 **Korean Saju: 518,400 combinations.** Four pillars (year, month, day, hour), each mapped to a pair from the 60-cycle Sexagenary system (천간지지), crossed with the Five Elements framework. The math produces 518,400 unique profiles.
 
-That's **32,400 times more precise** than MBTI.
+That's **32,400 times more granular** than MBTI.
 
-## Why Precision Matters for Your Child
+Granularity is not the same as accuracy — more categories does not by itself make a system more valid. What it buys you is room to describe two children differently when MBTI would file them under the same four letters.
+
+## Why does granularity matter for a child?
 
 When you're trying to understand yourself, 16 types might be enough. You can fill in the gaps with self-awareness.
 
