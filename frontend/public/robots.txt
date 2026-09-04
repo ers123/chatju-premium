@@ -28,7 +28,11 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
-# Disallow admin/auth paths
+# Disallow admin/auth paths.
+# These need their own User-agent line. Without it they belong to whichever
+# group was declared last — they were sitting under CCBot, so every other
+# crawler, Googlebot included, was told nothing.
+User-agent: *
 Disallow: /admin
 Disallow: /auth
 Disallow: /payment/success
